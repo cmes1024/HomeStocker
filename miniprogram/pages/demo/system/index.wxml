@@ -1,0 +1,57 @@
+<Header page-name="系统信息" align-content="center" zIndex="10" headerStyle="background: white" />
+
+<view class="demo-section">
+  <view class="demo-hint">系统信息已拆分为 windowInfo / deviceInfo / systemSetting 三个独立 API，按需获取，避免一次拉取全部。</view>
+
+  <!-- windowInfo -->
+  <view class="info-card">
+    <view class="info-card-hd">windowInfo <text class="tag">getWindowInfo()</text></view>
+    <view class="info-card-bd">
+      <view wx:if="{{windowInfo.safeArea}}" class="info-meta">安全区域: {{windowInfo.safeArea.top}}/{{windowInfo.safeArea.right}}/{{windowInfo.safeArea.bottom}}/{{windowInfo.safeArea.left}}</view>
+      <view wx:for="{{windowInfo}}" wx:key="*this" class="info-row">
+        <text class="info-key">{{item.key || item}}</text>
+        <text class="info-val">{{item.val || item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- deviceInfo -->
+  <view class="info-card">
+    <view class="info-card-hd">deviceInfo <text class="tag" wx:if="{{!hasDeviceInfo}}">getSystemInfoSync 兼容</text><text class="tag primary" wx:if="{{hasDeviceInfo}}">getDeviceInfo()</text></view>
+    <view class="info-card-bd">
+      <view class="info-row"><text class="info-key">品牌</text><text class="info-val">{{deviceInfo.brand}}</text></view>
+      <view class="info-row"><text class="info-key">型号</text><text class="info-val">{{deviceInfo.model}}</text></view>
+      <view class="info-row"><text class="info-key">系统</text><text class="info-val">{{deviceInfo.system}}</text></view>
+      <view class="info-row"><text class="info-key">平台</text><text class="info-val">{{deviceInfo.platform}}</text></view>
+      <view class="info-row"><text class="info-key">SDK版本</text><text class="info-val">{{deviceInfo.SDKVersion}}</text></view>
+      <view class="info-row"><text class="info-key">语言</text><text class="info-val">{{deviceInfo.language}}</text></view>
+    </view>
+  </view>
+
+  <!-- systemSetting -->
+  <view class="info-card">
+    <view class="info-card-hd">systemSetting <text class="tag" wx:if="{{!hasSystemSetting}}">getSystemInfoSync 兼容</text><text class="tag primary" wx:if="{{hasSystemSetting}}">getSystemSetting()</text></view>
+    <view class="info-card-bd">
+      <view class="info-row"><text class="info-key">蓝牙</text><text class="info-val">{{deviceInfo.bluetoothEnabled !== undefined ? (deviceInfo.bluetoothEnabled ? '开' : '关') : '-'}}</text></view>
+      <view class="info-row"><text class="info-key">定位</text><text class="info-val">{{deviceInfo.locationEnabled !== undefined ? (deviceInfo.locationEnabled ? '开' : '关') : '-'}}</text></view>
+      <view class="info-row"><text class="info-key">WiFi</text><text class="info-val">{{deviceInfo.wifiEnabled !== undefined ? (deviceInfo.wifiEnabled ? '开' : '关') : '-'}}</text></view>
+    </view>
+  </view>
+
+  <!-- menuPositionInfo -->
+  <view class="info-card">
+    <view class="info-card-hd">menuPositionInfo <text class="tag">getMenuButtonBoundingClientRect()</text></view>
+    <view class="info-card-bd">
+      <view class="info-row"><text class="info-key">top</text><text class="info-val">{{menuPosition.top}}px</text></view>
+      <view class="info-row"><text class="info-key">bottom</text><text class="info-val">{{menuPosition.bottom}}px</text></view>
+      <view class="info-row"><text class="info-key">width</text><text class="info-val">{{menuPosition.width}}px</text></view>
+      <view class="info-row"><text class="info-key">height</text><text class="info-val">{{menuPosition.height}}px</text></view>
+    </view>
+  </view>
+
+  <!-- deviceInfo raw -->
+  <view class="info-card raw">
+    <view class="info-card-hd">deviceInfo 原始数据</view>
+    <view class="info-card-bd raw-bd">{{formatJSON(deviceInfo)}}</view>
+  </view>
+</view>

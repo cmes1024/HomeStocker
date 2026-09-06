@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untitled</title>
+    <style id="theme-vars">
+:root {
+  --family-background: #f6f8f6;
+  --family-foreground: #18211d;
+  --family-card: #ffffff;
+  --family-card-foreground: #18211d;
+  --family-popover: #ffffff;
+  --family-popover-foreground: #18211d;
+  --family-primary: #2f7d62;
+  --family-primary-foreground: #f8fffb;
+  --family-muted: #e8efeb;
+  --family-muted-foreground: #60716a;
+  --family-border: #d6dfda;
+  --family-input: #d6dfda;
+  --family-ring: #2f7d62;
+
+  --family-bg: var(--family-background);
+  --family-surface: var(--family-card);
+  --family-surface-2: #eef5f1;
+  --family-ink: var(--family-foreground);
+  --family-ink-2: #5f6f68;
+  --family-ink-3: #889790;
+  --family-line: var(--family-border);
+  --family-brand: var(--family-primary);
+  --family-brand-ink: var(--family-primary-foreground);
+
+  --family-state-success: #2f7d62;
+  --family-state-warning: #c68a24;
+  --family-state-error: #c9574b;
+  --family-state-info: #5380c1;
+
+  --family-radius-sm: 8px;
+  --family-radius-md: 16px;
+  --family-radius-lg: 24px;
+  --family-shadow-soft: 0 12px 28px rgba(24, 33, 29, 0.05);
+  --family-shadow-float: 0 16px 32px rgba(24, 33, 29, 0.08);
+
+  --family-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--family-background);
+  color: var(--family-foreground);
+  font-family: var(--family-font-sans);
+}
+
+body {
+  min-height: 100vh;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--family-background);
+    --color-foreground: var(--family-foreground);
+    --color-card: var(--family-card);
+    --color-card-foreground: var(--family-card-foreground);
+    --color-popover: var(--family-popover);
+    --color-popover-foreground: var(--family-popover-foreground);
+    --color-primary: var(--family-primary);
+    --color-primary-foreground: var(--family-primary-foreground);
+    --color-muted: var(--family-muted);
+    --color-muted-foreground: var(--family-muted-foreground);
+    --color-border: var(--family-border);
+    --color-input: var(--family-input);
+    --color-ring: var(--family-ring);
+    --radius-sm: var(--family-radius-sm);
+    --radius-md: var(--family-radius-md);
+    --radius-lg: var(--family-radius-lg);
+  }
+  @layer base {
+    body { background: var(--family-background); color: var(--family-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--family-background); }
+      .text-background { color: var(--family-background); }
+      .border-background { border-color: var(--family-background); }
+      .ring-background { --tw-ring-color: var(--family-background); }
+      .bg-foreground { background-color: var(--family-foreground); }
+      .text-foreground { color: var(--family-foreground); }
+      .border-foreground { border-color: var(--family-foreground); }
+      .ring-foreground { --tw-ring-color: var(--family-foreground); }
+      .bg-card { background-color: var(--family-card); }
+      .text-card { color: var(--family-card); }
+      .border-card { border-color: var(--family-card); }
+      .ring-card { --tw-ring-color: var(--family-card); }
+      .bg-card-foreground { background-color: var(--family-card-foreground); }
+      .text-card-foreground { color: var(--family-card-foreground); }
+      .border-card-foreground { border-color: var(--family-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--family-card-foreground); }
+      .bg-popover { background-color: var(--family-popover); }
+      .text-popover { color: var(--family-popover); }
+      .border-popover { border-color: var(--family-popover); }
+      .ring-popover { --tw-ring-color: var(--family-popover); }
+      .bg-popover-foreground { background-color: var(--family-popover-foreground); }
+      .text-popover-foreground { color: var(--family-popover-foreground); }
+      .border-popover-foreground { border-color: var(--family-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--family-popover-foreground); }
+      .bg-primary { background-color: var(--family-primary); }
+      .text-primary { color: var(--family-primary); }
+      .border-primary { border-color: var(--family-primary); }
+      .ring-primary { --tw-ring-color: var(--family-primary); }
+      .bg-primary-foreground { background-color: var(--family-primary-foreground); }
+      .text-primary-foreground { color: var(--family-primary-foreground); }
+      .border-primary-foreground { border-color: var(--family-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--family-primary-foreground); }
+      .bg-muted { background-color: var(--family-muted); }
+      .text-muted { color: var(--family-muted); }
+      .border-muted { border-color: var(--family-muted); }
+      .ring-muted { --tw-ring-color: var(--family-muted); }
+      .bg-muted-foreground { background-color: var(--family-muted-foreground); }
+      .text-muted-foreground { color: var(--family-muted-foreground); }
+      .border-muted-foreground { border-color: var(--family-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--family-muted-foreground); }
+      .bg-border { background-color: var(--family-border); }
+      .text-border { color: var(--family-border); }
+      .border-border { border-color: var(--family-border); }
+      .ring-border { --tw-ring-color: var(--family-border); }
+      .bg-input { background-color: var(--family-input); }
+      .text-input { color: var(--family-input); }
+      .border-input { border-color: var(--family-input); }
+      .ring-input { --tw-ring-color: var(--family-input); }
+      .bg-ring { background-color: var(--family-ring); }
+      .text-ring { color: var(--family-ring); }
+      .border-ring { border-color: var(--family-ring); }
+      .ring-ring { --tw-ring-color: var(--family-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <style>
+    :root {
+      color-scheme: light;
+      --family-bg: var(--family-background, #f7f6f2);
+      --family-surface: var(--family-card, #ffffff);
+      --family-surface-soft: #f1f6f1;
+      --family-surface-hero: #edf6ee;
+      --family-text: var(--family-foreground, #1b241f);
+      --family-text-secondary: #66766e;
+      --family-text-tertiary: #8d9a93;
+      --family-line: var(--family-border, #dbe4dd);
+      --family-primary: var(--family-primary, #2f7d62);
+      --family-primary-soft: rgba(47, 125, 98, 0.12);
+      --family-warning: #d48d2d;
+      --family-warning-soft: rgba(212, 141, 45, 0.14);
+      --family-danger: #c76055;
+      --family-danger-soft: rgba(199, 96, 85, 0.14);
+      --family-info: #5e84d8;
+      --family-shadow-soft: 0 10px 28px rgba(28, 36, 31, 0.06);
+      --family-shadow-float: 0 18px 36px rgba(28, 36, 31, 0.1);
+      --family-radius-xl: 28px;
+      --family-radius-lg: 22px;
+      --family-radius-md: 18px;
+      --family-radius-sm: 14px;
+      --family-font: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--family-bg);
+      color: var(--family-text);
+      font-family: var(--family-font);
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      overflow: hidden;
+    }
+
+    body {
+      position: relative;
+    }
+
+    button {
+      margin: 0;
+      border: 0;
+      background: none;
+      color: inherit;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    svg {
+      display: block;
+    }
+
+    [data-page-root="page-home"] {
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at top, rgba(47, 125, 98, 0.08), transparent 32%),
+        linear-gradient(180deg, #f8f7f3 0%, #f6f7f3 44%, #f3f5f1 100%);
+    }
+
+    .app-shell {
+      position: relative;
+      width: min(100%, 430px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: 10px 16px 16px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+    }
+
+    .top-shell {
+      position: relative;
+      z-index: 6;
+      display: grid;
+      gap: 12px;
+    }
+
+    .mini-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border: 1px solid rgba(219, 228, 221, 0.92);
+      border-radius: 24px;
+      background: rgba(250, 250, 247, 0.88);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--family-shadow-soft);
+    }
+
+    .mini-nav__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .mini-nav__caption {
+      font-size: 11px;
+      line-height: 1.2;
+      color: var(--family-text-secondary);
+      letter-spacing: 0.08em;
+    }
+
+    .mini-nav__title {
+      font-size: 20px;
+      line-height: 1.1;
+      font-weight: 700;
+    }
+
+    .capsule-menu {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      padding: 3px;
+      border: 1px solid var(--family-line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .capsule-menu__item {
+      width: 34px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      color: var(--family-text);
+    }
+
+    .capsule-menu__divider {
+      width: 1px;
+      height: 14px;
+      background: var(--family-line);
+    }
+
+    .family-entry {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid rgba(219, 228, 221, 0.96);
+      border-radius: var(--family-radius-xl);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(246, 250, 246, 0.96));
+      box-shadow: var(--family-shadow-soft);
+      overflow: hidden;
+    }
+
+    .family-entry__meta {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      line-height: 1;
+      color: var(--family-text-secondary);
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(219, 228, 221, 0.92);
+    }
+
+    .pill.is-primary {
+      color: var(--family-primary);
+      background: var(--family-primary-soft);
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    .family-entry__title {
+      font-size: 28px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+    }
+
+    .family-entry__desc {
+      font-size: 14px;
+      line-height: 1.5;
+      color: var(--family-text-secondary);
+    }
+
+    .family-switch {
+      align-self: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 14px;
+      border-radius: 20px;
+      background: var(--family-primary);
+      color: #f5fff8;
+      box-shadow: 0 12px 24px rgba(47, 125, 98, 0.22);
+      transform: translateZ(0);
+    }
+
+    .family-switch__label {
+      font-size: 13px;
+      line-height: 1;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .hero-metric {
+      padding: 14px 12px;
+      border-radius: 20px;
+      background: var(--family-surface-hero);
+      border: 1px solid rgba(219, 228, 221, 0.72);
+    }
+
+    .hero-metric__label {
+      font-size: 12px;
+      line-height: 1.2;
+      color: var(--family-text-secondary);
+    }
+
+    .hero-metric__value {
+      margin-top: 8px;
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .hero-inline-switch {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(219, 228, 221, 0.9);
+    }
+
+    .hero-inline-switch__title {
+      font-size: 14px;
+      line-height: 1.4;
+      font-weight: 600;
+    }
+
+    .hero-inline-switch__hint {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+    }
+
+    .main-scroll {
+      position: relative;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-bottom: 348px;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .main-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .content-stack {
+      display: grid;
+      gap: 14px;
+      padding-bottom: 18px;
+    }
+
+    .section-card {
+      padding: 18px;
+      border-radius: var(--family-radius-xl);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid rgba(219, 228, 221, 0.94);
+      box-shadow: var(--family-shadow-soft);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section-head__eyebrow {
+      font-size: 12px;
+      line-height: 1.2;
+      color: var(--family-text-tertiary);
+      letter-spacing: 0.08em;
+    }
+
+    .section-head__title {
+      margin-top: 4px;
+      font-size: 20px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .section-head__desc {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--family-text-secondary);
+    }
+
+    .text-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--family-surface-soft);
+      color: var(--family-primary);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .reminder-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .stat-tile {
+      padding: 16px;
+      border-radius: 22px;
+      border: 1px solid rgba(219, 228, 221, 0.84);
+      background: linear-gradient(180deg, #f7faf7 0%, #eef5ef 100%);
+    }
+
+    .stat-tile__top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.2;
+      color: var(--family-text-secondary);
+      font-weight: 600;
+    }
+
+    .stat-tile__value {
+      margin-top: 18px;
+      font-size: 30px;
+      line-height: 0.95;
+      font-weight: 700;
+    }
+
+    .stat-tile__meta {
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+    }
+
+    .stat-tile.is-wide {
+      grid-column: 1 / -1;
+      background: linear-gradient(135deg, rgba(47, 125, 98, 0.12), rgba(255, 255, 255, 0.96));
+    }
+
+    .stat-inline-note {
+      margin-top: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(219, 228, 221, 0.8);
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .pressable-card {
+      position: relative;
+      overflow: hidden;
+      padding: 16px;
+      border-radius: 24px;
+      border: 1px solid rgba(219, 228, 221, 0.92);
+      background: linear-gradient(180deg, #ffffff 0%, #f5f8f5 100%);
+      box-shadow: var(--family-shadow-soft);
+      text-align: left;
+      transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    }
+
+    .pressable-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(180deg, rgba(47, 125, 98, 0), rgba(47, 125, 98, 0.05));
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .pressable-card:active {
+      transform: scale(0.985);
+      box-shadow: 0 10px 18px rgba(28, 36, 31, 0.08);
+    }
+
+    .pressable-card--wide {
+      grid-column: 1 / -1;
+    }
+
+    .pressable-card__icon {
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: var(--family-surface-soft);
+      color: var(--family-primary);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    }
+
+    .pressable-card__title {
+      margin-top: 18px;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .pressable-card__desc {
+      margin-top: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--family-text-secondary);
+    }
+
+    .pressable-card__foot {
+      margin-top: 18px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--family-text-secondary);
+      font-size: 11px;
+      line-height: 1;
+      font-weight: 600;
+    }
+
+    .preview-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .preview-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 14px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #ffffff 0%, #f4f7f4 100%);
+      border: 1px solid rgba(219, 228, 221, 0.9);
+      box-shadow: var(--family-shadow-soft);
+    }
+
+    .preview-item__icon {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      background: #ffffff;
+      color: var(--family-primary);
+      box-shadow: 0 8px 16px rgba(28, 36, 31, 0.08);
+    }
+
+    .preview-item__icon.is-warning {
+      color: var(--family-warning);
+    }
+
+    .preview-item__icon.is-danger {
+      color: var(--family-danger);
+    }
+
+    .preview-item__title {
+      font-size: 15px;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .preview-item__desc {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--family-text-secondary);
+    }
+
+    .preview-item__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 10px;
+      border-radius: 16px;
+      background: var(--family-warning-soft);
+      color: var(--family-warning);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .preview-item__tag.is-primary {
+      background: var(--family-primary-soft);
+      color: var(--family-primary);
+    }
+
+    .preview-item__tag.is-danger {
+      background: var(--family-danger-soft);
+      color: var(--family-danger);
+    }
+
+    .activity-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .activity-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 12px;
+      padding: 14px;
+      border-radius: 22px;
+      background: linear-gradient(180deg, #f8faf8 0%, #f1f5f1 100%);
+      border: 1px solid rgba(219, 228, 221, 0.84);
+    }
+
+    .activity-avatar {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--family-primary);
+      font-size: 14px;
+      line-height: 1;
+      font-weight: 700;
+      box-shadow: 0 8px 14px rgba(28, 36, 31, 0.08);
+    }
+
+    .activity-text {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .activity-meta {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+    }
+
+    .sheet-preview {
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      bottom: 88px;
+      z-index: 5;
+      padding: 10px 14px 14px;
+      border-radius: 30px 30px 24px 24px;
+      border: 1px solid rgba(219, 228, 221, 0.96);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 250, 247, 0.98));
+      box-shadow: var(--family-shadow-float);
+      backdrop-filter: blur(16px);
+    }
+
+    .sheet-preview__handle {
+      width: 42px;
+      height: 5px;
+      margin: 0 auto 12px;
+      border-radius: 999px;
+      background: rgba(143, 153, 147, 0.5);
+    }
+
+    .sheet-preview__head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .sheet-preview__title {
+      font-size: 18px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .sheet-preview__desc {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--family-text-secondary);
+    }
+
+    .sheet-preview__badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 8px 10px;
+      border-radius: 16px;
+      background: var(--family-primary-soft);
+      color: var(--family-primary);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .sheet-family-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .sheet-family-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 22px;
+      background: #ffffff;
+      border: 1px solid rgba(219, 228, 221, 0.92);
+    }
+
+    .sheet-family-item.is-current {
+      background: linear-gradient(135deg, rgba(47, 125, 98, 0.14), rgba(255, 255, 255, 0.98));
+      border-color: rgba(47, 125, 98, 0.22);
+    }
+
+    .sheet-family-item__avatar {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 18px;
+      background: var(--family-surface-soft);
+      color: var(--family-primary);
+      font-weight: 700;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .sheet-family-item__name {
+      font-size: 15px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .sheet-family-item__meta {
+      margin-top: 4px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+    }
+
+    .sheet-family-item__state {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 16px;
+      background: var(--family-surface-soft);
+      color: var(--family-text-secondary);
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 600;
+    }
+
+    .sheet-family-item__state.is-current {
+      background: rgba(47, 125, 98, 0.14);
+      color: var(--family-primary);
+    }
+
+    .sheet-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .sheet-action {
+      padding: 12px 14px;
+      border-radius: 18px;
+      border: 1px dashed rgba(219, 228, 221, 1);
+      background: rgba(255, 255, 255, 0.88);
+      font-size: 13px;
+      line-height: 1.4;
+      color: var(--family-text-secondary);
+      text-align: left;
+    }
+
+    .bottom-nav {
+      position: relative;
+      z-index: 6;
+      height: 64px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding: 0 6px;
+      border-radius: 24px;
+      border: 1px solid rgba(219, 228, 221, 0.96);
+      background: rgba(255, 255, 255, 0.98);
+      box-shadow: var(--family-shadow-soft);
+    }
+
+    .bottom-nav__item {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-width: 0;
+      color: var(--family-text-secondary);
+    }
+
+    .bottom-nav__item[data-active="true"] {
+      color: var(--family-primary);
+      font-weight: 700;
+    }
+
+    .bottom-nav__label {
+      max-width: 100%;
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-16,
+    .icon-18,
+    .icon-20 {
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.9;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex: none;
+    }
+
+    .icon-16 {
+      width: 16px;
+      height: 16px;
+    }
+
+    .icon-18 {
+      width: 18px;
+      height: 18px;
+    }
+
+    .icon-20 {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+
+  <main data-page-root="page-home">
+    <div class="app-shell">
+      <header class="top-shell" aria-label="首页固定顶部壳层">
+        <div class="mini-nav">
+          <div class="mini-nav__meta">
+            <span class="mini-nav__caption">固定顶部壳层</span>
+            <strong class="mini-nav__title">首页</strong>
+          </div>
+          <div class="flex h-8 w-[88px] items-center overflow-hidden rounded-full border border-[#d9dce3] bg-white text-[#334155]" aria-label="小程序胶囊菜单">
+            <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="更多">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="5" cy="12" r="1.5"></circle>
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="19" cy="12" r="1.5"></circle>
+              </svg>
+            </button>
+            <span class="h-4 w-px bg-[#e5e7eb]" aria-hidden="true"></span>
+            <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="关闭">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18 6 6 18"></path>
+                <path d="m6 6 12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <section class="family-entry" aria-label="当前家庭概览">
+          <div class="family-entry__meta">
+            <div class="pill-row">
+              <span class="pill is-primary">当前家庭</span>
+              <span class="pill">提醒总开关已开启</span>
+            </div>
+            <div class="family-entry__title">星河一家</div>
+            <div class="family-entry__desc">顶部家庭切换常驻在壳层中，切换后首页总览、提醒与最近操作将按家庭上下文即时刷新。</div>
+            <div class="hero-metrics" aria-label="当前家庭摘要">
+              <article class="hero-metric">
+                <div class="hero-metric__label">共享成员</div>
+                <div class="hero-metric__value">4</div>
+              </article>
+              <article class="hero-metric">
+                <div class="hero-metric__label">今日提醒</div>
+                <div class="hero-metric__value">8</div>
+              </article>
+              <article class="hero-metric">
+                <div class="hero-metric__label">同步时间</div>
+                <div class="hero-metric__value" style="font-size:18px;">08:30</div>
+              </article>
+            </div>
+            <div class="hero-inline-switch">
+              <div>
+                <div class="hero-inline-switch__title">多家庭主入口已固定在顶部</div>
+                <div class="hero-inline-switch__hint">切换不会打断当前页，后续通过半屏面板完成。</div>
+              </div>
+              <div class="pill-row" aria-label="家庭列表速览">
+                <span class="pill is-primary">星河一家</span>
+                <span class="pill">父母家</span>
+                <span class="pill">滨江公寓</span>
+              </div>
+            </div>
+          </div>
+
+          <button data-dom-id="cta-switch-family" class="family-switch" type="button" aria-label="切换家庭">
+            <span class="family-switch__label">切换家庭</span>
+            <svg class="icon-16" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m6 9 6 6 6-6"></path>
+            </svg>
+          </button>
+        </section>
+      </header>
+
+      <section class="main-scroll" data-scroll-region="home-main" aria-label="首页主内容局部滚动区">
+        <div class="content-stack">
+          <section class="section-card" aria-labelledby="today-reminder-title">
+            <div class="section-head">
+              <div>
+                <div class="section-head__eyebrow">TODAY</div>
+                <div class="section-head__title" id="today-reminder-title">今日提醒</div>
+                <div class="section-head__desc">先处理临期与待补货，首页卡片保持轻量、跟手、接近原生操作节奏。</div>
+              </div>
+              <button data-dom-id="card-expiring-detail" class="text-link" id="card-expiring-detail" type="button" aria-label="查看临期详情">
+                查看详情
+                <svg class="icon-16" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M5 12h14"></path>
+                  <path d="m13 6 6 6-6 6"></path>
+                </svg>
+              </button>
+            </div>
+            <div class="reminder-grid">
+              <article class="stat-tile">
+                <div class="stat-tile__top">
+                  <span>临期物资</span>
+                  <svg class="icon-18" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="13" r="8"></circle>
+                    <path d="M12 9v4l2 2"></path>
+                  </svg>
+                </div>
+                <div class="stat-tile__value">3</div>
+                <div class="stat-tile__meta">2 项将在 3 天内到期</div>
+              </article>
+              <article class="stat-tile">
+                <div class="stat-tile__top">
+                  <span>已过期</span>
+                  <svg class="icon-18" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <path d="M12 9v4"></path>
+                    <path d="M12 17h.01"></path>
+                  </svg>
+                </div>
+                <div class="stat-tile__value">1</div>
+                <div class="stat-tile__meta">建议今晚统一清理药箱</div>
+              </article>
+              <article class="stat-tile is-wide">
+                <div class="stat-tile__top">
+                  <span>待补货</span>
+                  <span class="pill is-primary">周三采购日</span>
+                </div>
+                <div class="stat-tile__value">4</div>
+                <div class="stat-tile__meta">纸巾、牛奶、鸡蛋、洗洁精库存偏低，适合一并采购。</div>
+              </article>
+            </div>
+            <div class="stat-inline-note">
+              <span>提醒按当前家庭维度聚合，仅展示已开启家庭提醒的物资。</span>
+              <span class="pill">实时刷新</span>
+            </div>
+          </section>
+
+          <section class="section-card" aria-labelledby="quick-entry-title">
+            <div class="section-head">
+              <div>
+                <div class="section-head__eyebrow">QUICK ENTRY</div>
+                <div class="section-head__title" id="quick-entry-title">快捷入口</div>
+                <div class="section-head__desc">采用近原生入口卡片，动作明确、反馈轻量，适合高频家庭协作使用。</div>
+              </div>
+            </div>
+            <div class="quick-grid">
+              <button data-dom-id="cta-add-item" class="pressable-card" type="button" aria-label="添加物资">
+                <span class="pressable-card__icon" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M12 5v14"></path>
+                    <path d="M5 12h14"></path>
+                  </svg>
+                </span>
+                <div class="pressable-card__title">添加物资</div>
+                <div class="pressable-card__desc">手动录入采购、库存与存放位置。</div>
+                <div class="pressable-card__foot">主操作入口</div>
+              </button>
+
+              <button data-dom-id="cta-ocr-entry" class="pressable-card" type="button" aria-label="拍照录入">
+                <span class="pressable-card__icon" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M4 7V5a1 1 0 0 1 1-1h2"></path>
+                    <path d="M17 4h2a1 1 0 0 1 1 1v2"></path>
+                    <path d="M20 17v2a1 1 0 0 1-1 1h-2"></path>
+                    <path d="M7 20H5a1 1 0 0 1-1-1v-2"></path>
+                    <path d="M8 12h8"></path>
+                    <path d="M12 8v8"></path>
+                  </svg>
+                </span>
+                <div class="pressable-card__title">拍照录入</div>
+                <div class="pressable-card__desc">识别包装与保质期，回填后确认保存。</div>
+                <div class="pressable-card__foot">OCR 快捷通道</div>
+              </button>
+
+              <button class="pressable-card pressable-card--wide" type="button" aria-label="查看全部物资">
+                <span class="pressable-card__icon" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M21 8a2 2 0 0 0-1-1.73L13 2.27a2 2 0 0 0-2 0L4 6.27A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"></path>
+                    <path d="m3.3 7 8.7 5 8.7-5"></path>
+                    <path d="M12 22V12"></path>
+                  </svg>
+                </span>
+                <div class="pressable-card__title">查看全部物资</div>
+                <div class="pressable-card__desc">进入物资列表，以位置、分类或临期状态继续筛选。</div>
+                <div class="pressable-card__foot">列表 / 详情连续进入</div>
+              </button>
+            </div>
+          </section>
+
+          <section class="section-card" aria-labelledby="expiring-preview-title">
+            <div class="section-head">
+              <div>
+                <div class="section-head__eyebrow">EXPIRING</div>
+                <div class="section-head__title" id="expiring-preview-title">临期物资预览</div>
+                <div class="section-head__desc">列表卡片更接近小程序原生信息单元，强化从首页进入详情的连续感。</div>
+              </div>
+              <span class="pill">共 3 条</span>
+            </div>
+            <div class="preview-list">
+              <article class="preview-item">
+                <span class="preview-item__icon is-warning" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M10 2h4"></path>
+                    <path d="M12 14v3"></path>
+                    <path d="M4.93 10.93A10 10 0 1 0 19.07 10.93"></path>
+                    <path d="M8 2h8"></path>
+                    <path d="M14.83 8.83 12 12"></path>
+                  </svg>
+                </span>
+                <div>
+                  <div class="preview-item__title">鲜牛奶 950ml</div>
+                  <div class="preview-item__desc">冷藏区上层 · 剩余 2 盒 · 点击后进入连续详情卡片</div>
+                </div>
+                <span class="preview-item__tag">剩 2 天</span>
+              </article>
+
+              <article class="preview-item">
+                <span class="preview-item__icon" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M7 20h10"></path>
+                    <path d="M10 20c5.5-2.5.8-7.5.8-7.5S8 9.7 8 6.5A3.5 3.5 0 0 1 11.5 3c1.2 0 2.25.47 3.03 1.24"></path>
+                    <path d="M17 8c0 3.5-2.5 5-2.5 5"></path>
+                  </svg>
+                </span>
+                <div>
+                  <div class="preview-item__title">生菜</div>
+                  <div class="preview-item__desc">冰箱保鲜抽屉 · 剩余 1 份 · 建议今天晚餐优先消耗</div>
+                </div>
+                <span class="preview-item__tag is-primary">剩 1 天</span>
+              </article>
+
+              <article class="preview-item">
+                <span class="preview-item__icon is-danger" aria-hidden="true">
+                  <svg class="icon-20" viewBox="0 0 24 24">
+                    <path d="M10 2h4"></path>
+                    <path d="M9 2v4"></path>
+                    <path d="M15 2v4"></path>
+                    <path d="M12 6c4.4 0 8 3.13 8 7v2a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-2c0-3.87 3.6-7 8-7Z"></path>
+                    <path d="M8 18v2"></path>
+                    <path d="M16 18v2"></path>
+                  </svg>
+                </span>
+                <div>
+                  <div class="preview-item__title">儿童退烧贴</div>
+                  <div class="preview-item__desc">医药收纳盒 · 剩余 1 盒 · 进入详情后可继续编辑提醒策略</div>
+                </div>
+                <span class="preview-item__tag is-danger">剩 5 天</span>
+              </article>
+            </div>
+          </section>
+
+          <section class="section-card" aria-labelledby="recent-activity-title">
+            <div class="section-head">
+              <div>
+                <div class="section-head__eyebrow">RECENT</div>
+                <div class="section-head__title" id="recent-activity-title">最近操作</div>
+                <div class="section-head__desc">展示家庭成员最近录入与库存动作，帮助减少重复购买与信息错位。</div>
+              </div>
+              <span class="pill">今天</span>
+            </div>
+            <div class="activity-list">
+              <article class="activity-item">
+                <span class="activity-avatar" aria-hidden="true">妈</span>
+                <div>
+                  <div class="activity-text"><strong>妈妈</strong> 新增了 <strong>鸡蛋 30 枚</strong>，放在厨房置物架。</div>
+                  <div class="activity-meta">09:10 · 通过手动添加</div>
+                </div>
+              </article>
+              <article class="activity-item">
+                <span class="activity-avatar" aria-hidden="true">爸</span>
+                <div>
+                  <div class="activity-text"><strong>爸爸</strong> 将 <strong>抽纸</strong> 数量从 2 调整为 1，已进入待补货。</div>
+                  <div class="activity-meta">08:42 · 库存快调</div>
+                </div>
+              </article>
+              <article class="activity-item">
+                <span class="activity-avatar" aria-hidden="true">我</span>
+                <div>
+                  <div class="activity-text"><strong>你</strong> 刚刚拍照录入了 <strong>酸奶 6 杯装</strong>，系统已识别保质期。</div>
+                  <div class="activity-meta">07:55 · OCR 录入</div>
+                </div>
+              </article>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <aside class="sheet-preview" aria-label="家庭切换半屏面板预览">
+        <div class="sheet-preview__handle" aria-hidden="true"></div>
+        <div class="sheet-preview__head">
+          <div>
+            <div class="sheet-preview__title">家庭切换半屏面板</div>
+            <div class="sheet-preview__desc">当前页直接展示已展开预览，强调后续切换将以半屏容器完成，而不是整页跳转。</div>
+          </div>
+          <span class="sheet-preview__badge">已展开预览</span>
+        </div>
+
+        <div class="sheet-family-list">
+          <article class="sheet-family-item is-current">
+            <span class="sheet-family-item__avatar" aria-hidden="true">星</span>
+            <div>
+              <div class="sheet-family-item__name">星河一家</div>
+              <div class="sheet-family-item__meta">4 人 · 冷藏、药箱与日用品提醒都在同步中</div>
+            </div>
+            <span class="sheet-family-item__state is-current">当前</span>
+          </article>
+
+          <article class="sheet-family-item">
+            <span class="sheet-family-item__avatar" aria-hidden="true">父</span>
+            <div>
+              <div class="sheet-family-item__name">父母家</div>
+              <div class="sheet-family-item__meta">3 人 · 医药与米面库存关注较高</div>
+            </div>
+            <span class="sheet-family-item__state">切换</span>
+          </article>
+
+          <article class="sheet-family-item">
+            <span class="sheet-family-item__avatar" aria-hidden="true">滨</span>
+            <div>
+              <div class="sheet-family-item__name">滨江公寓</div>
+              <div class="sheet-family-item__meta">2 人 · 周末补货频率更高</div>
+            </div>
+            <span class="sheet-family-item__state">查看</span>
+          </article>
+        </div>
+
+        <div class="sheet-actions">
+          <button class="sheet-action" type="button" aria-label="新增家庭">新增家庭<br>延续半屏创建流程</button>
+          <button class="sheet-action" type="button" aria-label="管理家庭">管理家庭<br>编辑、邀请、删除在容器内完成</button>
+        </div>
+      </aside>
+
+      <nav data-mobile-nav="global" class="mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]"><div class="grid h-full w-full grid-cols-3"><button data-nav-key="home" data-dom-id="nav-home" data-active="true" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold"><i data-lucide="house" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span></button><button data-dom-id="nav-inventory" data-nav-key="inventory" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="package-2" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">物资</span></button><button data-dom-id="nav-family" data-nav-key="family" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="users-round" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">家庭</span></button></div></nav>
+    </div>
+  </main>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

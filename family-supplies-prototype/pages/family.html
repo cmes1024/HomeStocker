@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家庭管理</title>
+    <style id="theme-vars">
+:root {
+  --family-background: #f6f8f6;
+  --family-foreground: #18211d;
+  --family-card: #ffffff;
+  --family-card-foreground: #18211d;
+  --family-popover: #ffffff;
+  --family-popover-foreground: #18211d;
+  --family-primary: #2f7d62;
+  --family-primary-foreground: #f8fffb;
+  --family-muted: #e8efeb;
+  --family-muted-foreground: #60716a;
+  --family-border: #d6dfda;
+  --family-input: #d6dfda;
+  --family-ring: #2f7d62;
+
+  --family-bg: var(--family-background);
+  --family-surface: var(--family-card);
+  --family-surface-2: #eef5f1;
+  --family-ink: var(--family-foreground);
+  --family-ink-2: #5f6f68;
+  --family-ink-3: #889790;
+  --family-line: var(--family-border);
+  --family-brand: var(--family-primary);
+  --family-brand-ink: var(--family-primary-foreground);
+
+  --family-state-success: #2f7d62;
+  --family-state-warning: #c68a24;
+  --family-state-error: #c9574b;
+  --family-state-info: #5380c1;
+
+  --family-radius-sm: 8px;
+  --family-radius-md: 16px;
+  --family-radius-lg: 24px;
+  --family-shadow-soft: 0 12px 28px rgba(24, 33, 29, 0.05);
+  --family-shadow-float: 0 16px 32px rgba(24, 33, 29, 0.08);
+
+  --family-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--family-background);
+  color: var(--family-foreground);
+  font-family: var(--family-font-sans);
+}
+
+body {
+  min-height: 100vh;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--family-background);
+    --color-foreground: var(--family-foreground);
+    --color-card: var(--family-card);
+    --color-card-foreground: var(--family-card-foreground);
+    --color-popover: var(--family-popover);
+    --color-popover-foreground: var(--family-popover-foreground);
+    --color-primary: var(--family-primary);
+    --color-primary-foreground: var(--family-primary-foreground);
+    --color-muted: var(--family-muted);
+    --color-muted-foreground: var(--family-muted-foreground);
+    --color-border: var(--family-border);
+    --color-input: var(--family-input);
+    --color-ring: var(--family-ring);
+    --radius-sm: var(--family-radius-sm);
+    --radius-md: var(--family-radius-md);
+    --radius-lg: var(--family-radius-lg);
+  }
+  @layer base {
+    body { background: var(--family-background); color: var(--family-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--family-background); }
+      .text-background { color: var(--family-background); }
+      .border-background { border-color: var(--family-background); }
+      .ring-background { --tw-ring-color: var(--family-background); }
+      .bg-foreground { background-color: var(--family-foreground); }
+      .text-foreground { color: var(--family-foreground); }
+      .border-foreground { border-color: var(--family-foreground); }
+      .ring-foreground { --tw-ring-color: var(--family-foreground); }
+      .bg-card { background-color: var(--family-card); }
+      .text-card { color: var(--family-card); }
+      .border-card { border-color: var(--family-card); }
+      .ring-card { --tw-ring-color: var(--family-card); }
+      .bg-card-foreground { background-color: var(--family-card-foreground); }
+      .text-card-foreground { color: var(--family-card-foreground); }
+      .border-card-foreground { border-color: var(--family-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--family-card-foreground); }
+      .bg-popover { background-color: var(--family-popover); }
+      .text-popover { color: var(--family-popover); }
+      .border-popover { border-color: var(--family-popover); }
+      .ring-popover { --tw-ring-color: var(--family-popover); }
+      .bg-popover-foreground { background-color: var(--family-popover-foreground); }
+      .text-popover-foreground { color: var(--family-popover-foreground); }
+      .border-popover-foreground { border-color: var(--family-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--family-popover-foreground); }
+      .bg-primary { background-color: var(--family-primary); }
+      .text-primary { color: var(--family-primary); }
+      .border-primary { border-color: var(--family-primary); }
+      .ring-primary { --tw-ring-color: var(--family-primary); }
+      .bg-primary-foreground { background-color: var(--family-primary-foreground); }
+      .text-primary-foreground { color: var(--family-primary-foreground); }
+      .border-primary-foreground { border-color: var(--family-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--family-primary-foreground); }
+      .bg-muted { background-color: var(--family-muted); }
+      .text-muted { color: var(--family-muted); }
+      .border-muted { border-color: var(--family-muted); }
+      .ring-muted { --tw-ring-color: var(--family-muted); }
+      .bg-muted-foreground { background-color: var(--family-muted-foreground); }
+      .text-muted-foreground { color: var(--family-muted-foreground); }
+      .border-muted-foreground { border-color: var(--family-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--family-muted-foreground); }
+      .bg-border { background-color: var(--family-border); }
+      .text-border { color: var(--family-border); }
+      .border-border { border-color: var(--family-border); }
+      .ring-border { --tw-ring-color: var(--family-border); }
+      .bg-input { background-color: var(--family-input); }
+      .text-input { color: var(--family-input); }
+      .border-input { border-color: var(--family-input); }
+      .ring-input { --tw-ring-color: var(--family-input); }
+      .bg-ring { background-color: var(--family-ring); }
+      .text-ring { color: var(--family-ring); }
+      .border-ring { border-color: var(--family-ring); }
+      .ring-ring { --tw-ring-color: var(--family-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+    <style id="critical-layout">
+      html,
+      body {
+        overflow-x: hidden;
+      }
+
+      body {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88) 0%, var(--family-background) 12%, var(--family-background) 100%);
+      }
+
+      [data-page="family"] {
+        width: 100%;
+        min-height: 100vh;
+      }
+
+      [data-page-shell="family"] {
+        width: min(100%, 420px);
+        margin: 0 auto;
+        padding: 0 16px 20px;
+      }
+
+      [data-topbar="mini-program"] {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(16px);
+        background: rgba(246, 248, 246, 0.92);
+      }
+
+      [data-card-group="family"] {
+        display: grid;
+        gap: 14px;
+      }
+
+      [data-card="family-overview"],
+      [data-card="family-list"],
+      [data-card="reminder-switch"],
+      [data-card="members"],
+      [data-card="management"] {
+        width: 100%;
+        border-radius: 24px;
+        border: 1px solid var(--family-border);
+        background: var(--family-surface);
+        box-shadow: var(--family-shadow-soft);
+      }
+
+      [data-card="family-overview"] {
+        overflow: hidden;
+      }
+
+      [data-member-list],
+      [data-family-list],
+      [data-setting-list] {
+        display: grid;
+        gap: 12px;
+      }
+
+      [data-member-item],
+      [data-family-item],
+      [data-setting-item] {
+        width: 100%;
+        min-width: 0;
+      }
+
+      [data-mobile-nav="global"] {
+        position: sticky;
+        bottom: 12px;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+    <main data-page="family" class="pb-4">
+      <div data-topbar="mini-program" class="border-b border-[color:var(--family-line)]">
+        <div data-page-shell="family" class="pt-4">
+          <div class="flex h-11 items-center justify-between">
+            <div class="flex w-[88px] items-center justify-start" aria-hidden="true"></div>
+            <button type="button" aria-label="返回上一页" class="hidden h-9 w-9 items-center justify-center rounded-full bg-[color:var(--family-surface)] text-[color:var(--family-ink)] shadow-[var(--family-shadow-soft)]">
+              <i data-lucide="chevron-left" class="h-4 w-4"></i>
+            </button>
+            <h1 class="text-[17px] font-semibold tracking-[0.01em] text-[color:var(--family-ink)]">家庭</h1>
+            <div class="flex h-8 w-[88px] items-center justify-center rounded-full border border-[color:var(--family-line)] bg-[color:var(--family-surface)] text-[color:var(--family-ink)]" aria-label="小程序菜单">
+              <button type="button" class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+                <i data-lucide="more-horizontal" class="h-4 w-4"></i>
+              </button>
+              <span class="h-4 w-px bg-[color:var(--family-line)]" aria-hidden="true"></span>
+              <button type="button" class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+                <i data-lucide="x" class="h-4 w-4"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div data-page-shell="family" class="pt-4">
+        <div data-card-group="family">
+          <section data-card="family-overview" class="relative p-5">
+            <div class="absolute inset-x-0 top-0 h-24 bg-[linear-gradient(135deg,rgba(47,125,98,0.18),rgba(83,128,193,0.08))]"></div>
+            <div class="relative space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="space-y-2">
+                  <p class="inline-flex items-center rounded-full bg-[color:var(--family-surface)]/85 px-3 py-1 text-[12px] font-medium text-[color:var(--family-brand)]">
+                    当前家庭
+                  </p>
+                  <div>
+                    <h2 class="text-[24px] font-semibold text-[color:var(--family-ink)]">星河一家</h2>
+                    <p class="mt-1 text-[13px] leading-5 text-[color:var(--family-ink-2)]">当前正在使用的家庭空间，首页、物资与提醒都跟随这里同步切换。</p>
+                  </div>
+                </div>
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--family-brand)] text-[color:var(--family-brand-ink)] shadow-[var(--family-shadow-float)]">
+                  <i data-lucide="home" class="h-6 w-6"></i>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3">
+                <article class="rounded-2xl bg-[color:var(--family-surface)] px-4 py-3">
+                  <p class="text-[12px] text-[color:var(--family-ink-2)]">成员规模</p>
+                  <p class="mt-1 text-[20px] font-semibold text-[color:var(--family-ink)]">4 人</p>
+                </article>
+                <article class="rounded-2xl bg-[color:var(--family-surface)] px-4 py-3">
+                  <p class="text-[12px] text-[color:var(--family-ink-2)]">启用提醒</p>
+                  <p class="mt-1 text-[20px] font-semibold text-[color:var(--family-ink)]">已开启</p>
+                </article>
+              </div>
+
+              <div class="flex items-center justify-between rounded-2xl border border-dashed border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-3">
+                <div>
+                  <p class="text-[12px] text-[color:var(--family-ink-2)]">家庭邀请码</p>
+                  <p class="mt-1 text-[18px] font-semibold tracking-[0.16em] text-[color:var(--family-ink)]">FAM-2048</p>
+                </div>
+                <button type="button" class="inline-flex items-center gap-2 rounded-full bg-[color:var(--family-muted)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">
+                  <i data-lucide="copy" class="h-4 w-4"></i>
+                  复制
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <section data-card="family-list" class="p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-[16px] font-semibold text-[color:var(--family-ink)]">家庭列表管理</h2>
+                <p class="mt-1 text-[13px] text-[color:var(--family-ink-2)]">在这里查看全部家庭、切换当前家庭，并管理新增、编辑、删除操作。</p>
+              </div>
+              <button type="button" data-dom-id="cta-create-family-inline" class="inline-flex items-center gap-2 rounded-full bg-[color:var(--family-brand)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-brand-ink)] shadow-[var(--family-shadow-soft)]">
+                <i data-lucide="plus" class="h-4 w-4"></i>
+                创建家庭
+              </button>
+            </div>
+
+            <div data-family-list class="mt-4">
+              <article data-family-item class="rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-[15px] font-semibold text-[color:var(--family-ink)]">星河一家</p>
+                      <span class="rounded-full bg-[color:var(--family-brand)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-brand)]">当前使用中</span>
+                    </div>
+                    <p class="mt-1 text-[12px] leading-5 text-[color:var(--family-ink-2)]">你常用的主家庭，首页和提醒默认展示该家庭数据。</p>
+                  </div>
+                  <span class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-1 text-[11px] font-medium text-[color:var(--family-ink-2)]">4 人</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button type="button" class="rounded-full bg-[color:var(--family-brand)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-brand-ink)]">当前家庭</button>
+                  <button type="button" data-dom-id="cta-edit-current-family" class="rounded-full bg-[color:var(--family-muted)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">编辑信息</button>
+                </div>
+              </article>
+
+              <article data-family-item class="rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-[15px] font-semibold text-[color:var(--family-ink)]">父母家</p>
+                      <span class="rounded-full bg-[color:var(--family-state-info)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-state-info)]">异地补货</span>
+                    </div>
+                    <p class="mt-1 text-[12px] leading-5 text-[color:var(--family-ink-2)]">重点关注药品和保健品库存，适合定期远程帮父母补货。</p>
+                  </div>
+                  <span class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-1 text-[11px] font-medium text-[color:var(--family-ink-2)]">3 人</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button type="button" data-dom-id="cta-switch-family-parents" class="rounded-full bg-[color:var(--family-muted)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">切换到这里</button>
+                  <button type="button" data-dom-id="cta-edit-family-parents" class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">编辑</button>
+                  <button type="button" data-dom-id="cta-delete-family-parents" class="rounded-full border border-[color:var(--family-state-error)]/18 bg-[color:var(--family-surface)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-state-error)]">删除</button>
+                </div>
+              </article>
+
+              <article data-family-item class="rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] p-4">
+                <div class="flex items-start justify-between gap-3">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <p class="text-[15px] font-semibold text-[color:var(--family-ink)]">滨江公寓</p>
+                      <span class="rounded-full bg-[color:var(--family-state-warning)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-state-warning)]">合租场景</span>
+                    </div>
+                    <p class="mt-1 text-[12px] leading-5 text-[color:var(--family-ink-2)]">适合共享公共耗材与厨房用品，减少重复购买和库存断档。</p>
+                  </div>
+                  <span class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-1 text-[11px] font-medium text-[color:var(--family-ink-2)]">5 人</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  <button type="button" data-dom-id="cta-switch-family-rent" class="rounded-full bg-[color:var(--family-muted)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">切换到这里</button>
+                  <button type="button" data-dom-id="cta-edit-family-rent" class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">编辑</button>
+                  <button type="button" data-dom-id="cta-delete-family-rent" class="rounded-full border border-[color:var(--family-state-error)]/18 bg-[color:var(--family-surface)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-state-error)]">删除</button>
+                </div>
+              </article>
+            </div>
+
+            <div class="mt-4 flex items-center justify-between rounded-2xl bg-[color:var(--family-surface-2)] px-4 py-3">
+              <div>
+                <p class="text-[12px] text-[color:var(--family-ink-2)]">加入已有家庭</p>
+                <p class="mt-1 text-[14px] font-semibold text-[color:var(--family-ink)]">通过邀请码加入家人已创建的空间</p>
+              </div>
+              <button type="button" data-dom-id="cta-join-family-inline" class="inline-flex items-center gap-2 rounded-full bg-[color:var(--family-surface)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-brand)]">
+                <i data-lucide="key-round" class="h-4 w-4"></i>
+                输入邀请码
+              </button>
+            </div>
+          </section>
+
+          <section data-card="reminder-switch" class="p-5">
+            <div class="flex items-start justify-between gap-4">
+              <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                  <span class="flex h-9 w-9 items-center justify-center rounded-2xl bg-[color:var(--family-surface-2)] text-[color:var(--family-brand)]">
+                    <i data-lucide="bell-ring" class="h-5 w-5"></i>
+                  </span>
+                  <div>
+                    <h2 class="text-[16px] font-semibold text-[color:var(--family-ink)]">家庭提醒总开关</h2>
+                    <p class="mt-1 text-[13px] leading-5 text-[color:var(--family-ink-2)]">针对当前选中的家庭统一控制到期提醒、补货提醒与共享变更通知。</p>
+                  </div>
+                </div>
+              </div>
+              <button type="button" role="switch" aria-checked="true" aria-label="切换家庭提醒总开关" class="relative inline-flex h-8 w-14 shrink-0 items-center rounded-full bg-[color:var(--family-brand)] px-1 shadow-[var(--family-shadow-soft)]">
+                <span class="ml-auto flex h-6 w-6 items-center justify-center rounded-full bg-[color:var(--family-surface)] text-[color:var(--family-brand)]">
+                  <i data-lucide="check" class="h-4 w-4"></i>
+                </span>
+              </button>
+            </div>
+            <div class="mt-4 flex items-center justify-between rounded-2xl bg-[color:var(--family-surface-2)] px-4 py-3">
+              <div>
+                <p class="text-[12px] text-[color:var(--family-ink-2)]">当前状态</p>
+                <p class="mt-1 text-[15px] font-semibold text-[color:var(--family-ink)]">已开启，最近 7 天推送 12 条</p>
+              </div>
+              <span class="rounded-full bg-[color:var(--family-surface)] px-3 py-1 text-[12px] font-medium text-[color:var(--family-state-success)]">稳定运行</span>
+            </div>
+          </section>
+
+          <section data-card="members" class="p-5">
+            <div class="flex items-center justify-between gap-3">
+              <div>
+                <h2 class="text-[16px] font-semibold text-[color:var(--family-ink)]">家庭成员</h2>
+                <p class="mt-1 text-[13px] text-[color:var(--family-ink-2)]">以下成员信息始终对应当前选中的家庭，切换家庭后内容同步刷新。</p>
+              </div>
+              <button type="button" data-dom-id="cta-open-members" class="inline-flex items-center gap-1 rounded-full bg-[color:var(--family-muted)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-ink)]">
+                查看全部
+                <i data-lucide="chevron-right" class="h-4 w-4"></i>
+              </button>
+            </div>
+
+            <div data-member-list class="mt-4">
+              <article data-member-item class="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--family-brand)]/12 text-[15px] font-semibold text-[color:var(--family-brand)]">林</div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-[15px] font-semibold text-[color:var(--family-ink)]">林妈妈</p>
+                      <span class="rounded-full bg-[color:var(--family-brand)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-brand)]">创建者</span>
+                    </div>
+                    <p class="mt-1 truncate text-[12px] text-[color:var(--family-ink-2)]">拥有家庭设置、成员权限与邀请码管理权限</p>
+                  </div>
+                </div>
+                <i data-lucide="shield-check" class="h-5 w-5 shrink-0 text-[color:var(--family-brand)]"></i>
+              </article>
+
+              <article data-member-item class="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--family-state-info)]/12 text-[15px] font-semibold text-[color:var(--family-state-info)]">周</div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-[15px] font-semibold text-[color:var(--family-ink)]">周爸爸</p>
+                      <span class="rounded-full bg-[color:var(--family-state-info)]/10 px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-state-info)]">管理员</span>
+                    </div>
+                    <p class="mt-1 truncate text-[12px] text-[color:var(--family-ink-2)]">可维护位置、审核补货建议并调整物资分类</p>
+                  </div>
+                </div>
+                <i data-lucide="key-round" class="h-5 w-5 shrink-0 text-[color:var(--family-state-info)]"></i>
+              </article>
+
+              <article data-member-item class="flex items-center justify-between gap-3 rounded-2xl border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-3">
+                <div class="flex min-w-0 items-center gap-3">
+                  <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[color:var(--family-state-warning)]/12 text-[15px] font-semibold text-[color:var(--family-state-warning)]">林</div>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                      <p class="truncate text-[15px] font-semibold text-[color:var(--family-ink)]">林小宝</p>
+                      <span class="rounded-full bg-[color:var(--family-muted)] px-2 py-0.5 text-[11px] font-medium text-[color:var(--family-ink-2)]">成员</span>
+                    </div>
+                    <p class="mt-1 truncate text-[12px] text-[color:var(--family-ink-2)]">可查看库存、提交需求并接收个人提醒</p>
+                  </div>
+                </div>
+                <i data-lucide="user-round-check" class="h-5 w-5 shrink-0 text-[color:var(--family-state-warning)]"></i>
+              </article>
+            </div>
+          </section>
+
+          <section data-card="management" class="p-5">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <h2 class="text-[16px] font-semibold text-[color:var(--family-ink)]">当前家庭设置</h2>
+                <p class="mt-1 text-[13px] text-[color:var(--family-ink-2)]">当前家庭的日常设置继续保留在这里，家庭列表管理则放在上方独立展示。</p>
+              </div>
+              <button type="button" data-dom-id="cta-invite-member" class="inline-flex items-center gap-2 rounded-full bg-[color:var(--family-brand)] px-3 py-2 text-[12px] font-medium text-[color:var(--family-brand-ink)] shadow-[var(--family-shadow-soft)]">
+                <i data-lucide="user-plus" class="h-4 w-4"></i>
+                邀请成员
+              </button>
+            </div>
+
+            <div data-setting-list class="mt-4">
+              <button type="button" data-setting-item class="flex items-center justify-between rounded-2xl bg-[color:var(--family-surface-2)] px-4 py-4 text-left">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--family-surface)] text-[color:var(--family-brand)]">
+                    <i data-lucide="map-pinned" class="h-5 w-5"></i>
+                  </span>
+                  <span>
+                    <span class="block text-[15px] font-semibold text-[color:var(--family-ink)]">位置管理</span>
+                    <span class="mt-1 block text-[12px] text-[color:var(--family-ink-2)]">维护储物柜、厨房、药箱等存放位置</span>
+                  </span>
+                </div>
+                <i data-lucide="chevron-right" class="h-5 w-5 shrink-0 text-[color:var(--family-ink-3)]"></i>
+              </button>
+
+              <button type="button" data-setting-item class="flex items-center justify-between rounded-2xl bg-[color:var(--family-surface-2)] px-4 py-4 text-left">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--family-surface)] text-[color:var(--family-state-info)]">
+                    <i data-lucide="layout-grid" class="h-5 w-5"></i>
+                  </span>
+                  <span>
+                    <span class="block text-[15px] font-semibold text-[color:var(--family-ink)]">分类管理</span>
+                    <span class="mt-1 block text-[12px] text-[color:var(--family-ink-2)]">统一食品、日用品、药品等分类规则</span>
+                  </span>
+                </div>
+                <i data-lucide="chevron-right" class="h-5 w-5 shrink-0 text-[color:var(--family-ink-3)]"></i>
+              </button>
+
+              <button type="button" data-setting-item class="flex items-center justify-between rounded-2xl bg-[color:var(--family-surface-2)] px-4 py-4 text-left">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--family-surface)] text-[color:var(--family-brand)]">
+                    <i data-lucide="badge-plus" class="h-5 w-5"></i>
+                  </span>
+                  <span>
+                    <span class="block text-[15px] font-semibold text-[color:var(--family-ink)]">邀请成员</span>
+                    <span class="mt-1 block text-[12px] text-[color:var(--family-ink-2)]">通过邀请码或微信分享扩展家庭协作</span>
+                  </span>
+                </div>
+                <i data-lucide="chevron-right" class="h-5 w-5 shrink-0 text-[color:var(--family-ink-3)]"></i>
+              </button>
+
+              <button type="button" data-setting-item class="flex items-center justify-between rounded-2xl border border-[color:var(--family-state-error)]/18 bg-[color:var(--family-surface)] px-4 py-4 text-left">
+                <div class="flex items-center gap-3">
+                  <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-[color:var(--family-state-error)]/10 text-[color:var(--family-state-error)]">
+                    <i data-lucide="log-out" class="h-5 w-5"></i>
+                  </span>
+                  <span>
+                    <span class="block text-[15px] font-semibold text-[color:var(--family-ink)]">退出家庭</span>
+                    <span class="mt-1 block text-[12px] text-[color:var(--family-ink-2)]">离开后不再接收该家庭的库存提醒与动态</span>
+                  </span>
+                </div>
+                <i data-lucide="chevron-right" class="h-5 w-5 shrink-0 text-[color:var(--family-state-error)]"></i>
+              </button>
+            </div>
+          </section>
+        </div>
+
+        <nav data-mobile-nav="global" class="mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]"><div class="grid h-full w-full grid-cols-3"><button data-dom-id="nav-home" data-nav-key="home" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="house" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span></button><button data-dom-id="nav-inventory" data-nav-key="inventory" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="package-2" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">物资</span></button><button data-nav-key="family" data-active="true" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold"><i data-lucide="users-round" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">家庭</span></button></div></nav>
+      </div>
+    </main>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

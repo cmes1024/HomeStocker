@@ -1,0 +1,111 @@
+/* components/loading/index.wxss */
+@import "/styles/common.wxss";
+
+.debounce-mark {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  overflow: hidden;
+  z-index: var(--loading-z-index);
+}
+
+.transparent {
+  background: rgba(255, 255, 255, 0.5); 
+}
+
+.glass {
+  backdrop-filter: blur(5rpx); 
+}
+
+.loading {
+  &::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, calc(50% + var(--loading-offset)));
+    color: var(--color-666);
+    font-size: 26rpx;
+  }
+
+  .animation {
+    width: var(--loading-size);
+    height: var(--loading-size);
+    background: #ff5954;
+    border-radius: 50%;
+    position: absolute;
+    display: inline-block;
+  }
+
+  .an-1 {
+    transform: translate(calc(0rpx - var(--loading-offset) + var(--loading-size) / 2), 0rpx) scale(var(--left-ball-step1, 1));
+    animation: loading_boll_left 1s linear infinite;
+    z-index: 1;
+  }
+
+  .an-2 {
+    transform: translate(calc(var(--loading-offset) - var(--loading-size) / 2), 0rpx) scale(var(--right-ball-step1, 1));
+    animation: loading_boll_right 1s linear infinite;
+    z-index: 2;
+  }
+
+  @keyframes loading_boll_left {
+    0% {
+      transform: translate(calc(0rpx - var(--loading-offset) + var(--loading-size) / 2), 0rpx) scale(var(--left-ball-step1, 1));
+      z-index: 1;
+    }
+
+    25% {
+      z-index: 2;
+      transform: translate(0rpx, calc(var(--loading-offset) - var(--loading-size) / 2)) scale(var(--left-ball-step2, 0.75));
+    }
+
+    50% {
+      transform: translate(calc(var(--loading-offset) - var(--loading-size) / 2), 0rpx) scale(var(--left-ball-step3, 1));
+      z-index: 1;
+    }
+
+    75% {
+      transform: translate(0rpx, calc(0rpx - var(--loading-offset) + var(--loading-size) / 2)) scale(var(--left-ball-step4, 0.75));
+      z-index: 2;
+    }
+
+    100% {
+      transform: translate(calc(0rpx - var(--loading-offset) + var(--loading-size) / 2), 0rpx) scale(var(--left-ball-step1, 1));
+      z-index: 1;
+    }
+  }
+
+  @keyframes loading_boll_right {
+    0% {
+      transform: translate(calc(var(--loading-offset) - var(--loading-size) / 2), 0rpx) scale(var(--right-ball-step1, 1));
+      z-index: 2;
+    }
+
+    25% {
+      transform: translate(0rpx, calc(0rpx - var(--loading-offset) + var(--loading-size) / 2)) scale(var(--right-ball-step2, 0.75));
+      z-index: 1;
+    }
+
+    50% {
+      transform: translate(calc(0rpx - var(--loading-offset) + var(--loading-size) / 2), 0rpx) scale(var(--right-ball-step3, 1));
+      z-index: 2;
+    }
+
+    75% {
+      transform: translate(0rpx, calc(var(--loading-offset) - var(--loading-size) / 2)) scale(var(--right-ball-step4, 0.75));
+      z-index: 1;
+    }
+
+    100% {
+      transform: translate(calc(var(--loading-offset) - var(--loading-size) / 2), 0rpx) scale(var(--right-ball-step1, 1));
+      z-index: 2;
+    }
+  }
+}

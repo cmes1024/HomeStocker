@@ -1,0 +1,7 @@
+{
+  "component": true,
+  "usingComponents": {
+    "loading": "/components/loading/index",
+    "mini-use-agreement": "/components/agreement/index"
+  }
+}

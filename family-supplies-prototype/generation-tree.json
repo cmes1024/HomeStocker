@@ -1,0 +1,51 @@
+{
+  "root": {
+    "id": "family-supplies-root",
+    "type": "project",
+    "status": "planned",
+    "children": [
+      {
+        "id": "page-onboarding",
+        "type": "page",
+        "htmlSrc": "pages/onboarding.html",
+        "status": "planned",
+        "children": []
+      },
+      {
+        "id": "page-home",
+        "type": "page",
+        "htmlSrc": "pages/home.html",
+        "status": "planned",
+        "children": []
+      },
+      {
+        "id": "page-inventory",
+        "type": "page",
+        "htmlSrc": "pages/inventory.html",
+        "status": "planned",
+        "children": []
+      },
+      {
+        "id": "page-add-item",
+        "type": "page",
+        "htmlSrc": "pages/add-item.html",
+        "status": "planned",
+        "children": []
+      },
+      {
+        "id": "page-item-detail",
+        "type": "page",
+        "htmlSrc": "pages/item-detail.html",
+        "status": "planned",
+        "children": []
+      },
+      {
+        "id": "page-family",
+        "type": "page",
+        "htmlSrc": "pages/family.html",
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

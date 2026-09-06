@@ -1,0 +1,10 @@
+<!--
+  Loading 动画组件
+  CSS @keyframes 方案是默认实现，如需启用 Worklet 渲染线程动画：
+  1. 在 index.js 中取消 worklet.worklet.js 的 require
+  2. 在 WXML 中使用 worklet:animation 绑定替代 CSS 动画
+-->
+<view wx:if="{{show}}" class="debounce-mark loading ex-loading-class {{transparent ? '' : 'transparent'}} {{glass ? 'glass' : ''}}" style="--loading-z-index: {{zIndex}};--loading-size:{{ballSize}}rpx;--loading-offset:{{offset}}rpx;" data-text="{{text}}">
+  <view class="animation an-1" style="background-color:{{ballColor[0]}};--left-ball-step1: {{leftBallScales[0]}};--left-ball-step2: {{leftBallScales[1]}};--left-ball-step3: {{leftBallScales[2]}};--left-ball-step4: {{leftBallScales[3]}}"></view>
+  <view class="animation an-2" style="background-color:{{ballColor[1]}};--right-ball-step1: {{rightBallScales[0]}};--right-ball-step2: {{rightBallScales[1]}};--right-ball-step3: {{rightBallScales[2]}};--right-ball-step4: {{rightBallScales[3]}}"></view>
+</view>

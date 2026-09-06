@@ -1,0 +1,58 @@
+<Header page-name="浮层组件演示" align-content="center" zIndex="10" headerStyle="background: white" />
+
+<view class="demo-section">
+  <view class="demo-hint">演示全局 UX 组件：Loading（pageRouter）、Modal、maskElement 防抖。</view>
+
+  <!-- Loading -->
+  <view class="demo-card">
+    <view class="demo-card-hd">Loading 加载</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="showLoading">▶ 触发加载（2s）</view>
+      <view class="demo-desc">通过 this.pageRouter.loading() / loaded() 控制</view>
+    </view>
+  </view>
+
+  <!-- Modal -->
+  <view class="demo-card">
+    <view class="demo-card-hd">Modal 弹窗</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="openModal">▶ 打开弹窗</view>
+      <view class="demo-desc">基于 page-container 的底部弹出面板</view>
+    </view>
+  </view>
+
+  <!-- maskElement 防抖 -->
+  <view class="demo-card">
+    <view class="demo-card-hd">maskElement 防抖</view>
+    <view class="demo-card-bd">
+      <maskElement load-animation>
+        <view class="demo-btn-sm" bind:tap="onMaskAction">防抖按钮（快速点我）</view>
+      </maskElement>
+      <view class="demo-desc">快速重复点击时，遮罩阻止第二次触发，直到动画结束</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">Promise 模式防抖</view>
+    <view class="demo-card-bd">
+      <maskElement load-animation is-promise>
+        <view class="demo-btn-sm green" bind:tap="onMaskAction">Promise 模式</view>
+      </maskElement>
+      <view class="demo-desc">适用于异步操作场景，手动调用 setStatus 控制</view>
+    </view>
+  </view>
+</view>
+
+<!-- Modal 内容 -->
+<modal open="{{modalOpen}}" bind:clickoverlay="closeModal" zIndex="11">
+  <view class="popup-demo">
+    <view class="popup-demo-title">Modal 内容</view>
+    <view class="popup-demo-body">
+      这是通过 page-container 渲染的底部弹出面板。
+      支持拖拽关闭、半屏展示。
+    </view>
+    <view class="popup-demo-close" bind:tap="closeModal">关闭</view>
+  </view>
+</modal>
+
+<loading />

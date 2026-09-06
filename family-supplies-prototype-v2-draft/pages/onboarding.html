@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Untitled</title>
+    <style id="theme-vars">
+:root {
+  --family-background: #f6f8f6;
+  --family-foreground: #18211d;
+  --family-card: #ffffff;
+  --family-card-foreground: #18211d;
+  --family-popover: #ffffff;
+  --family-popover-foreground: #18211d;
+  --family-primary: #2f7d62;
+  --family-primary-foreground: #f8fffb;
+  --family-muted: #e8efeb;
+  --family-muted-foreground: #60716a;
+  --family-border: #d6dfda;
+  --family-input: #d6dfda;
+  --family-ring: #2f7d62;
+
+  --family-bg: var(--family-background);
+  --family-surface: var(--family-card);
+  --family-surface-2: #eef5f1;
+  --family-ink: var(--family-foreground);
+  --family-ink-2: #5f6f68;
+  --family-ink-3: #889790;
+  --family-line: var(--family-border);
+  --family-brand: var(--family-primary);
+  --family-brand-ink: var(--family-primary-foreground);
+
+  --family-state-success: #2f7d62;
+  --family-state-warning: #c68a24;
+  --family-state-error: #c9574b;
+  --family-state-info: #5380c1;
+
+  --family-radius-sm: 8px;
+  --family-radius-md: 16px;
+  --family-radius-lg: 24px;
+  --family-shadow-soft: 0 12px 28px rgba(24, 33, 29, 0.05);
+  --family-shadow-float: 0 16px 32px rgba(24, 33, 29, 0.08);
+
+  --family-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--family-background);
+  color: var(--family-foreground);
+  font-family: var(--family-font-sans);
+}
+
+body {
+  min-height: 100vh;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--family-background);
+    --color-foreground: var(--family-foreground);
+    --color-card: var(--family-card);
+    --color-card-foreground: var(--family-card-foreground);
+    --color-popover: var(--family-popover);
+    --color-popover-foreground: var(--family-popover-foreground);
+    --color-primary: var(--family-primary);
+    --color-primary-foreground: var(--family-primary-foreground);
+    --color-muted: var(--family-muted);
+    --color-muted-foreground: var(--family-muted-foreground);
+    --color-border: var(--family-border);
+    --color-input: var(--family-input);
+    --color-ring: var(--family-ring);
+    --radius-sm: var(--family-radius-sm);
+    --radius-md: var(--family-radius-md);
+    --radius-lg: var(--family-radius-lg);
+  }
+  @layer base {
+    body { background: var(--family-background); color: var(--family-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--family-background); }
+      .text-background { color: var(--family-background); }
+      .border-background { border-color: var(--family-background); }
+      .ring-background { --tw-ring-color: var(--family-background); }
+      .bg-foreground { background-color: var(--family-foreground); }
+      .text-foreground { color: var(--family-foreground); }
+      .border-foreground { border-color: var(--family-foreground); }
+      .ring-foreground { --tw-ring-color: var(--family-foreground); }
+      .bg-card { background-color: var(--family-card); }
+      .text-card { color: var(--family-card); }
+      .border-card { border-color: var(--family-card); }
+      .ring-card { --tw-ring-color: var(--family-card); }
+      .bg-card-foreground { background-color: var(--family-card-foreground); }
+      .text-card-foreground { color: var(--family-card-foreground); }
+      .border-card-foreground { border-color: var(--family-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--family-card-foreground); }
+      .bg-popover { background-color: var(--family-popover); }
+      .text-popover { color: var(--family-popover); }
+      .border-popover { border-color: var(--family-popover); }
+      .ring-popover { --tw-ring-color: var(--family-popover); }
+      .bg-popover-foreground { background-color: var(--family-popover-foreground); }
+      .text-popover-foreground { color: var(--family-popover-foreground); }
+      .border-popover-foreground { border-color: var(--family-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--family-popover-foreground); }
+      .bg-primary { background-color: var(--family-primary); }
+      .text-primary { color: var(--family-primary); }
+      .border-primary { border-color: var(--family-primary); }
+      .ring-primary { --tw-ring-color: var(--family-primary); }
+      .bg-primary-foreground { background-color: var(--family-primary-foreground); }
+      .text-primary-foreground { color: var(--family-primary-foreground); }
+      .border-primary-foreground { border-color: var(--family-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--family-primary-foreground); }
+      .bg-muted { background-color: var(--family-muted); }
+      .text-muted { color: var(--family-muted); }
+      .border-muted { border-color: var(--family-muted); }
+      .ring-muted { --tw-ring-color: var(--family-muted); }
+      .bg-muted-foreground { background-color: var(--family-muted-foreground); }
+      .text-muted-foreground { color: var(--family-muted-foreground); }
+      .border-muted-foreground { border-color: var(--family-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--family-muted-foreground); }
+      .bg-border { background-color: var(--family-border); }
+      .text-border { color: var(--family-border); }
+      .border-border { border-color: var(--family-border); }
+      .ring-border { --tw-ring-color: var(--family-border); }
+      .bg-input { background-color: var(--family-input); }
+      .text-input { color: var(--family-input); }
+      .border-input { border-color: var(--family-input); }
+      .ring-input { --tw-ring-color: var(--family-input); }
+      .bg-ring { background-color: var(--family-ring); }
+      .text-ring { color: var(--family-ring); }
+      .border-ring { border-color: var(--family-ring); }
+      .ring-ring { --tw-ring-color: var(--family-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <style>
+    :root {
+      color-scheme: light;
+      --family-bg: #f7f6f1;
+      --family-surface: #ffffff;
+      --family-surface-soft: #eef5ef;
+      --family-surface-muted: #f3f4ef;
+      --family-text: #1f2a21;
+      --family-text-secondary: #5e6d61;
+      --family-text-tertiary: #8a958d;
+      --family-line: #dce6dc;
+      --family-primary: #2f7d62;
+      --family-primary-deep: #276a54;
+      --family-primary-soft: #e6f2eb;
+      --family-warning-soft: #f7f1df;
+      --family-shadow: 0 8px 24px rgba(34, 56, 42, 0.06);
+      --family-radius-card: 24px;
+      --family-radius-control: 18px;
+      --family-radius-pill: 999px;
+      --family-font: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--family-bg);
+      color: var(--family-text);
+      font-family: var(--family-font);
+    }
+
+    body {
+      min-height: 100vh;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .page {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(230, 242, 235, 0.92), rgba(230, 242, 235, 0) 34%),
+        var(--family-bg);
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 420px;
+      min-height: 100vh;
+      margin: 0 auto;
+      padding: 0 16px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: calc(10px + env(safe-area-inset-top, 0px)) 0 12px;
+      background: linear-gradient(180deg, rgba(247, 246, 241, 0.96), rgba(247, 246, 241, 0.76) 76%, rgba(247, 246, 241, 0));
+      backdrop-filter: blur(8px);
+    }
+
+    .nav__left {
+      min-width: 92px;
+      font-size: 13px;
+      color: var(--family-text-tertiary);
+    }
+
+    .nav__title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    .capsule {
+      width: 92px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 6px;
+      border: 1px solid rgba(31, 42, 33, 0.08);
+      border-radius: var(--family-radius-pill);
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--family-shadow);
+    }
+
+    .capsule__slot {
+      width: 38px;
+      height: 24px;
+      border: 0;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--family-text);
+    }
+
+    .capsule__divider {
+      width: 1px;
+      height: 14px;
+      background: rgba(31, 42, 33, 0.1);
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .card {
+      background: var(--family-surface);
+      border: 1px solid var(--family-line);
+      border-radius: var(--family-radius-card);
+      box-shadow: var(--family-shadow);
+    }
+
+    .hero {
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .hero__badge {
+      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: var(--family-radius-pill);
+      background: var(--family-primary-soft);
+      color: var(--family-primary);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero__title {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .hero__text {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--family-text-secondary);
+    }
+
+    .hero__meta {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .hero__meta-item {
+      padding: 12px;
+      border-radius: 18px;
+      background: var(--family-surface-soft);
+    }
+
+    .hero__meta-label {
+      margin: 0 0 4px;
+      font-size: 12px;
+      color: var(--family-text-tertiary);
+    }
+
+    .hero__meta-value {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .section-label {
+      margin: 0 2px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--family-text-secondary);
+    }
+
+    .value-card {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .value-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .value-item {
+      display: grid;
+      grid-template-columns: 40px 1fr;
+      gap: 12px;
+      align-items: start;
+      padding: 12px;
+      border-radius: 18px;
+      background: var(--family-surface-muted);
+    }
+
+    .icon-box {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: #ffffff;
+      color: var(--family-primary);
+    }
+
+    .value-item__title {
+      margin: 0 0 4px;
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .value-item__text {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--family-text-secondary);
+    }
+
+    .entry-card {
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .entry-card--primary {
+      background: linear-gradient(180deg, #ffffff 0%, #f0f7f2 100%);
+      border-color: #d7e7dc;
+    }
+
+    .entry-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .entry-title {
+      margin: 0 0 6px;
+      font-size: 22px;
+      line-height: 1.3;
+      font-weight: 700;
+    }
+
+    .entry-text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--family-text-secondary);
+    }
+
+    .entry-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .entry-tag {
+      padding: 7px 10px;
+      border-radius: var(--family-radius-pill);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(47, 125, 98, 0.12);
+      color: var(--family-text-secondary);
+      font-size: 12px;
+    }
+
+    .entry-button {
+      min-height: 52px;
+      width: 100%;
+      border: 0;
+      border-radius: 20px;
+      padding: 0 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--family-primary);
+      color: #ffffff;
+      box-shadow: 0 10px 24px rgba(47, 125, 98, 0.2);
+    }
+
+    .entry-button--secondary {
+      background: #ffffff;
+      color: var(--family-text);
+      border: 1px solid var(--family-line);
+      box-shadow: none;
+    }
+
+    .entry-button__main {
+      display: grid;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .entry-button__title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .entry-button__desc {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .entry-button--secondary .entry-button__desc {
+      color: var(--family-text-secondary);
+    }
+
+    .flow-card {
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .flow-card__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .flow-card__title {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .flow-card__text {
+      margin: 4px 0 0;
+      font-size: 13px;
+      line-height: 1.55;
+      color: var(--family-text-secondary);
+    }
+
+    .flow-note {
+      padding: 6px 10px;
+      border-radius: var(--family-radius-pill);
+      background: var(--family-warning-soft);
+      color: #8b6c18;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .sheet-preview {
+      padding: 12px;
+      border-radius: 20px;
+      background: var(--family-surface-muted);
+      border: 1px solid rgba(31, 42, 33, 0.05);
+      display: grid;
+      gap: 10px;
+    }
+
+    .sheet-preview__mask {
+      height: 120px;
+      border-radius: 18px 18px 0 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(241, 246, 242, 0.85) 100%);
+      border: 1px dashed rgba(47, 125, 98, 0.24);
+      border-bottom: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .sheet-preview__handle {
+      width: 42px;
+      height: 5px;
+      border-radius: 999px;
+      background: #cfd7d0;
+      margin: 10px auto 0;
+    }
+
+    .sheet-preview__panel {
+      width: calc(100% - 18px);
+      margin: 10px auto 0;
+      padding: 12px;
+      border-radius: 18px 18px 0 0;
+      background: #ffffff;
+      box-shadow: 0 -8px 24px rgba(34, 56, 42, 0.07);
+      display: grid;
+      gap: 8px;
+    }
+
+    .sheet-preview__line {
+      height: 10px;
+      border-radius: 999px;
+      background: #edf2ed;
+    }
+
+    .sheet-preview__line--short {
+      width: 46%;
+    }
+
+    .flow-steps {
+      display: grid;
+      gap: 10px;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 18px;
+      background: #ffffff;
+      border: 1px solid var(--family-line);
+    }
+
+    .flow-step__index {
+      width: 28px;
+      height: 28px;
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--family-primary-soft);
+      color: var(--family-primary);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .flow-step__body {
+      min-width: 0;
+    }
+
+    .flow-step__title {
+      margin: 0 0 2px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .flow-step__text {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--family-text-secondary);
+    }
+
+    .enter-home {
+      min-height: 48px;
+      border: 1px dashed rgba(47, 125, 98, 0.3);
+      border-radius: 18px;
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(230, 242, 235, 0.5);
+      color: var(--family-primary-deep);
+    }
+
+    .enter-home__text {
+      display: grid;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .enter-home__title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .enter-home__desc {
+      font-size: 12px;
+      color: var(--family-text-secondary);
+    }
+
+    .foot-card {
+      padding: 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .foot-item {
+      padding: 12px;
+      border-radius: 18px;
+      background: var(--family-surface-muted);
+    }
+
+    .foot-item__title {
+      margin: 0 0 4px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .foot-item__text {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--family-text-secondary);
+    }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 359px) {
+      .app-shell {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+
+      .hero__title {
+        font-size: 24px;
+      }
+
+      .hero__meta {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+
+  <main class="page" data-node-id="page-onboarding">
+    <div class="app-shell">
+      <header class="nav" aria-label="自定义导航">
+        <div class="nav__left">首次进入</div>
+        <div class="nav__title">引导页V2</div>
+        <div class="flex h-8 w-[88px] items-center overflow-hidden rounded-full border border-[#d9dce3] bg-white text-[#334155]" aria-label="微信小程序胶囊菜单">
+          <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="更多">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="6" cy="12" r="1.6" fill="currentColor"></circle>
+              <circle cx="12" cy="12" r="1.6" fill="currentColor"></circle>
+              <circle cx="18" cy="12" r="1.6" fill="currentColor"></circle>
+            </svg>
+          </button>
+          <span class="h-4 w-px bg-[#e5e7eb]" aria-hidden="true"></span>
+          <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="关闭">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 8L16 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              <path d="M16 8L8 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="content">
+        <section class="card hero" aria-labelledby="hero-title">
+          <div class="hero__badge">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M6 9.5L12 5L18 9.5V17.5C18 18.6 17.1 19.5 16 19.5H8C6.9 19.5 6 18.6 6 17.5V9.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"></path>
+              <path d="M10 14.5H14" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"></path>
+            </svg>
+            欢迎开始管理家庭物资
+          </div>
+          <div>
+            <h1 id="hero-title" class="hero__title">先创建家庭，或加入已有家庭</h1>
+            <p class="hero__text">这是首次打开且你还没有家庭时看到的入口页。完成创建或加入后，后续将直接进入首页，不再重复出现。</p>
+          </div>
+          <div class="hero__meta" aria-label="价值说明">
+            <div class="hero__meta-item">
+              <p class="hero__meta-label">避免重复采购</p>
+              <p class="hero__meta-value">库存一眼可见</p>
+            </div>
+            <div class="hero__meta-item">
+              <p class="hero__meta-label">临期提醒</p>
+              <p class="hero__meta-value">减少浪费</p>
+            </div>
+            <div class="hero__meta-item">
+              <p class="hero__meta-label">家庭协同</p>
+              <p class="hero__meta-value">共同维护</p>
+            </div>
+          </div>
+        </section>
+
+        <p class="section-label">家庭物资价值说明</p>
+        <section class="card value-card" aria-label="家庭物资价值说明">
+          <div class="value-list">
+            <article class="value-item">
+              <span class="icon-box" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" fill="none">
+                  <rect x="5" y="5" width="14" height="14" rx="4" stroke="currentColor" stroke-width="1.8"></rect>
+                  <path d="M8.5 9.5H15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                  <path d="M8.5 13H15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="value-item__title">看清家里还有什么</h2>
+                <p class="value-item__text">围绕家庭统一记录食品、日用品等物资，减少忘记存放位置或重复购买的情况。</p>
+              </div>
+            </article>
+            <article class="value-item">
+              <span class="icon-box" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="12" r="7.5" stroke="currentColor" stroke-width="1.8"></circle>
+                  <path d="M12 8.4V12L14.7 13.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="value-item__title">及时处理临期物资</h2>
+                <p class="value-item__text">对需要关注的物资做提醒，帮助家庭更从容地安排消耗与补货。</p>
+              </div>
+            </article>
+            <article class="value-item">
+              <span class="icon-box" aria-hidden="true">
+                <svg class="icon" viewBox="0 0 24 24" fill="none">
+                  <path d="M8.2 9.4C8.2 7.9 9.4 6.7 10.9 6.7C12.4 6.7 13.6 7.9 13.6 9.4C13.6 10.9 12.4 12.1 10.9 12.1C9.4 12.1 8.2 10.9 8.2 9.4Z" stroke="currentColor" stroke-width="1.8"></path>
+                  <path d="M5.4 17.2C6.2 15.4 8 14.3 10.9 14.3C13.8 14.3 15.6 15.4 16.4 17.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                  <path d="M16.2 9.2H20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                  <path d="M18.1 7.3V11.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                </svg>
+              </span>
+              <div>
+                <h2 class="value-item__title">和家人共享同一份状态</h2>
+                <p class="value-item__text">家庭成员加入后看到的是同一个家庭空间，适合一起维护家中物资。</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <p class="section-label">开始方式</p>
+        <section class="card entry-card entry-card--primary" aria-label="创建家庭主入口">
+          <div class="entry-head">
+            <div>
+              <h2 class="entry-title">创建家庭</h2>
+              <p class="entry-text">适合第一次使用。先建立你的家庭空间，后续家人可以再加入进来，共同管理物资。</p>
+            </div>
+            <span class="icon-box" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M12 6V18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M6 12H18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              </svg>
+            </span>
+          </div>
+          <div class="entry-tags">
+            <span class="entry-tag">首次使用主入口</span>
+            <span class="entry-tag">完成后进入首页</span>
+          </div>
+          <button class="entry-button" type="button" data-dom-id="cta-create-family" aria-label="创建家庭">
+            <span class="entry-button__main">
+              <span class="entry-button__title">创建第一个家庭</span>
+              <span class="entry-button__desc">后续以半屏流程填写家庭信息</span>
+            </span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6.5L15 12L9 17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </section>
+
+        <section class="card entry-card" aria-label="加入家庭次入口">
+          <div class="entry-head">
+            <div>
+              <h2 class="entry-title">加入家庭</h2>
+              <p class="entry-text">如果家人已经创建好了家庭，你可以通过邀请码加入，随后直接进入该家庭首页。</p>
+            </div>
+            <span class="icon-box" aria-hidden="true">
+              <svg class="icon" viewBox="0 0 24 24" fill="none">
+                <path d="M8 10C8 8.3 9.4 7 11.1 7C12.8 7 14.2 8.3 14.2 10C14.2 11.7 12.8 13 11.1 13C9.4 13 8 11.7 8 10Z" stroke="currentColor" stroke-width="1.8"></path>
+                <path d="M5.3 17.5C6 15.8 7.9 14.8 11.1 14.8C14.3 14.8 16.2 15.8 16.9 17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M17 9.2H20.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+                <path d="M18.6 7.6V10.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              </svg>
+            </span>
+          </div>
+          <div class="entry-tags">
+            <span class="entry-tag">输入邀请码</span>
+            <span class="entry-tag">共享家庭清单</span>
+          </div>
+          <button class="entry-button entry-button--secondary" type="button" data-dom-id="cta-join-family" aria-label="加入家庭">
+            <span class="entry-button__main">
+              <span class="entry-button__title">输入邀请码加入</span>
+              <span class="entry-button__desc">后续以半屏流程完成加入</span>
+            </span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M9 6.5L15 12L9 17.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </section>
+
+        <p class="section-label">后续流程预期</p>
+        <section class="card flow-card" aria-label="创建和加入将以半屏流程完成">
+          <div class="flow-card__head">
+            <div>
+              <h2 class="flow-card__title">创建 / 加入会在当前页上方半屏展开</h2>
+              <p class="flow-card__text">保持轻量首开感，不跳成长网页。创建家庭或输入邀请码时，优先以半屏流程完成，再进入首页。</p>
+            </div>
+            <span class="flow-note">page-container 预期</span>
+          </div>
+          <div class="sheet-preview" aria-hidden="true">
+            <div class="sheet-preview__mask">
+              <div class="sheet-preview__handle"></div>
+              <div class="sheet-preview__panel">
+                <div class="sheet-preview__line sheet-preview__line--short"></div>
+                <div class="sheet-preview__line"></div>
+                <div class="sheet-preview__line"></div>
+              </div>
+            </div>
+            <div class="flow-steps">
+              <div class="flow-step">
+                <span class="flow-step__index">1</span>
+                <div class="flow-step__body">
+                  <p class="flow-step__title">点击创建家庭</p>
+                  <p class="flow-step__text">填写家庭名称等基础信息后完成创建。</p>
+                </div>
+              </div>
+              <div class="flow-step">
+                <span class="flow-step__index">2</span>
+                <div class="flow-step__body">
+                  <p class="flow-step__title">点击加入家庭</p>
+                  <p class="flow-step__text">输入邀请码后加入已有家庭空间。</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <button class="enter-home" type="button" data-dom-id="cta-enter-home" aria-label="创建或加入成功后进入首页">
+            <span class="enter-home__text">
+              <span class="enter-home__title">创建或加入成功后进入首页</span>
+              <span class="enter-home__desc">该动作由完成创建 / 加入后自动发生</span>
+            </span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 12H17" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path>
+              <path d="M13 8L17 12L13 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+          </button>
+        </section>
+
+        <p class="section-label">说明</p>
+        <section class="card foot-card" aria-label="不再重复展示与隐私说明">
+          <article class="foot-item">
+            <h2 class="foot-item__title">完成首次创建或加入后不再重复展示</h2>
+            <p class="foot-item__text">当你已经拥有家庭记录，下次打开小程序会直接进入首页，不再回到当前引导页。</p>
+          </article>
+          <article class="foot-item">
+            <h2 class="foot-item__title">隐私说明</h2>
+            <p class="foot-item__text">首次使用可按需授权微信昵称与头像，仅用于家庭成员识别与协同展示；用户协议与隐私说明在正式流程中查看。</p>
+          </article>
+        </section>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

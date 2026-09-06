@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物资详情</title>
+    <style id="theme-vars">
+:root {
+  --family-background: #f6f8f6;
+  --family-foreground: #18211d;
+  --family-card: #ffffff;
+  --family-card-foreground: #18211d;
+  --family-popover: #ffffff;
+  --family-popover-foreground: #18211d;
+  --family-primary: #2f7d62;
+  --family-primary-foreground: #f8fffb;
+  --family-muted: #e8efeb;
+  --family-muted-foreground: #60716a;
+  --family-border: #d6dfda;
+  --family-input: #d6dfda;
+  --family-ring: #2f7d62;
+
+  --family-bg: var(--family-background);
+  --family-surface: var(--family-card);
+  --family-surface-2: #eef5f1;
+  --family-ink: var(--family-foreground);
+  --family-ink-2: #5f6f68;
+  --family-ink-3: #889790;
+  --family-line: var(--family-border);
+  --family-brand: var(--family-primary);
+  --family-brand-ink: var(--family-primary-foreground);
+
+  --family-state-success: #2f7d62;
+  --family-state-warning: #c68a24;
+  --family-state-error: #c9574b;
+  --family-state-info: #5380c1;
+
+  --family-radius-sm: 8px;
+  --family-radius-md: 16px;
+  --family-radius-lg: 24px;
+  --family-shadow-soft: 0 12px 28px rgba(24, 33, 29, 0.05);
+  --family-shadow-float: 0 16px 32px rgba(24, 33, 29, 0.08);
+
+  --family-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--family-background);
+  color: var(--family-foreground);
+  font-family: var(--family-font-sans);
+}
+
+body {
+  min-height: 100vh;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--family-background);
+    --color-foreground: var(--family-foreground);
+    --color-card: var(--family-card);
+    --color-card-foreground: var(--family-card-foreground);
+    --color-popover: var(--family-popover);
+    --color-popover-foreground: var(--family-popover-foreground);
+    --color-primary: var(--family-primary);
+    --color-primary-foreground: var(--family-primary-foreground);
+    --color-muted: var(--family-muted);
+    --color-muted-foreground: var(--family-muted-foreground);
+    --color-border: var(--family-border);
+    --color-input: var(--family-input);
+    --color-ring: var(--family-ring);
+    --radius-sm: var(--family-radius-sm);
+    --radius-md: var(--family-radius-md);
+    --radius-lg: var(--family-radius-lg);
+  }
+  @layer base {
+    body { background: var(--family-background); color: var(--family-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--family-background); }
+      .text-background { color: var(--family-background); }
+      .border-background { border-color: var(--family-background); }
+      .ring-background { --tw-ring-color: var(--family-background); }
+      .bg-foreground { background-color: var(--family-foreground); }
+      .text-foreground { color: var(--family-foreground); }
+      .border-foreground { border-color: var(--family-foreground); }
+      .ring-foreground { --tw-ring-color: var(--family-foreground); }
+      .bg-card { background-color: var(--family-card); }
+      .text-card { color: var(--family-card); }
+      .border-card { border-color: var(--family-card); }
+      .ring-card { --tw-ring-color: var(--family-card); }
+      .bg-card-foreground { background-color: var(--family-card-foreground); }
+      .text-card-foreground { color: var(--family-card-foreground); }
+      .border-card-foreground { border-color: var(--family-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--family-card-foreground); }
+      .bg-popover { background-color: var(--family-popover); }
+      .text-popover { color: var(--family-popover); }
+      .border-popover { border-color: var(--family-popover); }
+      .ring-popover { --tw-ring-color: var(--family-popover); }
+      .bg-popover-foreground { background-color: var(--family-popover-foreground); }
+      .text-popover-foreground { color: var(--family-popover-foreground); }
+      .border-popover-foreground { border-color: var(--family-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--family-popover-foreground); }
+      .bg-primary { background-color: var(--family-primary); }
+      .text-primary { color: var(--family-primary); }
+      .border-primary { border-color: var(--family-primary); }
+      .ring-primary { --tw-ring-color: var(--family-primary); }
+      .bg-primary-foreground { background-color: var(--family-primary-foreground); }
+      .text-primary-foreground { color: var(--family-primary-foreground); }
+      .border-primary-foreground { border-color: var(--family-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--family-primary-foreground); }
+      .bg-muted { background-color: var(--family-muted); }
+      .text-muted { color: var(--family-muted); }
+      .border-muted { border-color: var(--family-muted); }
+      .ring-muted { --tw-ring-color: var(--family-muted); }
+      .bg-muted-foreground { background-color: var(--family-muted-foreground); }
+      .text-muted-foreground { color: var(--family-muted-foreground); }
+      .border-muted-foreground { border-color: var(--family-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--family-muted-foreground); }
+      .bg-border { background-color: var(--family-border); }
+      .text-border { color: var(--family-border); }
+      .border-border { border-color: var(--family-border); }
+      .ring-border { --tw-ring-color: var(--family-border); }
+      .bg-input { background-color: var(--family-input); }
+      .text-input { color: var(--family-input); }
+      .border-input { border-color: var(--family-input); }
+      .ring-input { --tw-ring-color: var(--family-input); }
+      .bg-ring { background-color: var(--family-ring); }
+      .text-ring { color: var(--family-ring); }
+      .border-ring { border-color: var(--family-ring); }
+      .ring-ring { --tw-ring-color: var(--family-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+    <style id="critical-layout">
+      html,
+      body {
+        overflow-x: hidden;
+      }
+
+      body {
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--family-surface-2) 86%, white 14%) 0%, var(--family-background) 26%, var(--family-background) 100%);
+      }
+
+      [data-page-shell] {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 12px 12px calc(120px + env(safe-area-inset-bottom, 0px));
+      }
+
+      [data-top-bar] {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(14px);
+      }
+
+      [data-detail-card],
+      [data-adjust-card],
+      [data-reminder-card],
+      [data-record-card] {
+        min-width: 0;
+      }
+
+      [data-stepper] {
+        display: grid;
+        grid-template-columns: 56px minmax(0, 1fr) 56px;
+        gap: 10px;
+        align-items: stretch;
+      }
+
+      [data-bottom-actions] {
+        position: fixed;
+        left: 50%;
+        bottom: 0;
+        z-index: 30;
+        width: 100%;
+        max-width: 420px;
+        transform: translateX(-50%);
+        padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(180deg, rgba(246, 248, 246, 0) 0%, rgba(246, 248, 246, 0.92) 24%, rgba(246, 248, 246, 0.98) 100%);
+      }
+
+      [data-record-list] {
+        position: relative;
+      }
+
+      [data-record-list]::before {
+        content: "";
+        position: absolute;
+        left: 7px;
+        top: 8px;
+        bottom: 8px;
+        width: 1px;
+        background: color-mix(in srgb, var(--family-line) 82%, white 18%);
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased text-foreground">
+    <main id="page-item-detail" data-node-id="page-item-detail" data-page-shell>
+      <section data-top-bar class="mb-4 rounded-[28px] border border-[color:var(--family-line)]/70 bg-[color:color-mix(in_srgb,var(--family-surface)_88%,white_12%)] px-4 pb-4 pt-3 shadow-[var(--family-shadow-soft)]">
+        <div class="flex items-center justify-between">
+          <button data-dom-id="nav-back-inventory" type="button" aria-label="返回物资列表" class="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--family-surface-2)] text-[color:var(--family-ink)]">
+            <i data-lucide="chevron-left" class="h-5 w-5"></i>
+          </button>
+          <div class="text-base font-semibold tracking-[0.02em]">物资详情</div>
+          <div class="flex h-8 w-[88px] items-center justify-center rounded-full border border-[color:var(--family-line)] bg-[color:var(--family-surface)] text-[color:var(--family-ink)]" aria-label="小程序菜单">
+            <button type="button" class="flex h-full flex-1 items-center justify-center" aria-label="更多">
+              <i data-lucide="more-horizontal" class="h-4 w-4"></i>
+            </button>
+            <span class="h-4 w-px bg-[color:var(--family-line)]" aria-hidden="true"></span>
+            <button type="button" class="flex h-full flex-1 items-center justify-center" aria-label="关闭">
+              <i data-lucide="x" class="h-4 w-4"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section data-detail-card class="mb-4 rounded-[28px] border border-[color:var(--family-line)] bg-card px-4 py-4 shadow-[var(--family-shadow-soft)]">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
+            <p class="text-sm text-[color:var(--family-ink-2)]">厨房常备 · 谷物主食</p>
+            <h1 class="mt-1 text-[24px] font-semibold leading-tight text-foreground">东北大米 5kg</h1>
+            <p class="mt-2 text-sm leading-6 text-[color:var(--family-ink-2)]">分类：主食粮油</p>
+            <p class="text-sm leading-6 text-[color:var(--family-ink-2)]">位置：储藏柜 A1 层</p>
+          </div>
+          <span class="inline-flex shrink-0 items-center rounded-full bg-[color:color-mix(in_srgb,var(--family-state-success)_12%,white_88%)] px-3 py-1 text-xs font-semibold text-[color:var(--family-state-success)]">库存正常</span>
+        </div>
+
+        <div class="mt-4 rounded-[22px] bg-[color:var(--family-surface-2)] px-4 py-4">
+          <div class="flex items-end justify-between gap-3">
+            <div>
+              <p class="text-xs text-[color:var(--family-ink-2)]">当前库存</p>
+              <p class="mt-1 text-[30px] font-semibold leading-none text-foreground">3 <span class="text-base font-medium text-[color:var(--family-ink-2)]">袋</span></p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-[color:var(--family-ink-2)]">建议状态</p>
+              <p class="mt-1 text-sm font-semibold text-foreground">可支撑约 18 天</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="rounded-[20px] border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-3 py-3">
+            <p class="text-xs text-[color:var(--family-ink-2)]">采购批次</p>
+            <p class="mt-1 text-sm font-semibold text-foreground">2026-07-28 入库</p>
+          </div>
+          <div class="rounded-[20px] border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-3 py-3">
+            <p class="text-xs text-[color:var(--family-ink-2)]">家庭提醒</p>
+            <p class="mt-1 text-sm font-semibold text-foreground">由妈妈与我共同维护</p>
+          </div>
+        </div>
+      </section>
+
+      <section data-adjust-card class="mb-4 rounded-[24px] border border-[color:var(--family-line)] bg-card px-4 py-4 shadow-[var(--family-shadow-soft)]">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-base font-semibold text-foreground">数量调节</h2>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">用于快速登记领取或补货，当前库存会在记录流中同步展示。</p>
+          </div>
+          <span class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-1 text-[11px] font-medium text-[color:var(--family-ink-2)]">快速维护</span>
+        </div>
+
+        <div data-stepper class="mt-4">
+          <button data-dom-id="cta-minus-qty" type="button" aria-label="库存减一" class="rounded-[20px] border border-[color:var(--family-line)] bg-[color:var(--family-surface)] text-[24px] font-semibold text-[color:var(--family-ink)] shadow-[var(--family-shadow-soft)]">−</button>
+          <div class="rounded-[20px] bg-[color:var(--family-surface-2)] px-4 py-4 text-center">
+            <p class="text-xs text-[color:var(--family-ink-2)]">调整后库存</p>
+            <p class="mt-1 text-[28px] font-semibold leading-none text-foreground">3</p>
+            <p class="mt-2 text-sm text-[color:var(--family-ink-2)]">建议低于 2 袋时发起补货提醒</p>
+          </div>
+          <button data-dom-id="cta-plus-qty" type="button" aria-label="库存加一" class="rounded-[20px] border border-primary/18 bg-primary text-[24px] font-semibold text-primary-foreground shadow-[var(--family-shadow-soft)]">+</button>
+        </div>
+
+        <div class="mt-4 rounded-[20px] border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs text-[color:var(--family-ink-2)]">库存说明</p>
+              <p class="mt-1 text-sm font-semibold text-foreground">上次扣减发生在今天 08:30，已同步为早餐消耗。</p>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-[color:color-mix(in_srgb,var(--family-state-info)_12%,white_88%)] px-3 py-1 text-[11px] font-semibold text-[color:var(--family-state-info)]">可追踪</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-reminder-card class="mb-4 rounded-[24px] border border-[color:var(--family-line)] bg-card px-4 py-4 shadow-[var(--family-shadow-soft)]">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-base font-semibold text-foreground">保质期与提醒</h2>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">帮助家庭成员判断临期风险并保持补货节奏。</p>
+          </div>
+          <span class="inline-flex items-center rounded-full bg-[color:color-mix(in_srgb,var(--family-state-success)_12%,white_88%)] px-3 py-1 text-[11px] font-semibold text-[color:var(--family-state-success)]">提醒已开启</span>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3">
+          <div class="rounded-[20px] bg-[color:var(--family-surface-2)] px-4 py-4">
+            <p class="text-xs text-[color:var(--family-ink-2)]">到期日</p>
+            <p class="mt-1 text-base font-semibold text-foreground">2026-12-18</p>
+            <p class="mt-2 text-xs leading-5 text-[color:var(--family-ink-2)]">适合周度巡检时一起核对</p>
+          </div>
+          <div class="rounded-[20px] bg-[color:var(--family-surface-2)] px-4 py-4">
+            <p class="text-xs text-[color:var(--family-ink-2)]">剩余天数</p>
+            <p class="mt-1 text-base font-semibold text-foreground">129 天</p>
+            <p class="mt-2 text-xs leading-5 text-[color:var(--family-ink-2)]">当前无临期风险</p>
+          </div>
+        </div>
+
+        <div class="mt-4 rounded-[20px] border border-[color:var(--family-line)] bg-[color:var(--family-surface)] px-4 py-4">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-xs text-[color:var(--family-ink-2)]">提醒状态</p>
+              <p class="mt-1 text-sm font-semibold text-foreground">已开启低库存提醒，每周一 09:00 检查</p>
+            </div>
+            <span class="inline-flex h-10 items-center rounded-full border border-[color:var(--family-line)] bg-[color:var(--family-surface-2)] px-3 text-sm font-medium text-[color:var(--family-ink)]">开启中</span>
+          </div>
+        </div>
+      </section>
+
+      <section data-record-card class="mb-4 rounded-[24px] border border-[color:var(--family-line)] bg-card px-4 py-4 shadow-[var(--family-shadow-soft)]">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-base font-semibold text-foreground">备注与最近操作</h2>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">记录家庭共用背景与最近变更，方便追溯库存来源。</p>
+          </div>
+          <span class="rounded-full bg-[color:var(--family-surface-2)] px-3 py-1 text-[11px] font-medium text-[color:var(--family-ink-2)]">近 7 天</span>
+        </div>
+
+        <div class="mt-4 rounded-[20px] bg-[color:var(--family-surface-2)] px-4 py-4">
+          <p class="text-xs text-[color:var(--family-ink-2)]">备注</p>
+          <p class="mt-2 text-sm leading-6 text-foreground">优先消耗旧批次，补货时默认选择 5kg 规格；若库存低于 2 袋，需在周末采购清单中标记。</p>
+        </div>
+
+        <div data-record-list class="mt-4 space-y-4 pl-6">
+          <article class="relative">
+            <span class="absolute -left-6 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary"></span>
+            <p class="text-sm font-semibold text-foreground">今天 08:30 扣减 1 袋</p>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">早餐备餐后由我登记，库存从 4 袋更新为 3 袋。</p>
+          </article>
+          <article class="relative">
+            <span class="absolute -left-6 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--family-state-info)]"></span>
+            <p class="text-sm font-semibold text-foreground">昨天 21:10 更新提醒策略</p>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">将低库存提醒调整为每周一固定检查，避免遗漏家庭采购。</p>
+          </article>
+          <article class="relative">
+            <span class="absolute -left-6 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-[color:var(--family-state-success)]"></span>
+            <p class="text-sm font-semibold text-foreground">08-07 19:40 入库 2 袋</p>
+            <p class="mt-1 text-sm leading-6 text-[color:var(--family-ink-2)]">从社区超市补货，系统同步记录新批次到期时间。</p>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <div data-bottom-actions>
+      <div class="rounded-[26px] border border-[color:var(--family-line)] bg-[color:color-mix(in_srgb,var(--family-surface)_92%,white_8%)] p-3 shadow-[var(--family-shadow-float)]">
+        <div class="flex items-center gap-3">
+          <button type="button" aria-label="查看更多操作" class="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] bg-[color:var(--family-surface-2)] text-[color:var(--family-ink)]">
+            <i data-lucide="file-pen-line" class="h-5 w-5"></i>
+          </button>
+          <button data-dom-id="cta-edit-item" type="button" class="flex-1 rounded-[18px] bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-[var(--family-shadow-soft)]">编辑信息</button>
+        </div>
+        <div class="mt-3 flex items-center justify-between gap-3 px-1">
+          <button type="button" class="text-sm font-medium text-[color:var(--family-ink-2)]">查看全部记录</button>
+          <button type="button" class="text-sm font-medium text-[color:var(--family-ink-2)]">删除物资</button>
+        </div>
+      </div>
+    </div>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

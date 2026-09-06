@@ -1,0 +1,16 @@
+<!--index.wxml-->
+<Header back="{{false}}" page-name="首页" align-content="center" zIndex="10" headerStyle="z-index: 10;background: white" />
+<view class="demo-entry" bind:tap="goToDemo">📱 打开 Demo 演示</view>
+<view bind:tap="worker">调用worker线程</view>
+<view bind:tap="getData">触发页面加载</view>
+<maskElement load-animation>
+  <Button bind:tap="clickOpen">打开弹窗</Button>
+</maskElement>
+<modal open="{{open}}" bind:clickoverlay="clickoverlay" zIndex="11">
+  <view class="popup">
+    <view class="title">弹框内容</view>
+    <maskElement load-animation id="closebtn" is-promise>
+      <view class="close-btn" bind:tap="close">关闭</view>
+    </maskElement>
+  </view>
+</modal>

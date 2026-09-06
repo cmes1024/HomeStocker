@@ -1,0 +1,8 @@
+{
+  "usingComponents": {
+    "Header": "/components/Header/index",
+    "loading": "/components/loading/index",
+    "demo-button": "/pages/demo/page-router/components/demo-button/index"
+  },
+  "navigationBarTitleText": "pageRouter 通信"
+}

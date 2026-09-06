@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "Worker 线程",
+  "usingComponents": {
+    "Header": "/components/Header/index"
+  }
+}

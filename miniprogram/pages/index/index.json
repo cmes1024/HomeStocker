@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "maskElement": "/components/maskElement/index",
+    "modal": "/components/Modal/index"
+  }
+}

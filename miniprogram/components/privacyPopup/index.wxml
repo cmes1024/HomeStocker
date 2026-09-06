@@ -1,0 +1,16 @@
+<!--component/privacyPopup/index.wxml-->
+<block wx:if="{{innerShow}}">
+  <view class="mask" style="--policyzindex:{{zIndex}}"></view>
+  <view class="policy-content" style="--policyzindex:{{zIndex}}">
+    <view class="title">{{title}}</view>
+    <scroll-view class="content" scroll-y>
+      <text class="desc">{{desc1}}</text>
+      <text class="policy-txt" bind:tap="readPolicy">{{urlTitle}}</text>
+      <view class="desc">{{desc2}}</view>
+    </scroll-view>
+    <view class="btns">
+      <view id="disagree-btn" class="btns-disagree" bindtap="disagree">不同意{{disagreeToCloseApp ? '并退出' : ''}}</view>
+      <button id="agree-btn" open-type="agreePrivacyAuthorization" class="btns-agree" bindagreeprivacyauthorization="agree">同意并继续</button>
+    </view>
+  </view>
+</block>

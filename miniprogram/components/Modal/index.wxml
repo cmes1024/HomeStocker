@@ -1,0 +1,5 @@
+<!--components/Modal/index.wxml-->
+<page-container show="{{open}}" round position="bottom" custom-style="height:calc(100vh - {{menuPositionInfo.bottom}}px);background: transparent;" z-index="{{zIndex}}">
+  <view class="mask" bind:tap="clickMask"></view>
+  <slot/>
+</page-container>

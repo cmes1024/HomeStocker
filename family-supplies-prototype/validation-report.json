@@ -1,0 +1,178 @@
+{
+  "success": false,
+  "outcome": "terminal_stop",
+  "repairable": false,
+  "terminalViolations": [
+    "validationHistory has 3 full validation run(s), max allowed is 2"
+  ],
+  "terminalBlockingSummary": {
+    "terminalState": "validation-budget-exhausted",
+    "nextAction": "stop_and_report_blocking_summary",
+    "violations": [
+      "validationHistory has 3 full validation run(s), max allowed is 2"
+    ]
+  },
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.22.00.00.00",
+    "version_source": "skill-release-manifest.json",
+    "runtime_skill_dir": null,
+    "recorded_at": null,
+    "expected_version": "2026.07.22.00.00.00",
+    "status": "matched",
+    "read_status": "ok"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 2,
+  "softWarningCount": 20,
+  "renderBlockingErrors": [
+    "[design-file] Validation failed for .design file batch: ========================================\n[FAIL] Validation failed\n----------------------------------------\nFound 1 issues:\n\n  1. [data[0].devMetadata.interactions[2].domId] domId \"cta-enter-home\" is registered in .design but not found in HTML file \"pages/onboarding.html\". Fix: add data-dom-id=\"cta-enter-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n\n========================================\n",
+    "[repair-ledger] validationHistory has 3 failed validation(s) but validationRepairLedger has 2 entries"
+  ],
+  "errorSignatures": [
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[design-file] Validation failed for .design file batch: ======================================== [FAIL] Validation failed ---------------------------------------- Found 1 issues: 1. [data[0].devMetadata.interactions[2].domId] domId \"cta-enter-home\" is registered in .design but not found in HTML file \"pages/onboarding.html\". Fix: add data-dom-id=\"cta-enter-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. ========================================",
+      "signature": "fc94058690b75e254a8eb522b7bf88144e3125fe644afedcde7aea8dec145d8f"
+    },
+    {
+      "errorClass": "repair-ledger",
+      "normalized": "[repair-ledger] validationHistory has 3 failed validation(s) but validationRepairLedger has 2 entries",
+      "signature": "83056ddec66775c77061757e3308101358be6a4d9ab350b7bfe56498430fa7fa"
+    }
+  ],
+  "softWarnings": [
+    "[html-head-style] add-item.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] family.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] home.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] inventory.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] item-detail.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] onboarding.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[repair-ledger] validationRepairLedger[0].repairActions[0].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[0].repairActions[0].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[0].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[0].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[1].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[1].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].revalidationReportPath is missing",
+    "[repair-ledger] validationRepairLedger[1].revalidationReportHash is missing",
+    "[repair-ledger] validationRepairLedger[1].revalidationSuccess should be a boolean",
+    "[repair-ledger] validationHistory has 3 failed validation(s) but repairEntryEvidence has 2 entries",
+    "[repair-ledger] validationHistory[1] has no matching validationRepairLedger entry for validation-report.json#4552318db420af14061d39412489daf96dfe60901d63ad127ae2f036d1b94cbe",
+    "[mobile-navigation-consistency] 3 mobile page(s) do not expose a 3+ item data-nav-key nav cluster while sibling pages do. This is acceptable for detail/reward/modal pages only when planned explicitly.",
+    "[validation-discipline] validationHistory has 3 full validation run(s), max allowed is 2",
+    "[html-quality] colors_and_type.css: free-explore radius tokens must stay within the restrained 2/4/8/12/16px scale; oversized or forbidden radius tokens found (--family-radius-lg: 24px). Do not use 20px+ radii unless the user explicitly requested large rounded shapes."
+  ],
+  "repairPlanHints": [],
+  "repairActionTable": [],
+  "errorCount": 2,
+  "warningCount": 20,
+  "errors": [
+    "[design-file] Validation failed for .design file batch: ========================================\n[FAIL] Validation failed\n----------------------------------------\nFound 1 issues:\n\n  1. [data[0].devMetadata.interactions[2].domId] domId \"cta-enter-home\" is registered in .design but not found in HTML file \"pages/onboarding.html\". Fix: add data-dom-id=\"cta-enter-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n\n========================================\n",
+    "[repair-ledger] validationHistory has 3 failed validation(s) but validationRepairLedger has 2 entries"
+  ],
+  "warnings": [
+    "[html-head-style] add-item.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] family.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] home.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] inventory.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] item-detail.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[html-head-style] onboarding.html: found 1 custom <style> block(s) in <head>. The <head> is owned by apply-html-head-contract.mjs; move custom styles before </body> or re-run apply-html-head-contract.mjs <css-path> <html-file> --replace-head to relocate them.",
+    "[repair-ledger] validationRepairLedger[0].repairActions[0].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[0].repairActions[0].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[0].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[0].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[1].preEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].repairActions[1].postEditFileHashes[] is missing (legacy optional evidence)",
+    "[repair-ledger] validationRepairLedger[1].revalidationReportPath is missing",
+    "[repair-ledger] validationRepairLedger[1].revalidationReportHash is missing",
+    "[repair-ledger] validationRepairLedger[1].revalidationSuccess should be a boolean",
+    "[repair-ledger] validationHistory has 3 failed validation(s) but repairEntryEvidence has 2 entries",
+    "[repair-ledger] validationHistory[1] has no matching validationRepairLedger entry for validation-report.json#4552318db420af14061d39412489daf96dfe60901d63ad127ae2f036d1b94cbe",
+    "[mobile-navigation-consistency] 3 mobile page(s) do not expose a 3+ item data-nav-key nav cluster while sibling pages do. This is acceptable for detail/reward/modal pages only when planned explicitly.",
+    "[validation-discipline] validationHistory has 3 full validation run(s), max allowed is 2",
+    "[html-quality] colors_and_type.css: free-explore radius tokens must stay within the restrained 2/4/8/12/16px scale; oversized or forbidden radius tokens found (--family-radius-lg: 24px). Do not use 20px+ radii unless the user explicitly requested large rounded shapes."
+  ],
+  "validationRunDisciplineStatus": {
+    "declared": true,
+    "restoreMode": false,
+    "maxFullValidationRuns": 2,
+    "validationHistoryCount": 3,
+    "repairLedgerCount": 2,
+    "softWarningsTriggerRepair": false,
+    "terminalState": "validation-budget-exhausted",
+    "nextAction": "stop_and_report_blocking_summary",
+    "violations": [
+      "validationHistory has 3 full validation run(s), max allowed is 2"
+    ],
+    "success": false
+  },
+  "terminalState": "validation-budget-exhausted",
+  "nextCheck": {
+    "type": "stop",
+    "reason": "validation-budget-exhausted",
+    "command": null
+  },
+  "repairBatch": [],
+  "repairContextPacket": {
+    "schema_version": "1.0",
+    "purpose": "terminal stop packet; do not repair",
+    "success": false,
+    "outcome": "terminal_stop",
+    "repairable": false,
+    "terminalViolations": [
+      "validationHistory has 3 full validation run(s), max allowed is 2"
+    ],
+    "terminalBlockingSummary": {
+      "terminalState": "validation-budget-exhausted",
+      "nextAction": "stop_and_report_blocking_summary",
+      "violations": [
+        "validationHistory has 3 full validation run(s), max allowed is 2"
+      ]
+    },
+    "terminalState": "validation-budget-exhausted",
+    "skillProvenance": {
+      "name": "solo-design",
+      "version": "2026.07.22.00.00.00",
+      "version_source": "skill-release-manifest.json",
+      "runtime_skill_dir": null,
+      "recorded_at": null,
+      "expected_version": "2026.07.22.00.00.00",
+      "status": "matched",
+      "read_status": "ok"
+    },
+    "renderBlockingErrorCount": 0,
+    "softWarningCount": 20,
+    "renderBlockingErrors": [],
+    "repairActionTable": [],
+    "repairPlanHints": [],
+    "nextCheck": {
+      "type": "stop",
+      "command": null,
+      "fullValidationAllowed": false,
+      "reason": "validation-budget-exhausted",
+      "nextAction": "stop_and_report_blocking_summary"
+    },
+    "forbidden": [
+      "do not repair ledger",
+      "do not delete validation state",
+      "do not rerun validation",
+      "do not read validator source"
+    ]
+  },
+  "projectFileHashes": {
+    "family-supplies-prototype.design": "cd0306e01b3195a277b8e25184a3e1d4309ca439526f7edc171434da839f37bc",
+    "colors_and_type.css": "4ce47e55a98781f98f64a76ca8a5d461a14a7fb9708b96d5dc7d8aaadf8d2825",
+    "runtime-orchestration-summary.json": "059b092948902753d9cd1e719da76ccd7b546c06285c00e2580eccdd7ee1b551",
+    "pages/add-item.html": "e95c6d9fe108b52f8544d0e0c76e87d5011586efd778c71d911067c9a5960c05",
+    "pages/family.html": "23dd888464dd922b91c3189465cd30d422d005487b7cd354c034eff4cffbd705",
+    "pages/home.html": "1232a2b26e4efebc81d99794d368da1890803c2cb8c5e91262128c2dcd316406",
+    "pages/inventory.html": "e6440929b899dee76202f4ce26a4742b2c260dd9600654de558920479e433518",
+    "pages/item-detail.html": "78f09cd75b9c5b5ef9e34af0eff03502116b76e42912d7032450449b1c560e12",
+    "pages/onboarding.html": "ada90cfdd40754a1f66dec6f10826e3f1c3f0982252ded15786651f43415be31"
+  },
+  "designDir": "/Users/cme/Documents/github/NotePad/family-supplies-prototype",
+  "expectedPages": 6,
+  "requireInteractions": null,
+  "checkedAt": "2026-08-11T11:09:42.344Z"
+}

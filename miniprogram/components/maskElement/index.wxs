@@ -1,0 +1,22 @@
+var isPromise = false;
+function tap(event, ownerInstance) {
+  var instance = ownerInstance.selectComponent('.debounce-mark');
+  instance && instance.addClass && instance.addClass('loading');
+}
+function end(event, ownerInstance) {
+  var instance = ownerInstance.selectComponent('.debounce-mark');
+  instance && instance.removeClass && instance.removeClass('loading');
+}
+function typeChange(newValue, oldValue, ownerInstance, instance) {
+  isPromise = newValue;
+}
+function switchs(newValue, oldValue, ownerInstance, instance) {
+  var i = ownerInstance.selectComponent('.debounce-mark');
+  i && i.removeClass && i.removeClass('loading');
+}
+module.exports = {
+  tap: tap,
+  end: end,
+  typeChange: typeChange,
+  switchs: switchs
+}

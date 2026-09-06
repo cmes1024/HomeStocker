@@ -1,0 +1,69 @@
+/* components/Header/index.wxss */
+.header {
+  width: 750rpx;
+  position: fixed;
+
+  &-content {
+    display: flex;
+    align-items: center;
+    padding: 0 12rpx 0 24rpx;
+    box-sizing: border-box;
+
+    &-left {
+      display: inline-flex;
+      height: 100%;
+      width: 64rpx;
+      align-items: center;
+      .back-icon {
+        margin: auto 12rpx auto 0;
+      }
+    }
+
+    &-title {
+      display: inline-block;
+      height: fit-content;
+      margin: auto 0;
+      width: calc(100% - var(--left) - var(--right));
+      align-items: center;
+      overflow-x: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 36rpx;
+
+    }
+
+    .text-align-left {
+      text-align: left;
+    }
+
+    .text-align-center {
+      width: calc(100vw - (var(--right) + 24rpx) * 2);
+      text-align: center;
+      margin-left: auto;
+    }
+
+    .text-align-right {
+      text-align: right;
+    }
+  }
+}
+.ex-panel {
+  width: 690rpx!important;
+  padding-top: 60rpx!important;
+  }
+  .ex-btns {
+    flex-direction: column-reverse;
+  
+  }
+  .ex-disagree {
+    border: none!important;
+    color: #999!important;
+    font-size: 24rpx;
+  }
+  .ex-logo {
+    width: 128rpx!important;
+    height: 128rpx!important;
+    border-radius: 50%;
+    top: -45rpx!important;
+    box-shadow: 2rpx 10rpx 20rpx 1rpx rgba(0,0,0, .5);
+  }

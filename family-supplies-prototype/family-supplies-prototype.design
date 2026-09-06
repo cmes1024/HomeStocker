@@ -1,0 +1,265 @@
+{
+  "data": [
+    {
+      "id": "page-onboarding",
+      "title": "引导页",
+      "type": "page",
+      "version": 2,
+      "createdAt": 1786427400000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1737,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-86074d08",
+          "measuredAt": 1786603316208
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/onboarding.html",
+        "interactions": [
+          {
+            "domId": "cta-create-family",
+            "targetPageId": "page-home",
+            "transitionLabel": "创建家庭后进入首页"
+          },
+          {
+            "domId": "cta-join-family",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "加入家庭后进入首页"
+          },
+          {
+            "domId": "cta-enter-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "跳过引导"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-home",
+      "title": "首页",
+      "type": "page",
+      "version": 2,
+      "createdAt": 1786427400001,
+      "canvasData": {
+        "x": 309,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2278,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-c4cad1aa",
+          "measuredAt": 1786603316208
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/home.html",
+        "interactions": [
+          {
+            "domId": "nav-inventory",
+            "targetPageId": "page-inventory",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到物资"
+          },
+          {
+            "domId": "nav-family",
+            "targetPageId": "page-family",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到家庭"
+          },
+          {
+            "domId": "cta-add-item",
+            "targetPageId": "page-add-item",
+            "transitionLabel": "开始录入物资"
+          },
+          {
+            "domId": "cta-ocr-entry",
+            "targetPageId": "page-add-item",
+            "hideEdge": true,
+            "transitionLabel": "拍照识别录入"
+          },
+          {
+            "domId": "card-expiring-detail",
+            "targetPageId": "page-inventory",
+            "transitionLabel": "查看临期物资"
+          },
+          {
+            "domId": "cta-switch-family",
+            "targetPageId": "page-family",
+            "transitionLabel": "从首页进入家庭列表管理"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-inventory",
+      "title": "物资列表",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786427400002,
+      "canvasData": {
+        "x": 624,
+        "y": 720,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1473,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-317e4839",
+          "measuredAt": 1786603316208
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/inventory.html",
+        "interactions": [
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到首页"
+          },
+          {
+            "domId": "nav-family",
+            "targetPageId": "page-family",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到家庭"
+          },
+          {
+            "domId": "cta-open-add-item",
+            "targetPageId": "page-add-item",
+            "transitionLabel": "添加新物资"
+          },
+          {
+            "domId": "item-rice-detail",
+            "targetPageId": "page-item-detail",
+            "transitionLabel": "查看物资详情"
+          },
+          {
+            "domId": "item-milk-detail",
+            "targetPageId": "page-item-detail",
+            "hideEdge": true,
+            "transitionLabel": "查看另一条物资详情"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-add-item",
+      "title": "添加物资",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786427400003,
+      "canvasData": {
+        "x": 618,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2361,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-e62926c9",
+          "measuredAt": 1786443438928
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/add-item.html",
+        "interactions": [
+          {
+            "domId": "nav-back-inventory",
+            "targetPageId": "page-inventory",
+            "hideEdge": true,
+            "transitionLabel": "返回物资列表"
+          },
+          {
+            "domId": "cta-save-item",
+            "targetPageId": "page-inventory",
+            "transitionLabel": "保存后返回列表"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-item-detail",
+      "title": "物资详情",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1786427400004,
+      "canvasData": {
+        "x": -12,
+        "y": 686,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 1843,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-5af2cc9a",
+          "measuredAt": 1786443438928
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/item-detail.html",
+        "interactions": [
+          {
+            "domId": "nav-back-inventory",
+            "targetPageId": "page-inventory",
+            "hideEdge": true,
+            "transitionLabel": "返回物资列表"
+          },
+          {
+            "domId": "cta-edit-item",
+            "targetPageId": "page-add-item",
+            "transitionLabel": "编辑物资信息"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-family",
+      "title": "家庭管理",
+      "type": "page",
+      "version": 2,
+      "createdAt": 1786427400005,
+      "canvasData": {
+        "x": 309,
+        "y": 686,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 2344,
+          "viewportWidth": 375,
+          "sourceHash": "fnv1a-4be310e2",
+          "measuredAt": 1786603316208
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/family.html",
+        "interactions": [
+          {
+            "domId": "nav-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到首页"
+          },
+          {
+            "domId": "nav-inventory",
+            "targetPageId": "page-inventory",
+            "hideEdge": true,
+            "transitionLabel": "底部导航到物资"
+          }
+        ]
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": false,
+    "deviceType": "mobile",
+    "projectName": "家庭物资管理小程序原型"
+  }
+}

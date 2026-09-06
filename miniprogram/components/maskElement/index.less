@@ -1,0 +1,96 @@
+/* components/maskElement/index.wxss */
+@import "/styles/common.wxss";
+
+.debounce-content {
+  /* width: inherit;
+  height: inherit; */
+  position: relative;
+  width: fit-content;
+}
+.debounce-mark {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  top: 0;
+  left: 0;
+  /* opacity: .5; */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: row;
+  overflow: hidden;
+  z-index: -1;
+  font-size: 24rpx;
+}
+.loading::before {
+  content: attr(data-text);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: #999;
+}
+.loading {
+  animation: run var(--debounce-time) step-end;
+  background: rgba(255,255,255, var(--opacity));
+  animation-fill-mode: forwards;
+}
+@keyframes run {
+  from {
+    z-index: 1;
+  }
+  to {
+    z-index: var(--ispromise);
+  }
+}
+.loading .animation {
+  width: var(--size);
+  height: var(--size);
+  background: #ff5954;
+  border-radius: 50%;
+  position: absolute;
+  display: inline-block;
+}
+
+.loading .an-1 {
+  transform: translate(var(--leftHorizontalOffset), 0);
+  /* animation:ani1 1s linear infinite;*/
+  animation: ani1 1s linear infinite;
+}
+
+.loading .an-2 {
+  transform: translate(var(--rightHorizontalOffset), 0);
+  background: #00a8ce;
+  animation: ani2 1s linear infinite;
+}
+
+@keyframes ani1 {
+  25% {
+    z-index: 2;
+  }
+  50% {
+    transform: translate(var(--rightHorizontalOffset), 0) scale(1);
+  }
+  75% {
+    transform: translate(0, 0) scale(0.75);
+  }
+  100% {
+    transform: translate(var(--leftHorizontalOffset), 0) scale(1);
+  }
+}
+
+@keyframes ani2 {
+  25% {
+    transform: translate(0, 0) scale(0.75);
+  }
+  50% {
+    transform: translate(var(--leftHorizontalOffset), 0) scale(1);
+  }
+  75% {
+    z-index: 2;
+  }
+  100% {
+    transform: translate(var(--rightHorizontalOffset), 0) scale(1);
+  }
+}

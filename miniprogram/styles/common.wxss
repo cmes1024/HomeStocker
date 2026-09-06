@@ -1,0 +1,23 @@
+@import "./variable.wxss";
+.safe-area-bottom {
+  padding-bottom: calc(constant(safe-area-inset-bottom));
+  padding-bottom: calc(env(safe-area-inset-bottom));
+}
+
+@supports not(env(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: var(--safe-area-bottom, 64rpx);
+  }
+}
+
+@supports not(constant(safe-area-inset-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: var(--safe-area-bottom, 64rpx);
+  }
+}
+
+@supports not(var(--safe-area-bottom)) {
+  .safe-area-bottom {
+    padding-bottom: 64rpx;
+  }
+}

@@ -1,0 +1,23 @@
+<!--components/agreement/index.wxml-->
+<view wx:if="{{show}}" class="wrapper agreement-bg ex-wrapper" style="--agreement-bg:{{config.bgColor || config.themeColor || 'var(--main-color)'}};--agreement-theme:{{ config.themeColor || 'var(--main-color)'}};z-index: {{zIndex}}">
+  <view wx:if="{{loading}}" class="loading ex-loading"></view>
+  <view class="content ex-panel">
+    <view class="title ex-title">{{config.policy.title || '服务协议和隐私协议'}}</view>
+    <view class="txt ex-txt">
+      {{config.policy.desc[0] || "欢迎您使用小程序，请您仔细阅读并充分理解"}}
+      <text class="theme-color" wx:for="{{config.policy.list}}" wx:key="unique" bind:tap="clickAgreement" data-item="{{item}}">{{item.agreementName || item.title}}</text>
+      {{config.policy.desc[1] || "，如您同意"}}
+      <text class="theme-color" wx:for="{{config.policy.list}}" wx:key="unique" bind:tap="clickAgreement" data-item="{{item}}">{{item.agreementName || item.title}}</text>
+      {{config.policy.desc[2] || "的全部内容，请点击“同意”开始使用我们的服务。"}}
+    </view>
+    <view class="btn border-box justify-between u-m-t-40 ex-btns">
+      <mask-element load-animation="{{maskAnimation}}">
+        <view class="btn-item u-font-32 border-box ex-disagree" style="--agreement-bgColor:#fff;--agreement-fontColor:var(--agreement-theme)" bind:tap="disagree">{{config.btns.disagreeText || '不同意,仅浏览' }}</view>
+      </mask-element>
+      <mask-element load-animation="{{maskAnimation}}">
+        <button wx:if="{{authorization.needAuthorization}}" id="agree-btn" class="btn-item u-font-32 border-box ex-agree" open-type="agreePrivacyAuthorization" style="--agreement-fontColor:#fff;--bgColor:var(--agreement-theme)" bindagreeprivacyauthorization="agree">{{config.btns.agreeText || '同意' }}</button>
+        <view wx:else class="btn-item u-font-32 border-box ex-agree" style="--agreement-fontColor:#fff;--agreement-bgColor:var(--agreement-theme)" bind:tap="agree">{{config.btns.agreeText || '同意' }}</view>
+      </mask-element>
+    </view>
+  </view>
+</view>

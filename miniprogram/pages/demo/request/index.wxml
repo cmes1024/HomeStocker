@@ -1,0 +1,45 @@
+<Header page-name="请求编排" align-content="center" zIndex="10" headerStyle="background: white" />
+
+<view class="demo-section">
+  <view class="demo-hint">演示 RequestManager 的请求队列、白名单机制、空闲调度和网络异常处理能力。</view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">请求队列 & 白名单</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="demoWhiteList">▶ 执行</view>
+      <view class="demo-desc">设置白名单 /gateway，关键请求排队，startRequest 放行</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">空闲调度</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="demoIdle">▶ 执行</view>
+      <view class="demo-desc">requestIdleCallback 空闲时执行，不阻塞用户交互</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">网络异常提示</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="demoErrorTip">▶ 执行</view>
+      <view class="demo-desc">统一文案处理：timeout → "网络开小差啦～"</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">请求快速版</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="demoQuickRequest">▶ 执行</view>
+      <view class="demo-desc">requestTypesQuick 封装 URL 装配和参数构建</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">执行日志</view>
+    <view class="demo-logs">
+      <view wx:for="{{logs}}" wx:key="*this" class="demo-log-item">{{item}}</view>
+      <view wx:if="{{!logs.length}}" class="demo-log-empty">点击按钮触发操作</view>
+    </view>
+  </view>
+</view>

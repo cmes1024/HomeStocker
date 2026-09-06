@@ -1,0 +1,37 @@
+<Header page-name="Worker 线程" align-content="center" zIndex="10" headerStyle="background: white" />
+
+<view class="demo-section">
+  <view class="demo-hint">演示 Worker 线程的发布订阅模式。Worker 在独立线程执行计算任务，通过事件 key 回传结果。</view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">一次性事件</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="sendOnce">▶ 发送（once）</view>
+      <view class="demo-desc">用 .once() 订阅，回调执行后自动取消订阅</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">多订阅者</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="sendMulti">▶ 发送（on）</view>
+      <view class="demo-desc">同一事件 key 可以被多个订阅者监听</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">批量任务</view>
+    <view class="demo-card-bd">
+      <view class="demo-btn-sm" bind:tap="sendBatch">▶ 发送（批量）</view>
+      <view class="demo-desc">并行发送 3 个独立 Worker 任务，各自回传</view>
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">执行日志 <text wx:if="{{workerReady}}" style="color:#05D267">● 已连接</text></view>
+    <view class="demo-logs">
+      <view wx:for="{{logs}}" wx:key="*this" class="demo-log-item">{{item}}</view>
+      <view wx:if="{{!logs.length}}" class="demo-log-empty">点击按钮触发 Worker 通信</view>
+    </view>
+  </view>
+</view>

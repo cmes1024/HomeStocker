@@ -1,0 +1,36 @@
+page {
+  --safe-area-bottom: 64rpx;
+  --proxy-color: #3FA6FF;
+  --theme-color: #05D267;
+  --active-btn-color: #FF6600;
+
+  /* 主色调 */
+  --main-color: #007BFF;
+  /* 副色调 */
+  --second-color: #6C757D;
+  /* 浅主色调 */
+  --main-opacity-color: #007bff18;
+
+  /* 营销主色调 */
+  --promotion-main-color: #ef95dd;
+  /* 营销副色调 */
+  --promotion-second-color: #a58ef6;
+  /* 营销副色调 */
+  --promotion-third-color: #fcdf46;
+
+  --login-bg-color: #007BFF;
+
+  /* 变量值 */
+  --color-333: #333;
+  --color-666: #666;
+  --color-999: #999;
+  --color-ccc: #ccc;
+
+  /* 售罄 */
+  --saleout-txt-color: red;
+
+  --info-color: #1485EE;
+  --success-color: #07C160;
+  --warning-color: #FFC300;
+  --error-color: #FA5151;
+}

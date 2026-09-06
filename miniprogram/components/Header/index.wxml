@@ -1,0 +1,17 @@
+<!--components/Header/index.wxml-->
+<view class="place" style="height: calc({{menuPositionInfo.height + menuPositionInfo.top}}px + {{bottomDistance}}rpx);--header-height:calc({{menuPositionInfo.height + menuPositionInfo.top}}px + {{bottomDistance}}rpx)"></view>
+<view class="header" style="height: calc({{menuPositionInfo.height + menuPositionInfo.top}}px + {{bottomDistance}}rpx);top:0;{{headerStyle}};z-index:{{zIndex}}">
+  <view class="header-content" style="width:{{menuPositionInfo.left}}px;height: {{menuPositionInfo.height}}px;margin-top:{{menuPositionInfo.top}}px">
+    <!-- 左边图标 -->
+    <view wx:if="{{back}}" class="header-content-left" bind:tap="BackPage">
+      <!-- <Icons class="back-icon" icon="back" size="14" /> -->
+      返回
+    </view>
+    <!-- 页面标题 -->
+    <view class="header-content-title text-align-{{alignContent}}" style="--left:{{back ? '64rpx' : '0px'}};--right: {{menuPositionInfo.width}}px;{{titleStyle}}">
+      {{pageName}}
+    </view>
+  </view>
+</view>
+<loading zIndex="{{zIndex+1}}"/>
+<mini-use-agreement zIndex="{{zIndex+1}}" config="{{proxyConfig}}" bind:agree="agree" bind:disagree="disagree" bind:agreementClick="agreementClick" ex-panel="ex-panel" ex-wrapper="ex-wrapper" ex-logo="ex-logo" ex-btns="ex-btns" ex-disagree="ex-disagree"/>

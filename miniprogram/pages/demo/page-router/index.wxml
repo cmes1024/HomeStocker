@@ -1,0 +1,41 @@
+<Header page-name="pageRouter 通信" align-content="center" zIndex="10" headerStyle="background: white" />
+
+<view class="demo-section">
+  <view class="demo-hint">demo-button 组件通过 pageRouter 注册了 increment / reset / getCount 方法，页面直接调用，无需知道组件内部实现。</view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">组件区</view>
+    <view class="demo-card-bd">
+      <demo-button
+        label="点击我"
+        color="#007BFF"
+        bind:change="onBtnChange"
+      />
+      <demo-button
+        label="另一个实例"
+        color="#05D267"
+        bind:change="onBtnChange"
+      />
+    </view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">页面控制区（通过 pageRouter）</view>
+    <view class="demo-card-bd row">
+      <view class="demo-btn-sm" bind:tap="pageIncrement">+1</view>
+      <view class="demo-btn-sm" bind:tap="pageReset">归零</view>
+      <view class="demo-btn-sm green" bind:tap="showLoading">加载演示</view>
+    </view>
+    <view class="demo-card-ft">当前值: <text>{{countFromPage}}</text></view>
+  </view>
+
+  <view class="demo-card">
+    <view class="demo-card-hd">通信日志</view>
+    <view class="demo-logs">
+      <view wx:for="{{logs}}" wx:key="*this" class="demo-log-item">{{item}}</view>
+      <view wx:if="{{!logs.length}}" class="demo-log-empty">暂无日志，点击上方按钮触发通信</view>
+    </view>
+  </view>
+</view>
+
+<loading />

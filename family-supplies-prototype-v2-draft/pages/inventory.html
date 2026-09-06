@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物资列表V2</title>
+    <style id="theme-vars">
+:root {
+  --family-background: #f6f8f6;
+  --family-foreground: #18211d;
+  --family-card: #ffffff;
+  --family-card-foreground: #18211d;
+  --family-popover: #ffffff;
+  --family-popover-foreground: #18211d;
+  --family-primary: #2f7d62;
+  --family-primary-foreground: #f8fffb;
+  --family-muted: #e8efeb;
+  --family-muted-foreground: #60716a;
+  --family-border: #d6dfda;
+  --family-input: #d6dfda;
+  --family-ring: #2f7d62;
+
+  --family-bg: var(--family-background);
+  --family-surface: var(--family-card);
+  --family-surface-2: #eef5f1;
+  --family-ink: var(--family-foreground);
+  --family-ink-2: #5f6f68;
+  --family-ink-3: #889790;
+  --family-line: var(--family-border);
+  --family-brand: var(--family-primary);
+  --family-brand-ink: var(--family-primary-foreground);
+
+  --family-state-success: #2f7d62;
+  --family-state-warning: #c68a24;
+  --family-state-error: #c9574b;
+  --family-state-info: #5380c1;
+
+  --family-radius-sm: 8px;
+  --family-radius-md: 16px;
+  --family-radius-lg: 24px;
+  --family-shadow-soft: 0 12px 28px rgba(24, 33, 29, 0.05);
+  --family-shadow-float: 0 16px 32px rgba(24, 33, 29, 0.08);
+
+  --family-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--family-background);
+  color: var(--family-foreground);
+  font-family: var(--family-font-sans);
+}
+
+body {
+  min-height: 100vh;
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--family-background);
+    --color-foreground: var(--family-foreground);
+    --color-card: var(--family-card);
+    --color-card-foreground: var(--family-card-foreground);
+    --color-popover: var(--family-popover);
+    --color-popover-foreground: var(--family-popover-foreground);
+    --color-primary: var(--family-primary);
+    --color-primary-foreground: var(--family-primary-foreground);
+    --color-muted: var(--family-muted);
+    --color-muted-foreground: var(--family-muted-foreground);
+    --color-border: var(--family-border);
+    --color-input: var(--family-input);
+    --color-ring: var(--family-ring);
+    --radius-sm: var(--family-radius-sm);
+    --radius-md: var(--family-radius-md);
+    --radius-lg: var(--family-radius-lg);
+  }
+  @layer base {
+    body { background: var(--family-background); color: var(--family-foreground); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style id="semantic-token-fallback">
+      .bg-background { background-color: var(--family-background); }
+      .text-background { color: var(--family-background); }
+      .border-background { border-color: var(--family-background); }
+      .ring-background { --tw-ring-color: var(--family-background); }
+      .bg-foreground { background-color: var(--family-foreground); }
+      .text-foreground { color: var(--family-foreground); }
+      .border-foreground { border-color: var(--family-foreground); }
+      .ring-foreground { --tw-ring-color: var(--family-foreground); }
+      .bg-card { background-color: var(--family-card); }
+      .text-card { color: var(--family-card); }
+      .border-card { border-color: var(--family-card); }
+      .ring-card { --tw-ring-color: var(--family-card); }
+      .bg-card-foreground { background-color: var(--family-card-foreground); }
+      .text-card-foreground { color: var(--family-card-foreground); }
+      .border-card-foreground { border-color: var(--family-card-foreground); }
+      .ring-card-foreground { --tw-ring-color: var(--family-card-foreground); }
+      .bg-popover { background-color: var(--family-popover); }
+      .text-popover { color: var(--family-popover); }
+      .border-popover { border-color: var(--family-popover); }
+      .ring-popover { --tw-ring-color: var(--family-popover); }
+      .bg-popover-foreground { background-color: var(--family-popover-foreground); }
+      .text-popover-foreground { color: var(--family-popover-foreground); }
+      .border-popover-foreground { border-color: var(--family-popover-foreground); }
+      .ring-popover-foreground { --tw-ring-color: var(--family-popover-foreground); }
+      .bg-primary { background-color: var(--family-primary); }
+      .text-primary { color: var(--family-primary); }
+      .border-primary { border-color: var(--family-primary); }
+      .ring-primary { --tw-ring-color: var(--family-primary); }
+      .bg-primary-foreground { background-color: var(--family-primary-foreground); }
+      .text-primary-foreground { color: var(--family-primary-foreground); }
+      .border-primary-foreground { border-color: var(--family-primary-foreground); }
+      .ring-primary-foreground { --tw-ring-color: var(--family-primary-foreground); }
+      .bg-muted { background-color: var(--family-muted); }
+      .text-muted { color: var(--family-muted); }
+      .border-muted { border-color: var(--family-muted); }
+      .ring-muted { --tw-ring-color: var(--family-muted); }
+      .bg-muted-foreground { background-color: var(--family-muted-foreground); }
+      .text-muted-foreground { color: var(--family-muted-foreground); }
+      .border-muted-foreground { border-color: var(--family-muted-foreground); }
+      .ring-muted-foreground { --tw-ring-color: var(--family-muted-foreground); }
+      .bg-border { background-color: var(--family-border); }
+      .text-border { color: var(--family-border); }
+      .border-border { border-color: var(--family-border); }
+      .ring-border { --tw-ring-color: var(--family-border); }
+      .bg-input { background-color: var(--family-input); }
+      .text-input { color: var(--family-input); }
+      .border-input { border-color: var(--family-input); }
+      .ring-input { --tw-ring-color: var(--family-input); }
+      .bg-ring { background-color: var(--family-ring); }
+      .text-ring { color: var(--family-ring); }
+      .border-ring { border-color: var(--family-ring); }
+      .ring-ring { --tw-ring-color: var(--family-ring); }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body>
+  <main id="page-inventory" data-node-id="page-inventory">
+    <div class="inventory-shell">
+      <header class="custom-nav">
+        <div class="nav-side">
+          <button type="button" class="icon-button" aria-label="返回上一页">
+            <i data-lucide="chevron-left"></i>
+          </button>
+        </div>
+        <div class="nav-center">
+          <p class="nav-overline">本周更新 14 次</p>
+          <h1>物资列表</h1>
+        </div>
+        <div class="flex h-8 w-[88px] items-center overflow-hidden rounded-full border border-[#d9dce3] bg-white text-[#334155]" aria-label="小程序菜单">
+          <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="更多">
+            <i data-lucide="more-horizontal" class="h-4 w-4"></i>
+          </button>
+          <span class="h-4 w-px bg-[#e5e7eb]" aria-hidden="true"></span>
+          <button class="flex h-full flex-1 items-center justify-center" type="button" aria-label="关闭">
+            <i data-lucide="x" class="h-4 w-4"></i>
+          </button>
+        </div>
+      </header>
+
+      <section class="page-intro">
+        <div>
+          <p class="eyebrow">家庭仓储 · Skyline 高频管理页</p>
+          <h2>冰箱、厨房柜、储藏间一屏统管</h2>
+          <p class="intro-copy">把搜索、筛选、视图切换与详情入口收敛在同一条连续工作流里，优先处理临期和低库存。</p>
+        </div>
+        <div class="intro-badges">
+          <span class="pill soft">
+            <i data-lucide="scan-search"></i>
+            连续浏览
+          </span>
+          <span class="pill soft">
+            <i data-lucide="panel-top"></i>
+            吸顶控制
+          </span>
+        </div>
+      </section>
+
+      <div class="inventory-scroll">
+        <section class="sticky-control-stack">
+          <div class="search-add-bar section-card">
+            <label class="search-box" aria-label="搜索物资">
+              <i data-lucide="search"></i>
+              <input type="text" value="搜索名称 / 分类 / 位置 / 家人备注" />
+            </label>
+            <button data-dom-id="cta-open-add-item" type="button" class="add-button" aria-label="添加物资">
+              <i data-lucide="plus"></i>
+              <span>添加</span>
+            </button>
+          </div>
+
+          <div class="sticky-filters section-card">
+            <div class="filter-summary">
+              <div>
+                <p class="eyebrow">统一管理心智</p>
+                <h3>分类、位置、临期、排序</h3>
+              </div>
+              <span class="summary-chip">当前家庭 · 厨房主视角</span>
+            </div>
+            <div class="filter-row" aria-label="吸顶筛选区">
+              <button type="button" class="filter-pill active">
+                <i data-lucide="shapes"></i>
+                <span>分类 全部</span>
+              </button>
+              <button type="button" class="filter-pill">
+                <i data-lucide="map-pinned"></i>
+                <span>位置 厨房</span>
+              </button>
+              <button type="button" class="filter-pill warning">
+                <i data-lucide="alarm-clock"></i>
+                <span>临期 7 天内</span>
+              </button>
+              <button type="button" class="filter-pill">
+                <i data-lucide="arrow-up-down"></i>
+                <span>排序 临期优先</span>
+              </button>
+            </div>
+            <div class="view-switch-row" aria-label="视图切换">
+              <button type="button" class="view-pill selected" aria-pressed="true">
+                <i data-lucide="layout-grid"></i>
+                <span>卡片模式</span>
+              </button>
+              <button type="button" class="view-pill" aria-pressed="false">
+                <i data-lucide="rows-3"></i>
+                <span>紧凑表格</span>
+              </button>
+              <span class="mode-note">双模式同页对照，后续可接共享元素与分组吸顶</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="stats-summary">
+          <article class="stat-card highlight">
+            <p>库存总数</p>
+            <strong>128</strong>
+            <span>18 个分类 / 9 个位置</span>
+          </article>
+          <article class="stat-card warning">
+            <p>临期待处理</p>
+            <strong>4</strong>
+            <span>牛奶、鸡蛋、面包、酸奶</span>
+          </article>
+          <article class="stat-card info">
+            <p>低库存关注</p>
+            <strong>3</strong>
+            <span>抽纸、酱油、洗衣凝珠</span>
+          </article>
+        </section>
+
+        <section class="section-heading">
+          <div>
+            <p class="eyebrow">标准化长列表结构</p>
+            <h3>卡片列表</h3>
+          </div>
+          <span class="section-meta">每组 20 条内分页 · 预留分组吸顶</span>
+        </section>
+
+        <section class="group-list" aria-label="物资卡片列表">
+          <div class="group-block">
+            <div class="group-header">
+              <div>
+                <p class="group-title">今日优先处理</p>
+                <p class="group-subtitle">临期与待分发物资优先露出，适合进入详情连续处理</p>
+              </div>
+              <span class="group-count">2 件</span>
+            </div>
+
+            <article class="inventory-card inventory-card-warning" data-dom-id="item-milk-detail">
+              <div class="card-topline">
+                <span class="category-tag warning-tag">饮品</span>
+                <span class="status-tag warning-status">临期 3 天</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>纯牛奶 250ml</h4>
+                    <p>冰箱上层 · 剩余 8 盒 · 家人早餐常用</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>进入详情</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip warning-surface">
+                  <div>
+                    <span>建议动作</span>
+                    <strong>优先饮用并同步提醒家人</strong>
+                  </div>
+                  <div>
+                    <span>提醒状态</span>
+                    <strong>已开启</strong>
+                  </div>
+                  <div>
+                    <span>最近变动</span>
+                    <strong>今早取用 2 盒</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-rail">
+                <div class="detail-path">
+                  <i data-lucide="move-right"></i>
+                  <span>从列表卡进入详情，延续标题、状态标签与位置信息</span>
+                </div>
+                <button type="button" class="ghost-action" aria-label="为纯牛奶设置提醒">
+                  <i data-lucide="bell-ring"></i>
+                  设提醒
+                </button>
+              </div>
+            </article>
+
+            <article class="inventory-card inventory-card-danger">
+              <div class="card-topline">
+                <span class="category-tag danger-tag">生鲜</span>
+                <span class="status-tag danger-status">今天到期</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>鸡蛋 12 枚装</h4>
+                    <p>冰箱门侧 · 剩余 5 枚 · 早餐备餐位</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>继续处理</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip danger-surface">
+                  <div>
+                    <span>建议动作</span>
+                    <strong>今天优先消耗</strong>
+                  </div>
+                  <div>
+                    <span>补货判断</span>
+                    <strong>本周三采购</strong>
+                  </div>
+                  <div>
+                    <span>提醒责任</span>
+                    <strong>妈妈已查看</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <div class="group-block">
+            <div class="group-header">
+              <div>
+                <p class="group-title">常备储存</p>
+                <p class="group-subtitle">分类、位置与库存结构统一，方便后续按位置或分类分组吸顶</p>
+              </div>
+              <span class="group-count">4 件</span>
+            </div>
+
+            <article class="inventory-card" data-dom-id="item-rice-detail">
+              <div class="card-topline">
+                <span class="category-tag">主食</span>
+                <span class="status-tag success-status">库存稳定</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>东北大米 5kg</h4>
+                    <p>储藏柜 A1 · 剩余 3 袋 · 家庭主粮</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>查看详情</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip">
+                  <div>
+                    <span>保质剩余</span>
+                    <strong>128 天</strong>
+                  </div>
+                  <div>
+                    <span>补货预估</span>
+                    <strong>暂不需要</strong>
+                  </div>
+                  <div>
+                    <span>最近领取</span>
+                    <strong>昨天 1 袋</strong>
+                  </div>
+                </div>
+              </div>
+              <div class="detail-rail">
+                <div class="detail-path">
+                  <i data-lucide="waypoints"></i>
+                  <span>详情延续：主食标签、库存数值、储位路径</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="inventory-card">
+              <div class="card-topline">
+                <span class="category-tag">日用品</span>
+                <span class="status-tag info-status">低库存关注</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>抽纸 24 包</h4>
+                    <p>客厅高柜 · 剩余 2 提 · 常规消耗品</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>补货判断</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip">
+                  <div>
+                    <span>库存阈值</span>
+                    <strong>低于 2 提提醒</strong>
+                  </div>
+                  <div>
+                    <span>采购建议</span>
+                    <strong>9 天内补货</strong>
+                  </div>
+                  <div>
+                    <span>所属位置</span>
+                    <strong>客厅日用品区</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="inventory-card">
+              <div class="card-topline">
+                <span class="category-tag">调味</span>
+                <span class="status-tag success-status">正常</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>生抽酱油 1L</h4>
+                    <p>厨房台面篮筐 · 剩余 1 瓶 · 做饭高频</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>库存快调</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip">
+                  <div>
+                    <span>开封时间</span>
+                    <strong>2 周前</strong>
+                  </div>
+                  <div>
+                    <span>保质剩余</span>
+                    <strong>63 天</strong>
+                  </div>
+                  <div>
+                    <span>推荐位置</span>
+                    <strong>调味区 2 层</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="inventory-card">
+              <div class="card-topline">
+                <span class="category-tag">医疗</span>
+                <span class="status-tag success-status">已检查</span>
+              </div>
+              <div class="card-main">
+                <div class="card-title-row">
+                  <div>
+                    <h4>常备药箱</h4>
+                    <p>玄关抽屉 · 1 盒 · 家庭应急储备</p>
+                  </div>
+                  <div class="route-bridge">
+                    <span>查看记录</span>
+                    <i data-lucide="chevron-right"></i>
+                  </div>
+                </div>
+                <div class="metric-strip">
+                  <div>
+                    <span>重点状态</span>
+                    <strong>口罩与创可贴充足</strong>
+                  </div>
+                  <div>
+                    <span>下次检查</span>
+                    <strong>8 月 18 日</strong>
+                  </div>
+                  <div>
+                    <span>责任成员</span>
+                    <strong>爸爸</strong>
+                  </div>
+                </div>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section-heading compact-heading">
+          <div>
+            <p class="eyebrow">移动端友好的紧凑行块</p>
+            <h3>紧凑表格预览区</h3>
+          </div>
+          <span class="section-meta">不是 Web table，而是可滑动的行块摘要</span>
+        </section>
+
+        <section class="compact-preview section-card" aria-label="紧凑表格模式预览">
+          <div class="compact-toolbar">
+            <span class="pill active-pill">
+              <i data-lucide="rows-3"></i>
+              紧凑模式摘要
+            </span>
+            <span class="compact-hint">字段保持统一：名称 / 位置 / 库存 / 临期 / 排序依据</span>
+          </div>
+
+          <div class="compact-rows">
+            <article class="compact-row compact-row-warning">
+              <div class="compact-primary">
+                <strong>纯牛奶 250ml</strong>
+                <span>饮品</span>
+              </div>
+              <div class="compact-meta">
+                <span>冰箱上层</span>
+                <span>库存 8</span>
+                <span>临期 3 天</span>
+                <span>排序 01</span>
+              </div>
+            </article>
+            <article class="compact-row">
+              <div class="compact-primary">
+                <strong>东北大米 5kg</strong>
+                <span>主食</span>
+              </div>
+              <div class="compact-meta">
+                <span>储藏柜 A1</span>
+                <span>库存 3 袋</span>
+                <span>剩余 128 天</span>
+                <span>排序 08</span>
+              </div>
+            </article>
+            <article class="compact-row compact-row-info">
+              <div class="compact-primary">
+                <strong>抽纸 24 包</strong>
+                <span>日用品</span>
+              </div>
+              <div class="compact-meta">
+                <span>客厅高柜</span>
+                <span>库存 2 提</span>
+                <span>低库存</span>
+                <span>排序 11</span>
+              </div>
+            </article>
+            <article class="compact-row">
+              <div class="compact-primary">
+                <strong>常备药箱</strong>
+                <span>医疗</span>
+              </div>
+              <div class="compact-meta">
+                <span>玄关抽屉</span>
+                <span>库存 1 盒</span>
+                <span>检查完成</span>
+                <span>排序 14</span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </div>
+
+      <nav data-mobile-nav="global" class="mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]"><div class="grid h-full w-full grid-cols-3"><button data-dom-id="nav-home" data-nav-key="home" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="house" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">首页</span></button><button data-nav-key="inventory" data-active="true" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold"><i data-lucide="package-2" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">物资</span></button><button data-dom-id="nav-family" data-nav-key="family" data-active="false" class="min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]"><i data-lucide="users-round" class="h-5 w-5 shrink-0"></i><span class="text-[11px] leading-none whitespace-nowrap max-w-full truncate">家庭</span></button></div></nav>
+    </div>
+  </main>
+
+  <style>
+    html,
+    body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--family-surface-2) 74%, white 26%) 0%, var(--family-background) 32%, var(--family-background) 100%);
+      color: var(--family-foreground);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    input {
+      border: 0;
+      outline: none;
+      background: transparent;
+      color: var(--family-foreground);
+      width: 100%;
+      min-width: 0;
+    }
+
+    #page-inventory {
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 10px 12px 16px;
+    }
+
+    .inventory-shell {
+      width: min(100%, 420px);
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .custom-nav,
+    .page-intro,
+    .section-card,
+    .mobile-nav,
+    .inventory-card,
+    .stat-card {
+      border: 1px solid color-mix(in srgb, var(--family-line) 78%, white 22%);
+      background: var(--family-surface);
+      box-shadow: var(--family-shadow-soft);
+    }
+
+    .custom-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 28px;
+      background: color-mix(in srgb, var(--family-surface) 92%, white 8%);
+    }
+
+    .nav-side {
+      width: 88px;
+      display: flex;
+      align-items: center;
+    }
+
+    .nav-side-right {
+      justify-content: flex-end;
+    }
+
+    .icon-button {
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      background: var(--family-surface-2);
+      color: var(--family-ink);
+    }
+
+    .icon-button i,
+    .capsule-menu i,
+    .pill i,
+    .filter-pill i,
+    .view-pill i,
+    .route-bridge i,
+    .detail-path i,
+    .ghost-action i,
+    .nav-item i,
+    .add-button i {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .nav-center {
+      flex: 1;
+      text-align: center;
+      min-width: 0;
+    }
+
+    .nav-center h1,
+    .page-intro h2,
+    .section-heading h3 {
+      margin: 0;
+    }
+
+    .nav-center h1 {
+      font-size: 23px;
+      line-height: 1.1;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-overline,
+    .eyebrow,
+    .group-subtitle,
+    .compact-hint,
+    .section-meta,
+    .summary-chip,
+    .mode-note,
+    .stat-card span,
+    .card-main p,
+    .metric-strip span,
+    .compact-meta span {
+      color: var(--family-ink-2);
+    }
+
+    .nav-overline,
+    .eyebrow {
+      margin: 0 0 4px;
+      font-size: 12px;
+      line-height: 1.3;
+    }
+
+    .capsule-menu {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 36px;
+      min-width: 88px;
+      padding: 0 4px;
+      border-radius: 999px;
+      border: 1px solid var(--family-line);
+      background: color-mix(in srgb, var(--family-surface) 92%, white 8%);
+    }
+
+    .capsule-menu button {
+      width: 38px;
+      height: 28px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+    }
+
+    .capsule-menu span {
+      width: 1px;
+      height: 14px;
+      background: var(--family-line);
+    }
+
+    .page-intro {
+      border-radius: 28px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--family-surface-2) 72%, white 28%) 0%, white 100%);
+    }
+
+    .page-intro h2 {
+      font-size: 26px;
+      line-height: 1.16;
+      font-weight: 700;
+    }
+
+    .intro-copy {
+      margin: 8px 0 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--family-ink-2);
+    }
+
+    .intro-badges,
+    .filter-row,
+    .view-switch-row,
+    .compact-toolbar {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .intro-badges::-webkit-scrollbar,
+    .filter-row::-webkit-scrollbar,
+    .view-switch-row::-webkit-scrollbar,
+    .compact-toolbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .pill,
+    .filter-pill,
+    .view-pill,
+    .ghost-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      border-radius: 999px;
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .pill {
+      padding: 10px 12px;
+      border: 1px solid color-mix(in srgb, var(--family-line) 84%, white 16%);
+    }
+
+    .soft {
+      background: color-mix(in srgb, var(--family-surface-2) 78%, white 22%);
+    }
+
+    .inventory-scroll {
+      flex: 1;
+      overflow: auto;
+      padding-bottom: 8px;
+      scrollbar-width: none;
+    }
+
+    .inventory-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sticky-control-stack {
+      position: sticky;
+      top: 0;
+      z-index: 6;
+      display: grid;
+      gap: 10px;
+      padding-bottom: 10px;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--family-background) 96%, transparent 4%) 0%, color-mix(in srgb, var(--family-background) 92%, transparent 8%) 82%, transparent 100%);
+      backdrop-filter: blur(10px);
+    }
+
+    .section-card {
+      border-radius: 24px;
+      padding: 14px;
+    }
+
+    .search-add-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .search-box {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 14px;
+      border-radius: 20px;
+      background: var(--family-surface-2);
+      border: 1px solid color-mix(in srgb, var(--family-line) 76%, white 24%);
+      color: var(--family-ink-2);
+    }
+
+    .search-box input {
+      font-size: 14px;
+      color: var(--family-ink-2);
+    }
+
+    .add-button {
+      height: 52px;
+      padding: 0 16px;
+      border-radius: 20px;
+      background: var(--family-primary);
+      color: var(--family-primary-foreground);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 15px;
+      font-weight: 700;
+      box-shadow: var(--family-shadow-soft);
+      flex-shrink: 0;
+    }
+
+    .sticky-filters {
+      display: grid;
+      gap: 12px;
+    }
+
+    .filter-summary {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .filter-summary h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.3;
+    }
+
+    .summary-chip {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--family-surface-2);
+      font-size: 12px;
+    }
+
+    .filter-pill,
+    .view-pill {
+      padding: 11px 14px;
+      border: 1px solid color-mix(in srgb, var(--family-line) 84%, white 16%);
+      background: color-mix(in srgb, var(--family-surface-2) 62%, white 38%);
+      color: var(--family-ink);
+      flex-shrink: 0;
+    }
+
+    .filter-pill.active,
+    .view-pill.selected,
+    .active-pill {
+      background: var(--family-primary);
+      border-color: transparent;
+      color: var(--family-primary-foreground);
+    }
+
+    .filter-pill.warning {
+      background: color-mix(in srgb, var(--family-state-warning) 10%, white 90%);
+      color: var(--family-state-warning);
+      border-color: color-mix(in srgb, var(--family-state-warning) 24%, var(--family-line) 76%);
+    }
+
+    .mode-note {
+      font-size: 12px;
+      line-height: 1.5;
+      align-self: center;
+      min-width: 180px;
+    }
+
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      border-radius: 22px;
+      padding: 14px 12px;
+      min-width: 0;
+    }
+
+    .stat-card p {
+      margin: 0;
+      font-size: 12px;
+      color: var(--family-ink-2);
+    }
+
+    .stat-card strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 28px;
+      line-height: 1;
+      font-weight: 700;
+    }
+
+    .stat-card span {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .stat-card.highlight {
+      background: linear-gradient(180deg, color-mix(in srgb, var(--family-surface-2) 68%, white 32%) 0%, white 100%);
+    }
+
+    .stat-card.warning {
+      background: color-mix(in srgb, var(--family-state-warning) 8%, white 92%);
+    }
+
+    .stat-card.info {
+      background: color-mix(in srgb, var(--family-state-info) 8%, white 92%);
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      padding: 0 4px;
+    }
+
+    .section-heading h3 {
+      font-size: 22px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .section-meta {
+      font-size: 12px;
+      line-height: 1.5;
+      text-align: right;
+    }
+
+    .group-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .group-block {
+      display: grid;
+      gap: 10px;
+    }
+
+    .group-header {
+      position: sticky;
+      top: 164px;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--family-background) 74%, white 26%);
+      border: 1px solid color-mix(in srgb, var(--family-line) 72%, white 28%);
+      backdrop-filter: blur(10px);
+    }
+
+    .group-title {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .group-subtitle {
+      margin: 4px 0 0;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .group-count {
+      flex-shrink: 0;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: var(--family-surface-2);
+      font-size: 12px;
+      color: var(--family-ink-2);
+    }
+
+    .inventory-card {
+      border-radius: 26px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .inventory-card-warning {
+      border-color: color-mix(in srgb, var(--family-state-warning) 34%, var(--family-line) 66%);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--family-state-warning) 5%, white 95%) 0%, white 100%);
+    }
+
+    .inventory-card-danger {
+      border-color: color-mix(in srgb, var(--family-state-error) 32%, var(--family-line) 68%);
+      background: linear-gradient(180deg, color-mix(in srgb, var(--family-state-error) 5%, white 95%) 0%, white 100%);
+    }
+
+    .card-topline,
+    .card-title-row,
+    .detail-rail {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title-row {
+      align-items: flex-start;
+    }
+
+    .card-title-row h4 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .card-main p {
+      margin: 6px 0 0;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .category-tag,
+    .status-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .category-tag {
+      color: var(--family-ink-2);
+      background: var(--family-surface-2);
+    }
+
+    .warning-tag {
+      color: var(--family-state-warning);
+      background: color-mix(in srgb, var(--family-state-warning) 10%, white 90%);
+    }
+
+    .danger-tag {
+      color: var(--family-state-error);
+      background: color-mix(in srgb, var(--family-state-error) 10%, white 90%);
+    }
+
+    .status-tag {
+      background: color-mix(in srgb, var(--family-state-success) 10%, white 90%);
+      color: var(--family-state-success);
+    }
+
+    .warning-status {
+      background: color-mix(in srgb, var(--family-state-warning) 12%, white 88%);
+      color: var(--family-state-warning);
+    }
+
+    .danger-status {
+      background: color-mix(in srgb, var(--family-state-error) 12%, white 88%);
+      color: var(--family-state-error);
+    }
+
+    .info-status {
+      background: color-mix(in srgb, var(--family-state-info) 12%, white 88%);
+      color: var(--family-state-info);
+    }
+
+    .route-bridge {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: var(--family-primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .metric-strip {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      padding: 12px;
+      border-radius: 20px;
+      background: var(--family-surface-2);
+    }
+
+    .warning-surface {
+      background: color-mix(in srgb, var(--family-state-warning) 8%, white 92%);
+    }
+
+    .danger-surface {
+      background: color-mix(in srgb, var(--family-state-error) 8%, white 92%);
+    }
+
+    .metric-strip span {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 11px;
+      line-height: 1.4;
+    }
+
+    .metric-strip strong {
+      display: block;
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 700;
+    }
+
+    .detail-rail {
+      padding-top: 2px;
+    }
+
+    .detail-path {
+      min-width: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      line-height: 1.5;
+      color: var(--family-ink-2);
+    }
+
+    .ghost-action {
+      padding: 10px 12px;
+      border: 1px solid color-mix(in srgb, var(--family-state-warning) 28%, var(--family-line) 72%);
+      background: white;
+      color: var(--family-state-warning);
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .compact-heading {
+      margin-top: 14px;
+    }
+
+    .compact-preview {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+
+    .compact-hint {
+      align-self: center;
+      font-size: 12px;
+      line-height: 1.5;
+      min-width: 200px;
+    }
+
+    .compact-rows {
+      display: grid;
+      gap: 10px;
+    }
+
+    .compact-row {
+      border-radius: 18px;
+      padding: 12px 14px;
+      border: 1px solid color-mix(in srgb, var(--family-line) 80%, white 20%);
+      background: color-mix(in srgb, var(--family-surface-2) 46%, white 54%);
+    }
+
+    .compact-row-warning {
+      border-color: color-mix(in srgb, var(--family-state-warning) 28%, var(--family-line) 72%);
+      background: color-mix(in srgb, var(--family-state-warning) 8%, white 92%);
+    }
+
+    .compact-row-info {
+      border-color: color-mix(in srgb, var(--family-state-info) 24%, var(--family-line) 76%);
+      background: color-mix(in srgb, var(--family-state-info) 8%, white 92%);
+    }
+
+    .compact-primary,
+    .compact-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .compact-primary strong {
+      font-size: 15px;
+      line-height: 1.3;
+    }
+
+    .compact-primary span {
+      padding: 5px 8px;
+      border-radius: 999px;
+      background: white;
+      font-size: 11px;
+      color: var(--family-ink-2);
+    }
+
+    .compact-meta {
+      margin-top: 8px;
+    }
+
+    .compact-meta span {
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .mobile-nav {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+      border-radius: 24px;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+      background: color-mix(in srgb, var(--family-surface) 94%, white 6%);
+      position: relative;
+      z-index: 7;
+    }
+
+    .nav-item {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 56px;
+      border-radius: 18px;
+      color: var(--family-ink-2);
+    }
+
+    .nav-item span {
+      font-size: 11px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .nav-item.active {
+      background: color-mix(in srgb, var(--family-primary) 10%, white 90%);
+      color: var(--family-primary);
+      font-weight: 700;
+    }
+
+    @media (max-width: 380px) {
+      .stats-summary,
+      .metric-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .filter-summary,
+      .card-topline,
+      .card-title-row,
+      .detail-rail,
+      .section-heading {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .route-bridge,
+      .ghost-action,
+      .section-meta,
+      .summary-chip {
+        align-self: flex-start;
+      }
+
+      .search-add-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .add-button {
+        justify-content: center;
+      }
+
+      .group-header {
+        top: 198px;
+      }
+    }
+  </style>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+  "usingComponents": {
+    "Header": "/components/Header/index",
+    "loading": "/components/loading/index",
+    "modal": "/components/Modal/index",
+    "maskElement": "/components/maskElement/index"
+  },
+  "navigationBarTitleText": "浮层组件"
+}

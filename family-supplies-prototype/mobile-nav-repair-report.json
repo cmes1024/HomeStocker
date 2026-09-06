@@ -1,0 +1,38 @@
+{
+  "success": false,
+  "repairedPages": [
+    {
+      "htmlSrc": "pages/home.html",
+      "action": "replace-data-mobile-nav-global",
+      "activeKey": "home"
+    },
+    {
+      "htmlSrc": "pages/inventory.html",
+      "action": "replace-data-mobile-nav-global",
+      "activeKey": "inventory"
+    },
+    {
+      "htmlSrc": "pages/family.html",
+      "action": "replace-data-mobile-nav-global",
+      "activeKey": "family"
+    }
+  ],
+  "skippedPages": [],
+  "failedPages": [
+    {
+      "htmlSrc": "pages/onboarding.html",
+      "reason": "canonicalHtmlByKey.none must contain at least 3 data-nav-key items"
+    },
+    {
+      "htmlSrc": "pages/add-item.html",
+      "reason": "canonicalHtmlByKey.none must contain at least 3 data-nav-key items"
+    },
+    {
+      "htmlSrc": "pages/item-detail.html",
+      "reason": "canonicalHtmlByKey.none must contain at least 3 data-nav-key items"
+    }
+  ],
+  "repairCount": 3,
+  "previousFailedReportDetected": false,
+  "checkedAt": "2026-08-11T10:13:51.761Z"
+}

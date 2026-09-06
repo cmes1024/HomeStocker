@@ -1,0 +1,1646 @@
+{
+  "project": {
+    "name": "家庭物资管理小程序原型",
+    "designProjectPath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype",
+    "resolvedLane": "existing_edit_add_comparison",
+    "deviceType": "mobile",
+    "surface": "project",
+    "selectedIntentWorkflowRead": true,
+    "intentProfile": {
+      "caseFamily": "existing_project_mutation",
+      "operatingMode": "free-explore",
+      "requestType": "prototype-update",
+      "routingReason": "在现有家庭物资管理原型上补齐已确认的引导页逻辑、多家庭切换入口与家庭列表管理能力。"
+    },
+    "contextRequirementsLoaded": [
+      {
+        "path": "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/page-rendering-quality-gate.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/design-artifact-validation.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "delivery-quality/delivery-evidence-contract.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      },
+      {
+        "path": "visual-experience/visual-experience-guidelines.md",
+        "readStatus": "loaded",
+        "bodyRead": true
+      }
+    ],
+    "contextReadScope": {
+      "mainAgent": {
+        "forbiddenReads": [
+          "other intent-workflows/**",
+          "Sub-Agent implementation files before dispatch"
+        ]
+      },
+      "pageSubAgent": {
+        "allowedReads": [
+          "current lane page runtime guide",
+          "current lane dispatch contract excerpt",
+          "current Page Packet",
+          "supplementaryReads[] only"
+        ],
+        "forbiddenReads": [
+          "SKILL.md full re-read",
+          "other intent-workflows/**",
+          "full runtime-orchestration-summary.json unless explicitly sliced"
+        ]
+      },
+      "readScopeLedgerWriter": "shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs"
+    },
+    "validationRunDiscipline": {
+      "maxFullValidationRuns": 2,
+      "softWarningsTriggerRepair": false,
+      "blockingRepairMode": "targeted-once",
+      "forbiddenRepairTriggers": [
+        "soft-warning-only",
+        "provenance-warning-only",
+        "style-warning-only"
+      ]
+    },
+    "lowValueCallWatchdog": {
+      "applies": true,
+      "noProgressSignals": [
+        "no_tool_call",
+        "no_artifact_diff",
+        "no_structured_decision"
+      ],
+      "noProgressNextAction": "enter_readiness_or_blocked_summary"
+    },
+    "cssPreflightEvidence": {
+      "applies": true,
+      "status": "passed",
+      "command": "node /Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs /Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css /Users/cme/Documents/github/NotePad/family-supplies-prototype/.preflight/preflight.html --title=\"Preflight\" --lang=zh-CN --prefix=family",
+      "brandPrefix": "family",
+      "checks": {
+        "themeVars": "present",
+        "semanticTokenFallback": "present",
+        "themeInline": "present",
+        "tailwindCdn": "present",
+        "htmlClass": "present",
+        "semanticMappings": "resolved"
+      },
+      "retryCount": 0,
+      "blockingReason": null
+    },
+    "styleContinuityAnchors": [
+      "奶白底色与绿色主按钮",
+      "圆角卡片与轻阴影",
+      "首页顶部家庭切换入口",
+      "底部三栏主导航"
+    ],
+    "sharedProjectShellContract": {
+      "mobileNavigation": {
+        "type": "bottom-tab",
+        "heightPx": 64,
+        "position": "flow-bottom",
+        "items": [
+          {
+            "key": "home",
+            "label": "首页",
+            "icon": "house"
+          },
+          {
+            "key": "inventory",
+            "label": "物资",
+            "icon": "package-2"
+          },
+          {
+            "key": "family",
+            "label": "家庭",
+            "icon": "users-round"
+          }
+        ],
+        "activeState": "only color/font-weight/data-active may change; no layout changes",
+        "structure": {
+          "navTag": "nav",
+          "navClass": "mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]",
+          "innerClass": "grid h-full w-full grid-cols-3",
+          "itemTag": "button",
+          "itemClass": "min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full",
+          "iconClass": "h-5 w-5 shrink-0",
+          "labelClass": "text-[11px] leading-none whitespace-nowrap max-w-full truncate",
+          "activeRule": "only color/font-weight/data-active may change; no class changes that affect layout",
+          "markerAttr": "data-mobile-nav=\"global\"",
+          "canonicalHtmlByKey": {
+            "home": "<nav data-mobile-nav=\"global\" class=\"mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]\"><div class=\"grid h-full w-full grid-cols-3\"><button data-nav-key=\"home\" data-active=\"true\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold\"><i data-lucide=\"house\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">首页</span></button><button data-nav-key=\"inventory\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"package-2\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">物资</span></button><button data-nav-key=\"family\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"users-round\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">家庭</span></button></div></nav>",
+            "inventory": "<nav data-mobile-nav=\"global\" class=\"mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]\"><div class=\"grid h-full w-full grid-cols-3\"><button data-nav-key=\"home\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"house\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">首页</span></button><button data-nav-key=\"inventory\" data-active=\"true\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold\"><i data-lucide=\"package-2\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">物资</span></button><button data-nav-key=\"family\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"users-round\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">家庭</span></button></div></nav>",
+            "family": "<nav data-mobile-nav=\"global\" class=\"mt-6 h-[64px] rounded-[24px] border border-[color:var(--family-border)] bg-white px-2 shadow-[var(--family-shadow-soft)]\"><div class=\"grid h-full w-full grid-cols-3\"><button data-nav-key=\"home\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"house\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">首页</span></button><button data-nav-key=\"inventory\" data-active=\"false\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-[color:var(--family-ink-2)]\"><i data-lucide=\"package-2\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">物资</span></button><button data-nav-key=\"family\" data-active=\"true\" class=\"min-w-0 flex flex-col items-center justify-center gap-1 px-1 h-full text-primary font-semibold\"><i data-lucide=\"users-round\" class=\"h-5 w-5 shrink-0\"></i><span class=\"text-[11px] leading-none whitespace-nowrap max-w-full truncate\">家庭</span></button></div></nav>",
+            "none": "<nav data-mobile-nav=\"global\" aria-hidden=\"true\" class=\"hidden\"></nav>"
+          }
+        }
+      }
+    },
+    "skillProvenance": {
+      "name": "solo-design",
+      "version": "2026.07.22.00.00.00",
+      "version_source": "skill-release-manifest.json"
+    },
+    "pageCompletenessGate": {
+      "expectedPages": [
+        "onboarding",
+        "home",
+        "inventory",
+        "add-item",
+        "item-detail",
+        "family"
+      ],
+      "requiredStates": [
+        "新用户创建或加入家庭",
+        "物资列表筛选浏览",
+        "AI 辅助录入与手动确认",
+        "物资详情库存调整"
+      ],
+      "requiredInteractions": [
+        "进入首页",
+        "底部导航切换",
+        "查看物资详情",
+        "开始录入物资",
+        "返回上一层"
+      ],
+      "requiredNavigation": [
+        "bottom-nav",
+        "back-or-close"
+      ],
+      "missingAllowed": []
+    },
+    "dispatchPreflightManifest": [
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-onboarding",
+        "htmlSrc": "pages/onboarding.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/onboarding.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/onboarding.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-onboarding' --html-src='pages/onboarding.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/onboarding.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/onboarding.html' --title='引导页' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "none",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.none",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-home",
+        "htmlSrc": "pages/home.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/home.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/home.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-home' --html-src='pages/home.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/home.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/home.html' --title='首页' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "home",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.home",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-inventory",
+        "htmlSrc": "pages/inventory.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/inventory.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/inventory.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-inventory' --html-src='pages/inventory.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/inventory.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/inventory.html' --title='物资列表' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "inventory",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.inventory",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-add-item",
+        "htmlSrc": "pages/add-item.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/add-item.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/add-item.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-add-item' --html-src='pages/add-item.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/add-item.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/add-item.html' --title='添加物资' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "none",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.none",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-item-detail",
+        "htmlSrc": "pages/item-detail.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/item-detail.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/item-detail.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-item-detail' --html-src='pages/item-detail.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/item-detail.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/item-detail.html' --title='物资详情' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "none",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.none",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      },
+      {
+        "recorded_at": "2026-08-11T10:00:57.614Z",
+        "generatedBy": "build-page-dispatch-manifest.mjs",
+        "packetType": "FreePagePacket",
+        "laneContract": {
+          "resolvedLane": "free_exploration",
+          "packetType": "FreePagePacket",
+          "pageRuntimeGuide": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+          "dispatchContract": "intent-workflows/intent-page-free-exploration/dispatch-contract.md"
+        },
+        "taskLinePresent": true,
+        "outputPathPresent": true,
+        "sharedTemplate": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "nodeId": "page-family",
+        "htmlSrc": "pages/family.html",
+        "supplementaryReads": [],
+        "allowedWritePaths": [
+          "pages/family.html",
+          "assets/"
+        ],
+        "forbiddenWriteRoots": [
+          "*.design",
+          "runtime-orchestration-summary.json",
+          "validation-report.json",
+          "finish-readiness-report.json",
+          "restore-contract-report.json",
+          "page-generation-summary.json"
+        ],
+        "toolPolicy": {
+          "todoWriteAllowed": false,
+          "validationScriptsAllowed": false,
+          "previewAllowed": false,
+          "helperScriptsAllowed": false,
+          "designFileWriteAllowed": false,
+          "allowedWritePaths": [
+            "pages/family.html",
+            "assets/"
+          ]
+        },
+        "skillRuntime": {
+          "skillDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design",
+          "deterministicToolDir": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling",
+          "toolPaths": {
+            "applyHtmlHeadContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs",
+            "recordDispatchCompletion": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs",
+            "buildPageDispatchManifest": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/build-page-dispatch-manifest.mjs",
+            "validateDesignWorkspace": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-design-workspace.mjs",
+            "validateFinishReadiness": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-finish-readiness.mjs",
+            "validateRestoreContract": "/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/validate-restore-contract.mjs"
+          },
+          "requiredForPageSubAgent": [
+            "applyHtmlHeadContract",
+            "recordDispatchCompletion"
+          ],
+          "pathInjection": "absolute",
+          "pathContract": "Do not use {SKILL_DIR} placeholders inside Page Sub-Agent packets; use toolPaths.* absolute paths.",
+          "commandTemplates": {
+            "recordDispatchCompletion": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/record-dispatch-completion.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype' --node-id='page-family' --html-src='pages/family.html' --status=completed --changed-files=<comma-separated-project-relative-files> --trace-digest=<main-agent-runtime-trace-digest> --tool-ledger-json=<tool-ledger-json-or-file>"
+          }
+        },
+        "cssFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css",
+        "htmlFilePath": "/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/family.html",
+        "brandPrefix": "family",
+        "aestheticsMode": "free-explore",
+        "toolDisciplineBlockPresent": true,
+        "fillHtmlHeadCommand": "node '/Users/cme/.trae/builtin/design/default/skills/solo-design/shared-runtime/deterministic-tooling/apply-html-head-contract.mjs' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/colors_and_type.css' '/Users/cme/Documents/github/NotePad/family-supplies-prototype/pages/family.html' --title='家庭管理' --lang='zh-CN' --prefix='family'",
+        "headFillMode": "skeleton-first",
+        "viewportMode": "document-scroll",
+        "completionSchemaExpected": "compact",
+        "restoreFields": null,
+        "restoreContractStatus": null,
+        "restoreCompactPacket": null,
+        "deterministicCommands": null,
+        "sourceAuthorityLock": null,
+        "preDispatchFileHashes": {
+          "family-supplies-prototype.design": "3fb1e7e867f12539db1183472f8a752f4e145d1579b1974fa5995809edad8bc9"
+        },
+        "contextPreflight": {
+          "workflowPath": "intent-workflows/intent-page-free-exploration/INTENT_WORKFLOW.md",
+          "requiredContextFiles": [
+            "shared-runtime/runtime-boundaries/lane-runtime-contracts.md",
+            "shared-runtime/agent-dispatch-runtime/lane-dispatch-index.md",
+            "delivery-quality/page-rendering-quality-gate.md",
+            "delivery-quality/design-artifact-validation.md",
+            "delivery-quality/delivery-evidence-contract.md",
+            "visual-experience/visual-experience-guidelines.md"
+          ],
+          "optionalContextFiles": [],
+          "passed": true
+        },
+        "pageSliceOnly": true,
+        "requiredFieldsPresent": true,
+        "missingFields": [],
+        "fillHtmlHeadCommandValid": true,
+        "mobileNavigation": {
+          "required": true,
+          "appliesToThisPage": true,
+          "activeKey": "family",
+          "contractPresent": true,
+          "structurePresent": true,
+          "canonicalHtmlIncluded": true,
+          "canonicalHtmlSource": "sharedProjectShellContract.mobileNavigation.structure.canonicalHtmlByKey.family",
+          "structureHash": "d4d80b1ea528fbfcd8c87e08d31d918f07f9817841b3f1977eabb2d29dad8e9c",
+          "missingFields": []
+        },
+        "persistedToSummary": true,
+        "taskQueryAudited": false,
+        "proofSource": "summary-only",
+        "largeWorkflowFilesInTaskQuery": null
+      }
+    ],
+    "validationHistory": [
+      {
+        "reportPath": "validation-report.json",
+        "reportHash": "bcf4a6a8244a760f8c1395bfe8167e167a3839bc50b26435aae7ebfba3de6520",
+        "checkedAt": "2026-08-11T10:11:16.912Z",
+        "success": false,
+        "exitCode": 1,
+        "renderBlockingErrorCount": 19,
+        "repairPlanHints": [
+          "mobile-navigation-consistency",
+          "mobile-navigation-consistency",
+          "mobile-navigation-consistency"
+        ],
+        "errorSignatures": [
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/onboarding.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "198af51b76a5401e58d7ef36865134fb3312c03856ff114515bf81725237cbdf"
+          },
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/home.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "d55d2e84b992ce8032121979396f8030d70f7aca8a1ae1aced7f2bb59417048e"
+          },
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/inventory.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "3bed5abdd1587b46372cea440cc5e98103a6e478f1fec012af28dfacc7bccba7"
+          },
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/add-item.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "20df88133b7993006aa61273f25634245651728e01de28ee3639659998b0d811"
+          },
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/item-detail.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "a21c453e13c21608e873ff7e7435ffa1b039fb15907a429224af607b260a0dff"
+          },
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[dispatch-changed-files] pages/family.html: controlled file changed after dispatch preflight without mainAgentPostDispatchMutations evidence: family-supplies-prototype.design",
+            "signature": "6dc43b263ce9cbb2a2f7a2cd67239e6bf529c3e3167f413b82da236ccc97e1fa"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/home.html: data-nav-key order (home|inventory|family) does not match sharedProjectShellContract.mobileNavigation.items (home|inventory|family|none). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "ea3e6713d7adba0d3abeb97ea4d8df26525fa68dfe0e2521cc4507c707810191"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/home.html: mobile nav grid class grid-cols-3 does not match item count (grid-cols-4). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "b598265f3da252970a4b9928629b1319a091fb4c61d6c48403e4337312f43f18"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/inventory.html: data-nav-key order (home|inventory|family) does not match sharedProjectShellContract.mobileNavigation.items (home|inventory|family|none). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "7034a88985369c1273eadf41b860a75b5a5df358e8d985605c89f3a52bfaf282"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/inventory.html: mobile nav grid class grid-cols-3 does not match item count (grid-cols-4). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "da482291d99e541266411e4656b57bad7eb9cad4c1e465e21c53c24377bf777b"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/family.html: data-nav-key order (home|inventory|family) does not match sharedProjectShellContract.mobileNavigation.items (home|inventory|family|none). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "25e9759b7c4f6b2cefec7cc52cdc9f30c9474571b1349edd2c8cd9d6c7637389"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] pages/family.html: mobile nav grid class grid-cols-3 does not match item count (grid-cols-4). Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "b789567c94066f122efcba27996aae03747c50c0cac4afaab23aa12f194b3bdb"
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "normalized": "[mobile-navigation-consistency] mobile pages with global nav must keep the same data-nav-key item order, positioning, height, and structural geometry. pages/home.html: home|inventory|family::flow::64::tag=button::item=duration-200.flex.flex-col.focus:outline-none.focus:ring-2.focus:ring-[color:var(--family-ring)].focus:ring-inset.gap-1.h-full.hover:bg-[color:var(--family-surface-2)].items-center.justify-center.min-w-0.px-1.transition|duration-200.flex.flex-col.focus:outline-none.focus:ring-2.focus:ring-[color:var(--family-ring)].focus:ring-inset.gap-1.h-full.hover:bg-[color:var(--family-surface-2)].hover:text-primary.items-center.justify-center.min-w-0.px-1.transition::icon=icon:h-5.shrink-0.w-5::nowrap=true::grid=grid-cols-3::max=false::full=true/true; pages/inventory.html: home|inventory|family::flow::64::tag=button::item=flex.flex-col.gap-1.h-full.items-center.justify-center.min-w-0.px-1::icon=icon:h-5.shrink-0.w-5::nowrap=true::grid=grid-cols-3::max=false::full=true/true; pages/family.html: home|inventory|family::flow::64::tag=button::item=flex.flex-col.gap-1.h-full.items-center.justify-center.min-w-0.px-1::icon=icon:h-5.shrink-0.w-5::nowrap=true::grid=grid-cols-3::max=false::full=true/true. Use data-dom-id only for click wiring. Repair: rebuild the Page Packet with Mobile Navigation Contract and copy canonicalNavHtml. If this is post-validation repair, run repair-mobile-navigation-flow.mjs once; do not patch individual span/data-dom-id/class fragments.",
+            "signature": "2fa0b4e8de08ddb801a4ffd48ddc6080aeec9be898c1d9da74e0f51cda19abf8"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] onboarding.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "53189884774407116774c3f0bea89ef4048e06b23376d3f815c8b715166903f0"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] home.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "33a36c23f494baa79c0f8f7187bb3efac3e716650c3449e47d533e1596186860"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] inventory.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "367ead184df52444a138ac385b19f00f0c91a69950d21996a9734cbe520fc1f9"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] add-item.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "79a20f6a666ceb875e0d38f2e7585e5d9dfc7f5d89a32701119e2bf34bbcbb19"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] item-detail.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "5e6f0345074dbc1b9e14398c4502be0835c8aeb70da22f0871d00a6967627c00"
+          },
+          {
+            "errorClass": "mini-program-chrome",
+            "normalized": "[mini-program-chrome] family.html: miniProgramStyle page must include a visible right system capsule.",
+            "signature": "4ac6b532e6c7647ebfaf1553a286f0a95939ae0ff5930a94bf5a6c62ecdb5e91"
+          }
+        ],
+        "terminalState": null
+      },
+      {
+        "reportPath": "validation-report.json",
+        "reportHash": "4552318db420af14061d39412489daf96dfe60901d63ad127ae2f036d1b94cbe",
+        "checkedAt": "2026-08-11T10:16:18.660Z",
+        "success": false,
+        "exitCode": 1,
+        "renderBlockingErrorCount": 1,
+        "repairPlanHints": [],
+        "errorSignatures": [
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[design-file] Validation failed for .design file batch: ======================================== [FAIL] Validation failed ---------------------------------------- Found 12 issues: 1. [data[1].devMetadata.interactions[0].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 2. [data[1].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 3. [data[2].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 4. [data[2].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 5. [data[5].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 6. [data[5].devMetadata.interactions[1].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 7. [require-interactions] domId \"nav-inventory\" expected in \"pages/home.html\" but data-dom-id=\"nav-inventory\" not found in the HTML file. Fix: add data-dom-id=\"nav-inventory\" to the intended interactive element. 8. [require-interactions] domId \"nav-family\" expected in \"pages/home.html\" but data-dom-id=\"nav-family\" not found in the HTML file. Fix: add data-dom-id=\"nav-family\" to the intended interactive element. 9. [require-interactions] domId \"nav-home\" expected in \"pages/inventory.html\" but data-dom-id=\"nav-home\" not found in the HTML file. Fix: add data-dom-id=\"nav-home\" to the intended interactive element. 10. [require-interactions] domId \"nav-family\" expected in \"pages/inventory.html\" but data-dom-id=\"nav-family\" not found in the HTML file. Fix: add data-dom-id=\"nav-family\" to the intended interactive element. 11. [require-interactions] domId \"nav-home\" expected in \"pages/family.html\" but data-dom-id=\"nav-home\" not found in the HTML file. Fix: add data-dom-id=\"nav-home\" to the intended interactive element. 12. [require-interactions] domId \"nav-inventory\" expected in \"pages/family.html\" but data-dom-id=\"nav-inventory\" not found in the HTML file. Fix: add data-dom-id=\"nav-inventory\" to the intended interactive element. ========================================",
+            "signature": "564a254bfcaeb48f08d4fd7091844aa63a704b7ce399c3118f64b549a1c5f900"
+          }
+        ],
+        "terminalState": null
+      },
+      {
+        "reportPath": "validation-report.json",
+        "reportHash": "53eff16e7e7403e87a837a3f6c5dbfe4592ece87e68c7523800dd2104d039a9c",
+        "checkedAt": "2026-08-11T11:06:48.149Z",
+        "success": false,
+        "exitCode": 1,
+        "renderBlockingErrorCount": 2,
+        "repairPlanHints": [],
+        "errorSignatures": [
+          {
+            "errorClass": "artifact-readiness",
+            "normalized": "[design-file] Validation failed for .design file batch: ======================================== [FAIL] Validation failed ---------------------------------------- Found 7 issues: 1. [data[0].devMetadata.interactions[2].domId] domId \"cta-enter-home\" is registered in .design but not found in HTML file \"pages/onboarding.html\". Fix: add data-dom-id=\"cta-enter-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 2. [data[1].devMetadata.interactions[0].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 3. [data[1].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 4. [data[2].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 5. [data[2].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 6. [data[5].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. 7. [data[5].devMetadata.interactions[1].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists. ========================================",
+            "signature": "a3adc1b5e12bba8cbfde2833c732acab5b7af2c1701611792258c738a630af6e"
+          },
+          {
+            "errorClass": "repair-ledger",
+            "normalized": "[repair-ledger] validationHistory has 2 failed validation(s) but validationRepairLedger has 1 entry",
+            "signature": "3333f42e8489019214d29e9169a3809249d6d5b6e31c930564d89f17669be9a9"
+          }
+        ],
+        "terminalState": null
+      }
+    ],
+    "wiringRegistrationEvidence": {
+      "expectedDomIds": [
+        "cta-create-family:pages/onboarding.html",
+        "cta-join-family:pages/onboarding.html",
+        "cta-enter-home:pages/onboarding.html",
+        "nav-inventory:pages/home.html",
+        "nav-family:pages/home.html",
+        "cta-add-item:pages/home.html",
+        "cta-ocr-entry:pages/home.html",
+        "card-expiring-detail:pages/home.html",
+        "nav-home:pages/inventory.html",
+        "nav-family:pages/inventory.html",
+        "cta-open-add-item:pages/inventory.html",
+        "item-rice-detail:pages/inventory.html",
+        "item-milk-detail:pages/inventory.html",
+        "nav-back-inventory:pages/add-item.html",
+        "cta-save-item:pages/add-item.html",
+        "nav-back-inventory:pages/item-detail.html",
+        "cta-edit-item:pages/item-detail.html",
+        "nav-home:pages/family.html",
+        "nav-inventory:pages/family.html"
+      ],
+      "allExpectedDomIdsRegistered": true,
+      "missingDomIds": []
+    },
+    "generationTree": {
+      "root": {
+        "id": "family-supplies-root",
+        "type": "project",
+        "status": "generated",
+        "children": [
+          {
+            "id": "page-onboarding",
+            "type": "page",
+            "htmlSrc": "pages/onboarding.html",
+            "status": "generated",
+            "children": []
+          },
+          {
+            "id": "page-home",
+            "type": "page",
+            "htmlSrc": "pages/home.html",
+            "status": "generated",
+            "children": []
+          },
+          {
+            "id": "page-inventory",
+            "type": "page",
+            "htmlSrc": "pages/inventory.html",
+            "status": "generated",
+            "children": []
+          },
+          {
+            "id": "page-add-item",
+            "type": "page",
+            "htmlSrc": "pages/add-item.html",
+            "status": "generated",
+            "children": []
+          },
+          {
+            "id": "page-item-detail",
+            "type": "page",
+            "htmlSrc": "pages/item-detail.html",
+            "status": "generated",
+            "children": []
+          },
+          {
+            "id": "page-family",
+            "type": "page",
+            "htmlSrc": "pages/family.html",
+            "status": "generated",
+            "children": []
+          }
+        ]
+      }
+    },
+    "readScopeLedger": [
+      {
+        "actor": "page-sub-agent",
+        "lane": "free_exploration",
+        "path": "intent-workflows/intent-page-free-exploration/free-exploration-page-runtime.md",
+        "reason": "page runtime guide",
+        "scopeClass": "page-runtime",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-08-11T10:00:57.614Z",
+        "nodeId": "page-onboarding",
+        "htmlSrc": "pages/onboarding.html"
+      },
+      {
+        "actor": "page-sub-agent",
+        "lane": "free_exploration",
+        "path": "intent-workflows/intent-page-free-exploration/dispatch-contract.md",
+        "reason": "dispatch contract",
+        "scopeClass": "dispatch-contract",
+        "declaredBeforeRead": true,
+        "recordedAt": "2026-08-11T10:00:57.614Z",
+        "nodeId": "page-onboarding",
+        "htmlSrc": "pages/onboarding.html"
+      }
+    ],
+    "expectedDispatches": [
+      {
+        "nodeId": "page-onboarding",
+        "pageId": "page-onboarding",
+        "targetPageId": "page-onboarding",
+        "htmlSrc": "pages/onboarding.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/onboarding.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "repair-update-onboarding-20260811",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T11:09:34.751Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-home",
+        "pageId": "page-home",
+        "targetPageId": "page-home",
+        "htmlSrc": "pages/home.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/home.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "repair-update-home-20260811",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T11:09:34.815Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-inventory",
+        "pageId": "page-inventory",
+        "targetPageId": "page-inventory",
+        "htmlSrc": "pages/inventory.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/inventory.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "repair-update-inventory-20260811",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T11:09:34.881Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-add-item",
+        "pageId": "page-add-item",
+        "targetPageId": "page-add-item",
+        "htmlSrc": "pages/add-item.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/add-item.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "main-agent-batch-20260811-2",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T10:13:44.733Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-item-detail",
+        "pageId": "page-item-detail",
+        "targetPageId": "page-item-detail",
+        "htmlSrc": "pages/item-detail.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/item-detail.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "main-agent-batch-20260811-2",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T10:13:44.791Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "nodeId": "page-family",
+        "pageId": "page-family",
+        "targetPageId": "page-family",
+        "htmlSrc": "pages/family.html",
+        "packetType": "FreePagePacket",
+        "status": "completed",
+        "changedFiles": [
+          "pages/family.html"
+        ],
+        "toolCallLedger": {
+          "source": "main-agent-runtime-trace",
+          "traceDigest": "repair-update-family-20260811",
+          "todoWriteCalls": 0,
+          "previewCalls": 0,
+          "validationScriptCalls": 0,
+          "helperScriptWrites": 0
+        },
+        "recordedAt": "2026-08-11T11:09:34.944Z",
+        "source": "record-dispatch-completion.mjs"
+      }
+    ],
+    "mainAgentPostDispatchMutations": [
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register onboarding navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.564Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register home navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.619Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register inventory navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.676Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register add-item navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.733Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register item-detail navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.791Z",
+        "source": "record-dispatch-completion.mjs"
+      },
+      {
+        "path": "family-supplies-prototype.design",
+        "reason": "register family navigation wiring",
+        "owner": "main-agent",
+        "recordedAt": "2026-08-11T10:13:44.852Z",
+        "source": "record-dispatch-completion.mjs"
+      }
+    ],
+    "validationRepairLedger": [
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "bcf4a6a8244a760f8c1395bfe8167e167a3839bc50b26435aae7ebfba3de6520",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-08-11T10:11:25.409Z",
+        "repairEntryStatus": "revalidated-failed-blocked",
+        "ownerTriage": [
+          {
+            "owner": "main-agent",
+            "errorClass": "mobile-navigation-consistency",
+            "affectedFiles": [
+              "pages/home.html"
+            ],
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once"
+          },
+          {
+            "owner": "main-agent",
+            "errorClass": "mobile-navigation-consistency",
+            "affectedFiles": [
+              "pages/inventory.html"
+            ],
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once"
+          },
+          {
+            "owner": "main-agent",
+            "errorClass": "mobile-navigation-consistency",
+            "affectedFiles": [
+              "pages/family.html"
+            ],
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once"
+          }
+        ],
+        "repairPlanHints": [
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "owner": "main-agent",
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once",
+            "affectedFiles": [
+              "pages/home.html"
+            ],
+            "repairReportPath": "mobile-nav-repair-report.json",
+            "repairAlreadyAttempted": false,
+            "allowSourceRead": "no-full-html-read",
+            "maxValidationRuns": 3
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "owner": "main-agent",
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once",
+            "affectedFiles": [
+              "pages/inventory.html"
+            ],
+            "repairReportPath": "mobile-nav-repair-report.json",
+            "repairAlreadyAttempted": false,
+            "allowSourceRead": "no-full-html-read",
+            "maxValidationRuns": 3
+          },
+          {
+            "errorClass": "mobile-navigation-consistency",
+            "owner": "main-agent",
+            "repairScope": "all-pages-with-mobile-nav",
+            "strategy": "run_repair_mobile_navigation_once",
+            "affectedFiles": [
+              "pages/family.html"
+            ],
+            "repairReportPath": "mobile-nav-repair-report.json",
+            "repairAlreadyAttempted": false,
+            "allowSourceRead": "no-full-html-read",
+            "maxValidationRuns": 3
+          }
+        ],
+        "repairActions": [
+          {
+            "owner": "main-agent",
+            "errorClass": "artifact-readiness",
+            "affectedFiles": [
+              "family-supplies-prototype.design",
+              "runtime-orchestration-summary.json",
+              "pages/onboarding.html",
+              "pages/home.html",
+              "pages/inventory.html",
+              "pages/add-item.html",
+              "pages/item-detail.html",
+              "pages/family.html"
+            ],
+            "action": "main-agent-batch-repair",
+            "observedFileHashes": [
+              {
+                "path": "family-supplies-prototype.design",
+                "hash": "ab53f330a4c423f5dcbf2a22020d1e2fd3efebe1f32a42cdd92f77b88d3f5534"
+              },
+              {
+                "path": "runtime-orchestration-summary.json",
+                "hash": "4c6c91efc2d31749475c2e5abccb6906387bf6167ef9313b757a8d5be3183f57"
+              },
+              {
+                "path": "pages/onboarding.html",
+                "hash": "1480a2ef7e45e94f2b6e9ff1a4712ad13e705e495d34c00155feda7e88c19f16"
+              },
+              {
+                "path": "pages/home.html",
+                "hash": "b33f1e680796d657f492bd404e89b443c47ad89fad736f0f3394f423fcacfda0"
+              },
+              {
+                "path": "pages/inventory.html",
+                "hash": "4386947dce441f594678fe3097e034c4b705ed5f12632c6650f6c6d6933eed87"
+              },
+              {
+                "path": "pages/add-item.html",
+                "hash": "8f69fb6d018f264284bdd782127af9d8f37d711d1ab2cb65844da64b3f38cea4"
+              },
+              {
+                "path": "pages/item-detail.html",
+                "hash": "36b1818ff4ea5edb05b7acf74b05e5a05efc663191d998b1abbcf5cab223cf82"
+              },
+              {
+                "path": "pages/family.html",
+                "hash": "2665d382730ceaa35928749833205e024edb39be34460cdf3dea643445580547"
+              }
+            ],
+            "preEditFileHashes": [],
+            "postEditFileHashes": [],
+            "repairOwnedFields": [
+              "artifact-readiness"
+            ],
+            "recordedAt": "2026-08-11T10:13:30.506Z",
+            "repairActionTableRequired": true
+          }
+        ],
+        "revalidationReportPath": "validation-report.json",
+        "revalidationReportHash": "4552318db420af14061d39412489daf96dfe60901d63ad127ae2f036d1b94cbe",
+        "revalidationSuccess": false,
+        "blockedReason": "底部导航自动修复后丢失 nav-home/nav-inventory/nav-family 的 data-dom-id 标记，导致 .design 交互注册与 HTML 不一致；当前修复轮次已达上限，停止继续自动修补。",
+        "revalidationRecordedAt": "2026-08-11T10:16:45.898Z"
+      },
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "53eff16e7e7403e87a837a3f6c5dbfe4592ece87e68c7523800dd2104d039a9c",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-08-11T11:06:59.289Z",
+        "repairEntryStatus": "action-recorded-awaiting-revalidation",
+        "ownerTriage": [
+          {
+            "owner": "main-agent",
+            "errorClass": "artifact-readiness",
+            "affectedFiles": [],
+            "repairScope": "repair_design_registration_or_file_reference_only",
+            "strategy": "read .design and affected file metadata only"
+          },
+          {
+            "owner": "main-agent",
+            "errorClass": "repair-ledger",
+            "affectedFiles": [],
+            "repairScope": "append_repair_entry_evidence_and_revalidation_report",
+            "strategy": "read validation report and repair workflow only"
+          }
+        ],
+        "repairPlanHints": [],
+        "repairActions": [
+          {
+            "owner": "main-agent",
+            "errorClass": "artifact-readiness",
+            "affectedFiles": [
+              "family-supplies-prototype.design",
+              "pages/home.html",
+              "pages/inventory.html",
+              "pages/family.html"
+            ],
+            "action": "repair_design_registration_or_file_reference_only",
+            "observedFileHashes": [
+              {
+                "path": "family-supplies-prototype.design",
+                "hash": "cd0306e01b3195a277b8e25184a3e1d4309ca439526f7edc171434da839f37bc"
+              },
+              {
+                "path": "pages/home.html",
+                "hash": "59c45cbaed84190fc8bb77e84dc51e563fa8e47e309b6c4164d744920fd2768a"
+              },
+              {
+                "path": "pages/inventory.html",
+                "hash": "bde703c03b6e1f4ed05ef5c18b98ee2300db23fc8cd78524f6d96090d9d0e403"
+              },
+              {
+                "path": "pages/family.html",
+                "hash": "91989c9affc1ff92ebac89238e2b85f3d959c245336e4e95790861856df4698d"
+              }
+            ],
+            "preEditFileHashes": [],
+            "postEditFileHashes": [],
+            "repairOwnedFields": [
+              "artifact-readiness"
+            ],
+            "recordedAt": "2026-08-11T11:07:15.729Z",
+            "repairActionTableRequired": true
+          },
+          {
+            "owner": "main-agent",
+            "errorClass": "repair-ledger",
+            "affectedFiles": [
+              "runtime-orchestration-summary.json",
+              "validation-report.json"
+            ],
+            "action": "append_repair_entry_evidence_and_revalidation_report",
+            "observedFileHashes": [
+              {
+                "path": "runtime-orchestration-summary.json",
+                "hash": "1dde038fc844473913a5007a6ea0c1ff30b84eeb9b74021561ac1ac8d148bdde"
+              },
+              {
+                "path": "validation-report.json",
+                "hash": "53eff16e7e7403e87a837a3f6c5dbfe4592ece87e68c7523800dd2104d039a9c"
+              }
+            ],
+            "preEditFileHashes": [],
+            "postEditFileHashes": [],
+            "repairOwnedFields": [
+              "repair-ledger"
+            ],
+            "recordedAt": "2026-08-11T11:09:03.366Z",
+            "repairActionTableRequired": true
+          }
+        ],
+        "revalidationReportPath": null,
+        "revalidationReportHash": null,
+        "revalidationSuccess": null,
+        "blockedReason": null
+      }
+    ],
+    "repairEntryEvidence": [
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "bcf4a6a8244a760f8c1395bfe8167e167a3839bc50b26435aae7ebfba3de6520",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-08-11T10:11:25.409Z",
+        "ledgerIndex": 0,
+        "ownerTriageCount": 3,
+        "repairActionCount": 1,
+        "revalidationReportPath": "validation-report.json",
+        "revalidationReportHash": "4552318db420af14061d39412489daf96dfe60901d63ad127ae2f036d1b94cbe",
+        "revalidationSuccess": false
+      },
+      {
+        "failedReportPath": "validation-report.json",
+        "failedReportHash": "53eff16e7e7403e87a837a3f6c5dbfe4592ece87e68c7523800dd2104d039a9c",
+        "repairWorkflowReadPath": "intent-workflows/intent-project-mutation/main-agent-repair-workflow.md",
+        "repairStartedAt": "2026-08-11T11:06:59.289Z",
+        "ledgerIndex": 1,
+        "ownerTriageCount": 2,
+        "repairActionCount": 2,
+        "revalidationReportPath": null,
+        "revalidationReportHash": null,
+        "revalidationSuccess": null
+      }
+    ],
+    "repairStopConditionMet": true,
+    "repairStopReason": "底部导航自动修复后丢失 nav-home/nav-inventory/nav-family 的 data-dom-id 标记，导致 .design 交互注册与 HTML 不一致；当前修复轮次已达上限，停止继续自动修补。",
+    "remainingBlockingIssues": [
+      "[design-file] Validation failed for .design file batch: ========================================\n[FAIL] Validation failed\n----------------------------------------\nFound 12 issues:\n\n  1. [data[1].devMetadata.interactions[0].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  2. [data[1].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/home.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  3. [data[2].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  4. [data[2].devMetadata.interactions[1].domId] domId \"nav-family\" is registered in .design but not found in HTML file \"pages/inventory.html\". Fix: add data-dom-id=\"nav-family\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  5. [data[5].devMetadata.interactions[0].domId] domId \"nav-home\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-home\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  6. [data[5].devMetadata.interactions[1].domId] domId \"nav-inventory\" is registered in .design but not found in HTML file \"pages/family.html\". Fix: add data-dom-id=\"nav-inventory\" to the corresponding element in the HTML file, or remove this interaction entry if the link no longer exists.\n  7. [require-interactions] domId \"nav-inventory\" expected in \"pages/home.html\" but data-dom-id=\"nav-inventory\" not found in the HTML file. Fix: add data-dom-id=\"nav-inventory\" to the intended interactive element.\n  8. [require-interactions] domId \"nav-family\" expected in \"pages/home.html\" but data-dom-id=\"nav-family\" not found in the HTML file. Fix: add data-dom-id=\"nav-family\" to the intended interactive element.\n  9. [require-interactions] domId \"nav-home\" expected in \"pages/inventory.html\" but data-dom-id=\"nav-home\" not found in the HTML file. Fix: add data-dom-id=\"nav-home\" to the intended interactive element.\n  10. [require-interactions] domId \"nav-family\" expected in \"pages/inventory.html\" but data-dom-id=\"nav-family\" not found in the HTML file. Fix: add data-dom-id=\"nav-family\" to the intended interactive element.\n  11. [require-interactions] domId \"nav-home\" expected in \"pages/family.html\" but data-dom-id=\"nav-home\" not found in the HTML file. Fix: add data-dom-id=\"nav-home\" to the intended interactive element.\n  12. [require-interactions] domId \"nav-inventory\" expected in \"pages/family.html\" but data-dom-id=\"nav-inventory\" not found in the HTML file. Fix: add data-dom-id=\"nav-inventory\" to the intended interactive element.\n\n========================================\n"
+    ],
+    "sourceProjectLaneHeritage": [
+      {
+        "lane": "free_exploration",
+        "reason": "原始项目由自由探索流程创建，本次在既有项目上直接迭代。"
+      }
+    ],
+    "mutationMode": "modify-existing-pages-in-place",
+    "affectedPageIds": [
+      "page-onboarding",
+      "page-home",
+      "page-family"
+    ]
+  },
+  "designSource": {
+    "operatingMode": "free-explore"
+  },
+  "pages": [
+    {
+      "nodeId": "page-onboarding",
+      "title": "引导页",
+      "htmlSrc": "pages/onboarding.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "task-driven",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "conditional onboarding logic"
+      ],
+      "mobileNavigationActiveKey": "none",
+      "businessScenario": "首次打开且无家庭时的创建/加入入口"
+    },
+    {
+      "nodeId": "page-home",
+      "title": "首页",
+      "htmlSrc": "pages/home.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "information-dense",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "family switch visibility"
+      ],
+      "mobileNavigationActiveKey": "home",
+      "businessScenario": "多家庭场景下的首页信息总览与切换入口"
+    },
+    {
+      "nodeId": "page-inventory",
+      "title": "物资列表",
+      "htmlSrc": "pages/inventory.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "information-dense",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "list crowding"
+      ],
+      "mobileNavigationActiveKey": "inventory"
+    },
+    {
+      "nodeId": "page-add-item",
+      "title": "添加物资",
+      "htmlSrc": "pages/add-item.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "task-driven",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "form clarity"
+      ],
+      "mobileNavigationActiveKey": "none"
+    },
+    {
+      "nodeId": "page-item-detail",
+      "title": "物资详情",
+      "htmlSrc": "pages/item-detail.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "task-driven",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "detail action density"
+      ],
+      "mobileNavigationActiveKey": "none"
+    },
+    {
+      "nodeId": "page-family",
+      "title": "家庭管理",
+      "htmlSrc": "pages/family.html",
+      "deviceType": "mobile",
+      "viewportMode": "document-scroll",
+      "pageType": "information-dense",
+      "miniProgramStyle": true,
+      "qualityRisks": [
+        "mobile-layout",
+        "multi-family management density"
+      ],
+      "mobileNavigationActiveKey": "family",
+      "businessScenario": "家庭列表管理与当前家庭设置"
+    }
+  ],
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.22.00.00.00",
+    "version_source": "skill-release-manifest.json"
+  }
+}

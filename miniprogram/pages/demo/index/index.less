@@ -1,0 +1,54 @@
+page {
+  background: #f5f5f5;
+}
+
+.demo-grid {
+  padding: 24rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.demo-card {
+  display: flex;
+  align-items: center;
+  padding: 28rpx 24rpx;
+  background: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.04);
+  gap: 20rpx;
+
+  &-icon {
+    font-size: 48rpx;
+    width: 72rpx;
+    height: 72rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  &-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &-title {
+    font-size: 30rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6rpx;
+  }
+
+  &-desc {
+    font-size: 24rpx;
+    color: #999;
+    line-height: 1.4;
+  }
+
+  &-arrow {
+    font-size: 32rpx;
+    color: #ccc;
+    flex-shrink: 0;
+  }
+}

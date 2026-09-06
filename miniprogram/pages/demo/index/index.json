@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "Header": "/components/Header/index"
+  },
+  "navigationBarTitleText": "Demo",
+  "disableScroll": true
+}

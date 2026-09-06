@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "请求编排",
+  "usingComponents": {
+    "Header": "/components/Header/index"
+  }
+}

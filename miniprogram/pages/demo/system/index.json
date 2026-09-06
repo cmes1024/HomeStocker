@@ -1,0 +1,6 @@
+{
+  "usingComponents": {
+    "Header": "/components/Header/index"
+  },
+  "navigationBarTitleText": "系统信息"
+}
