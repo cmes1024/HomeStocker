@@ -40,11 +40,17 @@ HomeStocker 是一款以「家庭」为单位的物资管理微信小程序，�
 
 | 层 | 选择 |
 |----|------|
-| Agent 编排 | LangGraph（Python） |
+| Agent 技术栈 | **LangChain（模型/工具/消息抽象）+ LangGraph（状态编排）** |
 | Agent 服务形态 | FastAPI 运行 LangGraph 图（不强制依赖 LangGraph Platform/Cloud） |
 | LLM 底座 | 国产模型（DeepSeek / 通义千问 / GLM / 混元），做成可插拔封装 |
 | 部署路径 | 路径 A：云函数中转（见 §6.1） |
 | RAG | V1 不引入 |
+
+> 说明：LangGraph 是 LangChain 团队出品的**编排层**，构建在 LangChain 之上，二者不是二选一。本架构中：
+> - **LangChain** 负责 LLM 封装（国产模型集成包）、tool schema 定义、消息对象、Prompt（`classify` 意图判断等）。
+> - **LangGraph** 负责 `StateGraph` 状态图、节点/边流转、State 管理、checkpointer 多轮对话记忆。
+>
+> 因此准确表述为「LangChain + LangGraph 作为 Agent 技术栈」。
 
 ---
 
@@ -58,7 +64,7 @@ HomeStocker 是一款以「家庭」为单位的物资管理微信小程序，�
         ▼                                                        │
    云函数中转（注入 openId / userId）                             │
         ▼                                                        │
-   LangGraph 服务（FastAPI 跑图）                                 │
+   LangChain + LangGraph 服务（FastAPI 跑图）                      │
         │ 调用 4 个 tool                                          │
         ▼                                                        ▼
    云开发文档数据库（families / items / users / shopping_list / ...）
