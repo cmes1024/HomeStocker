@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/chat/chat",
     "pages/demo/index/index",
     "pages/demo/system/index",
     "pages/demo/page-router/index",

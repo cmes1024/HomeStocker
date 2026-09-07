@@ -14,3 +14,4 @@
     </maskElement>
   </view>
 </modal>
+<view class="ai-fab" bind:tap="goToChat">AI</view>

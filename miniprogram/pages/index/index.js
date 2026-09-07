@@ -52,6 +52,9 @@ Page({
   goToDemo() {
     wx.navigateTo({ url: '/pages/demo/index/index' })
   },
+  goToChat() {
+    wx.navigateTo({ url: '/pages/chat/chat' })
+  },
   close() {
     const maskbtn = this.selectComponent("#closebtn");
     setTimeout(() => {

@@ -18,6 +18,9 @@ if (!wx._workers) wx._workers = new Workers(); // 创建线程、事件订阅和
 
 App({
   onLaunch(options) {
+    if (wx.cloud) {
+      wx.cloud.init({ traceUser: true }) // 云开发初始化（AI 对话走云函数中转）
+    }
     console.log("小程序冷启动入参", options)
     // 监控网络变化
     wx.onNetworkStatusChange(function (res) {
