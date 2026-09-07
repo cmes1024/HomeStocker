@@ -1,4 +1,10 @@
-"""LangGraph 图：load_context → classify → call_tool → respond。"""
+"""LangGraph 图：load_context → agent ⇄ call_tool（工具循环，直到模型给出最终答复）。
+
+说明：与设计文档最初的「classify → call_tool → respond」四节点相比，
+这里把 classify 与 respond 合并为单一 agent 节点（标准 ReAct 循环）——
+一次 LLM 调用既能决定调工具、也能在拿到工具结果后直接产出最终答复，
+避免了「单步工具调用」导致多步意图（如先 get_current_family 再 add_item）中断的问题。
+"""
 
 import json
 from typing import Literal
@@ -25,7 +31,7 @@ def build_graph(backend: DataBackend | None = None, model=None):
     model = model or get_llm()
     tools = build_tools(backend)
     tool_map = {t.name: t for t in tools}
-    tools_bound = model.bind_tools(tools)
+    model = model.bind_tools(tools)
 
     def load_context(state: AgentState) -> dict:
         user_id = state.get("user_id") or "demo-user"
@@ -47,12 +53,12 @@ def build_graph(backend: DataBackend | None = None, model=None):
             "system_prompt": build_system_prompt(fam),
         }
 
-    def classify(state: AgentState) -> dict:
+    def agent(state: AgentState) -> dict:
         msgs = [SystemMessage(content=state["system_prompt"])] + list(state["messages"])
-        resp = tools_bound.invoke(msgs)
+        resp = model.invoke(msgs)
         return {"messages": [resp]}
 
-    def route_after_classify(state: AgentState) -> Literal["call_tool", "end"]:
+    def route_after_agent(state: AgentState) -> Literal["call_tool", "end"]:
         last = state["messages"][-1]
         if isinstance(last, AIMessage) and getattr(last, "tool_calls", None):
             return "call_tool"
@@ -81,23 +87,16 @@ def build_graph(backend: DataBackend | None = None, model=None):
             )
         return {"messages": outputs}
 
-    def respond(state: AgentState) -> dict:
-        msgs = [SystemMessage(content=state["system_prompt"])] + list(state["messages"])
-        resp = model.invoke(msgs)
-        return {"messages": [resp]}
-
     g = StateGraph(AgentState)
     g.add_node("load_context", load_context)
-    g.add_node("classify", classify)
+    g.add_node("agent", agent)
     g.add_node("call_tool", call_tool)
-    g.add_node("respond", respond)
 
     g.add_edge(START, "load_context")
-    g.add_edge("load_context", "classify")
+    g.add_edge("load_context", "agent")
     g.add_conditional_edges(
-        "classify", route_after_classify, {"call_tool": "call_tool", "end": END}
+        "agent", route_after_agent, {"call_tool": "call_tool", "end": END}
     )
-    g.add_edge("call_tool", "respond")
-    g.add_edge("respond", END)
+    g.add_edge("call_tool", "agent")  # 工具执行完回到 agent，形成循环
 
     return g.compile()

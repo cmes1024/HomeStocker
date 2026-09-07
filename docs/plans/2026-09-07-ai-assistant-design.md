@@ -109,14 +109,21 @@ V1 采用**单 Agent + 工具循环**，不做多 Agent 拆分（YAGNI）。
 | `familyId` | 当前家庭 ID（由 `userId` 解析） |
 | `toolResults` | 工具执行结果 |
 
-### 5.2 图节点（4 个）
+### 5.2 图节点（3 个 + 工具循环）
+
+> 实现时把「classify」与「respond」合并为单一 `agent` 节点（标准 ReAct 循环）：
+> 一次 LLM 调用既决定调工具，也能在拿到工具结果后直接产出最终答复，
+> 避免单步工具调用导致多步意图（如先 `get_current_family` 再 `add_item`）中断。
 
 ```
-load_context ──▶ classify ──▶ call_tool ──▶ respond
-  (解析当前家庭      (LLM 判断意图:   (执行工具,      (工具结果 → 自然语言
-   + 家庭位置/分类)   查/临期/录入/    可能多工具串行)   + 结构化卡片)
-                      闲聊拒答)
+load_context ──▶ agent ⇄ call_tool
+  (解析当前家庭      (LLM 带工具：意图判断 / 工具结果 → 自然语言回复)
+   + 家庭位置/分类)       │
+                         └─ 有 tool_calls 则执行工具后回到 agent，否则 END
 ```
+
+**关于日期注入**：系统提示词中注入「今天的日期（含星期）」，
+使模型能把「下周三」「三天后」等相对日期换算成绝对 `expireDate`（实测必要）。
 
 ### 5.3 工具（4 个）
 
