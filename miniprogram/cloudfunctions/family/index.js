@@ -367,6 +367,8 @@ async function leaveFamily(openid) {
 
   if (family.ownerOpenid === openid) {
     await removeInBatches(db.collection('items'), { familyId })
+    await removeInBatches(db.collection('locations'), { familyId })
+    await removeInBatches(db.collection('spaces'), { familyId })
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()

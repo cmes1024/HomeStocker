@@ -5,12 +5,16 @@ const {
   setAppFamily,
   bindThemeToPage
 } = require('../../utils/theme')
+const copy = require('../../utils/copy')
 
 Page({
   data: {
+    copy: copy.family,
+    common: copy.common,
     loading: true,
     error: '',
     family: null,
+    familyMeta: '',
     families: [],
     acting: false,
     panel: '',
@@ -38,6 +42,7 @@ Page({
       const theme = setAppFamily(family)
       this.setData({
         family,
+        familyMeta: copy.family.meta(family.memberCount || 0),
         families: listed.list || [],
         loading: false,
         panel: '',
@@ -53,7 +58,7 @@ Page({
       }
       this.setData({
         loading: false,
-        error: e.message || '加载失败'
+        error: e.message || copy.common.loadFailed
       })
     }
   },
@@ -67,8 +72,12 @@ Page({
     if (!code) return
     wx.setClipboardData({
       data: code,
-      success: () => wx.showToast({ title: '已复制邀请码', icon: 'success' })
+      success: () => wx.showToast({ title: copy.family.inviteCopied, icon: 'success' })
     })
+  },
+
+  goSpaces() {
+    wx.navigateTo({ url: '/pages/spaces/index' })
   },
 
   openPanel(e) {
@@ -97,7 +106,7 @@ Page({
     if (this.data.acting) return
     const name = (this.data.familyNameInput || '').trim()
     if (!name) {
-      this.setData({ formError: '请输入家庭名称' })
+      this.setData({ formError: copy.family.nameRequired })
       return
     }
     this.setData({ acting: true, formError: '' })
@@ -117,7 +126,7 @@ Page({
     if (this.data.acting) return
     const inviteCode = (this.data.inviteCode || '').trim().toUpperCase()
     if (!inviteCode) {
-      this.setData({ formError: '请输入邀请码' })
+      this.setData({ formError: copy.family.codeRequired })
       return
     }
     this.setData({ acting: true, formError: '' })
@@ -128,8 +137,8 @@ Page({
       await this.load()
     } catch (e) {
       let msg = e.message || '加入失败'
-      if (e.code === 'ALREADY_IN_FAMILY') msg = '已加入该家庭'
-      if (e.code === 'INVALID_CODE') msg = '邀请码无效'
+      if (e.code === 'ALREADY_IN_FAMILY') msg = copy.family.alreadyIn
+      if (e.code === 'INVALID_CODE') msg = copy.family.invalidCode
       this.setData({ formError: msg })
     } finally {
       this.setData({ acting: false })
@@ -160,6 +169,7 @@ Page({
       const theme = setAppFamily(family)
       this.setData({
         family,
+        familyMeta: copy.family.meta(family.memberCount || 0),
         theme,
         headerTitle: ''
       })
@@ -207,14 +217,14 @@ Page({
       })
       wx.hideLoading()
       if (!upload.fileID) {
-        throw new Error('上传失败')
+        throw new Error(copy.family.uploadFailed)
       }
       this.setData({ acting: false })
       await this.applyBackground('image', upload.fileID)
     } catch (e) {
       wx.hideLoading()
       if (e && e.errMsg && e.errMsg.includes('cancel')) return
-      wx.showToast({ title: (e && e.message) || '上传失败', icon: 'none' })
+      wx.showToast({ title: (e && e.message) || copy.family.uploadFailed, icon: 'none' })
       this.setData({ acting: false })
     }
   },
@@ -227,11 +237,9 @@ Page({
     const isOwner = family.isOwner
     const confirm = await new Promise((resolve) => {
       wx.showModal({
-        title: isOwner ? '解散这个家？' : '先离开这家？',
-        content: isOwner
-          ? '柜子里的东西和成员关系都会清掉，不能恢复。'
-          : '离开后就看不到这家柜子里的东西了。',
-        confirmText: isOwner ? '解散' : '离开',
+        title: isOwner ? copy.family.dissolveTitle : copy.family.leaveTitle,
+        content: isOwner ? copy.family.dissolveContent : copy.family.leaveContent,
+        confirmText: isOwner ? copy.family.dissolveConfirm : copy.family.leaveConfirm,
         confirmColor: '#FA5151',
         success: (res) => resolve(res.confirm)
       })
@@ -242,7 +250,10 @@ Page({
     try {
       const result = await callFamily('leave')
       if (result && result.nextFamilyId) {
-        wx.showToast({ title: isOwner ? '已解散' : '已离开', icon: 'success' })
+        wx.showToast({
+          title: isOwner ? copy.family.dissolvedToast : copy.family.leftToast,
+          icon: 'success'
+        })
         this.setData({ acting: false })
         await this.load()
       } else {
@@ -250,7 +261,7 @@ Page({
         wx.reLaunch({ url: '/pages/onboarding/index' })
       }
     } catch (e) {
-      wx.showToast({ title: e.message || '操作失败', icon: 'none' })
+      wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
       this.setData({ acting: false })
     }
   }

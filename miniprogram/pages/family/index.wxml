@@ -8,70 +8,98 @@
   themeColor="{{theme.themeColor}}"
 >
   <view class="state" wx:if="{{loading}}">
-    <view class="state-text">推开家门…</view>
+    <view class="state-text">{{copy.loading}}</view>
   </view>
 
   <view class="state" wx:elif="{{error}}">
     <view class="state-text error">{{error}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">再试一次</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
   <block wx:elif="{{family}}">
-    <view class="home-hero {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="home-kicker">现在在这家</view>
+    <view class="home-hero">
+      <view class="home-kicker">{{copy.nowHere}}</view>
       <view class="home-name">{{family.name}}</view>
-      <view class="home-meta">家里现在 {{family.memberCount}} 人 · 共用一个柜子</view>
+      <view class="home-meta">{{familyMeta}}</view>
     </view>
 
     <view class="sticky">
-      <view class="sticky-label">把门钥匙给家人</view>
+      <view class="sticky-label">{{copy.inviteLabel}}</view>
       <view class="sticky-row">
         <view class="sticky-code">{{family.inviteCode}}</view>
         <view class="sticky-copy" style="color: {{theme.themeColor}};" bind:tap="onCopyCode">复制</view>
       </view>
-      <view class="sticky-hint">把邀请码发给家人，他们就能进来一起记</view>
+      <view class="sticky-hint">{{copy.inviteHint}}</view>
+    </view>
+
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goSpaces">
+      <view class="block-hd">
+        <view class="block-title">{{copy.spacesTitle}}</view>
+        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.spacesAction}}</view>
+      </view>
+      <view class="block-sub">{{copy.spacesSub}}</view>
     </view>
 
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="block-hd">
-        <view class="block-title">换一面墙</view>
-        <view class="block-action" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="background">挑一挑</view>
-      </view>
-      <view class="block-sub">背景会跟着这个家，走到哪都是同一面墙</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{panel === 'background'}}">
-      <view class="label">渐变</view>
-      <view class="preset-row">
+        <view class="block-title">{{copy.wallTitle}}</view>
         <view
-          class="preset-chip"
-          wx:for="{{gradients}}"
-          wx:key="id"
-          style="background: {{item.value}};"
-          data-value="{{item.value}}"
-          bind:tap="onPickGradient"
+          class="block-action"
+          style="color: {{theme.themeColor}};"
+          wx:if="{{panel !== 'background'}}"
+          bind:tap="openPanel"
+          data-panel="background"
+        >{{copy.wallAction}}</view>
+        <view
+          class="block-action"
+          style="color: {{theme.themeColor}};"
+          wx:else
+          bind:tap="closePanel"
+        >{{copy.collapse}}</view>
+      </view>
+      <view class="block-sub">{{copy.wallSub}}</view>
+
+      <view class="mood-panel" wx:if="{{panel === 'background'}}">
+        <view class="label">{{copy.gradient}}</view>
+        <view class="preset-row">
+          <view
+            class="preset-chip"
+            wx:for="{{gradients}}"
+            wx:key="id"
+            style="background: {{item.value}};"
+            data-value="{{item.value}}"
+            bind:tap="onPickGradient"
+          >
+            <text class="preset-label">{{item.label}}</text>
+          </view>
+        </view>
+        <view class="label spaced">{{copy.solid}}</view>
+        <view class="preset-row">
+          <view
+            class="preset-dot"
+            wx:for="{{solids}}"
+            wx:key="id"
+            style="background: {{item.value}};"
+            data-value="{{item.value}}"
+            bind:tap="onPickSolid"
+          />
+        </view>
+        <view class="label spaced">照片</view>
+        <view
+          class="photo-upload"
+          style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
+          hover-class="photo-upload-hover"
+          bind:tap="onPickImage"
         >
-          <text class="preset-label">{{item.label}}</text>
+          <view class="photo-upload-title">{{copy.pickPhoto}}</view>
+          <view class="photo-upload-hint">{{copy.pickPhotoHint}}</view>
         </view>
       </view>
-      <view class="label spaced">纯色</view>
-      <view class="preset-row">
-        <view
-          class="preset-dot"
-          wx:for="{{solids}}"
-          wx:key="id"
-          style="background: {{item.value}};"
-          data-value="{{item.value}}"
-          bind:tap="onPickSolid"
-        />
-      </view>
-      <view class="text-btn" bind:tap="onPickImage">用一张家里的照片</view>
-      <view class="text-btn muted" bind:tap="closePanel">收起</view>
     </view>
 
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="block-hd">
-        <view class="block-title">我还在的家</view>
+        <view class="block-title">{{copy.myHomes}}</view>
       </view>
       <view class="chip-row">
         <view
@@ -83,45 +111,45 @@
           bind:tap="onSwitchFamily"
         >
           <view class="chip-name">{{item.name}}</view>
-          <view class="chip-meta">{{item.isCurrent ? '正待在这' : '点一下过去'}} · {{item.memberCount}} 人</view>
+          <view class="chip-meta">{{item.isCurrent ? copy.chipHere : copy.chipGo}} · {{item.memberCount}} 人</view>
         </view>
       </view>
       <view class="action-row">
-        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="create">再建一个家</view>
-        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="join">用邀请码进另一家</view>
+        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="create">{{copy.createAnother}}</view>
+        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="join">{{copy.joinAnother}}</view>
       </view>
     </view>
 
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{panel === 'create'}}">
-      <view class="label">给新家起个名</view>
+      <view class="label">{{copy.createNameLabel}}</view>
       <input
         class="input"
-        placeholder="例如：老家、出租屋"
+        placeholder="{{copy.createNamePlaceholder}}"
         value="{{familyNameInput}}"
         bindinput="onNameInput"
         maxlength="20"
       />
       <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">建好并住过去</view>
-      <view class="text-btn muted" bind:tap="closePanel">先不算了</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
+      <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
     </view>
 
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{panel === 'join'}}">
-      <view class="label">家人给的邀请码</view>
+      <view class="label">{{copy.joinCodeLabel}}</view>
       <input
         class="input"
-        placeholder="6 位邀请码"
+        placeholder="{{copy.joinCodePlaceholder}}"
         value="{{inviteCode}}"
         bindinput="onCodeInput"
         maxlength="6"
       />
       <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">进去并住过去</view>
-      <view class="text-btn muted" bind:tap="closePanel">先不算了</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">{{copy.joinSubmit}}</view>
+      <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
     </view>
 
     <view class="leave {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="onLeave">
-      {{family.isOwner ? '解散这个家' : '先离开这家'}}
+      {{family.isOwner ? copy.leaveOwner : copy.leaveMember}}
     </view>
   </block>
 </AppShell>

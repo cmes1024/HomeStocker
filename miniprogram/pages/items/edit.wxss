@@ -35,6 +35,17 @@
   margin-bottom: 12rpx;
 }
 
+.label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.label-row .label {
+  margin-bottom: 0;
+}
+
 .input {
   background: rgba(255, 255, 255, 0.88);
   border-radius: 18rpx;
@@ -43,13 +54,47 @@
   border: 1rpx solid rgba(26, 26, 26, 0.06);
 }
 
+.qty-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.qty-num {
+  flex: 1.1;
+  min-width: 0;
+}
+
+.qty-unit {
+  flex: 1;
+  min-width: 0;
+}
+
 .pill-btn {
-  margin-top: 20rpx;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0;
   text-align: center;
-  padding: 22rpx 32rpx;
+  padding: 28rpx 32rpx;
   border-radius: 999rpx;
   color: #fff;
-  font-size: 30rpx;
+  font-size: 32rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+}
+
+/* mask-element 默认 width:fit-content，必须盖掉才能通栏 */
+.mask-full {
+  display: block !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-top: 28rpx;
+  box-sizing: border-box;
+}
+
+.mask-flex {
+  flex: 1;
+  width: 100%;
 }
 
 .error {
@@ -66,4 +111,90 @@
 .state-text {
   font-size: 28rpx;
   color: rgba(26, 26, 26, 0.55);
+}
+
+.picker {
+  line-height: 1.4;
+}
+
+.text-link {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+  box-sizing: border-box;
+}
+
+.modal {
+  width: 100%;
+  max-width: 620rpx;
+  padding: 36rpx 32rpx 28rpx;
+  border-radius: 28rpx;
+  background: #fff;
+  box-shadow: 0 20rpx 48rpx rgba(40, 30, 20, 0.16);
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 8rpx;
+}
+
+.modal-sub {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.45);
+  line-height: 1.45;
+  margin-bottom: 12rpx;
+}
+
+.modal-belong {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.72);
+  margin-bottom: 20rpx;
+}
+
+.modal-input {
+  margin-bottom: 8rpx;
+}
+
+.modal-error {
+  color: var(--error-color, #fa5151);
+  font-size: 24rpx;
+  margin: 8rpx 0 4rpx;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 24rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+}
+
+.modal-btn.ghost {
+  color: rgba(26, 26, 26, 0.65);
+  background: rgba(26, 26, 26, 0.06);
+}
+
+.modal-btn.primary {
+  color: #fff;
 }

@@ -5,7 +5,7 @@
   2. 在 WXML 中使用 worklet:onTouchStart、worklet:onAnimationEnd 等绑定替代 WXS
 -->
 <wxs module="tool" src="./index.wxs"></wxs>
-<view class="debounce-content content-class" capture-bind:tap="{{tool.tap}}" change:status="{{tool.switchs}}" status="{{status}}" change:isPromise="{{tool.typeChange}}" isPromise="{{isPromise}}">
+<view class="debounce-content content-class {{block ? 'is-block' : ''}}" capture-bind:tap="{{tool.tap}}" change:status="{{tool.switchs}}" status="{{status}}" change:isPromise="{{tool.typeChange}}" isPromise="{{isPromise}}">
   <view class="debounce-mark mask-class" style="--ispromise:{{isPromise ? 1 : -1}};--opacity: {{opacity}};--size:{{animation.size}}rpx;--leftHorizontalOffset:{{0-animation.horizontalOffset}}rpx;--rightHorizontalOffset:{{animation.horizontalOffset}}rpx;--debounce-time: {{isPromise ? promiseMaxTime : time}}s" data-text="{{text}}" bind:animationend="{{tool.end}}">
     <block wx:if="{{loadAnimation}}">
       <view class="animation an-1" style="background-color:{{animation.backgroundColor[0]}}"></view>

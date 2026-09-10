@@ -1,0 +1,74 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">{{copy.listLoading}}</view>
+  </view>
+
+  <view class="state" wx:elif="{{error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <block wx:else>
+    <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="kicker">{{copy.kicker}}</view>
+      <view class="title">{{copy.title}}</view>
+      <view class="sub">{{copy.sub}}</view>
+    </view>
+
+    <view class="space-grid {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view
+        class="space-tile"
+        wx:for="{{spaces}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        data-name="{{item.name}}"
+        bind:tap="goDetail"
+      >
+        <view class="space-name">{{item.name}}</view>
+        <view class="space-meta">{{item.isDefault ? copy.defaultMeta : copy.openMeta}}</view>
+        <view class="space-actions">
+          <view
+            class="link"
+            style="color: {{theme.themeColor}};"
+            data-id="{{item._id}}"
+            data-name="{{item.name}}"
+            catch:tap="openRename"
+          >{{copy.rename}}</view>
+          <view
+            class="link danger"
+            wx:if="{{!item.isDefault}}"
+            data-id="{{item._id}}"
+            catch:tap="onRemove"
+          >{{copy.remove}}</view>
+        </view>
+      </view>
+    </view>
+
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{renamingId}}">
+      <view class="label">{{copy.renameTitle}}</view>
+      <input class="input" value="{{renameValue}}" bindinput="onRenameInput" maxlength="20" />
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRenameSave">{{copy.renameSave}}</view>
+    </view>
+
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{showCreate}}">
+      <view class="label">{{copy.createLabel}}</view>
+      <input class="input" placeholder="{{copy.createPlaceholder}}" value="{{newName}}" bindinput="onNewName" maxlength="20" />
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
+    </view>
+
+    <view
+      class="pill-btn outline"
+      style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
+      wx:if="{{!showCreate}}"
+      bind:tap="openCreate"
+    >{{copy.createCta}}</view>
+  </block>
+</AppShell>

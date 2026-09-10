@@ -1,9 +1,12 @@
 const { callFamily } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
 const { setAppFamily, bindThemeToPage } = require('../../utils/theme')
+const copy = require('../../utils/copy')
 
 Page({
   data: {
+    copy: copy.onboarding,
+    common: copy.common,
     bootLoading: true,
     bootError: '',
     mode: 'choose',
@@ -59,7 +62,7 @@ Page({
     if (this.data.submitting) return
     const name = (this.data.familyName || '').trim()
     if (!name) {
-      this.setData({ formError: '请输入家庭名称' })
+      this.setData({ formError: copy.onboarding.nameRequired })
       return
     }
     this.setData({ submitting: true, formError: '' })
@@ -80,7 +83,7 @@ Page({
     if (this.data.submitting) return
     const inviteCode = (this.data.inviteCode || '').trim().toUpperCase()
     if (!inviteCode) {
-      this.setData({ formError: '请输入邀请码' })
+      this.setData({ formError: copy.onboarding.codeRequired })
       return
     }
     this.setData({ submitting: true, formError: '' })
@@ -90,8 +93,8 @@ Page({
       wx.reLaunch({ url: '/pages/items/index' })
     } catch (e) {
       let msg = e.message || '加入失败'
-      if (e.code === 'ALREADY_IN_FAMILY') msg = '已加入该家庭'
-      if (e.code === 'INVALID_CODE') msg = '邀请码无效'
+      if (e.code === 'ALREADY_IN_FAMILY') msg = copy.onboarding.alreadyIn
+      if (e.code === 'INVALID_CODE') msg = copy.onboarding.invalidCode
       this.setData({ formError: msg })
     } finally {
       this.setData({ submitting: false })

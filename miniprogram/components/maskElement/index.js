@@ -34,6 +34,11 @@ Component({
     loadAnimation: {
       type: Boolean,
       value: false
+    },
+    // 通栏按钮：盖掉默认 width:fit-content
+    block: {
+      type: Boolean,
+      value: false
     }
   },
 

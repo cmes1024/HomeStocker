@@ -1,5 +1,5 @@
 {
-  "_comment": "MVP：items/families/memberships 客户端写一律 deny；items 读也走云函数（避免 get(users).currentFamilyId 规则在控制台易失败）。users 仅本人可读。",
+  "_comment": "MVP+空间：items/spaces/locations/families/memberships 客户端写一律 deny；列表读走云函数（避免 get(users).currentFamilyId 规则在控制台易失败）。users 仅本人可读。",
   "users": {
     "read": "doc._id == auth.openid",
     "write": false
@@ -13,6 +13,14 @@
     "write": false
   },
   "items": {
+    "read": false,
+    "write": false
+  },
+  "spaces": {
+    "read": false,
+    "write": false
+  },
+  "locations": {
     "read": false,
     "write": false
   }

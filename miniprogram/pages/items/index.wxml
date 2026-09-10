@@ -7,64 +7,83 @@
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
-  <view class="state" wx:if="{{bootLoading}}">
-    <view class="state-text">正在打开家里的柜子…</view>
-  </view>
+  <loading
+    show="{{bootLoading}}"
+    text="{{copy.bootLoading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
 
-  <view class="state" wx:elif="{{bootError}}">
+  <view class="state" wx:if="{{bootError}}">
     <view class="state-text error">{{bootError}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">再试一次</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">{{common.retry}}</view>
   </view>
 
-  <block wx:else>
+  <block wx:elif="{{!bootLoading}}">
     <view class="doorplate {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="doorplate-main" bind:tap="goFamily">
-        <text class="doorplate-label">家庭</text>
-        <text class="doorplate-name" wx:if="{{familyName}}">{{familyName}}</text>
-        <text class="doorplate-hint">设置与邀请</text>
+      <view class="doorplate-main" hover-class="doorplate-main-hover" bind:tap="goFamily">
+        <text class="doorplate-label">{{copy.familyLabel}}</text>
+        <view class="doorplate-name-row" wx:if="{{familyName}}">
+          <text class="doorplate-name">{{familyName}}</text>
+          <text class="doorplate-chevron">›</text>
+        </view>
+        <text class="doorplate-hint">{{copy.familyHint}}</text>
       </view>
       <view
         class="note-cta"
         style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
         bind:tap="goAdd"
-      >记一笔</view>
+      >{{copy.addCta}}</view>
     </view>
+    <view class="ledger-hint">{{copy.ledgerHint}}</view>
 
-    <view class="warm-line {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{!loading && !error && items.length}}">
-      家里的共用台账 · 谁改都能看见
-    </view>
+    <scroll-view
+      class="filter-row"
+      scroll-x
+      wx:if="{{filterChips.length > 1}}"
+      enable-flex
+    >
+      <view
+        class="filter-chip {{filterSpaceId === item.id ? 'on' : ''}}"
+        style="{{filterSpaceId === item.id ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
+        wx:for="{{filterChips}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bind:tap="onFilter"
+      >{{item.name}}</view>
+    </scroll-view>
 
     <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{loading}}">
-      <view class="state-text">看看柜子里有什么…</view>
+      <view class="state-text">{{copy.listLoading}}</view>
     </view>
 
     <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{error}}">
       <view class="state-text error">{{error}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryList">再试一次</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryList">{{common.retry}}</view>
     </view>
 
     <view class="empty {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{items.length === 0}}">
-      <view class="empty-title">柜子还空着</view>
-      <view class="empty-sub">记第一件家里的东西吧，家人都能看到</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">记一笔</view>
+      <view class="empty-title">{{copy.emptyTitle}}</view>
+      <view class="empty-sub">{{copy.emptySub}}</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">{{copy.addCta}}</view>
     </view>
 
     <view class="shelf {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
       <view
-        class="tile"
+        class="tile {{animateTiles ? 'anim' : ''}}"
         wx:for="{{items}}"
         wx:key="_id"
-        style="animation-delay: {{index % 8 * 40}}ms;"
+        style="{{animateTiles ? 'animation-delay: ' + (index % 8 * 40) + 'ms;' : ''}}"
         data-id="{{item._id}}"
         bind:tap="goEdit"
         bind:longpress="onRemove"
       >
         <view class="tile-top">
           <view class="tile-name">{{item.name}}</view>
-          <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}</view>
+          <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}{{item.unit}}</view>
         </view>
         <view class="tile-note" wx:if="{{item.note}}">{{item.note}}</view>
-        <view class="tile-note muted" wx:else>点一下改 · 长按去掉</view>
+        <view class="tile-note muted" wx:else>{{copy.tileHint}}</view>
       </view>
     </view>
   </block>

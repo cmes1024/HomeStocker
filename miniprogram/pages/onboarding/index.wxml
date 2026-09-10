@@ -8,46 +8,46 @@
   themeColor="{{theme.themeColor}}"
 >
   <view class="state" wx:if="{{bootLoading}}">
-    <view class="state-text">正在找你的家…</view>
+    <view class="state-text">{{copy.bootLoading}}</view>
   </view>
 
   <view class="state" wx:elif="{{bootError}}">
     <view class="state-text error">{{bootError}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">再试一次</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">{{common.retry}}</view>
   </view>
 
   <view class="welcome {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
-    <view class="welcome-kicker">家庭物资</view>
-    <view class="welcome-title">先有一个家</view>
-    <view class="welcome-sub">建好或加入之后，和家人一起记柜子里的东西</view>
+    <view class="welcome-kicker">{{copy.kicker}}</view>
+    <view class="welcome-title">{{copy.title}}</view>
+    <view class="welcome-sub">{{copy.sub}}</view>
 
     <block wx:if="{{mode === 'choose'}}">
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goCreate">建一个家</view>
-      <view class="ghost-btn" bind:tap="goJoin">我有邀请码</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goCreate">{{copy.createCta}}</view>
+      <view class="ghost-btn" bind:tap="goJoin">{{copy.joinCta}}</view>
     </block>
 
     <block wx:elif="{{mode === 'create'}}">
       <view class="field">
-        <view class="label">家叫什么</view>
-        <input class="input" placeholder="例如：我家、出租屋" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
+        <view class="label">{{copy.nameLabel}}</view>
+        <input class="input" placeholder="{{copy.namePlaceholder}}" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
       </view>
       <view class="error" wx:if="{{formError}}">{{formError}}</view>
       <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">
-        {{submitting ? '正在安顿…' : '安顿下来'}}
+        {{submitting ? copy.creating : copy.createSubmit}}
       </view>
-      <view class="text-btn" bind:tap="goChoose">返回</view>
+      <view class="text-btn" bind:tap="goChoose">{{common.back}}</view>
     </block>
 
     <block wx:else>
       <view class="field">
-        <view class="label">家人给的邀请码</view>
-        <input class="input" placeholder="6 位邀请码" value="{{inviteCode}}" bindinput="onCodeInput" maxlength="6" />
+        <view class="label">{{copy.codeLabel}}</view>
+        <input class="input" placeholder="{{copy.codePlaceholder}}" value="{{inviteCode}}" bindinput="onCodeInput" maxlength="6" />
       </view>
       <view class="error" wx:if="{{formError}}">{{formError}}</view>
       <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">
-        {{submitting ? '正在走进去…' : '走进这家'}}
+        {{submitting ? copy.joining : copy.joinSubmit}}
       </view>
-      <view class="text-btn" bind:tap="goChoose">返回</view>
+      <view class="text-btn" bind:tap="goChoose">{{common.back}}</view>
     </block>
   </view>
 </AppShell>

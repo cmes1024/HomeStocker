@@ -7,33 +7,110 @@
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
-  <view class="state" wx:if="{{loading}}">
-    <view class="state-text">翻一下本子…</view>
-  </view>
+  <loading
+    show="{{loading}}"
+    text="{{copy.loading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
 
-  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
-    <view class="slip-kicker">{{isEdit ? '改一件东西' : '记在家里的本子上'}}</view>
-    <view class="slip-title">{{isEdit ? '改一下' : '新的一笔'}}</view>
+  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{!loading}}">
+    <view class="slip-kicker">{{isEdit ? copy.kickerEdit : copy.kickerCreate}}</view>
+    <view class="slip-title">{{isEdit ? copy.titleEdit : copy.titleCreate}}</view>
 
     <view class="field">
-      <view class="label">叫什么</view>
-      <input class="input" placeholder="例如：抽纸、洗衣液" value="{{name}}" bindinput="onName" maxlength="40" />
+      <view class="label">{{copy.labelName}}</view>
+      <input class="input" placeholder="{{copy.namePlaceholder}}" value="{{name}}" bindinput="onName" maxlength="40" />
     </view>
     <view class="field">
-      <view class="label">大概多少</view>
-      <input class="input" type="digit" placeholder="1" value="{{quantity}}" bindinput="onQuantity" />
+      <view class="label">{{copy.labelQty}}</view>
+      <view class="qty-row">
+        <input
+          class="input qty-num"
+          type="digit"
+          placeholder="{{copy.qtyPlaceholder}}"
+          value="{{quantity}}"
+          bindinput="onQuantity"
+        />
+        <input
+          class="input qty-unit"
+          placeholder="{{copy.unitPlaceholder}}"
+          value="{{unit}}"
+          bindinput="onUnit"
+          maxlength="10"
+        />
+      </view>
     </view>
     <view class="field">
-      <view class="label">随手备注</view>
-      <input class="input" placeholder="放哪儿、谁买的…可空着" value="{{note}}" bindinput="onNote" maxlength="100" />
+      <view class="label">{{copy.labelSpace}}</view>
+      <picker mode="selector" range="{{spaceNames}}" value="{{spaceIndex}}" bindchange="onSpaceChange">
+        <view class="input picker">{{spaceNames[spaceIndex] || copy.spacePlaceholder}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <view class="label-row">
+        <view class="label">{{copy.labelLocation}}</view>
+        <view class="text-link" style="color: {{theme.themeColor}};" bind:tap="openNewLocation">{{copy.newLocation}}</view>
+      </view>
+      <picker mode="selector" range="{{locationNames}}" value="{{locationIndex}}" bindchange="onLocationChange">
+        <view class="input picker">{{locationNames[locationIndex] || copy.locationNone}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelNote}}</view>
+      <input class="input" placeholder="{{copy.notePlaceholder}}" value="{{note}}" bindinput="onNote" maxlength="100" />
     </view>
 
     <view class="error" wx:if="{{error}}">{{error}}</view>
 
-    <view
-      class="pill-btn"
-      style="background: {{theme.themeColor}};"
-      bind:tap="onSave"
-    >{{saving ? '放回去…' : (isEdit ? '放回柜子' : '放进柜子')}}</view>
+    <mask-element
+      id="saveMask"
+      isPromise="{{true}}"
+      loadAnimation="{{true}}"
+      block="{{true}}"
+      content-class="mask-full"
+      promiseMaxTime="{{30}}"
+    >
+      <view
+        class="pill-btn"
+        style="background: {{theme.themeColor}};"
+        bind:tap="onSave"
+      >{{copy.save}}</view>
+    </mask-element>
+  </view>
+
+  <view class="modal-mask" wx:if="{{showNewLocation}}" catch:tap="closeNewLocation">
+    <view class="modal" catch:tap="noop">
+      <view class="modal-title">{{copy.locModalTitle}}</view>
+      <view class="modal-sub">{{copy.locModalSub}}</view>
+      <view class="modal-belong" wx:if="{{spaceLabel}}">{{copy.locModalBelong}}{{spaceLabel}}</view>
+      <input
+        class="input modal-input"
+        focus="{{showNewLocation}}"
+        placeholder="{{copy.locNamePlaceholder}}"
+        value="{{newLocationName}}"
+        bindinput="onNewLocationName"
+        maxlength="40"
+        confirm-type="done"
+        bindconfirm="onCreateLocation"
+      />
+      <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
+      <view class="modal-actions">
+        <view class="modal-btn ghost" bind:tap="closeNewLocation">{{common.cancel}}</view>
+        <mask-element
+          id="locMask"
+          isPromise="{{true}}"
+          loadAnimation="{{true}}"
+          content-class="mask-flex"
+          promiseMaxTime="{{20}}"
+        >
+          <view
+            class="modal-btn primary"
+            style="background: {{theme.themeColor}};"
+            bind:tap="onCreateLocation"
+          >{{common.save}}</view>
+        </mask-element>
+      </view>
+    </view>
   </view>
 </AppShell>

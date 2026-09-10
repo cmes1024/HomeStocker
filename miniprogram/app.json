@@ -3,10 +3,14 @@
     "pages/onboarding/index",
     "pages/items/index",
     "pages/items/edit",
-    "pages/family/index"
+    "pages/family/index",
+    "pages/spaces/index",
+    "pages/spaces/detail"
   ],
   "usingComponents": {
-    "AppShell": "/components/AppShell/index"
+    "AppShell": "/components/AppShell/index",
+    "loading": "/components/loading/index",
+    "mask-element": "/components/maskElement/index"
   },
   "window": {
     "navigationBarTextStyle": "black",
