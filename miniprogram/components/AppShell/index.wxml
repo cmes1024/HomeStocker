@@ -4,14 +4,18 @@
     style="{{layerA.bgStyle}}; opacity: {{layerA.opacity}};"
   >
     <image wx:if="{{layerA.bgImage}}" class="bg-image" src="{{layerA.bgImage}}" mode="aspectFill" />
-    <view class="bg-veil {{layerA.lightHeader ? 'dark' : 'light'}}"></view>
+    <view
+      class="bg-veil {{layerA.bgImage ? 'frost' : (layerA.lightHeader ? 'dark' : 'light')}}"
+    ></view>
   </view>
   <view
     class="bg-layer"
     style="{{layerB.bgStyle}}; opacity: {{layerB.opacity}};"
   >
     <image wx:if="{{layerB.bgImage}}" class="bg-image" src="{{layerB.bgImage}}" mode="aspectFill" />
-    <view class="bg-veil {{layerB.lightHeader ? 'dark' : 'light'}}"></view>
+    <view
+      class="bg-veil {{layerB.bgImage ? 'frost' : (layerB.lightHeader ? 'dark' : 'light')}}"
+    ></view>
   </view>
 
   <view class="nav {{navLight ? 'light' : 'dark'}}" style="height: {{headerHeight}}px;">

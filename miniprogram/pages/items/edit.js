@@ -79,17 +79,18 @@ Page({
     if (this.data.saving) return
     const name = (this.data.name || '').trim()
     if (!name) {
-      this.setData({ error: '请输入名称' })
+      this.setData({ error: '先写个名字吧' })
       return
     }
     const quantity = Number(this.data.quantity)
     if (!Number.isFinite(quantity) || quantity < 0) {
-      this.setData({ error: '数量无效' })
+      this.setData({ error: '数量好像不对' })
       return
     }
     this.setData({ saving: true, error: '' })
     try {
-      if (this.data.isEdit) {
+      const isEdit = this.data.isEdit
+      if (isEdit) {
         await callItem('update', {
           itemId: this.data.itemId,
           name,
@@ -104,14 +105,14 @@ Page({
           source: 'ui'
         })
       }
-      wx.showToast({ title: '已保存', icon: 'success' })
+      wx.showToast({ title: isEdit ? '已放回' : '已放进柜子', icon: 'success' })
       setTimeout(() => wx.navigateBack(), 400)
     } catch (e) {
       if (e.code === 'NOT_FOUND') {
         this.notifyDeletedAndBack()
         return
       }
-      this.setData({ error: e.message || '保存失败' })
+      this.setData({ error: e.message || '没放进去，再试一次' })
     } finally {
       this.setData({ saving: false })
     }

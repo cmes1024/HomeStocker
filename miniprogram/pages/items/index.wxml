@@ -7,43 +7,64 @@
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
-  <view class="panel glass" wx:if="{{bootLoading}}">
-    <view class="hint">加载中…</view>
+  <view class="state" wx:if="{{bootLoading}}">
+    <view class="state-text">正在打开家里的柜子…</view>
   </view>
 
-  <view class="panel glass" wx:elif="{{bootError}}">
-    <view class="hint error">{{bootError}}</view>
-    <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">重试</button>
+  <view class="state" wx:elif="{{bootError}}">
+    <view class="state-text error">{{bootError}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">再试一次</view>
   </view>
 
   <block wx:else>
-    <view class="toolbar panel glass">
-      <view class="link family-entry" bind:tap="goFamily">
-        家庭<text wx:if="{{familyName}}" class="family-name"> {{familyName}}</text>
+    <view class="doorplate {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="doorplate-main" bind:tap="goFamily">
+        <text class="doorplate-label">家庭</text>
+        <text class="doorplate-name" wx:if="{{familyName}}">{{familyName}}</text>
+        <text class="doorplate-hint">设置与邀请</text>
       </view>
-      <view class="link primary" style="color: {{theme.themeColor}};" bind:tap="goAdd">新增</view>
+      <view
+        class="note-cta"
+        style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
+        bind:tap="goAdd"
+      >记一笔</view>
     </view>
 
-    <view wx:if="{{loading}}" class="panel glass">
-      <view class="hint">刷新中…</view>
+    <view class="warm-line {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{!loading && !error && items.length}}">
+      家里的共用台账 · 谁改都能看见
     </view>
 
-    <view wx:elif="{{error}}" class="panel glass">
-      <view class="hint error">{{error}}</view>
-      <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="onRetryList">重试</button>
+    <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{loading}}">
+      <view class="state-text">看看柜子里有什么…</view>
     </view>
 
-    <view wx:elif="{{items.length === 0}}" class="panel glass">
-      <view class="hint">还没有物资，点右上角新增</view>
+    <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{error}}">
+      <view class="state-text error">{{error}}</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryList">再试一次</view>
     </view>
 
-    <view wx:else class="list panel glass">
-      <view class="row" wx:for="{{items}}" wx:key="_id">
-        <view class="row-main" bind:tap="goEdit" data-id="{{item._id}}">
-          <view class="name">{{item.name}}</view>
-          <view class="meta">数量 {{item.quantity}}<text wx:if="{{item.note}}"> · {{item.note}}</text></view>
+    <view class="empty {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{items.length === 0}}">
+      <view class="empty-title">柜子还空着</view>
+      <view class="empty-sub">记第一件家里的东西吧，家人都能看到</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">记一笔</view>
+    </view>
+
+    <view class="shelf {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
+      <view
+        class="tile"
+        wx:for="{{items}}"
+        wx:key="_id"
+        style="animation-delay: {{index % 8 * 40}}ms;"
+        data-id="{{item._id}}"
+        bind:tap="goEdit"
+        bind:longpress="onRemove"
+      >
+        <view class="tile-top">
+          <view class="tile-name">{{item.name}}</view>
+          <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}</view>
         </view>
-        <view class="del" catch:tap="onRemove" data-id="{{item._id}}">删</view>
+        <view class="tile-note" wx:if="{{item.note}}">{{item.note}}</view>
+        <view class="tile-note muted" wx:else>点一下改 · 长按去掉</view>
       </view>
     </view>
   </block>

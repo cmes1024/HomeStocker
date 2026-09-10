@@ -227,10 +227,11 @@ Page({
     const isOwner = family.isOwner
     const confirm = await new Promise((resolve) => {
       wx.showModal({
-        title: isOwner ? '解散家庭' : '离开家庭',
+        title: isOwner ? '解散这个家？' : '先离开这家？',
         content: isOwner
-          ? '将删除本家庭全部物资与成员关系，且不可恢复。确定？'
-          : '离开后将无法查看本家庭物资。确定？',
+          ? '柜子里的东西和成员关系都会清掉，不能恢复。'
+          : '离开后就看不到这家柜子里的东西了。',
+        confirmText: isOwner ? '解散' : '离开',
         confirmColor: '#FA5151',
         success: (res) => resolve(res.confirm)
       })

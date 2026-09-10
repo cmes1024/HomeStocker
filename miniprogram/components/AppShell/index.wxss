@@ -20,6 +20,7 @@
   width: 100%;
   height: 100%;
   display: block;
+  filter: brightness(1.06) contrast(0.92) saturate(0.88);
 }
 
 .bg-veil {
@@ -34,18 +35,28 @@
 .bg-veil.light {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.18) 0%,
-    rgba(255, 255, 255, 0.08) 40%,
-    rgba(255, 255, 255, 0.28) 100%
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.1) 40%,
+    rgba(255, 255, 255, 0.3) 100%
   );
 }
 
 .bg-veil.dark {
   background: linear-gradient(
     180deg,
-    rgba(0, 0, 0, 0.35) 0%,
-    rgba(0, 0, 0, 0.2) 45%,
-    rgba(0, 0, 0, 0.45) 100%
+    rgba(0, 0, 0, 0.38) 0%,
+    rgba(0, 0, 0, 0.22) 45%,
+    rgba(0, 0, 0, 0.48) 100%
+  );
+}
+
+/* 照片背景：整体压一层暖白雾，保证深色字可读，仍透出照片 */
+.bg-veil.frost {
+  background: linear-gradient(
+    180deg,
+    rgba(252, 249, 244, 0.82) 0%,
+    rgba(252, 249, 244, 0.68) 38%,
+    rgba(252, 249, 244, 0.78) 100%
   );
 }
 
@@ -68,14 +79,24 @@
 }
 
 .nav-back {
-  width: 88rpx;
-  font-size: 28rpx;
-  padding: 0 8rpx;
+  min-width: 88rpx;
+  height: 100%;
+  padding: 0 20rpx;
+  box-sizing: border-box;
   flex-shrink: 0;
+  font-size: 26rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.78);
+  color: #1a1a1a;
+  text-shadow: none;
 }
 
 .nav-back.spacer {
   visibility: hidden;
+  background: transparent;
 }
 
 .nav-title {
@@ -96,7 +117,11 @@
   color: #1a1a1a;
 }
 
-.nav.light .nav-back,
+.nav.light .nav-back {
+  background: rgba(0, 0, 0, 0.38);
+  color: #fff;
+}
+
 .nav.light .nav-title {
   color: #fff;
   text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);

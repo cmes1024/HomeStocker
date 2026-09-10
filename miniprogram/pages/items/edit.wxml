@@ -7,30 +7,33 @@
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
-  <view class="panel glass" wx:if="{{loading}}">
-    <view class="hint">加载中…</view>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">翻一下本子…</view>
   </view>
 
-  <view class="panel glass" wx:else>
+  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
+    <view class="slip-kicker">{{isEdit ? '改一件东西' : '记在家里的本子上'}}</view>
+    <view class="slip-title">{{isEdit ? '改一下' : '新的一笔'}}</view>
+
     <view class="field">
-      <view class="label">名称</view>
-      <input class="input" placeholder="物资名称" value="{{name}}" bindinput="onName" maxlength="40" />
+      <view class="label">叫什么</view>
+      <input class="input" placeholder="例如：抽纸、洗衣液" value="{{name}}" bindinput="onName" maxlength="40" />
     </view>
     <view class="field">
-      <view class="label">数量</view>
-      <input class="input" type="digit" placeholder="0" value="{{quantity}}" bindinput="onQuantity" />
+      <view class="label">大概多少</view>
+      <input class="input" type="digit" placeholder="1" value="{{quantity}}" bindinput="onQuantity" />
     </view>
     <view class="field">
-      <view class="label">备注</view>
-      <input class="input" placeholder="可选" value="{{note}}" bindinput="onNote" maxlength="100" />
+      <view class="label">随手备注</view>
+      <input class="input" placeholder="放哪儿、谁买的…可空着" value="{{note}}" bindinput="onNote" maxlength="100" />
     </view>
+
     <view class="error" wx:if="{{error}}">{{error}}</view>
-    <button
-      class="btn primary"
+
+    <view
+      class="pill-btn"
       style="background: {{theme.themeColor}};"
-      loading="{{saving}}"
-      disabled="{{saving}}"
       bind:tap="onSave"
-    >保存</button>
+    >{{saving ? '放回去…' : (isEdit ? '放回柜子' : '放进柜子')}}</view>
   </view>
 </AppShell>

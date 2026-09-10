@@ -7,56 +7,47 @@
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
-  <view class="panel glass" wx:if="{{bootLoading}}">
-    <view class="hint">加载中…</view>
+  <view class="state" wx:if="{{bootLoading}}">
+    <view class="state-text">正在找你的家…</view>
   </view>
 
-  <view class="panel glass" wx:elif="{{bootError}}">
-    <view class="hint error">{{bootError}}</view>
-    <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">重试</button>
+  <view class="state" wx:elif="{{bootError}}">
+    <view class="state-text error">{{bootError}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">再试一次</view>
   </view>
 
-  <view class="panel glass" wx:else>
-    <view class="hero">
-      <view class="hero-title">先建一个家庭</view>
-      <view class="hero-sub">创建或加入后，和家人共享物资台账</view>
-    </view>
+  <view class="welcome {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
+    <view class="welcome-kicker">家庭物资</view>
+    <view class="welcome-title">先有一个家</view>
+    <view class="welcome-sub">建好或加入之后，和家人一起记柜子里的东西</view>
 
     <block wx:if="{{mode === 'choose'}}">
-      <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="goCreate">创建家庭</button>
-      <button class="btn ghost" bind:tap="goJoin">输入邀请码加入</button>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goCreate">建一个家</view>
+      <view class="ghost-btn" bind:tap="goJoin">我有邀请码</view>
     </block>
 
     <block wx:elif="{{mode === 'create'}}">
       <view class="field">
-        <view class="label">家庭名称</view>
-        <input class="input" placeholder="例如：我家" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
+        <view class="label">家叫什么</view>
+        <input class="input" placeholder="例如：我家、出租屋" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
       </view>
       <view class="error" wx:if="{{formError}}">{{formError}}</view>
-      <button
-        class="btn primary"
-        style="background: {{theme.themeColor}};"
-        loading="{{submitting}}"
-        disabled="{{submitting}}"
-        bind:tap="onCreate"
-      >创建</button>
-      <button class="btn link" bind:tap="goChoose">返回</button>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">
+        {{submitting ? '正在安顿…' : '安顿下来'}}
+      </view>
+      <view class="text-btn" bind:tap="goChoose">返回</view>
     </block>
 
     <block wx:else>
       <view class="field">
-        <view class="label">邀请码</view>
+        <view class="label">家人给的邀请码</view>
         <input class="input" placeholder="6 位邀请码" value="{{inviteCode}}" bindinput="onCodeInput" maxlength="6" />
       </view>
       <view class="error" wx:if="{{formError}}">{{formError}}</view>
-      <button
-        class="btn primary"
-        style="background: {{theme.themeColor}};"
-        loading="{{submitting}}"
-        disabled="{{submitting}}"
-        bind:tap="onJoin"
-      >加入</button>
-      <button class="btn link" bind:tap="goChoose">返回</button>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">
+        {{submitting ? '正在走进去…' : '走进这家'}}
+      </view>
+      <view class="text-btn" bind:tap="goChoose">返回</view>
     </block>
   </view>
 </AppShell>

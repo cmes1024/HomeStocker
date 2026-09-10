@@ -5,6 +5,7 @@
 ## 权威范围
 
 - **MVP 实施唯一范围源：** `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`
+- **下一版开发重点：** `docs/plans/2026-09-10-next-spaces-locations.md`（家庭空间 + 存放位置；清单为主、空间为辅）
 - 完整 PRD / 功能清单 / 旧架构（`docs/PRD-*.md` 等）是愿景，**不是**本阶段范围
 - Agent 编排细节：`docs/plans/2026-09-07-ai-assistant-design.md`（后接；MVP 不上对话 UI）
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
@@ -16,9 +17,9 @@
 | 核心 | 创建/加入家庭 + 共享物资台账 |
 | 权限 | 邀请码直加，全员同权 |
 | 家庭数 | **多家庭**：可继续创建/加入；`memberships` 多对多 + `currentFamilyId` 切换 |
-| 物资字段 | 仅 `name` / `quantity` / `note` |
+| 物资字段 | 仅 `name` / `quantity` / `note`（下一版再加空间/位置，见上） |
 | 家庭外观 | 背景可设渐变 / 纯色 / 自定义图片（家庭页全屏） |
-| 不做 | 角色审批、位置分类、保质期、OCR、采购、对话 UI |
+| 不做（本阶段） | 角色审批、保质期、OCR、采购、对话 UI；空间/位置见「下一版」文档 |
 
 ## 技术栈
 

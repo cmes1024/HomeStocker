@@ -79,18 +79,20 @@ Page({
     const id = e.currentTarget.dataset.id
     const confirm = await new Promise((resolve) => {
       wx.showModal({
-        title: '删除物资',
-        content: '确定删除该物资？',
+        title: '从柜子里拿掉？',
+        content: '去掉后家人那边也会看不到这件东西。',
+        confirmText: '拿掉',
+        confirmColor: '#FA5151',
         success: (res) => resolve(res.confirm)
       })
     })
     if (!confirm) return
     try {
       await callItem('remove', { itemId: id })
-      wx.showToast({ title: '已删除', icon: 'success' })
+      wx.showToast({ title: '已拿掉', icon: 'success' })
       this.loadList()
     } catch (err) {
-      wx.showToast({ title: err.message || '删除失败', icon: 'none' })
+      wx.showToast({ title: err.message || '操作失败', icon: 'none' })
     }
   }
 })

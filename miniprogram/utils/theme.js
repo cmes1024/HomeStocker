@@ -40,6 +40,7 @@ const DEFAULT_THEME = {
   bgStyle: `background: ${DEFAULT_GRADIENT};`,
   bgImage: '',
   lightHeader: false,
+  isPhoto: false,
   themeColor: '#3F7A88',
   background: {
     type: 'gradient',
@@ -92,16 +93,19 @@ function resolveTheme(background) {
       bgStyle: `background: ${background.value};`,
       bgImage: '',
       lightHeader: false,
+      isPhoto: false,
       themeColor,
       background: { type: 'solid', value: background.value }
     }
   }
 
   if (background.type === 'image') {
+    // 照片背景：浅色蒙层 + 深色字，避免明暗不均导致字看不清
     return {
-      bgStyle: 'background: #1a1a1a;',
+      bgStyle: 'background: #d8d2c8;',
       bgImage: background.value,
-      lightHeader: true,
+      lightHeader: false,
+      isPhoto: true,
       themeColor,
       background: { type: 'image', value: background.value }
     }
@@ -111,6 +115,7 @@ function resolveTheme(background) {
     bgStyle: `background: ${background.value};`,
     bgImage: '',
     lightHeader: false,
+    isPhoto: false,
     themeColor,
     background: { type: 'gradient', value: background.value }
   }

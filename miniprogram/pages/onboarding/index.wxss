@@ -1,74 +1,84 @@
-.panel.glass {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(12px);
-  border-radius: 20rpx;
-  padding: 36rpx 32rpx;
-  margin-bottom: 20rpx;
-  border: 1rpx solid rgba(255, 255, 255, 0.55);
+.welcome {
+  margin-top: 48rpx;
+  padding: 8rpx 8rpx 40rpx;
 }
 
-.hero {
-  margin-bottom: 40rpx;
+.welcome.on-photo {
+  margin-top: 24rpx;
+  padding: 36rpx 32rpx 40rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 14rpx 36rpx rgba(40, 30, 20, 0.07);
 }
 
-.hero-title {
-  font-size: 44rpx;
+.welcome-kicker {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.42);
+  letter-spacing: 2rpx;
+  margin-bottom: 12rpx;
+}
+
+.welcome-title {
+  font-size: 56rpx;
   font-weight: 600;
   color: #1a1a1a;
+  line-height: 1.2;
   margin-bottom: 16rpx;
 }
 
-.hero-sub {
+.welcome-sub {
   font-size: 28rpx;
-  color: #666;
-  line-height: 1.5;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.55;
+  margin-bottom: 56rpx;
+  max-width: 560rpx;
 }
 
 .field {
-  margin-bottom: 32rpx;
+  margin-bottom: 28rpx;
 }
 
 .label {
-  font-size: 26rpx;
-  color: #666;
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.5);
   margin-bottom: 12rpx;
 }
 
 .input {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 12rpx;
-  padding: 24rpx 28rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border-radius: 20rpx;
+  padding: 26rpx 28rpx;
   font-size: 30rpx;
-  border: 1rpx solid #e5e5e5;
+  border: 1rpx solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10rpx 24rpx rgba(40, 30, 20, 0.05);
 }
 
-.btn {
-  margin-top: 24rpx;
-  border-radius: 12rpx;
-  font-size: 30rpx;
-}
-
-.btn.primary {
-  color: #fff;
-}
-
-.btn.ghost {
-  background: rgba(255, 255, 255, 0.95);
-  color: #1a1a1a;
-  border: 1rpx solid #ddd;
-}
-
-.btn.link {
-  background: transparent;
-  color: #666;
-  font-size: 28rpx;
-}
-
-.hint {
+.pill-btn {
+  margin-top: 12rpx;
   text-align: center;
-  color: #666;
-  padding: 48rpx 0;
+  padding: 24rpx 32rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 30rpx;
+}
+
+.ghost-btn {
+  margin-top: 20rpx;
+  text-align: center;
+  padding: 22rpx 32rpx;
+  border-radius: 999rpx;
   font-size: 28rpx;
+  color: #1a1a1a;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1rpx solid rgba(255, 255, 255, 0.7);
+}
+
+.text-btn {
+  margin-top: 20rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.45);
+  padding: 16rpx;
 }
 
 .error {
@@ -77,6 +87,17 @@
   margin: 8rpx 0 16rpx;
 }
 
-.hint.error {
-  padding-bottom: 24rpx;
+.state {
+  text-align: center;
+  padding: 80rpx 24rpx;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.state-text.error {
+  color: var(--error-color, #fa5151);
+  margin-bottom: 24rpx;
 }
