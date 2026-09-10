@@ -1,0 +1,39 @@
+.page {
+  padding: 40rpx 32rpx;
+}
+
+.field {
+  margin-bottom: 28rpx;
+}
+
+.label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.input {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx 28rpx;
+  font-size: 30rpx;
+  border: 1rpx solid #e5e5e5;
+}
+
+.btn.primary {
+  margin-top: 40rpx;
+  background: var(--main-color, #007bff);
+  color: #fff;
+  border-radius: 12rpx;
+}
+
+.error {
+  color: var(--error-color, #fa5151);
+  font-size: 26rpx;
+}
+
+.hint {
+  text-align: center;
+  color: #666;
+  padding: 80rpx 0;
+}

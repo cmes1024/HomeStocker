@@ -1,0 +1,36 @@
+<Header back="{{false}}" page-name="{{familyName || '物资'}}" align-content="center" zIndex="10" headerStyle="z-index: 10;background: #ffffff" />
+
+<view class="page" wx:if="{{bootLoading}}">
+  <view class="hint">加载中…</view>
+</view>
+
+<view class="page" wx:elif="{{bootError}}">
+  <view class="hint error">{{bootError}}</view>
+  <button class="btn primary" bind:tap="onRetryBoot">重试</button>
+</view>
+
+<view class="page" wx:else>
+  <view class="toolbar">
+    <view class="link" bind:tap="goFamily">家庭</view>
+    <view class="link primary" bind:tap="goAdd">新增</view>
+  </view>
+
+  <view wx:if="{{loading}}" class="hint">刷新中…</view>
+
+  <view wx:elif="{{error}}" class="panel">
+    <view class="hint error">{{error}}</view>
+    <button class="btn primary" bind:tap="onRetryList">重试</button>
+  </view>
+
+  <view wx:elif="{{items.length === 0}}" class="hint">还没有物资，点右上角新增</view>
+
+  <view wx:else class="list">
+    <view class="row" wx:for="{{items}}" wx:key="_id">
+      <view class="row-main" bind:tap="goEdit" data-id="{{item._id}}">
+        <view class="name">{{item.name}}</view>
+        <view class="meta">数量 {{item.quantity}}<text wx:if="{{item.note}}"> · {{item.note}}</text></view>
+      </view>
+      <view class="del" catch:tap="onRemove" data-id="{{item._id}}">删</view>
+    </view>
+  </view>
+</view>

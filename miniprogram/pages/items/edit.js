@@ -1,0 +1,106 @@
+const { callItem } = require('../../utils/cloud')
+
+Page({
+  data: {
+    itemId: '',
+    name: '',
+    quantity: '1',
+    note: '',
+    loading: false,
+    saving: false,
+    error: '',
+    isEdit: false
+  },
+
+  onLoad(options) {
+    const itemId = (options && options.id) || ''
+    if (itemId) {
+      this.setData({ itemId, isEdit: true, loading: true })
+      this.loadItem(itemId)
+    }
+  },
+
+  notifyDeletedAndBack() {
+    wx.showModal({
+      title: '提示',
+      content: '商品已被删除',
+      showCancel: false,
+      success: () => wx.navigateBack()
+    })
+  },
+
+  async loadItem(itemId) {
+    try {
+      const item = await callItem('get', { itemId })
+      this.setData({
+        name: item.name || '',
+        quantity: String(item.quantity != null ? item.quantity : 1),
+        note: item.note || '',
+        loading: false
+      })
+    } catch (e) {
+      if (e.code === 'NOT_FOUND') {
+        this.notifyDeletedAndBack()
+        return
+      }
+      this.setData({
+        loading: false,
+        error: e.message || '加载失败'
+      })
+    }
+  },
+
+  onName(e) {
+    this.setData({ name: e.detail.value })
+  },
+
+  onQuantity(e) {
+    this.setData({ quantity: e.detail.value })
+  },
+
+  onNote(e) {
+    this.setData({ note: e.detail.value })
+  },
+
+  async onSave() {
+    if (this.data.saving) return
+    const name = (this.data.name || '').trim()
+    if (!name) {
+      this.setData({ error: '请输入名称' })
+      return
+    }
+    const quantity = Number(this.data.quantity)
+    if (!Number.isFinite(quantity) || quantity < 0) {
+      this.setData({ error: '数量无效' })
+      return
+    }
+    this.setData({ saving: true, error: '' })
+    try {
+      if (this.data.isEdit) {
+        await callItem('update', {
+          itemId: this.data.itemId,
+          name,
+          quantity,
+          note: this.data.note || ''
+        })
+      } else {
+        await callItem('create', {
+          name,
+          quantity,
+          note: this.data.note || '',
+          source: 'ui'
+        })
+      }
+      wx.showToast({ title: '已保存', icon: 'success' })
+      setTimeout(() => wx.navigateBack(), 400)
+    } catch (e) {
+      if (e.code === 'NOT_FOUND') {
+        this.notifyDeletedAndBack()
+        return
+      }
+      this.setData({ error: e.message || '保存失败' })
+    } finally {
+      this.setData({ saving: false })
+    }
+  }
+})

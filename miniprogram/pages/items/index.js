@@ -1,0 +1,84 @@
+const { listItems } = require('../../utils/db')
+const { routeByMembership } = require('../../utils/route')
+const { callItem } = require('../../utils/cloud')
+
+Page({
+  data: {
+    bootLoading: true,
+    bootError: '',
+    loading: false,
+    error: '',
+    items: [],
+    familyId: '',
+    familyName: ''
+  },
+
+  async onShow() {
+    try {
+      const session = await routeByMembership(this, 'items')
+      if (!session || !session.hasFamily) return
+      this.setData({
+        familyId: session.currentFamilyId,
+        familyName: (session.family && session.family.name) || '家庭物资'
+      })
+      await this.loadList()
+    } catch (e) {
+      // bootError 已设置
+    }
+  },
+
+  onRetryBoot() {
+    this.onShow()
+  },
+
+  async loadList() {
+    const familyId = this.data.familyId || getApp().globalData.familyId
+    if (!familyId) return
+    this.setData({ loading: true, error: '' })
+    try {
+      const items = await listItems(familyId)
+      this.setData({ items, loading: false })
+    } catch (e) {
+      this.setData({
+        loading: false,
+        error: e.message || '加载失败，请重试'
+      })
+    }
+  },
+
+  onRetryList() {
+    this.loadList()
+  },
+
+  goAdd() {
+    wx.navigateTo({ url: '/pages/items/edit' })
+  },
+
+  goEdit(e) {
+    const id = e.currentTarget.dataset.id
+    wx.navigateTo({ url: `/pages/items/edit?id=${id}` })
+  },
+
+  goFamily() {
+    wx.navigateTo({ url: '/pages/family/index' })
+  },
+
+  async onRemove(e) {
+    const id = e.currentTarget.dataset.id
+    const confirm = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除物资',
+        content: '确定删除该物资？',
+        success: (res) => resolve(res.confirm)
+      })
+    })
+    if (!confirm) return
+    try {
+      await callItem('remove', { itemId: id })
+      wx.showToast({ title: '已删除', icon: 'success' })
+      this.loadList()
+    } catch (err) {
+      wx.showToast({ title: err.message || '删除失败', icon: 'none' })
+    }
+  }
+})

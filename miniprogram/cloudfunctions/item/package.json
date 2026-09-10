@@ -1,0 +1,9 @@
+{
+  "name": "item",
+  "version": "1.0.0",
+  "description": "物资写路径：create / update / remove / get / search",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

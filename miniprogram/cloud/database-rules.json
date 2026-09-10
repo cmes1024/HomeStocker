@@ -1,0 +1,19 @@
+{
+  "_comment": "MVP：items/families/memberships 客户端写一律 deny；items 读也走云函数（避免 get(users).currentFamilyId 规则在控制台易失败）。users 仅本人可读。",
+  "users": {
+    "read": "doc._id == auth.openid",
+    "write": false
+  },
+  "families": {
+    "read": false,
+    "write": false
+  },
+  "memberships": {
+    "read": "doc.openid == auth.openid",
+    "write": false
+  },
+  "items": {
+    "read": false,
+    "write": false
+  }
+}

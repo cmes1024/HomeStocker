@@ -1,0 +1,80 @@
+.page {
+  padding: 48rpx 40rpx 80rpx;
+  box-sizing: border-box;
+  min-height: 100%;
+}
+
+.hero {
+  margin-bottom: 64rpx;
+}
+
+.hero-title {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 16rpx;
+}
+
+.hero-sub {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+}
+
+.field {
+  margin-bottom: 32rpx;
+}
+
+.label {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 12rpx;
+}
+
+.input {
+  background: #fff;
+  border-radius: 12rpx;
+  padding: 24rpx 28rpx;
+  font-size: 30rpx;
+  border: 1rpx solid #e5e5e5;
+}
+
+.btn {
+  margin-top: 24rpx;
+  border-radius: 12rpx;
+  font-size: 30rpx;
+}
+
+.btn.primary {
+  background: var(--main-color, #007bff);
+  color: #fff;
+}
+
+.btn.ghost {
+  background: #fff;
+  color: #1a1a1a;
+  border: 1rpx solid #ddd;
+}
+
+.btn.link {
+  background: transparent;
+  color: #666;
+  font-size: 28rpx;
+}
+
+.hint {
+  text-align: center;
+  color: #666;
+  padding: 80rpx 0;
+  font-size: 28rpx;
+}
+
+.error {
+  color: var(--error-color, #fa5151);
+  font-size: 26rpx;
+  margin: 8rpx 0 16rpx;
+}
+
+.hint.error {
+  padding-bottom: 24rpx;
+}

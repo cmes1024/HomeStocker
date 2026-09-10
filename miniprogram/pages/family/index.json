@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "家庭",
+  "usingComponents": {
+    "Header": "/components/Header/index"
+  }
+}

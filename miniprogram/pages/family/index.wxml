@@ -1,0 +1,32 @@
+<Header back="{{true}}" page-name="家庭" align-content="center" zIndex="10" headerStyle="z-index: 10;background: #ffffff" />
+
+<view class="page" wx:if="{{loading}}">
+  <view class="hint">加载中…</view>
+</view>
+
+<view class="page" wx:elif="{{error}}">
+  <view class="hint error">{{error}}</view>
+  <button class="btn primary" bind:tap="onRetry">重试</button>
+</view>
+
+<view class="page" wx:elif="{{family}}">
+  <view class="card">
+    <view class="label">家庭名称</view>
+    <view class="value">{{family.name}}</view>
+  </view>
+  <view class="card">
+    <view class="label">邀请码</view>
+    <view class="row">
+      <view class="code">{{family.inviteCode}}</view>
+      <view class="copy" bind:tap="onCopyCode">复制</view>
+    </view>
+  </view>
+  <view class="card">
+    <view class="label">成员数</view>
+    <view class="value">{{family.memberCount}}</view>
+  </view>
+
+  <button class="btn danger" loading="{{acting}}" disabled="{{acting}}" bind:tap="onLeave">
+    {{family.isOwner ? '解散家庭' : '离开家庭'}}
+  </button>
+</view>
