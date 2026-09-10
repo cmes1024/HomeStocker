@@ -1,20 +1,31 @@
 const { callFamily } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
+const { setAppFamily, bindThemeToPage } = require('../../utils/theme')
 
 Page({
   data: {
     bootLoading: true,
     bootError: '',
-    mode: 'choose', // choose | create | join
+    mode: 'choose',
     familyName: '',
     inviteCode: '',
     submitting: false,
-    formError: ''
+    formError: '',
+    theme: null,
+    headerTitle: ''
+  },
+
+  onLoad() {
+    setAppFamily(null)
+    bindThemeToPage(this, { headerTitle: '' })
   },
 
   async onShow() {
+    setAppFamily(null)
+    bindThemeToPage(this, { headerTitle: '' })
     try {
       await routeByMembership(this, 'onboarding')
+      bindThemeToPage(this, { headerTitle: '' })
     } catch (e) {
       // bootError 已设置
     }
@@ -54,13 +65,11 @@ Page({
     this.setData({ submitting: true, formError: '' })
     try {
       const family = await callFamily('create', { name })
-      const app = getApp()
-      app.globalData.familyId = family._id
-      app.globalData.family = family
+      setAppFamily(family)
       wx.reLaunch({ url: '/pages/items/index' })
     } catch (e) {
       this.setData({
-        formError: e.code === 'ALREADY_IN_FAMILY' ? '你已加入家庭' : (e.message || '创建失败')
+        formError: e.message || '创建失败'
       })
     } finally {
       this.setData({ submitting: false })
@@ -77,13 +86,11 @@ Page({
     this.setData({ submitting: true, formError: '' })
     try {
       const family = await callFamily('join', { inviteCode })
-      const app = getApp()
-      app.globalData.familyId = family._id
-      app.globalData.family = family
+      setAppFamily(family)
       wx.reLaunch({ url: '/pages/items/index' })
     } catch (e) {
       let msg = e.message || '加入失败'
-      if (e.code === 'ALREADY_IN_FAMILY') msg = '你已加入家庭'
+      if (e.code === 'ALREADY_IN_FAMILY') msg = '已加入该家庭'
       if (e.code === 'INVALID_CODE') msg = '邀请码无效'
       this.setData({ formError: msg })
     } finally {

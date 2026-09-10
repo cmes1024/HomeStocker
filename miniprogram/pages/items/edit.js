@@ -1,4 +1,5 @@
 const { callItem } = require('../../utils/cloud')
+const { bindThemeToPage } = require('../../utils/theme')
 
 Page({
   data: {
@@ -9,15 +10,27 @@ Page({
     loading: false,
     saving: false,
     error: '',
-    isEdit: false
+    isEdit: false,
+    headerTitle: '',
+    theme: null
   },
 
   onLoad(options) {
     const itemId = (options && options.id) || ''
+    const isEdit = !!itemId
+    bindThemeToPage(this, {
+      itemId,
+      isEdit,
+      loading: isEdit,
+      headerTitle: ''
+    })
     if (itemId) {
-      this.setData({ itemId, isEdit: true, loading: true })
       this.loadItem(itemId)
     }
+  },
+
+  onShow() {
+    bindThemeToPage(this, { headerTitle: '' })
   },
 
   notifyDeletedAndBack() {

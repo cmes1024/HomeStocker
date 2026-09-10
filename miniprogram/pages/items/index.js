@@ -1,6 +1,7 @@
 const { listItems } = require('../../utils/db')
 const { routeByMembership } = require('../../utils/route')
 const { callItem } = require('../../utils/cloud')
+const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 
 Page({
   data: {
@@ -10,16 +11,27 @@ Page({
     error: '',
     items: [],
     familyId: '',
-    familyName: ''
+    familyName: '',
+    headerTitle: '',
+    theme: null
+  },
+
+  onLoad() {
+    bindThemeToPage(this, { headerTitle: '' })
   },
 
   async onShow() {
+    bindThemeToPage(this, { headerTitle: '' })
     try {
       const session = await routeByMembership(this, 'items')
       if (!session || !session.hasFamily) return
-      this.setData({
+      setAppFamily(session.family)
+      const familyName = (session.family && session.family.name) || ''
+      bindThemeToPage(this, {
         familyId: session.currentFamilyId,
-        familyName: (session.family && session.family.name) || '家庭物资'
+        familyName,
+        headerTitle: '',
+        bootLoading: false
       })
       await this.loadList()
     } catch (e) {

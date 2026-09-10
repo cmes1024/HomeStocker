@@ -1,42 +1,62 @@
-<Header back="{{false}}" page-name="家庭物资" align-content="center" zIndex="10" headerStyle="z-index: 10;background: #ffffff" />
-
-<view class="page" wx:if="{{bootLoading}}">
-  <view class="hint">加载中…</view>
-</view>
-
-<view class="page" wx:elif="{{bootError}}">
-  <view class="hint error">{{bootError}}</view>
-  <button class="btn primary" bind:tap="onRetryBoot">重试</button>
-</view>
-
-<view class="page" wx:else>
-  <view class="hero">
-    <view class="hero-title">先建一个家庭</view>
-    <view class="hero-sub">创建或加入后，和家人共享物资台账</view>
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{false}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="panel glass" wx:if="{{bootLoading}}">
+    <view class="hint">加载中…</view>
   </view>
 
-  <block wx:if="{{mode === 'choose'}}">
-    <button class="btn primary" bind:tap="goCreate">创建家庭</button>
-    <button class="btn ghost" bind:tap="goJoin">输入邀请码加入</button>
-  </block>
+  <view class="panel glass" wx:elif="{{bootError}}">
+    <view class="hint error">{{bootError}}</view>
+    <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">重试</button>
+  </view>
 
-  <block wx:elif="{{mode === 'create'}}">
-    <view class="field">
-      <view class="label">家庭名称</view>
-      <input class="input" placeholder="例如：我家" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
+  <view class="panel glass" wx:else>
+    <view class="hero">
+      <view class="hero-title">先建一个家庭</view>
+      <view class="hero-sub">创建或加入后，和家人共享物资台账</view>
     </view>
-    <view class="error" wx:if="{{formError}}">{{formError}}</view>
-    <button class="btn primary" loading="{{submitting}}" disabled="{{submitting}}" bind:tap="onCreate">创建</button>
-    <button class="btn link" bind:tap="goChoose">返回</button>
-  </block>
 
-  <block wx:else>
-    <view class="field">
-      <view class="label">邀请码</view>
-      <input class="input" placeholder="6 位邀请码" value="{{inviteCode}}" bindinput="onCodeInput" maxlength="6" />
-    </view>
-    <view class="error" wx:if="{{formError}}">{{formError}}</view>
-    <button class="btn primary" loading="{{submitting}}" disabled="{{submitting}}" bind:tap="onJoin">加入</button>
-    <button class="btn link" bind:tap="goChoose">返回</button>
-  </block>
-</view>
+    <block wx:if="{{mode === 'choose'}}">
+      <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="goCreate">创建家庭</button>
+      <button class="btn ghost" bind:tap="goJoin">输入邀请码加入</button>
+    </block>
+
+    <block wx:elif="{{mode === 'create'}}">
+      <view class="field">
+        <view class="label">家庭名称</view>
+        <input class="input" placeholder="例如：我家" value="{{familyName}}" bindinput="onNameInput" maxlength="20" />
+      </view>
+      <view class="error" wx:if="{{formError}}">{{formError}}</view>
+      <button
+        class="btn primary"
+        style="background: {{theme.themeColor}};"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bind:tap="onCreate"
+      >创建</button>
+      <button class="btn link" bind:tap="goChoose">返回</button>
+    </block>
+
+    <block wx:else>
+      <view class="field">
+        <view class="label">邀请码</view>
+        <input class="input" placeholder="6 位邀请码" value="{{inviteCode}}" bindinput="onCodeInput" maxlength="6" />
+      </view>
+      <view class="error" wx:if="{{formError}}">{{formError}}</view>
+      <button
+        class="btn primary"
+        style="background: {{theme.themeColor}};"
+        loading="{{submitting}}"
+        disabled="{{submitting}}"
+        bind:tap="onJoin"
+      >加入</button>
+      <button class="btn link" bind:tap="goChoose">返回</button>
+    </block>
+  </view>
+</AppShell>

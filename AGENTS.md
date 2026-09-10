@@ -15,9 +15,10 @@
 |----|------|
 | 核心 | 创建/加入家庭 + 共享物资台账 |
 | 权限 | 邀请码直加，全员同权 |
-| 家庭数 | **体验**单家庭；**模型**多对多（`memberships`） |
+| 家庭数 | **多家庭**：可继续创建/加入；`memberships` 多对多 + `currentFamilyId` 切换 |
 | 物资字段 | 仅 `name` / `quantity` / `note` |
-| 不做 | 多家庭切换 UI、角色审批、位置分类、保质期、OCR、采购、对话 UI |
+| 家庭外观 | 背景可设渐变 / 纯色 / 自定义图片（家庭页全屏） |
+| 不做 | 角色审批、位置分类、保质期、OCR、采购、对话 UI |
 
 ## 技术栈
 
@@ -36,7 +37,7 @@ items (familyId, name, quantity, note, createdBy, source)
 
 - **禁止**把成员或物资嵌进 `families` 大数组
 - 索引：`families.inviteCode`；`memberships.openid` / `familyId` / 复合唯一；`items.familyId+updatedAt`
-- MVP：已有任意 membership 则不可再 create/join
+- MVP：可多 membership；create 不限；join 同家重复拒绝；切换改 `currentFamilyId`
 
 ## 云函数与写路径
 
@@ -66,7 +67,7 @@ items (familyId, name, quantity, note, createdBy, source)
 ## 给 Agent 的工作约定
 
 1. 改范围前先读 `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`
-2. 新能力默认 YAGNI；多家庭 UI / 角色 / 保质期 / OCR / 对话 UI 不进当前 MVP
+2. 新能力默认 YAGNI；角色 / 保质期 / OCR / 对话 UI 不进当前阶段；多家庭切换与家庭背景已开放
 3. 人↔家用 `memberships`；物资独立 `items` + `familyId`
 4. 领域写操作做成可被 tool 调用的云函数 action，保持单一写模型
 5. 用户未要求时不要擅自 commit / push

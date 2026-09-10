@@ -23,6 +23,7 @@
 | `inviteCode` | string | 6 位 `A-Z0-9`，唯一 |
 | `ownerOpenid` | string | |
 | `memberCount` | number | 云函数维护 |
+| `background` | object | `{ type: 'gradient'\|'solid'\|'image', value }`，家庭页全屏背景 |
 | `createdAt` | number | |
 
 不存 `memberOpenids[]`。
@@ -68,7 +69,10 @@
 
 MVP 实际读路径：`items` 列表经云函数 `item.list`（客户端直连读在自定义规则下易因 `get(users)` 失败，故改为云函数）。
 
-## MVP 体验约束
+## 多家庭体验
 
-- 已有任意 membership → create/join 返回 `ALREADY_IN_FAMILY`
-- 关系写与物资写一律云函数；列表读可客户端直连 `items`
+- 可加入多个家庭；create 始终允许；join 仅当已是**该**家庭成员时返回 `ALREADY_IN_FAMILY`
+- `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
+- `updateBackground` 更新当前家庭背景（渐变 / 纯色 / 云存储图片）；主题写入 `globalData.theme`，**全站页面**共用同一背景与强调色
+- 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
+- 关系写与物资写一律云函数；列表读可走云函数 `item.list`

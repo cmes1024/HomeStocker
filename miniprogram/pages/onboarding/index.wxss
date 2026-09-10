@@ -1,11 +1,14 @@
-.page {
-  padding: 48rpx 40rpx 80rpx;
-  box-sizing: border-box;
-  min-height: 100%;
+.panel.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  border-radius: 20rpx;
+  padding: 36rpx 32rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.55);
 }
 
 .hero {
-  margin-bottom: 64rpx;
+  margin-bottom: 40rpx;
 }
 
 .hero-title {
@@ -32,7 +35,7 @@
 }
 
 .input {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 12rpx;
   padding: 24rpx 28rpx;
   font-size: 30rpx;
@@ -46,12 +49,11 @@
 }
 
 .btn.primary {
-  background: var(--main-color, #007bff);
   color: #fff;
 }
 
 .btn.ghost {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   color: #1a1a1a;
   border: 1rpx solid #ddd;
 }
@@ -65,7 +67,7 @@
 .hint {
   text-align: center;
   color: #666;
-  padding: 80rpx 0;
+  padding: 48rpx 0;
   font-size: 28rpx;
 }
 

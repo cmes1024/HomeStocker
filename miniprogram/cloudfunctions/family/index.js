@@ -8,6 +8,11 @@ const _ = db.command
 const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const INVITE_LEN = 6
 
+const DEFAULT_BACKGROUND = {
+  type: 'gradient',
+  value: 'linear-gradient(165deg, #E8F1F2 0%, #C5D9DE 48%, #8FB3BC 100%)'
+}
+
 function ok(data) {
   return { ok: true, data }
 }
@@ -26,6 +31,30 @@ function randomInviteCode() {
     code += INVITE_CHARS[Math.floor(Math.random() * INVITE_CHARS.length)]
   }
   return code
+}
+
+function normalizeBackground(raw) {
+  if (!raw || typeof raw !== 'object') return { ...DEFAULT_BACKGROUND }
+  const type = raw.type
+  const value = String(raw.value || '').trim()
+  if (!value) return { ...DEFAULT_BACKGROUND }
+  if (type === 'gradient' || type === 'solid' || type === 'image') {
+    return { type, value }
+  }
+  return { ...DEFAULT_BACKGROUND }
+}
+
+function familySummary(familyId, family, openid) {
+  return {
+    _id: familyId,
+    name: family.name,
+    inviteCode: family.inviteCode,
+    ownerOpenid: family.ownerOpenid,
+    memberCount: family.memberCount || 0,
+    createdAt: family.createdAt,
+    background: normalizeBackground(family.background),
+    isOwner: family.ownerOpenid === openid
+  }
 }
 
 async function ensureUser(openid) {
@@ -49,11 +78,6 @@ async function ensureUser(openid) {
   return { _id: openid, ...doc }
 }
 
-async function countMemberships(openid) {
-  const res = await db.collection('memberships').where({ openid }).count()
-  return res.total || 0
-}
-
 async function createUniqueInviteCode(maxAttempts = 8) {
   for (let i = 0; i < maxAttempts; i++) {
     const inviteCode = randomInviteCode()
@@ -63,14 +87,30 @@ async function createUniqueInviteCode(maxAttempts = 8) {
   throw new Error('INVITE_CODE_EXHAUSTED')
 }
 
+async function pickOtherFamilyId(openid, excludeFamilyId) {
+  const res = await db
+    .collection('memberships')
+    .where({ openid })
+    .limit(20)
+    .get()
+  const other = (res.data || []).find((m) => m.familyId !== excludeFamilyId)
+  return other ? other.familyId : null
+}
+
+async function setCurrentFamily(openid, familyId) {
+  await db.collection('users').doc(openid).update({
+    data: {
+      currentFamilyId: familyId,
+      updatedAt: Date.now()
+    }
+  })
+}
+
 async function createFamily(openid, event) {
   const name = String(event.name || '').trim()
   if (!name) return fail('INVALID_NAME', '请输入家庭名称')
 
   await ensureUser(openid)
-  if ((await countMemberships(openid)) > 0) {
-    return fail('ALREADY_IN_FAMILY', '已加入家庭，无法再创建')
-  }
 
   const now = Date.now()
   let inviteCode
@@ -80,12 +120,17 @@ async function createFamily(openid, event) {
     return fail('INVITE_CODE_EXHAUSTED', '邀请码生成失败，请重试')
   }
 
+  const background = event.background
+    ? normalizeBackground(event.background)
+    : { ...DEFAULT_BACKGROUND }
+
   const addRes = await db.collection('families').add({
     data: {
       name,
       inviteCode,
       ownerOpenid: openid,
       memberCount: 1,
+      background,
       createdAt: now
     }
   })
@@ -99,12 +144,7 @@ async function createFamily(openid, event) {
     }
   })
 
-  await db.collection('users').doc(openid).update({
-    data: {
-      currentFamilyId: familyId,
-      updatedAt: now
-    }
-  })
+  await setCurrentFamily(openid, familyId)
 
   return ok({
     _id: familyId,
@@ -112,7 +152,9 @@ async function createFamily(openid, event) {
     inviteCode,
     ownerOpenid: openid,
     memberCount: 1,
-    createdAt: now
+    background,
+    createdAt: now,
+    isOwner: true
   })
 }
 
@@ -125,9 +167,6 @@ async function joinFamily(openid, event) {
   }
 
   await ensureUser(openid)
-  if ((await countMemberships(openid)) > 0) {
-    return fail('ALREADY_IN_FAMILY', '已加入家庭，无法再加入')
-  }
 
   const found = await db.collection('families').where({ inviteCode }).limit(1).get()
   if (!found.data || !found.data.length) {
@@ -138,6 +177,11 @@ async function joinFamily(openid, event) {
   const familyId = family._id
   const now = Date.now()
   const mid = membershipId(openid, familyId)
+
+  const existing = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (existing && existing.data) {
+    return fail('ALREADY_IN_FAMILY', '已加入该家庭')
+  }
 
   try {
     await db.collection('memberships').doc(mid).set({
@@ -157,21 +201,12 @@ async function joinFamily(openid, event) {
     }
   })
 
-  await db.collection('users').doc(openid).update({
-    data: {
-      currentFamilyId: familyId,
-      updatedAt: now
-    }
-  })
+  await setCurrentFamily(openid, familyId)
 
-  return ok({
-    _id: familyId,
-    name: family.name,
-    inviteCode: family.inviteCode,
-    ownerOpenid: family.ownerOpenid,
-    memberCount: (family.memberCount || 0) + 1,
-    createdAt: family.createdAt
-  })
+  return ok(familySummary(familyId, {
+    ...family,
+    memberCount: (family.memberCount || 0) + 1
+  }, openid))
 }
 
 async function getMyFamily(openid) {
@@ -192,16 +227,100 @@ async function getMyFamily(openid) {
     return fail('NO_FAMILY', '家庭不存在')
   }
 
-  const family = fam.data
-  return ok({
-    _id: familyId,
-    name: family.name,
-    inviteCode: family.inviteCode,
-    ownerOpenid: family.ownerOpenid,
-    memberCount: family.memberCount || 0,
-    createdAt: family.createdAt,
-    isOwner: family.ownerOpenid === openid
+  return ok(familySummary(familyId, fam.data, openid))
+}
+
+async function listMyFamilies(openid) {
+  const user = await ensureUser(openid)
+  const memRes = await db.collection('memberships').where({ openid }).limit(20).get()
+  const memberships = memRes.data || []
+  if (!memberships.length) {
+    return ok({ currentFamilyId: null, list: [] })
+  }
+
+  const ids = memberships.map((m) => m.familyId)
+  const famRes = await db
+    .collection('families')
+    .where({ _id: _.in(ids) })
+    .limit(20)
+    .get()
+  const byId = {}
+  ;(famRes.data || []).forEach((f) => {
+    byId[f._id] = f
   })
+
+  const list = memberships
+    .map((m) => {
+      const f = byId[m.familyId]
+      if (!f) return null
+      return {
+        ...familySummary(m.familyId, f, openid),
+        joinedAt: m.joinedAt,
+        isCurrent: m.familyId === user.currentFamilyId
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0))
+
+  return ok({
+    currentFamilyId: user.currentFamilyId || null,
+    list
+  })
+}
+
+async function switchFamily(openid, event) {
+  const familyId = String(event.familyId || '').trim()
+  if (!familyId) return fail('INVALID_FAMILY', '家庭无效')
+
+  await ensureUser(openid)
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NOT_MEMBER', '未加入该家庭')
+  }
+
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) {
+    return fail('NO_FAMILY', '家庭不存在')
+  }
+
+  await setCurrentFamily(openid, familyId)
+  return ok(familySummary(familyId, fam.data, openid))
+}
+
+async function updateBackground(openid, event) {
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  const type = String(event.type || '').trim()
+  const value = String(event.value || '').trim()
+  if (!['gradient', 'solid', 'image'].includes(type) || !value) {
+    return fail('INVALID_BACKGROUND', '背景设置无效')
+  }
+  if (type === 'solid' && !/^#[0-9A-Fa-f]{6}$/.test(value)) {
+    return fail('INVALID_BACKGROUND', '颜色格式无效')
+  }
+  if (type === 'gradient' && !value.includes('gradient')) {
+    return fail('INVALID_BACKGROUND', '渐变格式无效')
+  }
+  if (type === 'image' && !value.startsWith('cloud://')) {
+    return fail('INVALID_BACKGROUND', '图片无效')
+  }
+
+  const background = { type, value }
+  await db.collection('families').doc(familyId).update({
+    data: { background }
+  })
+
+  const fam = await db.collection('families').doc(familyId).get()
+  return ok(familySummary(familyId, { ...fam.data, background }, openid))
 }
 
 async function removeInBatches(collection, where, batchSize = 100) {
@@ -215,18 +334,19 @@ async function removeInBatches(collection, where, batchSize = 100) {
   }
 }
 
-async function clearUsersCurrentFamily(familyId) {
+async function reassignUsersCurrentFamily(familyId) {
   const res = await db.collection('users').where({ currentFamilyId: familyId }).get()
   const now = Date.now()
   await Promise.all(
-    (res.data || []).map((u) =>
-      db.collection('users').doc(u._id).update({
+    (res.data || []).map(async (u) => {
+      const nextId = await pickOtherFamilyId(u._id, familyId)
+      await db.collection('users').doc(u._id).update({
         data: {
-          currentFamilyId: null,
+          currentFamilyId: nextId,
           updatedAt: now
         }
       })
-    )
+    })
   )
 }
 
@@ -239,21 +359,23 @@ async function leaveFamily(openid) {
 
   const fam = await db.collection('families').doc(familyId).get().catch(() => null)
   if (!fam || !fam.data) {
-    await db.collection('users').doc(openid).update({
-      data: { currentFamilyId: null, updatedAt: Date.now() }
-    })
+    await setCurrentFamily(openid, null)
     return fail('NO_FAMILY', '家庭不存在')
   }
 
   const family = fam.data
-  const now = Date.now()
 
   if (family.ownerOpenid === openid) {
     await removeInBatches(db.collection('items'), { familyId })
     await removeInBatches(db.collection('memberships'), { familyId })
-    await clearUsersCurrentFamily(familyId)
+    await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()
-    return ok({ dissolved: true })
+
+    const nextFamilyId = await pickOtherFamilyId(openid, familyId)
+    if (nextFamilyId) {
+      await setCurrentFamily(openid, nextFamilyId)
+    }
+    return ok({ dissolved: true, nextFamilyId: nextFamilyId || null })
   }
 
   await db.collection('memberships').doc(membershipId(openid, familyId)).remove()
@@ -262,14 +384,10 @@ async function leaveFamily(openid) {
       memberCount: _.inc(-1)
     }
   })
-  await db.collection('users').doc(openid).update({
-    data: {
-      currentFamilyId: null,
-      updatedAt: now
-    }
-  })
 
-  return ok({ left: true })
+  const nextFamilyId = await pickOtherFamilyId(openid, familyId)
+  await setCurrentFamily(openid, nextFamilyId)
+  return ok({ left: true, nextFamilyId: nextFamilyId || null })
 }
 
 exports.main = async (event) => {
@@ -287,6 +405,12 @@ exports.main = async (event) => {
         return await joinFamily(OPENID, event)
       case 'getMyFamily':
         return await getMyFamily(OPENID)
+      case 'listMyFamilies':
+        return await listMyFamilies(OPENID)
+      case 'switchFamily':
+        return await switchFamily(OPENID, event)
+      case 'updateBackground':
+        return await updateBackground(OPENID, event)
       case 'leave':
         return await leaveFamily(OPENID)
       default:

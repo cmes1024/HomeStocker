@@ -1,0 +1,112 @@
+.shell {
+  position: relative;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.bg-layer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+  transition: opacity 0.45s ease;
+  will-change: opacity;
+}
+
+.bg-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.bg-veil {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.bg-veil.light {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.18) 0%,
+    rgba(255, 255, 255, 0.08) 40%,
+    rgba(255, 255, 255, 0.28) 100%
+  );
+}
+
+.bg-veil.dark {
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0.2) 45%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+}
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: transparent;
+  box-sizing: border-box;
+  transition: color 0.35s ease;
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  padding-left: 12rpx;
+  box-sizing: border-box;
+}
+
+.nav-back {
+  width: 88rpx;
+  font-size: 28rpx;
+  padding: 0 8rpx;
+  flex-shrink: 0;
+}
+
+.nav-back.spacer {
+  visibility: hidden;
+}
+
+.nav-title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 88rpx;
+  box-sizing: border-box;
+  min-height: 1em;
+}
+
+.nav.dark .nav-back,
+.nav.dark .nav-title {
+  color: #1a1a1a;
+}
+
+.nav.light .nav-back,
+.nav.light .nav-title {
+  color: #fff;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.body {
+  position: relative;
+  z-index: 1;
+  padding-left: 32rpx;
+  padding-right: 32rpx;
+  padding-bottom: calc(48rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}

@@ -1,6 +1,4 @@
 {
   "navigationBarTitleText": "编辑物资",
-  "usingComponents": {
-    "Header": "/components/Header/index"
-  }
+  "usingComponents": {}
 }

@@ -1,32 +1,124 @@
-<Header back="{{true}}" page-name="家庭" align-content="center" zIndex="10" headerStyle="z-index: 10;background: #ffffff" />
-
-<view class="page" wx:if="{{loading}}">
-  <view class="hint">加载中…</view>
-</view>
-
-<view class="page" wx:elif="{{error}}">
-  <view class="hint error">{{error}}</view>
-  <button class="btn primary" bind:tap="onRetry">重试</button>
-</view>
-
-<view class="page" wx:elif="{{family}}">
-  <view class="card">
-    <view class="label">家庭名称</view>
-    <view class="value">{{family.name}}</view>
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="panel glass" wx:if="{{loading}}">
+    <view class="hint">加载中…</view>
   </view>
-  <view class="card">
-    <view class="label">邀请码</view>
-    <view class="row">
-      <view class="code">{{family.inviteCode}}</view>
-      <view class="copy" bind:tap="onCopyCode">复制</view>
+
+  <view class="panel glass" wx:elif="{{error}}">
+    <view class="hint error">{{error}}</view>
+    <button class="btn primary" style="background: {{theme.themeColor}};" bind:tap="onRetry">重试</button>
+  </view>
+
+  <block wx:elif="{{family}}">
+    <view class="panel glass">
+      <view class="label">邀请码</view>
+      <view class="row">
+        <view class="code">{{family.inviteCode}}</view>
+        <view class="copy" style="color: {{theme.themeColor}};" bind:tap="onCopyCode">复制</view>
+      </view>
     </view>
-  </view>
-  <view class="card">
-    <view class="label">成员数</view>
-    <view class="value">{{family.memberCount}}</view>
-  </view>
 
-  <button class="btn danger" loading="{{acting}}" disabled="{{acting}}" bind:tap="onLeave">
-    {{family.isOwner ? '解散家庭' : '离开家庭'}}
-  </button>
-</view>
+    <view class="panel glass">
+      <view class="label">成员数</view>
+      <view class="value">{{family.memberCount}}</view>
+    </view>
+
+    <view class="panel glass">
+      <view class="section-hd">
+        <view class="section-title">家庭背景</view>
+        <view class="section-action" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="background">设置</view>
+      </view>
+      <view class="section-sub">渐变、纯色或自定义图片，将作为全站主题背景</view>
+    </view>
+
+    <view class="panel glass" wx:if="{{panel === 'background'}}">
+      <view class="label">渐变</view>
+      <view class="preset-row">
+        <view
+          class="preset-chip"
+          wx:for="{{gradients}}"
+          wx:key="id"
+          style="background: {{item.value}};"
+          data-value="{{item.value}}"
+          bind:tap="onPickGradient"
+        >
+          <text class="preset-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="label spaced">纯色</view>
+      <view class="preset-row">
+        <view
+          class="preset-dot"
+          wx:for="{{solids}}"
+          wx:key="id"
+          style="background: {{item.value}};"
+          data-value="{{item.value}}"
+          bind:tap="onPickSolid"
+        />
+      </view>
+      <button class="btn ghost" loading="{{acting}}" disabled="{{acting}}" bind:tap="onPickImage">选择图片</button>
+      <button class="btn link" bind:tap="closePanel">收起</button>
+    </view>
+
+    <view class="panel glass">
+      <view class="section-hd">
+        <view class="section-title">我的家庭</view>
+      </view>
+      <view
+        class="family-item {{item.isCurrent ? 'current' : ''}}"
+        wx:for="{{families}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        bind:tap="onSwitchFamily"
+      >
+        <view class="family-item-name" style="color: {{item.isCurrent ? theme.themeColor : '#1a1a1a'}};">{{item.name}}</view>
+        <view class="family-item-meta">
+          {{item.isCurrent ? '当前' : '切换'}} · {{item.memberCount}} 人
+        </view>
+      </view>
+      <view class="action-row">
+        <view class="action" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="create">创建家庭</view>
+        <view class="action" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="join">加入家庭</view>
+      </view>
+    </view>
+
+    <view class="panel glass" wx:if="{{panel === 'create'}}">
+      <view class="label">新家庭名称</view>
+      <input
+        class="input"
+        placeholder="例如：老家"
+        value="{{familyNameInput}}"
+        bindinput="onNameInput"
+        maxlength="20"
+      />
+      <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
+      <button class="btn primary" style="background: {{theme.themeColor}};" loading="{{acting}}" disabled="{{acting}}" bind:tap="onCreate">创建并切换</button>
+      <button class="btn link" bind:tap="closePanel">取消</button>
+    </view>
+
+    <view class="panel glass" wx:if="{{panel === 'join'}}">
+      <view class="label">邀请码</view>
+      <input
+        class="input"
+        placeholder="6 位邀请码"
+        value="{{inviteCode}}"
+        bindinput="onCodeInput"
+        maxlength="6"
+      />
+      <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
+      <button class="btn primary" style="background: {{theme.themeColor}};" loading="{{acting}}" disabled="{{acting}}" bind:tap="onJoin">加入并切换</button>
+      <button class="btn link" bind:tap="closePanel">取消</button>
+    </view>
+
+    <button class="btn danger" loading="{{acting}}" disabled="{{acting}}" bind:tap="onLeave">
+      {{family.isOwner ? '解散家庭' : '离开家庭'}}
+    </button>
+  </block>
+</AppShell>

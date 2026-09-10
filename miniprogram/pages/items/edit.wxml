@@ -1,22 +1,36 @@
-<Header back="{{true}}" page-name="{{isEdit ? '编辑物资' : '新增物资'}}" align-content="center" zIndex="10" headerStyle="z-index: 10;background: #ffffff" />
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="panel glass" wx:if="{{loading}}">
+    <view class="hint">加载中…</view>
+  </view>
 
-<view class="page" wx:if="{{loading}}">
-  <view class="hint">加载中…</view>
-</view>
-
-<view class="page" wx:else>
-  <view class="field">
-    <view class="label">名称</view>
-    <input class="input" placeholder="物资名称" value="{{name}}" bindinput="onName" maxlength="40" />
+  <view class="panel glass" wx:else>
+    <view class="field">
+      <view class="label">名称</view>
+      <input class="input" placeholder="物资名称" value="{{name}}" bindinput="onName" maxlength="40" />
+    </view>
+    <view class="field">
+      <view class="label">数量</view>
+      <input class="input" type="digit" placeholder="0" value="{{quantity}}" bindinput="onQuantity" />
+    </view>
+    <view class="field">
+      <view class="label">备注</view>
+      <input class="input" placeholder="可选" value="{{note}}" bindinput="onNote" maxlength="100" />
+    </view>
+    <view class="error" wx:if="{{error}}">{{error}}</view>
+    <button
+      class="btn primary"
+      style="background: {{theme.themeColor}};"
+      loading="{{saving}}"
+      disabled="{{saving}}"
+      bind:tap="onSave"
+    >保存</button>
   </view>
-  <view class="field">
-    <view class="label">数量</view>
-    <input class="input" type="digit" placeholder="0" value="{{quantity}}" bindinput="onQuantity" />
-  </view>
-  <view class="field">
-    <view class="label">备注</view>
-    <input class="input" placeholder="可选" value="{{note}}" bindinput="onNote" maxlength="100" />
-  </view>
-  <view class="error" wx:if="{{error}}">{{error}}</view>
-  <button class="btn primary" loading="{{saving}}" disabled="{{saving}}" bind:tap="onSave">保存</button>
-</view>
+</AppShell>

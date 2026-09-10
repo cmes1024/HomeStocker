@@ -12,9 +12,9 @@
 ## 约束
 
 - [ ] 客户端直写 `items` 被安全规则拒绝
-- [ ] 已有 membership 再 create/join 返回 `ALREADY_IN_FAMILY`
-- [ ] Owner 解散后双方回到 onboarding，可重新创建/加入
-- [ ] 非 owner 离开后回 onboarding，memberCount 减少
+- [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
+- [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
+- [ ] 家庭背景：渐变 / 纯色 / 图片可设，家庭页全屏展示；标题为「家庭 {名称}」
 - [ ] `memberships` / `items` 列表查询走索引（无「缺少索引」报错）
 
 ## 导航

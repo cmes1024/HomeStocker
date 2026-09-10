@@ -1,4 +1,5 @@
 const { ensureSession } = require('./session')
+const { setAppFamily } = require('./theme')
 
 /**
  * 启动分流：无家庭 → onboarding；有家庭 → items
@@ -9,17 +10,14 @@ async function routeByMembership(page, current) {
   page.setData({ bootLoading: true, bootError: '' })
   try {
     const session = await ensureSession()
-    const app = getApp()
     if (session.hasFamily) {
-      app.globalData.familyId = session.currentFamilyId
-      app.globalData.family = session.family
+      setAppFamily(session.family)
       if (current !== 'items') {
         wx.reLaunch({ url: '/pages/items/index' })
         return session
       }
     } else {
-      app.globalData.familyId = null
-      app.globalData.family = null
+      setAppFamily(null)
       if (current !== 'onboarding') {
         wx.reLaunch({ url: '/pages/onboarding/index' })
         return session

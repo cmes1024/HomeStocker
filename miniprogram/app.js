@@ -51,6 +51,7 @@ App({
   globalData: {
     config: null,
     familyId: null,
-    family: null
+    family: null,
+    theme: null
   }
 })

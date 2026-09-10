@@ -6,7 +6,7 @@
     "pages/family/index"
   ],
   "usingComponents": {
-    "Header": "/components/Header/index"
+    "AppShell": "/components/AppShell/index"
   },
   "window": {
     "navigationBarTextStyle": "black",

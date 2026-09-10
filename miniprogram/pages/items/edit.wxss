@@ -1,5 +1,10 @@
-.page {
-  padding: 40rpx 32rpx;
+.panel.glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(12px);
+  border-radius: 20rpx;
+  padding: 28rpx 32rpx;
+  margin-bottom: 20rpx;
+  border: 1rpx solid rgba(255, 255, 255, 0.55);
 }
 
 .field {
@@ -13,7 +18,7 @@
 }
 
 .input {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 12rpx;
   padding: 24rpx 28rpx;
   font-size: 30rpx;
@@ -21,8 +26,7 @@
 }
 
 .btn.primary {
-  margin-top: 40rpx;
-  background: var(--main-color, #007bff);
+  margin-top: 24rpx;
   color: #fff;
   border-radius: 12rpx;
 }
@@ -35,5 +39,5 @@
 .hint {
   text-align: center;
   color: #666;
-  padding: 80rpx 0;
+  padding: 48rpx 0;
 }
