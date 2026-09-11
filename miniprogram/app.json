@@ -4,7 +4,8 @@
     "pages/items/index",
     "pages/items/edit",
     "pages/family/index",
-    "pages/family/tags"
+    "pages/family/tags",
+    "pages/family/messages"
   ],
   "subpackages": [
     {

@@ -85,6 +85,10 @@ Page({
     wx.navigateTo({ url: '/pages/family/tags' })
   },
 
+  goMessages() {
+    wx.navigateTo({ url: '/pages/family/messages' })
+  },
+
   async onToggleExpireReminder() {
     if (this.data.acting || !this.data.family) return
     const current =

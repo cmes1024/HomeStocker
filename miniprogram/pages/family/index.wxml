@@ -48,6 +48,14 @@
       <view class="block-sub">{{copy.tagsSub}}</view>
     </view>
 
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goMessages">
+      <view class="block-hd">
+        <view class="block-title">{{copy.messagesTitle}}</view>
+        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.messagesAction}}</view>
+      </view>
+      <view class="block-sub">{{copy.messagesSub}}</view>
+    </view>
+
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="block-hd" catch:tap="onToggleExpireReminder">
         <view class="block-title">{{copy.reminderTitle}}</view>

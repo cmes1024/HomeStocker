@@ -1,6 +1,6 @@
-# CloudBase 集合与索引（MVP + 空间/位置 + B 波标签/保质期）
+# CloudBase 集合与索引（MVP + 空间/位置 + B 波标签/保质期 + C 波家庭消息）
 
-对齐 `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`、`docs/plans/2026-09-10-next-spaces-locations.md` 与 `docs/plans/2026-09-10-next-abcd-roadmap.md`（B 波）。
+对齐 `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`、`docs/plans/2026-09-10-next-spaces-locations.md` 与 `docs/plans/2026-09-10-next-abcd-roadmap.md`（B/C 波）。
 
 ## 集合
 
@@ -76,6 +76,25 @@
 
 临期/过期状态**不持久化**：由 `expireDate` 相对「今天」（Asia/Shanghai）派生——`expired`（早于今天）、`expiring`（今天…今天+3）、`normal`（更晚）。
 
+### `activities`
+
+家庭消息 / 物资改动日志（C 波）。**不**软删除物资本体；`remove` 事件靠本集合快照保留「谁删了什么」。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | 自动 |
+| `familyId` | string | 隔离键 |
+| `itemId` | string | 物资 id（硬删后仍保留，便于按 item 查历史） |
+| `action` | string | `create` \| `update` \| `remove` |
+| `actorOpenid` | string | 操作者 |
+| `itemName` | string | 写入时物资名快照（删除后 feed 仍可读） |
+| `changedFields` | string[] | 可选；`update` 时变更字段键（如 `name`、`quantity`） |
+| `summary` | string | 可选；中文变更摘要，供消息行展示 |
+| `source` | string | `ui` \| `agent` |
+| `createdAt` | number | |
+
+仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。
+
 ### `spaces`
 
 | 字段 | 类型 | 说明 |
@@ -113,6 +132,8 @@
 | `memberships` | `familyId` | 普通 | 成员列表 |
 | `memberships` | `openid` + `familyId` | 唯一 | 防重复（`_id` 已幂等，索引双保险） |
 | `tags` | `familyId` | 普通 | 家庭标签列表 |
+| `activities` | `familyId` ASC + `createdAt` DESC | 复合 | 家庭消息流倒序 |
+| `activities` | `itemId` ASC + `createdAt` DESC | 复合 | 物资详情最近操作 |
 | `items` | `familyId` ASC + `updatedAt` DESC | 复合 | 物资列表排序 |
 | `items` | `familyId` ASC + `spaceId` ASC | 复合 | 按空间列物资 |
 | `items` | `familyId` ASC + `expireDate` ASC | 复合 | 临期查询 / 定时提醒 |
@@ -127,9 +148,9 @@
 
 见同目录 `database-rules.json`。部署步骤：微信开发者工具 → 云开发 → 数据库 → 各集合权限 / 安全规则，按该文件粘贴。
 
-**控制台还需手工：** 创建 `tags` 集合；为 `items` 增加 `familyId + expireDate` 复合索引（上表）。
+**控制台还需手工：** 创建 `tags`、`activities` 集合；为 `items` 增加 `familyId + expireDate`；为 `activities` 增加 `familyId + createdAt`、`itemId + createdAt`（上表）。
 
-实际读路径：`items` / `spaces` / `locations` / `tags` 列表经云函数。客户端写一律 deny。
+实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。客户端写一律 deny。
 
 ## 多家庭体验
 
@@ -137,8 +158,8 @@
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
 - `updateBackground` 更新当前家庭背景（渐变 / 纯色 / 云存储图片）；主题写入 `globalData.theme`，**全站页面**共用同一背景与强调色
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
-- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `memberships`
-- 关系写、物资写、空间/位置写、标签写一律云函数
+- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `memberships`
+- 关系写、物资写、空间/位置写、标签写、活动写一律云函数
 
 ## 订阅消息（B 波）
 

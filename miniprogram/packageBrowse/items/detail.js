@@ -1,8 +1,51 @@
-const { callItem, callSpace, callTag } = require('../../utils/cloud')
+const { callItem, callSpace, callTag, callActivity } = require('../../utils/cloud')
 const { listLocations } = require('../../utils/db')
 const { bindThemeToPage } = require('../../utils/theme')
 const { shelfLifeStatus } = require('../../utils/expireStatus')
 const copy = require('../../utils/copy')
+
+function formatRelativeTime(ts) {
+  const t = Number(ts) || 0
+  if (!t) return ''
+  const diff = Date.now() - t
+  if (diff < 60 * 1000) return copy.messages.justNow
+  if (diff < 60 * 60 * 1000) {
+    return copy.messages.minutesAgo(Math.floor(diff / (60 * 1000)))
+  }
+  if (diff < 24 * 60 * 60 * 1000) {
+    return copy.messages.hoursAgo(Math.floor(diff / (60 * 60 * 1000)))
+  }
+  if (diff < 7 * 24 * 60 * 60 * 1000) {
+    return copy.messages.daysAgo(Math.floor(diff / (24 * 60 * 60 * 1000)))
+  }
+  const d = new Date(t)
+  return `${d.getMonth() + 1}/${d.getDate()}`
+}
+
+function actionVerb(action) {
+  if (action === 'create') return copy.detail.actionCreate
+  if (action === 'update') return copy.detail.actionUpdate
+  if (action === 'remove') return copy.detail.actionRemove
+  return copy.detail.actionUpdate
+}
+
+function mapActivityRows(list) {
+  return (list || []).map((row) => {
+    const actor =
+      (row.actorNickname && String(row.actorNickname).trim()) ||
+      copy.detail.actorFallback
+    const verb = actionVerb(row.action)
+    let line = `${actor} ${verb}`
+    if (row.action === 'update' && row.summary) {
+      line = `${line}（${row.summary}）`
+    }
+    return {
+      _id: row._id,
+      line,
+      timeLabel: formatRelativeTime(row.createdAt)
+    }
+  })
+}
 
 Page({
   data: {
@@ -15,6 +58,7 @@ Page({
     tagNames: [],
     expireStatus: '',
     expireLabel: '',
+    recentOps: [],
     loading: true,
     error: '',
     removing: false,
@@ -113,6 +157,15 @@ Page({
       }
 
       const life = shelfLifeStatus(item.expireDate)
+
+      let recentOps = []
+      try {
+        const act = await callActivity('list', { itemId, limit: 10 })
+        recentOps = mapActivityRows((act && act.list) || [])
+      } catch (e) {
+        recentOps = []
+      }
+
       this.setData({
         item,
         spaceName,
@@ -120,6 +173,7 @@ Page({
         tagNames,
         expireStatus: life.status,
         expireLabel: life.label,
+        recentOps,
         loading: false,
         error: ''
       })

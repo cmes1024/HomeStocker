@@ -64,7 +64,30 @@ const copy = {
     deletedTitle: '提示',
     deletedContent: '物品已被删除',
     badgeExpired: '已过期',
-    badgeExpiring: '即将过期'
+    badgeExpiring: '即将过期',
+    recentTitle: '最近操作',
+    recentEmpty: '还没有操作记录',
+    actorFallback: '家人',
+    actionCreate: '加入了',
+    actionUpdate: '更新了',
+    actionRemove: '删除了'
+  },
+
+  messages: {
+    loading: '翻一下消息…',
+    kicker: '家里的动静',
+    title: '家庭消息',
+    sub: '物资增删改会留在这里，方便家人对一下',
+    empty: '还没有消息。记一件东西后就会出现。',
+    actorFallback: '家人',
+    unnamedItem: '一件物品',
+    actionCreate: '加入了',
+    actionUpdate: '更新了',
+    actionRemove: '删除了',
+    justNow: '刚刚',
+    minutesAgo: (n) => `${n} 分钟前`,
+    hoursAgo: (n) => `${n} 小时前`,
+    daysAgo: (n) => `${n} 天前`
   },
 
   edit: {
@@ -144,6 +167,9 @@ const copy = {
     tagsTitle: '家庭标签',
     tagsAction: '去管理',
     tagsSub: '药品、饮料等分类；录入物品时可打标',
+    messagesTitle: '家庭消息',
+    messagesAction: '去看看',
+    messagesSub: '谁加了、改了、删了什么，都记在这里',
     reminderTitle: '过期提醒总开关',
     reminderSub: '关掉后，这家所有物品都不再发订阅消息',
     reminderOn: '已开启',

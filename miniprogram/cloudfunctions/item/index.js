@@ -172,6 +172,80 @@ async function resolveLocationId(familyId, spaceId, locationId) {
   return { locationId }
 }
 
+const ACTIVITY_FIELD_KEYS = [
+  'name',
+  'quantity',
+  'unit',
+  'note',
+  'spaceId',
+  'locationId',
+  'tagIds',
+  'productionDate',
+  'expireDate',
+  'expireReminderEnabled'
+]
+
+const ACTIVITY_FIELD_LABELS = {
+  name: '名称',
+  quantity: '数量',
+  unit: '单位',
+  note: '备注',
+  spaceId: '空间',
+  locationId: '位置',
+  tagIds: '标签',
+  productionDate: '生产日',
+  expireDate: '过期日',
+  expireReminderEnabled: '提醒开关'
+}
+
+function sameTagIds(a, b) {
+  const aa = Array.isArray(a) ? a.map(String).slice().sort() : []
+  const bb = Array.isArray(b) ? b.map(String).slice().sort() : []
+  if (aa.length !== bb.length) return false
+  return aa.every((v, i) => v === bb[i])
+}
+
+function normalizeComparable(key, value) {
+  if (key === 'tagIds') return null
+  if (key === 'expireReminderEnabled') return !!value
+  if (key === 'quantity') {
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+  }
+  if (value === undefined || value === null || value === '') return null
+  return value
+}
+
+function computeChangedFields(before, after) {
+  const changed = []
+  for (let i = 0; i < ACTIVITY_FIELD_KEYS.length; i++) {
+    const key = ACTIVITY_FIELD_KEYS[i]
+    if (key === 'tagIds') {
+      if (!sameTagIds(before.tagIds, after.tagIds)) changed.push(key)
+      continue
+    }
+    const bv = normalizeComparable(key, before[key])
+    const av = normalizeComparable(key, after[key])
+    if (bv !== av) changed.push(key)
+  }
+  return changed
+}
+
+function summarizeChangedFields(changedFields) {
+  return changedFields
+    .map((k) => ACTIVITY_FIELD_LABELS[k] || k)
+    .filter(Boolean)
+    .join('、')
+}
+
+async function appendActivity(doc) {
+  try {
+    await db.collection('activities').add({ data: doc })
+  } catch (e) {
+    console.error('appendActivity failed', e)
+  }
+}
+
 async function createItem(openid, event) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
@@ -236,6 +310,15 @@ async function createItem(openid, event) {
   }
 
   const addRes = await db.collection('items').add({ data: doc })
+  await appendActivity({
+    familyId: ctx.familyId,
+    itemId: addRes._id,
+    action: 'create',
+    actorOpenid: openid,
+    itemName: name,
+    source,
+    createdAt: now
+  })
   return ok({ _id: addRes._id, ...doc })
 }
 
@@ -339,7 +422,23 @@ async function updateItem(openid, event) {
   }
 
   await db.collection('items').doc(itemId).update({ data: patch })
-  return ok({ _id: itemId, ...snap.data, ...patch })
+  const merged = { ...snap.data, ...patch }
+  const changedFields = computeChangedFields(snap.data, merged)
+  if (changedFields.length) {
+    const source = event.source === 'agent' ? 'agent' : 'ui'
+    await appendActivity({
+      familyId: ctx.familyId,
+      itemId,
+      action: 'update',
+      actorOpenid: openid,
+      itemName: merged.name || snap.data.name || '',
+      changedFields,
+      summary: summarizeChangedFields(changedFields),
+      source,
+      createdAt: patch.updatedAt || Date.now()
+    })
+  }
+  return ok({ _id: itemId, ...merged })
 }
 
 async function removeItem(openid, event) {
@@ -355,7 +454,18 @@ async function removeItem(openid, event) {
     return fail('FORBIDDEN', '无权操作该物资')
   }
 
+  const itemName = snap.data.name || ''
+  const source = event.source === 'agent' ? 'agent' : snap.data.source === 'agent' ? 'agent' : 'ui'
   await db.collection('items').doc(itemId).remove()
+  await appendActivity({
+    familyId: ctx.familyId,
+    itemId,
+    action: 'remove',
+    actorOpenid: openid,
+    itemName,
+    source,
+    createdAt: Date.now()
+  })
   return ok({ removed: true, itemId })
 }
 

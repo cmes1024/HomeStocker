@@ -1,7 +1,8 @@
-# MVP + 空间/位置 + A/B 波 验收清单
+# MVP + 空间/位置 + A/B/C 波 验收清单
 
-部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `expireNotify`（云端安装依赖）。  
-B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
+部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify`（云端安装依赖）。  
+B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。  
+C 波另需：创建 `activities` 集合；索引 `familyId + createdAt`、`itemId + createdAt`；上传 `activity` 云函数。
 
 ## 闭环（原 MVP）
 
@@ -18,7 +19,7 @@ B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；�
 - [ ] 家庭页「逛空间」→ 空间列表 → 单空间页看到该空间物资及位置文案
 - [ ] 全家物资清单仍可用；可按空间筛选（有空间时）
 - [ ] 默认仓库可改名不可删（`DEFAULT_SPACE`）；删除其它空间时物品迁到默认仓库并清空位置；最后一个空间仍拒绝（`LAST_SPACE`）
-- [ ] 解散家庭后 `spaces` / `locations` / `tags` 一并清理
+- [ ] 解散家庭后 `spaces` / `locations` / `tags` / `activities` 一并清理
 
 ## A 波：物品详情
 
@@ -37,7 +38,7 @@ B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；�
 
 ## A 波：分包与性能
 
-- [ ] 主包页：onboarding / items 清单与编辑 / family / family/tags（无 spaces、无 item detail）
+- [ ] 主包页：onboarding / items 清单与编辑 / family / family/tags / family/messages（无 spaces、无 item detail）
 - [ ] 分包 `packageBrowse`：spaces 列表与详情、物品详情；家庭页 Wi‑Fi 可预下载
 - [ ] 氛围图上传前压缩（边长/质量上限）；失败则回退原图仍可上传
 - [ ] 清单返回静默刷新；主题未变时不重复全量 setData theme
@@ -65,15 +66,25 @@ B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；�
 - [ ] `expireNotify`：对 3 天/1 天/当天且双开关开启的物资发送订阅消息；须从小程序端或 IDE 定时触发器触发（控制台测试无 openapi 鉴权）
 - [ ] 控制台：上传 `expireNotify`、启用定时触发器（见 `config.json` 每日 9:00）；家庭页「立即检查提醒」可手动触发验收
 
+## C 波：家庭消息 / 活动日志
+
+- [ ] 物资 create / update（有字段变更）/ remove 成功后写入 `activities`；校验失败不写
+- [ ] 家庭页可进「家庭消息」；倒序展示谁增删改了什么；无昵称显示「家人」；更新行有变更摘要
+- [ ] 空家庭显示空态；加载失败可重试；**无**评论/发帖框
+- [ ] 物资详情展示该物品最近操作；无记录时不阻断详情
+- [ ] 硬删物资后家庭消息仍可见删除行（名称快照）；**无**软删除物资本体
+- [ ] 切换家庭后消息流只显示当前家；非成员读不到他家活动
+- [ ] 解散家庭后 `activities` 一并清理
+
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
-- [ ] `memberships` / `items` / `spaces` / `tags` 列表查询走索引（无「缺少索引」报错）
+- [ ] `memberships` / `items` / `spaces` / `tags` / `activities` 列表查询走索引（无「缺少索引」报错）
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family / family/tags；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航

@@ -1,0 +1,44 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">{{copy.loading}}</view>
+  </view>
+
+  <view class="state" wx:elif="{{error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <block wx:else>
+    <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="kicker">{{copy.kicker}}</view>
+      <view class="title">{{copy.title}}</view>
+      <view class="sub">{{copy.sub}}</view>
+    </view>
+
+    <view class="empty {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{rows.length === 0}}">
+      <view class="empty-title">{{copy.empty}}</view>
+    </view>
+
+    <view class="list {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
+      <view
+        class="row {{item.action === 'remove' ? 'muted' : ''}}"
+        wx:for="{{rows}}"
+        wx:key="_id"
+        data-id="{{item.itemId}}"
+        data-action="{{item.action}}"
+        bind:tap="onOpenItem"
+      >
+        <view class="row-line">{{item.line}}</view>
+        <view class="row-time">{{item.timeLabel}}</view>
+      </view>
+    </view>
+  </block>
+</AppShell>

@@ -64,6 +64,14 @@
       <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
     </view>
 
+    <view class="recent" wx:if="{{recentOps.length}}">
+      <view class="label">{{copy.recentTitle}}</view>
+      <view class="recent-row" wx:for="{{recentOps}}" wx:key="_id">
+        <view class="recent-line">{{item.line}}</view>
+        <view class="recent-time">{{item.timeLabel}}</view>
+      </view>
+    </view>
+
     <view class="actions">
       <view
         class="pill-btn"
