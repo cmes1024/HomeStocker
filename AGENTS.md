@@ -5,8 +5,9 @@
 ## 权威范围
 
 - **MVP 实施唯一范围源：** `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`
-- **当前下一版范围源：** `docs/plans/2026-09-10-next-spaces-locations.md`（家庭空间 + 存放位置；清单为主、空间为辅）
-- OpenSpec 进行中：`openspec/changes/family-spaces-locations/`
+- **空间版（已落地规划）：** `docs/plans/2026-09-10-next-spaces-locations.md`；OpenSpec：`openspec/changes/family-spaces-locations/`
+- **当前下一版范围源：** `docs/plans/2026-09-10-next-abcd-roadmap.md`（A→B→C→D）
+- **当前实施焦点（A 波）：** `docs/plans/2026-09-10-next-a-item-detail-perf.md`；OpenSpec：`openspec/changes/item-detail-atmosphere-perf/`
 - 完整 PRD / 功能清单 / 旧架构（`docs/PRD-*.md` 等）是愿景，**不是**本阶段范围
 - Agent 编排细节：`docs/plans/2026-09-07-ai-assistant-design.md`（后接；不上对话 UI）
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
@@ -20,8 +21,10 @@
 | 家庭数 | **多家庭**：可继续创建/加入；`memberships` 多对多 + `currentFamilyId` 切换 |
 | 物资字段 | `name` / `quantity` / `unit?` / `note` + `spaceId`（必填）/ `locationId`（可选） |
 | 空间 | 用户自建；无空间时懒创建默认「仓库」；空间浏览为辅，全家清单为主 |
-| 家庭外观 | 背景可设渐变 / 纯色 / 自定义图片（全站主题） |
-| 不做（本阶段） | 角色审批、保质期、OCR、采购、对话 UI、楼层 UI、实景上传 / 3D / 看房编辑器 |
+| 家庭外观 | 背景可设渐变 / 纯色 / 自定义图片（全站主题）；换图/退家清理旧云文件（A 波） |
+| 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除 |
+| 不做（A 波） | 标签、保质期、订阅消息、家庭消息流、对话 UI、楼层 UI、实景上传 / 3D / 看房编辑器 |
+| 后置（B/C/D） | 标签与保质期/即将过期、家庭动态、体验向新交互 — 见路线图 |
 
 ## 技术栈
 

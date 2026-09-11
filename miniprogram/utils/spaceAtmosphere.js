@@ -7,6 +7,7 @@ const { DEFAULT_THEME, getAppTheme } = require('./theme')
  */
 const SPACE_COVER_IMAGES = {
   // 暂无打包氛围图；有文件后再挂 key → 路径
+  'default-indoor': "/assets/test.jpg"
 }
 
 const FALLBACK_GRADIENT =
