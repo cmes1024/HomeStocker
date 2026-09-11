@@ -1,0 +1,56 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <loading
+    show="{{loading}}"
+    text="{{copy.loading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
+
+  <view class="state" wx:if="{{!loading && error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="state" wx:elif="{{!loading && missing}}">
+    <view class="state-title">{{copy.missingTitle}}</view>
+    <view class="state-text">{{copy.missingSub}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <block wx:elif="{{!loading && item}}">
+    <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="hero-title">{{item.name}}</view>
+      <view class="hero-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">
+        {{copy.qtyLabel}} · ×{{item.quantity}}{{item.unit}}
+      </view>
+    </view>
+
+    <view class="panel {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="field">
+        <view class="label">{{copy.spaceLabel}}</view>
+        <view class="value">{{item.spaceName || '--'}}</view>
+      </view>
+      <view class="field">
+        <view class="label">{{copy.locationLabel}}</view>
+        <view class="value">{{item.locationName || copy.locationEmpty}}</view>
+      </view>
+      <view class="field">
+        <view class="label">{{copy.noteLabel}}</view>
+        <view class="value note {{!item.note ? 'muted' : ''}}">{{item.note || copy.noteEmpty}}</view>
+      </view>
+    </view>
+
+    <view class="action-group">
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onEdit">{{copy.editCta}}</view>
+      <view class="ghost-btn" bind:tap="onRemove">{{copy.removeCta}}</view>
+    </view>
+  </block>
+</AppShell>

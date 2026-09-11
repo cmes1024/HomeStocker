@@ -1,0 +1,106 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{atmosphere.bgStyle}}"
+  bgImage="{{atmosphere.bgImage}}"
+  lightHeader="{{atmosphere.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">{{loadingText}}</view>
+  </view>
+
+  <view class="state" wx:elif="{{error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <block wx:else>
+    <view class="space-hero {{atmosphere.isPhoto ? 'on-photo' : ''}}">
+      <view class="kicker">{{copy.detailKicker}}</view>
+      <view class="title">{{space.name}}</view>
+      <view class="sub">{{copy.detailSub}}</view>
+    </view>
+
+    <view class="section {{atmosphere.isPhoto ? 'on-photo' : ''}}">
+      <view class="section-hd">
+        <view>
+          <view class="section-title">{{copy.locSectionTitle}}</view>
+          <view class="section-sub">{{copy.locSectionSub}}</view>
+        </view>
+        <view class="section-action" style="color: {{theme.themeColor}};" bind:tap="openCreateLoc">{{copy.locCreate}}</view>
+      </view>
+
+      <block wx:if="{{locations.length}}">
+        <view class="loc-row" wx:for="{{locations}}" wx:key="_id">
+          <view class="loc-name">{{item.name}}</view>
+          <view class="loc-actions">
+            <view
+              class="link"
+              style="color: {{theme.themeColor}};"
+              data-id="{{item._id}}"
+              data-name="{{item.name}}"
+              bind:tap="openRenameLoc"
+            >{{copy.rename}}</view>
+            <view class="link danger" data-id="{{item._id}}" bind:tap="onRemoveLoc">{{copy.remove}}</view>
+          </view>
+        </view>
+      </block>
+      <view class="loc-empty" wx:else>{{copy.locEmpty}}</view>
+    </view>
+
+    <view class="section-title items-title {{atmosphere.isPhoto ? 'on-photo' : ''}}">{{copy.locItemsTitle}}</view>
+
+    <view class="empty {{atmosphere.isPhoto ? 'on-photo' : ''}}" wx:if="{{!items.length}}">
+      <view class="empty-text">{{copy.detailEmpty}}</view>
+      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">{{copy.detailAdd}}</view>
+    </view>
+
+    <view
+      class="item-row {{atmosphere.isPhoto ? 'on-photo' : ''}}"
+      wx:for="{{items}}"
+      wx:key="_id"
+      data-id="{{item._id}}"
+      bind:tap="goDetail"
+    >
+      <view class="item-name">{{item.name}}</view>
+      <view class="item-meta">
+        × {{item.quantity}}{{item.unit}}{{item.locationName ? ' · ' + item.locationName : ''}}
+      </view>
+    </view>
+  </block>
+
+  <view class="modal-mask" wx:if="{{showLocModal}}" catch:tap="closeLocModal">
+    <view class="modal" catch:tap="noop">
+      <view class="modal-title">{{locModalMode === 'rename' ? copy.locRenameTitle : copy.locCreateTitle}}</view>
+      <input
+        class="input modal-input"
+        focus="{{showLocModal}}"
+        placeholder="{{copy.locNamePlaceholder}}"
+        value="{{locName}}"
+        bindinput="onLocName"
+        maxlength="40"
+        confirm-type="done"
+        bindconfirm="onSaveLoc"
+      />
+      <view class="modal-error" wx:if="{{locModalError}}">{{locModalError}}</view>
+      <view class="modal-actions">
+        <view class="modal-btn ghost" bind:tap="closeLocModal">{{common.cancel}}</view>
+        <mask-element
+          id="locMask"
+          isPromise="{{true}}"
+          loadAnimation="{{true}}"
+          content-class="mask-flex"
+          promiseMaxTime="{{20}}"
+        >
+          <view
+            class="modal-btn primary"
+            style="background: {{theme.themeColor}};"
+            bind:tap="onSaveLoc"
+          >{{common.save}}</view>
+        </mask-element>
+      </view>
+    </view>
+  </view>
+</AppShell>

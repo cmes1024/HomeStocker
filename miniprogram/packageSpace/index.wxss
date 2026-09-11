@@ -1,0 +1,131 @@
+.hero {
+  margin: 8rpx 4rpx 22rpx;
+}
+
+.hero.on-photo {
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.kicker {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin-bottom: 8rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 10rpx;
+}
+
+.sub {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.45;
+}
+
+.space-grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -8rpx 8rpx;
+}
+
+.space-tile {
+  width: calc(50% - 16rpx);
+  margin: 8rpx;
+  padding: 24rpx 22rpx 18rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1rpx solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8rpx 22rpx rgba(40, 30, 20, 0.05);
+}
+
+.space-grid.on-photo .space-tile {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.space-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin-bottom: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.space-meta {
+  font-size: 20rpx;
+  color: rgba(26, 26, 26, 0.45);
+  margin-bottom: 16rpx;
+}
+
+.space-actions {
+  display: flex;
+  gap: 20rpx;
+}
+
+.link {
+  font-size: 22rpx;
+}
+
+.link.danger {
+  color: rgba(250, 81, 81, 0.9);
+}
+
+.block {
+  margin-bottom: 22rpx;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.label {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin-bottom: 12rpx;
+}
+
+.input {
+  background: rgba(255, 255, 255, 0.88);
+  border-radius: 18rpx;
+  padding: 24rpx 26rpx;
+  font-size: 30rpx;
+  border: 1rpx solid rgba(26, 26, 26, 0.06);
+  margin-bottom: 18rpx;
+}
+
+.pill-btn {
+  margin-top: 8rpx;
+  text-align: center;
+  padding: 22rpx 32rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 30rpx;
+}
+
+.pill-btn.outline {
+  background: transparent;
+  border: 2rpx solid;
+  margin: 12rpx 0 40rpx;
+}
+
+.state {
+  text-align: center;
+  padding: 80rpx 24rpx;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.state-text.error {
+  color: #fa5151;
+  margin-bottom: 24rpx;
+}

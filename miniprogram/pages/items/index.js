@@ -1,6 +1,5 @@
 const { listItems, listSpaces } = require('../../utils/db')
 const { routeByMembership } = require('../../utils/route')
-const { callItem } = require('../../utils/cloud')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const copy = require('../../utils/copy')
 
@@ -31,7 +30,12 @@ Page({
 
   syncLoadingColors() {
     const color = (this.data.theme && this.data.theme.themeColor) || '#C4A484'
-    this.setData({ loadingColors: [color, color] })
+    const nextColors = [color, color]
+    const prevColors = this.data.loadingColors || []
+    if (prevColors[0] === nextColors[0] && prevColors[1] === nextColors[1]) {
+      return
+    }
+    this.setData({ loadingColors: nextColors })
   },
 
   async onShow() {
@@ -126,33 +130,12 @@ Page({
     wx.navigateTo({ url: `/pages/items/edit${qs}` })
   },
 
-  goEdit(e) {
+  goDetail(e) {
     const id = e.currentTarget.dataset.id
-    wx.navigateTo({ url: `/pages/items/edit?id=${id}` })
+    wx.navigateTo({ url: `/packageItem/detail?id=${encodeURIComponent(id)}` })
   },
 
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
-  },
-
-  async onRemove(e) {
-    const id = e.currentTarget.dataset.id
-    const confirm = await new Promise((resolve) => {
-      wx.showModal({
-        title: copy.items.removeTitle,
-        content: copy.items.removeContent,
-        confirmText: copy.items.removeConfirm,
-        confirmColor: '#FA5151',
-        success: (res) => resolve(res.confirm)
-      })
-    })
-    if (!confirm) return
-    try {
-      await callItem('remove', { itemId: id })
-      wx.showToast({ title: copy.items.removedToast, icon: 'success' })
-      this.loadList()
-    } catch (err) {
-      wx.showToast({ title: err.message || copy.common.opFailed, icon: 'none' })
-    }
   }
 })

@@ -110,6 +110,40 @@ async function resolveLocationId(familyId, spaceId, locationId) {
   return { locationId }
 }
 
+async function buildNameMaps(familyId, items) {
+  const spaceIds = [...new Set((items || []).map((item) => item.spaceId).filter(Boolean))]
+  const locationIds = [...new Set((items || []).map((item) => item.locationId).filter(Boolean))]
+  const [spacesRes, locationsRes] = await Promise.all([
+    spaceIds.length
+      ? db.collection('spaces').where({ _id: _.in(spaceIds), familyId }).limit(100).get()
+      : Promise.resolve({ data: [] }),
+    locationIds.length
+      ? db.collection('locations').where({ _id: _.in(locationIds), familyId }).limit(100).get()
+      : Promise.resolve({ data: [] })
+  ])
+
+  const spaceMap = {}
+  const locationMap = {}
+  ;(spacesRes.data || []).forEach((space) => {
+    spaceMap[space._id] = space.name || ''
+  })
+  ;(locationsRes.data || []).forEach((location) => {
+    locationMap[location._id] = location.name || ''
+  })
+
+  return { spaceMap, locationMap }
+}
+
+function hydrateItem(item, maps) {
+  const spaceMap = (maps && maps.spaceMap) || {}
+  const locationMap = (maps && maps.locationMap) || {}
+  return {
+    ...item,
+    spaceName: item.spaceId ? spaceMap[item.spaceId] || '' : '',
+    locationName: item.locationId ? locationMap[item.locationId] || '' : ''
+  }
+}
+
 async function createItem(openid, event) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
@@ -257,7 +291,9 @@ async function getItem(openid, event) {
     return fail('FORBIDDEN', '无权查看该物资')
   }
 
-  return ok({ _id: itemId, ...snap.data })
+  const item = { _id: itemId, ...snap.data }
+  const maps = await buildNameMaps(ctx.familyId, [item])
+  return ok(hydrateItem(item, maps))
 }
 
 async function listItems(openid, event) {
@@ -275,7 +311,9 @@ async function listItems(openid, event) {
     .orderBy('updatedAt', 'desc')
     .limit(limit)
     .get()
-  return ok({ list: res.data || [] })
+  const list = res.data || []
+  const maps = await buildNameMaps(ctx.familyId, list)
+  return ok({ list: list.map((item) => hydrateItem(item, maps)) })
 }
 
 async function searchItems(openid, event) {
@@ -305,7 +343,8 @@ async function searchItems(openid, event) {
     .filter((item) => String(item.name || '').toLowerCase().includes(lower))
     .slice(0, limit)
 
-  return ok({ list })
+  const maps = await buildNameMaps(ctx.familyId, list)
+  return ok({ list: list.map((item) => hydrateItem(item, maps)) })
 }
 
 exports.main = async (event) => {

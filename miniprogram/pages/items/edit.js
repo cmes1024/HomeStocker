@@ -63,7 +63,12 @@ Page({
 
   syncLoadingColors() {
     const color = (this.data.theme && this.data.theme.themeColor) || '#C4A484'
-    this.setData({ loadingColors: [color, color] })
+    const nextColors = [color, color]
+    const prevColors = this.data.loadingColors || []
+    if (prevColors[0] === nextColors[0] && prevColors[1] === nextColors[1]) {
+      return
+    }
+    this.setData({ loadingColors: nextColors })
   },
 
   notifyDeletedAndBack() {

@@ -164,15 +164,42 @@ function getAppTheme() {
   return { ...DEFAULT_THEME }
 }
 
+function sameBackground(prev, next) {
+  if (!prev && !next) return true
+  if (!prev || !next) return false
+  return prev.type === next.type && prev.value === next.value
+}
+
+function sameTheme(prev, next) {
+  if (!prev && !next) return true
+  if (!prev || !next) return false
+  return (
+    prev.bgStyle === next.bgStyle &&
+    prev.bgImage === next.bgImage &&
+    prev.lightHeader === next.lightHeader &&
+    prev.isPhoto === next.isPhoto &&
+    prev.themeColor === next.themeColor &&
+    sameBackground(prev.background, next.background)
+  )
+}
+
 /**
  * 把全局主题同步到页面 data.theme（供 AppShell 使用）。
  */
 function bindThemeToPage(page, patch = {}) {
   const theme = getAppTheme()
-  page.setData({
-    theme,
-    ...patch
+  const nextData = {}
+  if (!sameTheme(page.data && page.data.theme, theme)) {
+    nextData.theme = theme
+  }
+  Object.keys(patch).forEach((key) => {
+    if (!page.data || page.data[key] !== patch[key]) {
+      nextData[key] = patch[key]
+    }
   })
+  if (Object.keys(nextData).length) {
+    page.setData(nextData)
+  }
   applyNavBarColor(theme)
   return theme
 }

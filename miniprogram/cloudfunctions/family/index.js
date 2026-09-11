@@ -57,6 +57,21 @@ function familySummary(familyId, family, openid) {
   }
 }
 
+function getImageBackgroundFileId(background) {
+  if (!background || background.type !== 'image') return ''
+  const value = String(background.value || '').trim()
+  return value.startsWith('cloud://') ? value : ''
+}
+
+async function deleteFileBestEffort(fileID, reason) {
+  if (!fileID) return
+  try {
+    await cloud.deleteFile({ fileList: [fileID] })
+  } catch (error) {
+    console.warn('[family] deleteFile failed', reason, fileID, error)
+  }
+}
+
 async function ensureUser(openid) {
   const ref = db.collection('users').doc(openid)
   try {
@@ -314,13 +329,25 @@ async function updateBackground(openid, event) {
     return fail('INVALID_BACKGROUND', '图片无效')
   }
 
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) {
+    return fail('NO_FAMILY', '家庭不存在')
+  }
+
+  const prevBackground = normalizeBackground(fam.data.background)
+  const prevFileID = getImageBackgroundFileId(prevBackground)
+  const nextFileID = type === 'image' ? value : ''
   const background = { type, value }
   await db.collection('families').doc(familyId).update({
     data: { background }
   })
 
-  const fam = await db.collection('families').doc(familyId).get()
-  return ok(familySummary(familyId, { ...fam.data, background }, openid))
+  if (prevFileID && prevFileID !== nextFileID) {
+    await deleteFileBestEffort(prevFileID, 'updateBackground')
+  }
+
+  const nextFamily = await db.collection('families').doc(familyId).get()
+  return ok(familySummary(familyId, { ...nextFamily.data, background }, openid))
 }
 
 async function removeInBatches(collection, where, batchSize = 100) {
@@ -364,6 +391,7 @@ async function leaveFamily(openid) {
   }
 
   const family = fam.data
+  const familyBackgroundFileID = getImageBackgroundFileId(normalizeBackground(family.background))
 
   if (family.ownerOpenid === openid) {
     await removeInBatches(db.collection('items'), { familyId })
@@ -372,6 +400,7 @@ async function leaveFamily(openid) {
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()
+    await deleteFileBestEffort(familyBackgroundFileID, 'dissolveFamily')
 
     const nextFamilyId = await pickOtherFamilyId(openid, familyId)
     if (nextFamilyId) {

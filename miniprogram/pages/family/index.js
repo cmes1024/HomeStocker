@@ -5,6 +5,7 @@ const {
   setAppFamily,
   bindThemeToPage
 } = require('../../utils/theme')
+const { compressAtmosphereImage } = require('../../utils/image')
 const copy = require('../../utils/copy')
 
 Page({
@@ -77,7 +78,7 @@ Page({
   },
 
   goSpaces() {
-    wx.navigateTo({ url: '/pages/spaces/index' })
+    wx.navigateTo({ url: '/packageSpace/index' })
   },
 
   openPanel(e) {
@@ -208,12 +209,13 @@ Page({
       if (!file || !file.tempFilePath) return
 
       this.setData({ acting: true })
-      wx.showLoading({ title: '上传中', mask: true })
-      const ext = (file.tempFilePath.match(/\.\w+$/) || ['.jpg'])[0]
+      wx.showLoading({ title: '处理中', mask: true })
+      const compressedPath = await compressAtmosphereImage(file.tempFilePath)
+      const ext = (compressedPath.match(/\.\w+$/) || file.tempFilePath.match(/\.\w+$/) || ['.jpg'])[0]
       const cloudPath = `family-bg/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
       const upload = await wx.cloud.uploadFile({
         cloudPath,
-        filePath: file.tempFilePath
+        filePath: compressedPath
       })
       wx.hideLoading()
       if (!upload.fileID) {
