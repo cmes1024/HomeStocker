@@ -1,5 +1,6 @@
-const { callItem, callSpace } = require('../../utils/cloud')
+const { callItem, callSpace, callTag, callFamily } = require('../../utils/cloud')
 const { bindThemeToPage } = require('../../utils/theme')
+const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
 const copy = require('../../utils/copy')
 
 function unlockMask(page, id) {
@@ -38,7 +39,12 @@ Page({
     creatingLocation: false,
     modalError: '',
     preferredSpaceId: '',
-    spaceLabel: ''
+    spaceLabel: '',
+    tags: [],
+    selectedTagIds: [],
+    productionDate: '',
+    expireDate: '',
+    expireReminderEnabled: false
   },
 
   onLoad(options) {
@@ -83,7 +89,10 @@ Page({
       }
       const preferredSpaceId =
         (item && item.spaceId) || this.data.preferredSpaceId || ''
-      await this.loadSpaces(preferredSpaceId)
+      await Promise.all([
+        this.loadSpaces(preferredSpaceId),
+        this.loadTags((item && item.tagIds) || [])
+      ])
       if (item) {
         const spaceId = item.spaceId || this.data.spaceId
         await this.loadLocations(spaceId, item.locationId || '')
@@ -92,6 +101,9 @@ Page({
           quantity: String(item.quantity != null ? item.quantity : 1),
           unit: item.unit || '',
           note: item.note || '',
+          productionDate: item.productionDate || '',
+          expireDate: item.expireDate || '',
+          expireReminderEnabled: !!item.expireReminderEnabled,
           loading: false
         })
       } else {
@@ -108,6 +120,20 @@ Page({
         loading: false,
         error: e.message || copy.common.loadFailed
       })
+    }
+  },
+
+  async loadTags(preferredIds) {
+    try {
+      const ensured = await callTag('ensureDefaults')
+      const tags = ((ensured && ensured.list) || []).map((t) => ({
+        ...t,
+        selected: (preferredIds || []).indexOf(t._id) >= 0
+      }))
+      const selectedTagIds = tags.filter((t) => t.selected).map((t) => t._id)
+      this.setData({ tags, selectedTagIds })
+    } catch (e) {
+      this.setData({ tags: [], selectedTagIds: [] })
     }
   },
 
@@ -190,6 +216,45 @@ Page({
 
   onNote(e) {
     this.setData({ note: e.detail.value })
+  },
+
+  onProductionDate(e) {
+    this.setData({ productionDate: e.detail.value || '' })
+  },
+
+  onExpireDate(e) {
+    this.setData({ expireDate: e.detail.value || '' })
+  },
+
+  clearProductionDate() {
+    this.setData({ productionDate: '' })
+  },
+
+  clearExpireDate() {
+    this.setData({ expireDate: '', expireReminderEnabled: false })
+  },
+
+  async onToggleReminder(e) {
+    if (!this.data.expireDate) {
+      this.setData({ expireReminderEnabled: false })
+      return
+    }
+    const enabled = !!(e.detail && e.detail.value)
+    this.setData({ expireReminderEnabled: enabled })
+    if (enabled) {
+      await requestExpireSubscribe(callFamily)
+    }
+  },
+
+  onToggleTag(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const tags = (this.data.tags || []).map((t) => {
+      if (t._id !== id) return t
+      return { ...t, selected: !t.selected }
+    })
+    const selectedTagIds = tags.filter((t) => t.selected).map((t) => t._id)
+    this.setData({ tags, selectedTagIds })
   },
 
   async onSpaceChange(e) {
@@ -306,7 +371,13 @@ Page({
         unit: (this.data.unit || '').trim(),
         note: this.data.note || '',
         spaceId: this.data.spaceId || undefined,
-        locationId: this.data.locationId || null
+        locationId: this.data.locationId || null,
+        tagIds: this.data.selectedTagIds || [],
+        productionDate: this.data.productionDate || null,
+        expireDate: this.data.expireDate || null,
+        expireReminderEnabled: !!(
+          this.data.expireDate && this.data.expireReminderEnabled
+        )
       }
       if (isEdit) {
         await callItem('update', {
@@ -327,7 +398,10 @@ Page({
         return
       }
       const msg =
-        e.code === 'INVALID_SPACE' || e.code === 'INVALID_LOCATION'
+        e.code === 'INVALID_SPACE' ||
+        e.code === 'INVALID_LOCATION' ||
+        e.code === 'INVALID_TAGS' ||
+        e.code === 'INVALID_DATE'
           ? e.message
           : e.message || copy.edit.saveFailed
       this.setData({ error: msg })

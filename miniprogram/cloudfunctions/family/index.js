@@ -77,6 +77,10 @@ function familySummary(familyId, family, openid) {
     memberCount: family.memberCount || 0,
     createdAt: family.createdAt,
     background: normalizeBackground(family.background),
+    expireReminderEnabled:
+      family.expireReminderEnabled === undefined
+        ? true
+        : family.expireReminderEnabled !== false,
     isOwner: family.ownerOpenid === openid
   }
 }
@@ -155,6 +159,8 @@ async function createFamily(openid, event) {
       ownerOpenid: openid,
       memberCount: 1,
       background,
+      expireReminderEnabled: true,
+      tagsSeededAt: null,
       createdAt: now
     }
   })
@@ -164,7 +170,8 @@ async function createFamily(openid, event) {
     data: {
       openid,
       familyId,
-      joinedAt: now
+      joinedAt: now,
+      subscribeExpireGrantedAt: null
     }
   })
 
@@ -177,6 +184,7 @@ async function createFamily(openid, event) {
     ownerOpenid: openid,
     memberCount: 1,
     background,
+    expireReminderEnabled: true,
     createdAt: now,
     isOwner: true
   })
@@ -410,6 +418,7 @@ async function leaveFamily(openid) {
     await removeInBatches(db.collection('items'), { familyId })
     await removeInBatches(db.collection('locations'), { familyId })
     await removeInBatches(db.collection('spaces'), { familyId })
+    await removeInBatches(db.collection('tags'), { familyId })
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()
@@ -435,6 +444,46 @@ async function leaveFamily(openid) {
   return ok({ left: true, nextFamilyId: nextFamilyId || null })
 }
 
+async function updateExpireReminder(openid, event) {
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  const enabled = event.enabled === true || event.enabled === 1 || event.enabled === 'true'
+  await db.collection('families').doc(familyId).update({
+    data: { expireReminderEnabled: enabled }
+  })
+
+  const fam = await db.collection('families').doc(familyId).get()
+  return ok(familySummary(familyId, fam.data, openid))
+}
+
+/**
+ * 客户端在 requestSubscribeMessage 接受后调用，记录本家成员授权。
+ */
+async function recordSubscribeExpire(openid) {
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  await db.collection('memberships').doc(mid).update({
+    data: { subscribeExpireGrantedAt: Date.now() }
+  })
+  return ok({ granted: true })
+}
+
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) {
@@ -456,6 +505,10 @@ exports.main = async (event) => {
         return await switchFamily(OPENID, event)
       case 'updateBackground':
         return await updateBackground(OPENID, event)
+      case 'updateExpireReminder':
+        return await updateExpireReminder(OPENID, event)
+      case 'recordSubscribeExpire':
+        return await recordSubscribeExpire(OPENID)
       case 'leave':
         return await leaveFamily(OPENID)
       default:

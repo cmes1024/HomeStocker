@@ -2,15 +2,27 @@ const { callItem, callSpace } = require('./cloud')
 
 /**
  * 物资列表：走 item.search（空 keyword = 全量列表），兼容尚未部署 list action 的云函数。
- * options.spaceId 可选，按空间筛选。
+ * options.spaceId / options.tagId 可选。
  */
 async function listItems(_familyId, options = {}) {
   const data = await callItem('search', {
     keyword: '',
     limit: options.limit || 100,
-    spaceId: options.spaceId || undefined
+    spaceId: options.spaceId || undefined,
+    tagId: options.tagId || undefined
   })
   return (data && data.list) || []
+}
+
+async function listExpiringItems(options = {}) {
+  const data = await callItem('listExpiring', {
+    limit: options.limit || 50
+  })
+  return {
+    list: (data && data.list) || [],
+    today: data && data.today,
+    windowEnd: data && data.windowEnd
+  }
 }
 
 async function listSpaces() {
@@ -41,6 +53,7 @@ async function listItemsBySpace(spaceId, options = {}) {
 
 module.exports = {
   listItems,
+  listExpiringItems,
   listSpaces,
   listLocations,
   listItemsBySpace

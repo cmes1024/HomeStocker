@@ -93,6 +93,84 @@
   line-height: 1.4;
 }
 
+.expiring {
+  margin: 0 0 20rpx;
+  padding: 22rpx 24rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 248, 230, 0.92);
+  border: 1rpx solid rgba(180, 140, 80, 0.2);
+}
+
+.expiring.on-photo {
+  background: rgba(255, 248, 230, 0.96);
+}
+
+.expiring-hd {
+  margin-bottom: 12rpx;
+}
+
+.expiring-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.expiring-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 14rpx 0;
+  border-top: 1rpx solid rgba(26, 26, 26, 0.06);
+}
+
+.expiring-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expiring-meta {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.expiring-date {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.5);
+}
+
+.badge {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  font-weight: 600;
+}
+
+.badge.expired {
+  color: #fa5151;
+  background: rgba(250, 81, 81, 0.12);
+}
+
+.badge.expiring {
+  color: #c47a1a;
+  background: rgba(196, 122, 26, 0.14);
+}
+
+.tile-badges {
+  margin-top: 12rpx;
+}
+
+.filter-row.tag-row {
+  margin-top: -8rpx;
+}
+
 .filter-row {
   white-space: nowrap;
   margin: 0 0 20rpx;

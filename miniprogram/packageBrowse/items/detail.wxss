@@ -48,6 +48,30 @@
   color: rgba(26, 26, 26, 0.35);
 }
 
+.value-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: 999rpx;
+  font-weight: 600;
+}
+
+.badge.expired {
+  color: #fa5151;
+  background: rgba(250, 81, 81, 0.12);
+}
+
+.badge.expiring {
+  color: #c47a1a;
+  background: rgba(196, 122, 26, 0.14);
+}
+
 .actions {
   margin-top: 40rpx;
   display: flex;

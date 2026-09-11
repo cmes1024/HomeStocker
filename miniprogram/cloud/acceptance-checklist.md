@@ -1,7 +1,7 @@
-# MVP + 空间/位置 + A 波 验收清单
+# MVP + 空间/位置 + A/B 波 验收清单
 
-部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space`（云端安装依赖）。  
-A 波变更后需重新上传 **`family`**（氛围图 deleteFile）。
+部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `expireNotify`（云端安装依赖）。  
+B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
 
 ## 闭环（原 MVP）
 
@@ -18,7 +18,7 @@ A 波变更后需重新上传 **`family`**（氛围图 deleteFile）。
 - [ ] 家庭页「逛空间」→ 空间列表 → 单空间页看到该空间物资及位置文案
 - [ ] 全家物资清单仍可用；可按空间筛选（有空间时）
 - [ ] 默认仓库可改名不可删（`DEFAULT_SPACE`）；删除其它空间时物品迁到默认仓库并清空位置；最后一个空间仍拒绝（`LAST_SPACE`）
-- [ ] 解散家庭后 `spaces` / `locations` 一并清理
+- [ ] 解散家庭后 `spaces` / `locations` / `tags` 一并清理
 
 ## A 波：物品详情
 
@@ -37,21 +37,43 @@ A 波变更后需重新上传 **`family`**（氛围图 deleteFile）。
 
 ## A 波：分包与性能
 
-- [ ] 主包页：onboarding / items 清单与编辑 / family（无 spaces、无 item detail）
+- [ ] 主包页：onboarding / items 清单与编辑 / family / family/tags（无 spaces、无 item detail）
 - [ ] 分包 `packageBrowse`：spaces 列表与详情、物品详情；家庭页 Wi‑Fi 可预下载
 - [ ] 氛围图上传前压缩（边长/质量上限）；失败则回退原图仍可上传
 - [ ] 清单返回静默刷新；主题未变时不重复全量 setData theme
 - [ ] Workers：清单派生字段可走 worker，不可用时主线程降级仍正常
 
+## B 波：标签
+
+- [ ] 家庭页可进标签管理；首次打开会种子默认标签（药品/饮料/工具/衣物）；删掉后不自动补种
+- [ ] 可新建 / 重命名 / 删除标签；删除后物品上的该 tagId 被剥离
+- [ ] 编辑页可多选标签；详情展示标签名；清单可按单标签筛选并可清回「全部标签」
+- [ ] 跨家庭 tagId 写入被 `item` 拒绝
+
+## B 波：保质期与即将过期
+
+- [ ] 编辑可填/清除生产日、过期日（均可空）；无过期日则无临期状态
+- [ ] 详情与清单展示临期/已过期标识（窗：今天…今天+3）
+- [ ] 清单顶部「即将过期」模块：有临期/过期物资时出现，点进详情；提醒开关关闭的物资仍会出现
+- [ ] 切换家庭后模块与清单只反映当前家
+
+## B 波：订阅提醒
+
+- [ ] 物资提醒开关默认关；家庭总开关默认开（家庭页可点切换）
+- [ ] 开启物资提醒时尝试 `requestSubscribeMessage`；拒绝不阻断保存
+- [ ] 接受授权后 `recordSubscribeExpire` 写入 membership
+- [ ] `expireNotify`：对 3 天/1 天/当天且双开关开启的物资发送订阅消息；须从小程序端或 IDE 定时触发器触发（控制台测试无 openapi 鉴权）
+- [ ] 控制台：上传 `expireNotify`、启用定时触发器（见 `config.json` 每日 9:00）；家庭页「立即检查提醒」可手动触发验收
+
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
-- [ ] `memberships` / `items` / `spaces` 列表查询走索引（无「缺少索引」报错）
+- [ ] `memberships` / `items` / `spaces` / `tags` 列表查询走索引（无「缺少索引」报错）
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family / family/tags；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航

@@ -213,6 +213,13 @@
   color: #1a1a1a;
 }
 
+.text-btn.reminder-run {
+  display: inline-block;
+  margin-top: 8rpx;
+  margin-right: 0;
+  padding-top: 12rpx;
+}
+
 .text-btn.muted {
   color: rgba(26, 26, 26, 0.45);
   margin-right: 0;

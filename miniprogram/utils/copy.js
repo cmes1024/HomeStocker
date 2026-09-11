@@ -27,7 +27,13 @@ const copy = {
     removeTitle: '去掉这件物品？',
     removeContent: '去掉后家人那边也会看不到。',
     removeConfirm: '去掉',
-    removedToast: '已去掉'
+    removedToast: '已去掉',
+    expiringTitle: '即将过期',
+    expiringMore: '查看',
+    badgeExpired: '已过期',
+    badgeExpiring: '临期',
+    filterTags: '标签',
+    filterAllTags: '全部标签'
   },
 
   detail: {
@@ -38,8 +44,16 @@ const copy = {
     labelSpace: '放在哪个空间',
     labelLocation: '具体位置',
     labelNote: '随手备注',
+    labelTags: '标签',
+    labelProduction: '生产日期',
+    labelExpire: '过期日期',
+    labelReminder: '过期提醒',
+    reminderOn: '已开启',
+    reminderOff: '未开启',
     locationNone: '不指定位置',
     noteEmpty: '没有备注',
+    tagsEmpty: '未打标签',
+    dateEmpty: '未填写',
     edit: '改一改',
     remove: '去掉',
     removeTitle: '去掉这件物品？',
@@ -48,7 +62,9 @@ const copy = {
     removedToast: '已去掉',
     missingId: '缺少物品',
     deletedTitle: '提示',
-    deletedContent: '物品已被删除'
+    deletedContent: '物品已被删除',
+    badgeExpired: '已过期',
+    badgeExpiring: '即将过期'
   },
 
   edit: {
@@ -67,6 +83,12 @@ const copy = {
     labelLocation: '具体位置（可空）',
     locationNone: '不指定位置',
     newLocation: '新建位置',
+    labelTags: '标签（可多选）',
+    tagsEmpty: '还没有标签，可去家庭页管理',
+    labelProduction: '生产日期（可空）',
+    labelExpire: '过期日期（可空）',
+    labelReminder: '到期订阅提醒',
+    reminderHint: '默认关闭；开启后需授权微信订阅消息',
     labelNote: '随手备注',
     notePlaceholder: '谁买的…可空着',
     save: '放好了',
@@ -88,6 +110,27 @@ const copy = {
     locLoadFailed: '加载位置失败'
   },
 
+  tags: {
+    loading: '整理标签…',
+    kicker: '分类小纸条',
+    title: '家庭标签',
+    sub: '给物品打标，方便筛选；家人共用一套',
+    empty: '还没有标签',
+    createLabel: '新标签',
+    createPlaceholder: '例如：药品、饮料',
+    createSubmit: '加上',
+    rename: '改名',
+    remove: '删',
+    nameRequired: '先写个名字',
+    createdToast: '已添加',
+    renamedToast: '已改名',
+    removedToast: '已删除',
+    removeTitle: '删除这个标签？',
+    removeContent: '物品上的这个标签会一起去掉。',
+    removeConfirm: '删除',
+    renameTitle: '改个名字'
+  },
+
   family: {
     loading: '打开家庭设置…',
     nowHere: '当前家庭',
@@ -98,6 +141,18 @@ const copy = {
     spacesTitle: '家庭空间',
     spacesAction: '去看看',
     spacesSub: '按房间/区域浏览物品；清单仍是日常主路径',
+    tagsTitle: '家庭标签',
+    tagsAction: '去管理',
+    tagsSub: '药品、饮料等分类；录入物品时可打标',
+    reminderTitle: '过期提醒总开关',
+    reminderSub: '关掉后，这家所有物品都不再发订阅消息',
+    reminderOn: '已开启',
+    reminderOff: '已关闭',
+    reminderRunNow: '立即检查提醒',
+    reminderRunHint: '须从小程序内触发（控制台测试会因鉴权失败）',
+    reminderRunOk: '提醒已尝试发送',
+    reminderRunFail: '发送失败',
+    reminderRunning: '检查中…',
     wallTitle: '家里的氛围',
     wallAction: '换一换',
     wallSub: '挑个喜欢的底色或照片，这家的页面都会一起变暖',

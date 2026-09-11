@@ -40,6 +40,29 @@
       <view class="block-sub">{{copy.spacesSub}}</view>
     </view>
 
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goTags">
+      <view class="block-hd">
+        <view class="block-title">{{copy.tagsTitle}}</view>
+        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.tagsAction}}</view>
+      </view>
+      <view class="block-sub">{{copy.tagsSub}}</view>
+    </view>
+
+    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="block-hd" catch:tap="onToggleExpireReminder">
+        <view class="block-title">{{copy.reminderTitle}}</view>
+        <view class="block-action" style="color: {{theme.themeColor}};">
+          {{family.expireReminderEnabled !== false ? copy.reminderOn : copy.reminderOff}}
+        </view>
+      </view>
+      <view class="block-sub">{{copy.reminderSub}}</view>
+      <view
+        class="text-btn reminder-run"
+        style="color: {{theme.themeColor}};"
+        bind:tap="onRunExpireNotify"
+      >{{copy.reminderRunNow}}</view>
+    </view>
+
     <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="block-hd">
         <view class="block-title">{{copy.wallTitle}}</view>

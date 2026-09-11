@@ -3,7 +3,8 @@
     "pages/onboarding/index",
     "pages/items/index",
     "pages/items/edit",
-    "pages/family/index"
+    "pages/family/index",
+    "pages/family/tags"
   ],
   "subpackages": [
     {

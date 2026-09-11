@@ -36,6 +36,30 @@
       <view class="value {{locationName ? '' : 'muted'}}">{{locationName || copy.locationNone}}</view>
     </view>
     <view class="field">
+      <view class="label">{{copy.labelTags}}</view>
+      <view class="value {{tagNames.length ? '' : 'muted'}}">
+        <block wx:if="{{tagNames.length}}">
+          <text wx:for="{{tagNames}}" wx:key="*this">{{index ? ' · ' : ''}}{{item}}</text>
+        </block>
+        <block wx:else>{{copy.tagsEmpty}}</block>
+      </view>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelProduction}}</view>
+      <view class="value {{item.productionDate ? '' : 'muted'}}">{{item.productionDate || copy.dateEmpty}}</view>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelExpire}}</view>
+      <view class="value-row">
+        <view class="value {{item.expireDate ? '' : 'muted'}}">{{item.expireDate || copy.dateEmpty}}</view>
+        <view class="badge {{expireStatus}}" wx:if="{{expireLabel}}">{{expireLabel}}</view>
+      </view>
+    </view>
+    <view class="field" wx:if="{{item.expireDate}}">
+      <view class="label">{{copy.labelReminder}}</view>
+      <view class="value">{{item.expireReminderEnabled ? copy.reminderOn : copy.reminderOff}}</view>
+    </view>
+    <view class="field">
       <view class="label">{{copy.labelNote}}</view>
       <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
     </view>

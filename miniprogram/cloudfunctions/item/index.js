@@ -16,6 +16,68 @@ function fail(code, message) {
   return { ok: false, code, message }
 }
 
+function shanghaiTodayYmd(now = Date.now()) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Shanghai',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).formatToParts(new Date(now))
+  const y = parts.find((p) => p.type === 'year').value
+  const m = parts.find((p) => p.type === 'month').value
+  const d = parts.find((p) => p.type === 'day').value
+  return `${y}-${m}-${d}`
+}
+
+function addDaysYmd(ymd, days) {
+  const [y, m, d] = ymd.split('-').map(Number)
+  const utc = Date.UTC(y, m - 1, d) + days * 86400000
+  const dt = new Date(utc)
+  const yy = dt.getUTCFullYear()
+  const mm = String(dt.getUTCMonth() + 1).padStart(2, '0')
+  const dd = String(dt.getUTCDate()).padStart(2, '0')
+  return `${yy}-${mm}-${dd}`
+}
+
+/** @returns {string|null|undefined} null=清空；undefined=格式非法 */
+function normalizeDateInput(value) {
+  if (value === undefined) return undefined
+  if (value === null || value === '') return null
+  const s = String(value).trim().slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return undefined
+  return s
+}
+
+async function resolveTagIds(familyId, tagIds) {
+  if (tagIds === undefined) return { skip: true }
+  if (tagIds === null || tagIds === '') return { tagIds: [] }
+  if (!Array.isArray(tagIds)) {
+    return { error: fail('INVALID_TAGS', '标签格式无效') }
+  }
+  const unique = []
+  const seen = {}
+  for (let i = 0; i < tagIds.length; i++) {
+    const id = String(tagIds[i] || '').trim()
+    if (!id || seen[id]) continue
+    seen[id] = true
+    unique.push(id)
+  }
+  if (!unique.length) return { tagIds: [] }
+  if (unique.length > 20) {
+    return { error: fail('INVALID_TAGS', '标签过多') }
+  }
+  const snaps = await Promise.all(
+    unique.map((id) => db.collection('tags').doc(id).get().catch(() => null))
+  )
+  for (let i = 0; i < snaps.length; i++) {
+    const snap = snaps[i]
+    if (!snap || !snap.data || snap.data.familyId !== familyId) {
+      return { error: fail('INVALID_TAGS', '标签不属于当前家庭') }
+    }
+  }
+  return { tagIds: unique }
+}
+
 function membershipId(openid, familyId) {
   return `${openid}_${familyId}`
 }
@@ -135,6 +197,26 @@ async function createItem(openid, event) {
   )
   if (locRes.error) return locRes.error
 
+  const tagsRes = await resolveTagIds(ctx.familyId, event.tagIds)
+  if (tagsRes.error) return tagsRes.error
+  const tagIds = tagsRes.skip ? [] : tagsRes.tagIds
+
+  let productionDate = null
+  if (event.productionDate !== undefined) {
+    const d = normalizeDateInput(event.productionDate)
+    if (d === undefined) return fail('INVALID_DATE', '生产日期无效')
+    productionDate = d
+  }
+
+  let expireDate = null
+  if (event.expireDate !== undefined) {
+    const d = normalizeDateInput(event.expireDate)
+    if (d === undefined) return fail('INVALID_DATE', '过期日期无效')
+    expireDate = d
+  }
+
+  const expireReminderEnabled = !!expireDate && event.expireReminderEnabled === true
+
   const doc = {
     familyId: ctx.familyId,
     name,
@@ -143,6 +225,10 @@ async function createItem(openid, event) {
     note,
     spaceId: spaceRes.spaceId,
     locationId: locRes.locationId,
+    tagIds,
+    productionDate,
+    expireDate,
+    expireReminderEnabled,
     createdBy: openid,
     source,
     createdAt: now,
@@ -182,6 +268,35 @@ async function updateItem(openid, event) {
   }
   if (event.note !== undefined) {
     patch.note = String(event.note)
+  }
+
+  if (event.tagIds !== undefined) {
+    const tagsRes = await resolveTagIds(ctx.familyId, event.tagIds)
+    if (tagsRes.error) return tagsRes.error
+    if (!tagsRes.skip) patch.tagIds = tagsRes.tagIds
+  }
+
+  if (event.productionDate !== undefined) {
+    const d = normalizeDateInput(event.productionDate)
+    if (d === undefined) return fail('INVALID_DATE', '生产日期无效')
+    patch.productionDate = d
+  }
+
+  if (event.expireDate !== undefined) {
+    const d = normalizeDateInput(event.expireDate)
+    if (d === undefined) return fail('INVALID_DATE', '过期日期无效')
+    patch.expireDate = d
+  }
+
+  if (event.expireReminderEnabled !== undefined) {
+    patch.expireReminderEnabled = event.expireReminderEnabled === true
+  }
+
+  // 无过期日时不允许开提醒
+  const nextExpire =
+    patch.expireDate !== undefined ? patch.expireDate : snap.data.expireDate
+  if (!nextExpire) {
+    patch.expireReminderEnabled = false
   }
 
   const spaceChanging = event.spaceId !== undefined
@@ -269,6 +384,9 @@ async function listItems(openid, event) {
   if (event.spaceId) {
     where.spaceId = String(event.spaceId)
   }
+  if (event.tagId) {
+    where.tagIds = String(event.tagId)
+  }
   const res = await db
     .collection('items')
     .where(where)
@@ -286,12 +404,19 @@ async function searchItems(openid, event) {
   const limit = Math.min(Math.max(Number(event.limit) || 20, 1), 50)
 
   if (!keyword) {
-    return listItems(openid, { limit, spaceId: event.spaceId })
+    return listItems(openid, {
+      limit,
+      spaceId: event.spaceId,
+      tagId: event.tagId
+    })
   }
 
   const where = { familyId: ctx.familyId }
   if (event.spaceId) {
     where.spaceId = String(event.spaceId)
+  }
+  if (event.tagId) {
+    where.tagIds = String(event.tagId)
   }
 
   const res = await db
@@ -306,6 +431,48 @@ async function searchItems(openid, event) {
     .slice(0, limit)
 
   return ok({ list })
+}
+
+/**
+ * 临期 + 已过期（today … today+3 与更早），忽略提醒开关。
+ */
+async function listExpiring(openid, event) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  const limit = Math.min(Math.max(Number(event.limit) || 50, 1), 100)
+  const today = shanghaiTodayYmd()
+  const end = addDaysYmd(today, 3)
+
+  const res = await db
+    .collection('items')
+    .where({
+      familyId: ctx.familyId,
+      expireDate: _.lte(end)
+    })
+    .orderBy('expireDate', 'asc')
+    .limit(limit)
+    .get()
+    .catch(async (err) => {
+      // 索引未建或旧数据无 expireDate 时降级：拉列表再过滤
+      console.warn('listExpiring query fallback', err && err.message)
+      const all = await db
+        .collection('items')
+        .where({ familyId: ctx.familyId })
+        .limit(100)
+        .get()
+      const filtered = (all.data || [])
+        .filter((item) => {
+          const d = item.expireDate
+          return d && typeof d === 'string' && d <= end
+        })
+        .sort((a, b) => String(a.expireDate).localeCompare(String(b.expireDate)))
+        .slice(0, limit)
+      return { data: filtered }
+    })
+
+  const list = (res.data || []).filter((item) => item.expireDate)
+  return ok({ list, today, windowEnd: end })
 }
 
 exports.main = async (event) => {
@@ -329,6 +496,8 @@ exports.main = async (event) => {
         return await listItems(OPENID, event)
       case 'search':
         return await searchItems(OPENID, event)
+      case 'listExpiring':
+        return await listExpiring(OPENID, event)
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }

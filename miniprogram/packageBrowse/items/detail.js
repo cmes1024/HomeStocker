@@ -1,6 +1,7 @@
-const { callItem, callSpace } = require('../../utils/cloud')
+const { callItem, callSpace, callTag } = require('../../utils/cloud')
 const { listLocations } = require('../../utils/db')
 const { bindThemeToPage } = require('../../utils/theme')
+const { shelfLifeStatus } = require('../../utils/expireStatus')
 const copy = require('../../utils/copy')
 
 Page({
@@ -11,6 +12,9 @@ Page({
     item: null,
     spaceName: '',
     locationName: '',
+    tagNames: [],
+    expireStatus: '',
+    expireLabel: '',
     loading: true,
     error: '',
     removing: false,
@@ -71,6 +75,7 @@ Page({
       const item = await callItem('get', { itemId })
       let spaceName = ''
       let locationName = ''
+      let tagNames = []
 
       if (item.spaceId) {
         try {
@@ -93,10 +98,28 @@ Page({
         }
       }
 
+      if (item.tagIds && item.tagIds.length) {
+        try {
+          const listed = await callTag('list')
+          const tags = (listed && listed.list) || []
+          const byId = {}
+          tags.forEach((t) => {
+            byId[t._id] = t.name
+          })
+          tagNames = item.tagIds.map((id) => byId[id]).filter(Boolean)
+        } catch (e) {
+          tagNames = []
+        }
+      }
+
+      const life = shelfLifeStatus(item.expireDate)
       this.setData({
         item,
         spaceName,
         locationName,
+        tagNames,
+        expireStatus: life.status,
+        expireLabel: life.label,
         loading: false,
         error: ''
       })

@@ -81,6 +81,64 @@ Page({
     wx.navigateTo({ url: '/packageBrowse/spaces/index' })
   },
 
+  goTags() {
+    wx.navigateTo({ url: '/pages/family/tags' })
+  },
+
+  async onToggleExpireReminder() {
+    if (this.data.acting || !this.data.family) return
+    const current =
+      this.data.family.expireReminderEnabled === undefined
+        ? true
+        : !!this.data.family.expireReminderEnabled
+    const next = !current
+    this.setData({ acting: true })
+    try {
+      const family = await callFamily('updateExpireReminder', { enabled: next })
+      setAppFamily(family)
+      this.setData({
+        family,
+        acting: false
+      })
+    } catch (e) {
+      this.setData({ acting: false })
+      wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
+    }
+  },
+
+  async onRunExpireNotify() {
+    if (this.data.acting) return
+    this.setData({ acting: true })
+    wx.showLoading({ title: copy.family.reminderRunning, mask: true })
+    try {
+      const res = await wx.cloud.callFunction({ name: 'expireNotify', data: {} })
+      const result = (res && res.result) || {}
+      const data = result.data || {}
+      wx.hideLoading()
+      if (data.failCount > 0) {
+        wx.showModal({
+          title: copy.family.reminderRunFail,
+          content: data.lastError || copy.common.opFailed,
+          showCancel: false
+        })
+      } else if (!data.sendAttempts) {
+        wx.showToast({
+          title: data.candidateCount
+            ? '有临期物品但无人授权'
+            : '当前无匹配的临期物品',
+          icon: 'none'
+        })
+      } else {
+        wx.showToast({ title: copy.family.reminderRunOk, icon: 'success' })
+      }
+    } catch (e) {
+      wx.hideLoading()
+      wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
+    } finally {
+      this.setData({ acting: false })
+    }
+  },
+
   openPanel(e) {
     const panel = e.currentTarget.dataset.panel || ''
     this.setData({

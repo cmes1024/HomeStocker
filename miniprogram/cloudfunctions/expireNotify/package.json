@@ -1,0 +1,9 @@
+{
+  "name": "expireNotify",
+  "version": "1.0.0",
+  "description": "每日过期订阅消息（3天/1天/当天）",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3"
+  }
+}

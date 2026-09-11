@@ -57,8 +57,25 @@ async function callSpace(action, data = {}) {
   }
 }
 
+async function callTag(action, data = {}) {
+  try {
+    const res = await wx.cloud.callFunction({
+      name: 'tag',
+      data: { ...data, action }
+    })
+    return unwrap(res)
+  } catch (e) {
+    if (e.code && e.result) throw e
+    const err = new Error(friendlyCloudError(e))
+    err.code = 'CLOUD_CALL_FAILED'
+    err.cause = e
+    throw err
+  }
+}
+
 module.exports = {
   callFamily,
   callItem,
-  callSpace
+  callSpace,
+  callTag
 }

@@ -56,6 +56,52 @@
         <view class="input picker">{{locationNames[locationIndex] || copy.locationNone}}</view>
       </picker>
     </view>
+
+    <view class="field">
+      <view class="label">{{copy.labelTags}}</view>
+      <view class="tag-row" wx:if="{{tags.length}}">
+        <view
+          class="tag-chip {{item.selected ? 'on' : ''}}"
+          style="{{item.selected ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
+          wx:for="{{tags}}"
+          wx:key="_id"
+          data-id="{{item._id}}"
+          bind:tap="onToggleTag"
+        >{{item.name}}</view>
+      </view>
+      <view class="hint muted" wx:else>{{copy.tagsEmpty}}</view>
+    </view>
+
+    <view class="field">
+      <view class="label-row">
+        <view class="label">{{copy.labelProduction}}</view>
+        <view class="text-link" wx:if="{{productionDate}}" style="color: {{theme.themeColor}};" bind:tap="clearProductionDate">清除</view>
+      </view>
+      <picker mode="date" value="{{productionDate}}" bindchange="onProductionDate">
+        <view class="input picker">{{productionDate || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="field">
+      <view class="label-row">
+        <view class="label">{{copy.labelExpire}}</view>
+        <view class="text-link" wx:if="{{expireDate}}" style="color: {{theme.themeColor}};" bind:tap="clearExpireDate">清除</view>
+      </view>
+      <picker mode="date" value="{{expireDate}}" bindchange="onExpireDate">
+        <view class="input picker">{{expireDate || '选择日期'}}</view>
+      </picker>
+    </view>
+    <view class="field switch-field" wx:if="{{expireDate}}">
+      <view class="switch-text">
+        <view class="label">{{copy.labelReminder}}</view>
+        <view class="hint muted">{{copy.reminderHint}}</view>
+      </view>
+      <switch
+        checked="{{expireReminderEnabled}}"
+        color="{{theme.themeColor}}"
+        bindchange="onToggleReminder"
+      />
+    </view>
+
     <view class="field">
       <view class="label">{{copy.labelNote}}</view>
       <input class="input" placeholder="{{copy.notePlaceholder}}" value="{{note}}" bindinput="onNote" maxlength="100" />

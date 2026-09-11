@@ -1,8 +1,10 @@
-const { listItems, listSpaces, listLocations } = require('../../utils/db')
+const { listItems, listSpaces, listLocations, listExpiringItems } = require('../../utils/db')
+const { callTag } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { buildLocationById } = require('../../utils/ledgerEnrich')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
+const { shelfLifeStatus } = require('../../utils/expireStatus')
 const copy = require('../../utils/copy')
 
 Page({
@@ -14,6 +16,7 @@ Page({
     loading: false,
     error: '',
     items: [],
+    expiringItems: [],
     familyId: '',
     familyName: '',
     headerTitle: '',
@@ -21,8 +24,12 @@ Page({
     spaces: [],
     spaceById: {},
     locationById: {},
+    tagById: {},
+    tags: [],
     filterSpaceId: '',
+    filterTagId: '',
     filterChips: [{ id: '', name: copy.common.all }],
+    tagChips: [{ id: '', name: copy.items.filterAllTags }],
     animateTiles: true,
     loadingColors: ['#C4A484', '#8B6914']
   },
@@ -55,11 +62,11 @@ Page({
         bootLoading: false
       })
       this.syncLoadingColors()
-      // 已有筛选芯片时跳过全量空间重拉，返回详情只静默刷清单
       if (!hasSpaces) {
         await this.loadSpaces()
       }
-      await this.loadList()
+      await this.loadTags()
+      await Promise.all([this.loadList(), this.loadExpiring()])
     } catch (e) {
       // bootError 已设置
     }
@@ -97,9 +104,29 @@ Page({
     }
   },
 
+  async loadTags() {
+    try {
+      const ensured = await callTag('ensureDefaults')
+      const tags = (ensured && ensured.list) || []
+      const tagById = {}
+      tags.forEach((t) => {
+        if (t && t._id) tagById[t._id] = t.name || ''
+      })
+      const tagChips = [{ id: '', name: copy.items.filterAllTags }].concat(
+        tags.map((t) => ({ id: t._id, name: t.name }))
+      )
+      this.setData({ tags, tagById, tagChips })
+    } catch (e) {
+      this.setData({
+        tags: [],
+        tagById: {},
+        tagChips: [{ id: '', name: copy.items.filterAllTags }]
+      })
+    }
+  },
+
   /**
    * @param {{ silent?: boolean }} [options]
-   * silent：保留当前列表，拿到新数据再替换（返回详情页时避免闪动）
    */
   async loadList(options = {}) {
     const familyId = this.data.familyId || getApp().globalData.familyId
@@ -116,12 +143,14 @@ Page({
 
     try {
       const raw = await listItems(familyId, {
-        spaceId: this.data.filterSpaceId || undefined
+        spaceId: this.data.filterSpaceId || undefined,
+        tagId: this.data.filterTagId || undefined
       })
       const items = await enrichLedgerItemsAsync(
         raw,
         this.data.spaceById,
-        this.data.locationById
+        this.data.locationById,
+        this.data.tagById
       )
       this.setData({ items, loading: false })
     } catch (e) {
@@ -132,10 +161,34 @@ Page({
     }
   },
 
+  async loadExpiring() {
+    try {
+      const { list } = await listExpiringItems({ limit: 20 })
+      const enriched = (list || []).map((item) => {
+        const life = shelfLifeStatus(item.expireDate)
+        return {
+          ...item,
+          expireStatus: life.status,
+          expireLabel: life.label
+        }
+      })
+      this.setData({ expiringItems: enriched })
+    } catch (e) {
+      this.setData({ expiringItems: [] })
+    }
+  },
+
   onFilter(e) {
     const id = e.currentTarget.dataset.id || ''
     if (id === this.data.filterSpaceId) return
     this.setData({ filterSpaceId: id })
+    this.loadList({ silent: true })
+  },
+
+  onFilterTag(e) {
+    const id = e.currentTarget.dataset.id || ''
+    if (id === this.data.filterTagId) return
+    this.setData({ filterTagId: id })
     this.loadList({ silent: true })
   },
 

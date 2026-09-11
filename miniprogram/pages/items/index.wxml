@@ -37,6 +37,25 @@
     </view>
     <view class="ledger-hint">{{copy.ledgerHint}}</view>
 
+    <view class="expiring {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{expiringItems.length}}">
+      <view class="expiring-hd">
+        <view class="expiring-title">{{copy.expiringTitle}}</view>
+      </view>
+      <view
+        class="expiring-row"
+        wx:for="{{expiringItems}}"
+        wx:key="_id"
+        data-id="{{item._id}}"
+        bind:tap="goDetail"
+      >
+        <view class="expiring-name">{{item.name}}</view>
+        <view class="expiring-meta">
+          <text class="badge {{item.expireStatus}}">{{item.expireLabel}}</text>
+          <text class="expiring-date">{{item.expireDate}}</text>
+        </view>
+      </view>
+    </view>
+
     <scroll-view
       class="filter-row"
       scroll-x
@@ -50,6 +69,22 @@
         wx:key="id"
         data-id="{{item.id}}"
         bind:tap="onFilter"
+      >{{item.name}}</view>
+    </scroll-view>
+
+    <scroll-view
+      class="filter-row tag-row"
+      scroll-x
+      wx:if="{{tagChips.length > 1}}"
+      enable-flex
+    >
+      <view
+        class="filter-chip {{filterTagId === item.id ? 'on' : ''}}"
+        style="{{filterTagId === item.id ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
+        wx:for="{{tagChips}}"
+        wx:key="id"
+        data-id="{{item.id}}"
+        bind:tap="onFilterTag"
       >{{item.name}}</view>
     </scroll-view>
 
@@ -81,7 +116,11 @@
           <view class="tile-name">{{item.name}}</view>
           <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}{{item.unit}}</view>
         </view>
+        <view class="tile-badges" wx:if="{{item.expireLabel}}">
+          <text class="badge {{item.expireStatus}}">{{item.expireLabel}}</text>
+        </view>
         <view class="tile-note" wx:if="{{item.placeLine}}">{{item.placeLine}}</view>
+        <view class="tile-note muted" wx:elif="{{item.tagLine}}">{{item.tagLine}}</view>
         <view class="tile-note muted" wx:else>{{copy.tileHint}}</view>
       </view>
     </view>
