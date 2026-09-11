@@ -75,14 +75,13 @@
         wx:key="_id"
         style="{{animateTiles ? 'animation-delay: ' + (index % 8 * 40) + 'ms;' : ''}}"
         data-id="{{item._id}}"
-        bind:tap="goEdit"
-        bind:longpress="onRemove"
+        bind:tap="goDetail"
       >
         <view class="tile-top">
           <view class="tile-name">{{item.name}}</view>
           <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}{{item.unit}}</view>
         </view>
-        <view class="tile-note" wx:if="{{item.note}}">{{item.note}}</view>
+        <view class="tile-note" wx:if="{{item.placeLine}}">{{item.placeLine}}</view>
         <view class="tile-note muted" wx:else>{{copy.tileHint}}</view>
       </view>
     </view>

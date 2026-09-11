@@ -62,7 +62,7 @@
       wx:for="{{items}}"
       wx:key="_id"
       data-id="{{item._id}}"
-      bind:tap="goEdit"
+      bind:tap="goDetail"
     >
       <view class="item-name">{{item.name}}</view>
       <view class="item-meta">

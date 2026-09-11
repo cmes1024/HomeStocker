@@ -145,6 +145,6 @@ Page({
     const qs = name
       ? `id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`
       : `id=${encodeURIComponent(id)}`
-    wx.navigateTo({ url: `/pages/spaces/detail?${qs}` })
+    wx.navigateTo({ url: `/packageBrowse/spaces/detail?${qs}` })
   }
 })

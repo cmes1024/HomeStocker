@@ -166,13 +166,27 @@ function getAppTheme() {
 
 /**
  * 把全局主题同步到页面 data.theme（供 AppShell 使用）。
+ * 主题未变时跳过 theme 字段写入，减少多余 setData。
  */
 function bindThemeToPage(page, patch = {}) {
   const theme = getAppTheme()
-  page.setData({
-    theme,
-    ...patch
-  })
+  const prev = page.data && page.data.theme
+  const themeChanged =
+    !prev ||
+    prev.themeColor !== theme.themeColor ||
+    prev.bgImage !== theme.bgImage ||
+    prev.bgStyle !== theme.bgStyle ||
+    prev.isPhoto !== theme.isPhoto ||
+    prev.lightHeader !== theme.lightHeader
+
+  const data = { ...patch }
+  if (themeChanged) {
+    data.theme = theme
+  }
+
+  if (Object.keys(data).length) {
+    page.setData(data)
+  }
   applyNavBarColor(theme)
   return theme
 }

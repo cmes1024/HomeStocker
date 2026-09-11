@@ -1,7 +1,8 @@
-const { listItems, listSpaces } = require('../../utils/db')
+const { listItems, listSpaces, listLocations } = require('../../utils/db')
 const { routeByMembership } = require('../../utils/route')
-const { callItem } = require('../../utils/cloud')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
+const { buildLocationById } = require('../../utils/ledgerEnrich')
+const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const copy = require('../../utils/copy')
 
 Page({
@@ -18,6 +19,8 @@ Page({
     headerTitle: '',
     theme: null,
     spaces: [],
+    spaceById: {},
+    locationById: {},
     filterSpaceId: '',
     filterChips: [{ id: '', name: copy.common.all }],
     animateTiles: true,
@@ -31,6 +34,8 @@ Page({
 
   syncLoadingColors() {
     const color = (this.data.theme && this.data.theme.themeColor) || '#C4A484'
+    const prev = this.data.loadingColors
+    if (prev && prev[0] === color && prev[1] === color) return
     this.setData({ loadingColors: [color, color] })
   },
 
@@ -42,6 +47,7 @@ Page({
       if (!session || !session.hasFamily) return
       setAppFamily(session.family)
       const familyName = (session.family && session.family.name) || ''
+      const hasSpaces = (this.data.spaces || []).length > 0
       bindThemeToPage(this, {
         familyId: session.currentFamilyId,
         familyName,
@@ -49,7 +55,10 @@ Page({
         bootLoading: false
       })
       this.syncLoadingColors()
-      await this.loadSpaces()
+      // 已有筛选芯片时跳过全量空间重拉，返回详情只静默刷清单
+      if (!hasSpaces) {
+        await this.loadSpaces()
+      }
       await this.loadList()
     } catch (e) {
       // bootError 已设置
@@ -66,13 +75,23 @@ Page({
       if (!spaces.length) {
         spaces = []
       }
+      const spaceById = {}
+      spaces.forEach((s) => {
+        if (s && s._id) spaceById[s._id] = s.name || ''
+      })
+      const locationLists = await Promise.all(
+        spaces.map((s) => listLocations(s._id).catch(() => []))
+      )
+      const locationById = buildLocationById(locationLists)
       const filterChips = [{ id: '', name: copy.common.all }].concat(
         spaces.map((s) => ({ id: s._id, name: s.name }))
       )
-      this.setData({ spaces, filterChips })
+      this.setData({ spaces, spaceById, locationById, filterChips })
     } catch (e) {
       this.setData({
         spaces: [],
+        spaceById: {},
+        locationById: {},
         filterChips: [{ id: '', name: copy.common.all }]
       })
     }
@@ -80,7 +99,7 @@ Page({
 
   /**
    * @param {{ silent?: boolean }} [options]
-   * silent：保留当前列表，拿到新数据再替换（返回编辑页时避免闪动）
+   * silent：保留当前列表，拿到新数据再替换（返回详情页时避免闪动）
    */
   async loadList(options = {}) {
     const familyId = this.data.familyId || getApp().globalData.familyId
@@ -96,9 +115,14 @@ Page({
     }
 
     try {
-      const items = await listItems(familyId, {
+      const raw = await listItems(familyId, {
         spaceId: this.data.filterSpaceId || undefined
       })
+      const items = await enrichLedgerItemsAsync(
+        raw,
+        this.data.spaceById,
+        this.data.locationById
+      )
       this.setData({ items, loading: false })
     } catch (e) {
       this.setData({
@@ -112,7 +136,6 @@ Page({
     const id = e.currentTarget.dataset.id || ''
     if (id === this.data.filterSpaceId) return
     this.setData({ filterSpaceId: id })
-    // 切筛选时仍静默替换，避免整页闪 loading
     this.loadList({ silent: true })
   },
 
@@ -126,33 +149,13 @@ Page({
     wx.navigateTo({ url: `/pages/items/edit${qs}` })
   },
 
-  goEdit(e) {
+  goDetail(e) {
     const id = e.currentTarget.dataset.id
-    wx.navigateTo({ url: `/pages/items/edit?id=${id}` })
+    if (!id) return
+    wx.navigateTo({ url: `/packageBrowse/items/detail?id=${id}` })
   },
 
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
-  },
-
-  async onRemove(e) {
-    const id = e.currentTarget.dataset.id
-    const confirm = await new Promise((resolve) => {
-      wx.showModal({
-        title: copy.items.removeTitle,
-        content: copy.items.removeContent,
-        confirmText: copy.items.removeConfirm,
-        confirmColor: '#FA5151',
-        success: (res) => resolve(res.confirm)
-      })
-    })
-    if (!confirm) return
-    try {
-      await callItem('remove', { itemId: id })
-      wx.showToast({ title: copy.items.removedToast, icon: 'success' })
-      this.loadList()
-    } catch (err) {
-      wx.showToast({ title: err.message || copy.common.opFailed, icon: 'none' })
-    }
   }
 })

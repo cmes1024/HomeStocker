@@ -23,11 +23,32 @@ const copy = {
     ledgerHint: '家里的共用台账 · 谁改都能看见',
     emptyTitle: '还没有物品',
     emptySub: '记第一件家里的东西吧，家人都能看到',
-    tileHint: '点一下改 · 长按去掉',
+    tileHint: '点一下看看',
     removeTitle: '去掉这件物品？',
     removeContent: '去掉后家人那边也会看不到。',
     removeConfirm: '去掉',
     removedToast: '已去掉'
+  },
+
+  detail: {
+    loading: '翻一下本子…',
+    kicker: '家里的一件东西',
+    labelName: '叫什么',
+    labelQty: '大概多少',
+    labelSpace: '放在哪个空间',
+    labelLocation: '具体位置',
+    labelNote: '随手备注',
+    locationNone: '不指定位置',
+    noteEmpty: '没有备注',
+    edit: '改一改',
+    remove: '去掉',
+    removeTitle: '去掉这件物品？',
+    removeContent: '去掉后家人那边也会看不到。',
+    removeConfirm: '去掉',
+    removedToast: '已去掉',
+    missingId: '缺少物品',
+    deletedTitle: '提示',
+    deletedContent: '物品已被删除'
   },
 
   edit: {

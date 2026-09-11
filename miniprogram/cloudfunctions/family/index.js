@@ -44,6 +44,30 @@ function normalizeBackground(raw) {
   return { ...DEFAULT_BACKGROUND }
 }
 
+/**
+ * Best-effort 删除云存储文件；失败只打日志，不抛错。
+ */
+async function bestEffortDeleteFile(fileID) {
+  const id = String(fileID || '').trim()
+  if (!id || !id.startsWith('cloud://')) return
+  try {
+    const res = await cloud.deleteFile({ fileList: [id] })
+    const fileRes = res && res.fileList && res.fileList[0]
+    if (fileRes && fileRes.status !== 0) {
+      console.warn('deleteFile soft-fail', id, fileRes.status, fileRes.errMsg)
+    }
+  } catch (e) {
+    console.warn('deleteFile failed', id, e && e.message ? e.message : e)
+  }
+}
+
+async function maybeDeleteAtmosphereImage(background) {
+  const bg = normalizeBackground(background)
+  if (bg.type === 'image' && bg.value) {
+    await bestEffortDeleteFile(bg.value)
+  }
+}
+
 function familySummary(familyId, family, openid) {
   return {
     _id: familyId,
@@ -314,10 +338,25 @@ async function updateBackground(openid, event) {
     return fail('INVALID_BACKGROUND', '图片无效')
   }
 
+  const famBefore = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!famBefore || !famBefore.data) {
+    return fail('NO_FAMILY', '家庭不存在')
+  }
+  const previous = normalizeBackground(famBefore.data.background)
+
   const background = { type, value }
   await db.collection('families').doc(familyId).update({
     data: { background }
   })
+
+  // 换图或改为非 image：旧 image fileID 不同则 best-effort 回收
+  if (
+    previous.type === 'image' &&
+    previous.value &&
+    (type !== 'image' || previous.value !== value)
+  ) {
+    await bestEffortDeleteFile(previous.value)
+  }
 
   const fam = await db.collection('families').doc(familyId).get()
   return ok(familySummary(familyId, { ...fam.data, background }, openid))
@@ -366,12 +405,15 @@ async function leaveFamily(openid) {
   const family = fam.data
 
   if (family.ownerOpenid === openid) {
+    // 解散：先记下氛围图，DB 清理成功后再 best-effort 删文件（失败不阻断）
+    const atmosphereToDelete = normalizeBackground(family.background)
     await removeInBatches(db.collection('items'), { familyId })
     await removeInBatches(db.collection('locations'), { familyId })
     await removeInBatches(db.collection('spaces'), { familyId })
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()
+    await maybeDeleteAtmosphereImage(atmosphereToDelete)
 
     const nextFamilyId = await pickOtherFamilyId(openid, familyId)
     if (nextFamilyId) {
@@ -380,6 +422,7 @@ async function leaveFamily(openid) {
     return ok({ dissolved: true, nextFamilyId: nextFamilyId || null })
   }
 
+  // 普通成员退出：家庭仍在，保留氛围图给其他成员
   await db.collection('memberships').doc(membershipId(openid, familyId)).remove()
   await db.collection('families').doc(familyId).update({
     data: {

@@ -1,6 +1,7 @@
-# MVP + 空间/位置 验收清单
+# MVP + 空间/位置 + A 波 验收清单
 
-部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space`（云端安装依赖）。
+部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space`（云端安装依赖）。  
+A 波变更后需重新上传 **`family`**（氛围图 deleteFile）。
 
 ## 闭环（原 MVP）
 
@@ -19,6 +20,29 @@
 - [ ] 默认仓库可改名不可删（`DEFAULT_SPACE`）；删除其它空间时物品迁到默认仓库并清空位置；最后一个空间仍拒绝（`LAST_SPACE`）
 - [ ] 解散家庭后 `spaces` / `locations` 一并清理
 
+## A 波：物品详情
+
+- [ ] 清单点击进入详情（`packageBrowse/items/detail`），**不**直接进编辑
+- [ ] 清单**无**长按删除
+- [ ] 详情展示：名称、数量/单位、空间、位置（可空）、备注（可空）
+- [ ] 详情可「改一改」进入现有编辑页；确认删除后走 `item.remove` 并返回清单
+- [ ] 空间页内点击物品同样进详情
+
+## A 波：氛围图云存储清理
+
+- [ ] 氛围图换另一张：旧 `cloud://` fileID 被 best-effort 删除；换图成功不被删除失败阻断
+- [ ] 氛围从图片改为渐变/纯色：旧图 fileID best-effort 删除
+- [ ] Owner 解散带图片背景的家庭：数据清理后 best-effort 删氛围图
+- [ ] 普通成员退出：家庭仍在，**不**删氛围图（其他成员继续用）
+
+## A 波：分包与性能
+
+- [ ] 主包页：onboarding / items 清单与编辑 / family（无 spaces、无 item detail）
+- [ ] 分包 `packageBrowse`：spaces 列表与详情、物品详情；家庭页 Wi‑Fi 可预下载
+- [ ] 氛围图上传前压缩（边长/质量上限）；失败则回退原图仍可上传
+- [ ] 清单返回静默刷新；主题未变时不重复全量 setData theme
+- [ ] Workers：清单派生字段可走 worker，不可用时主线程降级仍正常
+
 ## 约束
 
 - [ ] 客户端直写 `items` / `spaces` / `locations` 被安全规则拒绝
@@ -29,5 +53,5 @@
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family / spaces（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航

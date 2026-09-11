@@ -5,6 +5,7 @@ const {
   setAppFamily,
   bindThemeToPage
 } = require('../../utils/theme')
+const { compressImageForUpload } = require('../../utils/imageCompress')
 const copy = require('../../utils/copy')
 
 Page({
@@ -77,7 +78,7 @@ Page({
   },
 
   goSpaces() {
-    wx.navigateTo({ url: '/pages/spaces/index' })
+    wx.navigateTo({ url: '/packageBrowse/spaces/index' })
   },
 
   openPanel(e) {
@@ -209,11 +210,15 @@ Page({
 
       this.setData({ acting: true })
       wx.showLoading({ title: '上传中', mask: true })
-      const ext = (file.tempFilePath.match(/\.\w+$/) || ['.jpg'])[0]
+      const filePath = await compressImageForUpload(file.tempFilePath, {
+        maxEdge: 1600,
+        quality: 72
+      })
+      const ext = (filePath.match(/\.\w+$/) || ['.jpg'])[0]
       const cloudPath = `family-bg/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
       const upload = await wx.cloud.uploadFile({
         cloudPath,
-        filePath: file.tempFilePath
+        filePath
       })
       wx.hideLoading()
       if (!upload.fileID) {

@@ -106,9 +106,10 @@ Page({
     this.load(this.data.spaceId, { silent: false })
   },
 
-  goEdit(e) {
+  goDetail(e) {
     const id = e.currentTarget.dataset.id
-    wx.navigateTo({ url: `/pages/items/edit?id=${id}` })
+    if (!id) return
+    wx.navigateTo({ url: `/packageBrowse/items/detail?id=${id}` })
   },
 
   goAdd() {

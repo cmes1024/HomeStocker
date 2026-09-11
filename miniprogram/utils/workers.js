@@ -10,10 +10,17 @@ class eventEmitter {
     this.#workerobj = wx.createWorker?.('workers/index.js', {
       useExperimentalWorker: true
     })
+    if (!this.#workerobj) {
+      throw new Error('createWorker returned empty')
+    }
     // 监听worker被系统回收事件
     this.#workerobj.onProcessKilled?.(() => {
       // 重新创建一个worker
-      this.init()
+      try {
+        this.init()
+      } catch (e) {
+        console.warn('[workers] re-init failed', e)
+      }
     })
     this.#workerobj.onMessage(({ key, data }) => {
       this.emit(key, data);

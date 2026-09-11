@@ -3,10 +3,25 @@
     "pages/onboarding/index",
     "pages/items/index",
     "pages/items/edit",
-    "pages/family/index",
-    "pages/spaces/index",
-    "pages/spaces/detail"
+    "pages/family/index"
   ],
+  "subpackages": [
+    {
+      "root": "packageBrowse",
+      "name": "browse",
+      "pages": [
+        "spaces/index",
+        "spaces/detail",
+        "items/detail"
+      ]
+    }
+  ],
+  "preloadRule": {
+    "pages/family/index": {
+      "network": "wifi",
+      "packages": ["browse"]
+    }
+  },
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
     "loading": "/components/loading/index",
@@ -22,6 +37,7 @@
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",
   "lazyCodeLoading": "requiredComponents",
+  "workers": "workers",
   "useExtendedLib": {
     "weui": true
   }

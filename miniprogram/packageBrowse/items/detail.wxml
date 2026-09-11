@@ -1,0 +1,52 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <loading
+    show="{{loading}}"
+    text="{{copy.loading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
+
+  <view class="state" wx:if="{{!loading && error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{!loading && item}}">
+    <view class="slip-kicker">{{copy.kicker}}</view>
+    <view class="slip-title">{{item.name}}</view>
+
+    <view class="field">
+      <view class="label">{{copy.labelQty}}</view>
+      <view class="value">×{{item.quantity}}{{item.unit}}</view>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelSpace}}</view>
+      <view class="value">{{spaceName || '—'}}</view>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelLocation}}</view>
+      <view class="value {{locationName ? '' : 'muted'}}">{{locationName || copy.locationNone}}</view>
+    </view>
+    <view class="field">
+      <view class="label">{{copy.labelNote}}</view>
+      <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
+    </view>
+
+    <view class="actions">
+      <view
+        class="pill-btn"
+        style="background: {{theme.themeColor}};"
+        bind:tap="goEdit"
+      >{{copy.edit}}</view>
+      <view class="pill-btn ghost" bind:tap="onRemove">{{copy.remove}}</view>
+    </view>
+  </view>
+</AppShell>

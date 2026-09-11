@@ -15,6 +15,16 @@ if (!wx._requestUrl) wx._requestUrl = new RequestUrl(env);
 if (!wx._baseParams) wx._baseParams = new BaseParams(env);
 if (!wx._requestManager) wx._requestManager = new RequestManager(env);
 
+// Worker 可选：失败不影响主路径（清单派生会主线程降级）
+try {
+  if (!wx._workers && wx.createWorker) {
+    const Workers = require("./utils/workers")
+    wx._workers = new Workers()
+  }
+} catch (e) {
+  console.warn('[workers] init skipped', e)
+}
+
 App({
   onLaunch(options) {
     if (wx.cloud) {
