@@ -18,9 +18,15 @@ Page({
     headerTitle: ''
   },
 
-  onLoad() {
+  onLoad(options) {
     setAppFamily(null)
     bindThemeToPage(this, { headerTitle: '' })
+    const code = String((options && options.inviteCode) || '')
+      .trim()
+      .toUpperCase()
+    if (code) {
+      this.setData({ mode: 'join', inviteCode: code, formError: '' })
+    }
   },
 
   async onShow() {

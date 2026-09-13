@@ -25,12 +25,29 @@ Page({
     gradients: GRADIENT_PRESETS,
     solids: SOLID_PRESETS,
     theme: null,
-    headerTitle: ''
+    headerTitle: '',
+    keySheet: false
   },
 
   onShow() {
     bindThemeToPage(this, { headerTitle: '' })
     this.load()
+  },
+
+  onShareAppMessage() {
+    const family = this.data.family
+    const code = family && family.inviteCode
+    if (this.data.keySheet && code) {
+      this.setData({ keySheet: false })
+      return {
+        title: copy.family.inviteShareTitle(family.name || '家庭'),
+        path: `/pages/onboarding/index?inviteCode=${code}`
+      }
+    }
+    return {
+      title: '家庭物资',
+      path: '/pages/items/index'
+    }
   },
 
   async load() {
@@ -48,6 +65,7 @@ Page({
         loading: false,
         panel: '',
         formError: '',
+        keySheet: false,
         theme,
         headerTitle: ''
       })
@@ -68,9 +86,21 @@ Page({
     this.load()
   },
 
-  onCopyCode() {
+  noop() {},
+
+  openKeySheet() {
+    if (!this.data.family || !this.data.family.inviteCode) return
+    this.setData({ keySheet: true })
+  },
+
+  closeKeySheet() {
+    this.setData({ keySheet: false })
+  },
+
+  onCopyCodeFromSheet() {
     const code = this.data.family && this.data.family.inviteCode
     if (!code) return
+    this.setData({ keySheet: false })
     wx.setClipboardData({
       data: code,
       success: () => wx.showToast({ title: copy.family.inviteCopied, icon: 'success' })
@@ -87,6 +117,11 @@ Page({
 
   goMessages() {
     wx.navigateTo({ url: '/pages/family/messages' })
+  },
+
+  toggleMoodPanel() {
+    const next = this.data.panel === 'background' ? '' : 'background'
+    this.setData({ panel: next, formError: '' })
   },
 
   async onToggleExpireReminder() {
@@ -149,7 +184,8 @@ Page({
       panel,
       formError: '',
       familyNameInput: '',
-      inviteCode: ''
+      inviteCode: '',
+      keySheet: false
     })
   },
 

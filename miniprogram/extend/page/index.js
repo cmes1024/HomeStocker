@@ -31,6 +31,16 @@ const pageExtend = Page => {
       });
     }
 
+    // 默认分享落到首页，避免带参落地页被二次转发时泄漏邀请码等 query
+    if (!object.onShareAppMessage) {
+      object.onShareAppMessage = function () {
+        return {
+          title: '家庭物资',
+          path: '/pages/items/index'
+        }
+      }
+    }
+
     return Page(object)
   }
 }

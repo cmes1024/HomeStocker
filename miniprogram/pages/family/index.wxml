@@ -19,76 +19,59 @@
   <block wx:elif="{{family}}">
     <view class="home-hero">
       <view class="home-kicker">{{copy.nowHere}}</view>
-      <view class="home-name">{{family.name}}</view>
+      <view class="home-name-row">
+        <view class="home-name">{{family.name}}</view>
+        <view class="key-chip" catch:tap="openKeySheet">
+          <view class="key-icon" aria-role="img" aria-label="钥匙">
+            <view class="key-bow"></view>
+            <view class="key-shaft"></view>
+            <view class="key-bit"></view>
+          </view>
+          <text class="key-code">{{family.inviteCode}}</text>
+        </view>
+      </view>
       <view class="home-meta">{{familyMeta}}</view>
     </view>
 
-    <view class="sticky">
-      <view class="sticky-label">{{copy.inviteLabel}}</view>
-      <view class="sticky-row">
-        <view class="sticky-code">{{family.inviteCode}}</view>
-        <view class="sticky-copy" style="color: {{theme.themeColor}};" bind:tap="onCopyCode">复制</view>
-      </view>
-      <view class="sticky-hint">{{copy.inviteHint}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goSpaces">
+    <view class="block tools {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="block-hd">
-        <view class="block-title">{{copy.spacesTitle}}</view>
-        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.spacesAction}}</view>
+        <view class="block-title">{{copy.homeTools}}</view>
       </view>
-      <view class="block-sub">{{copy.spacesSub}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goTags">
-      <view class="block-hd">
-        <view class="block-title">{{copy.tagsTitle}}</view>
-        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.tagsAction}}</view>
-      </view>
-      <view class="block-sub">{{copy.tagsSub}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="goMessages">
-      <view class="block-hd">
-        <view class="block-title">{{copy.messagesTitle}}</view>
-        <view class="block-action" style="color: {{theme.themeColor}};">{{copy.messagesAction}}</view>
-      </view>
-      <view class="block-sub">{{copy.messagesSub}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="block-hd" catch:tap="onToggleExpireReminder">
-        <view class="block-title">{{copy.reminderTitle}}</view>
-        <view class="block-action" style="color: {{theme.themeColor}};">
-          {{family.expireReminderEnabled !== false ? copy.reminderOn : copy.reminderOff}}
+      <view class="cube">
+        <view class="cube-cell" bind:tap="goSpaces">
+          <view class="cube-mark">空</view>
+          <view class="cube-label">{{copy.spacesTitle}}</view>
+        </view>
+        <view class="cube-cell" bind:tap="goTags">
+          <view class="cube-mark">签</view>
+          <view class="cube-label">{{copy.tagsTitle}}</view>
+        </view>
+        <view class="cube-cell" bind:tap="goMessages">
+          <view class="cube-mark">讯</view>
+          <view class="cube-label">{{copy.messagesTitle}}</view>
+        </view>
+        <view
+          class="cube-cell {{panel === 'background' ? 'on' : ''}}"
+          style="{{panel === 'background' ? 'color:' + theme.themeColor : ''}}"
+          bind:tap="toggleMoodPanel"
+        >
+          <view class="cube-mark">氛</view>
+          <view class="cube-label">{{copy.wallTitle}}</view>
+        </view>
+        <view class="cube-cell" catch:tap="onToggleExpireReminder">
+          <view class="cube-mark">提</view>
+          <view class="cube-label">{{copy.reminderTitle}}</view>
+          <view class="cube-status" style="color: {{theme.themeColor}};">
+            {{family.expireReminderEnabled !== false ? copy.reminderOn : copy.reminderOff}}
+          </view>
         </view>
       </view>
-      <view class="block-sub">{{copy.reminderSub}}</view>
+
       <view
         class="text-btn reminder-run"
         style="color: {{theme.themeColor}};"
         bind:tap="onRunExpireNotify"
       >{{copy.reminderRunNow}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="block-hd">
-        <view class="block-title">{{copy.wallTitle}}</view>
-        <view
-          class="block-action"
-          style="color: {{theme.themeColor}};"
-          wx:if="{{panel !== 'background'}}"
-          bind:tap="openPanel"
-          data-panel="background"
-        >{{copy.wallAction}}</view>
-        <view
-          class="block-action"
-          style="color: {{theme.themeColor}};"
-          wx:else
-          bind:tap="closePanel"
-        >{{copy.collapse}}</view>
-      </view>
-      <view class="block-sub">{{copy.wallSub}}</view>
 
       <view class="mood-panel" wx:if="{{panel === 'background'}}">
         <view class="label">{{copy.gradient}}</view>
@@ -184,3 +167,17 @@
     </view>
   </block>
 </AppShell>
+
+<view class="key-sheet-mask" wx:if="{{keySheet}}" bind:tap="closeKeySheet">
+  <view class="key-sheet" catch:tap="noop">
+    <button class="key-sheet-item share-btn" open-type="share" hover-class="key-sheet-hover">
+      {{copy.inviteShare}}
+    </button>
+    <view class="key-sheet-item" hover-class="key-sheet-hover" bind:tap="onCopyCodeFromSheet">
+      {{copy.inviteCopy}}
+    </view>
+    <view class="key-sheet-cancel" hover-class="key-sheet-hover" bind:tap="closeKeySheet">
+      {{copy.inviteCancel}}
+    </view>
+  </view>
+</view>
