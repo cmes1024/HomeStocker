@@ -1,0 +1,91 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  bgStyle="{{theme.bgStyle}}"
+  bgImage="{{theme.bgImage}}"
+  lightHeader="{{theme.lightHeader}}"
+  themeColor="{{theme.themeColor}}"
+>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">看看家里有哪些口袋…</view>
+  </view>
+
+  <view class="state" wx:elif="{{error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <block wx:else>
+    <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="kicker">逛一逛</view>
+      <view class="title">家里的口袋</view>
+      <view class="sub">每个空间一只口袋。点开后，最近放进去的从袋口出来。</view>
+    </view>
+
+    <view class="empty {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{!pockets.length}}">
+      <view class="empty-text">还没有空间，口袋也没有</view>
+    </view>
+
+    <view class="grid" wx:else>
+      <view
+        class="pocket-wrap"
+        wx:for="{{pockets}}"
+        wx:key="_id"
+      >
+        <view
+          id="pocket-{{index}}"
+          class="pocket {{phase !== 'idle' ? 'is-dim' : ''}} {{theme.isPhoto ? 'on-photo' : ''}}"
+          data-index="{{index}}"
+          hover-class="none"
+          bind:tap="onPocketTap"
+        >
+          <view class="rim"></view>
+          <view class="pocket-name">{{item.name}}</view>
+          <view class="pocket-meta">{{item.count}} 件</view>
+        </view>
+      </view>
+    </view>
+  </block>
+</AppShell>
+
+<root-portal wx:if="{{phase !== 'idle'}}">
+  <view class="overlay {{phase === 'closing' ? 'is-closing' : ''}}" catch:tap="onScrim">
+    <view
+      class="close"
+      style="top: {{closeTop}}px; height: {{closeHeight}}px; line-height: {{closeHeight}}px;"
+      catch:tap="onClose"
+    >收起</view>
+
+    <view class="tray {{trayClass}}" style="{{trayStyle}}" catch:tap="noop">
+      <view class="mouth"></view>
+      <view class="tray-name">{{openName}}</view>
+      <view class="tray-sub">{{openCount}} 件 · 最近放入的在前</view>
+    </view>
+
+    <scroll-view
+      wx:if="{{phase === 'open' || phase === 'closing'}}"
+      class="list"
+      style="top: {{listTop}}px; height: {{listHeight}}px;"
+      scroll-y
+      show-scrollbar="{{false}}"
+    >
+      <view class="empty-pocket" wx:if="{{!openItems.length}}">这个口袋是空的</view>
+      <view class="cards" wx:else>
+        <view
+          class="card {{item.fly ? 'fly' : ''}} {{item.settle ? 'settle' : ''}} {{skipFlight ? 'instant' : ''}} {{phase === 'closing' ? 'out' : ''}}"
+          wx:for="{{openItems}}"
+          wx:key="_id"
+          style="animation-delay: {{item.delay}}ms;"
+          data-id="{{item._id}}"
+          hover-class="none"
+          catch:tap="goItem"
+        >
+          <view class="card-name">{{item.name}}</view>
+          <view class="card-place">{{item.place}}</view>
+        </view>
+      </view>
+      <view class="cap" wx:if="{{openCapped}}">这个口袋只取出了最近 100 件</view>
+    </scroll-view>
+  </view>
+</root-portal>

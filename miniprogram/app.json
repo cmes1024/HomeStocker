@@ -14,7 +14,8 @@
       "pages": [
         "spaces/index",
         "spaces/detail",
-        "items/detail"
+        "items/detail",
+        "pockets/index"
       ]
     }
   ],

@@ -1,0 +1,308 @@
+.hero {
+  margin: 8rpx 4rpx 22rpx;
+}
+
+.hero.on-photo {
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.kicker {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin-bottom: 8rpx;
+}
+
+.title {
+  font-size: 48rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 10rpx;
+}
+
+.sub {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.45;
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -8rpx 24rpx;
+}
+
+.pocket-wrap {
+  width: 50%;
+  box-sizing: border-box;
+  padding: 8rpx;
+}
+
+.pocket-wrap:nth-child(even) .pocket {
+  margin-top: 28rpx;
+}
+
+.pocket {
+  position: relative;
+  min-height: 168rpx;
+  padding: 42rpx 22rpx 22rpx;
+  box-sizing: border-box;
+  border-radius: 14rpx 14rpx 36rpx 36rpx;
+  background: rgba(255, 252, 247, 0.94);
+  border: 1rpx solid rgba(255, 255, 255, 0.72);
+  box-shadow: 0 8rpx 22rpx rgba(40, 30, 20, 0.05);
+  transition: opacity 180ms ease;
+}
+
+.pocket.on-photo {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.pocket.is-dim {
+  opacity: 0.28;
+}
+
+.rim {
+  position: absolute;
+  left: 18rpx;
+  right: 18rpx;
+  top: 16rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: rgba(26, 26, 26, 0.08);
+}
+
+.pocket-name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pocket-meta {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.empty,
+.state {
+  text-align: center;
+  padding: 48rpx 24rpx 24rpx;
+}
+
+.empty.on-photo {
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.empty-text,
+.state-text {
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.45;
+}
+
+.state-text.error {
+  color: #fa5151;
+  margin-bottom: 24rpx;
+}
+
+.pill-btn {
+  display: inline-block;
+  margin-top: 8rpx;
+  padding: 18rpx 32rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 28rpx;
+}
+
+.overlay {
+  position: fixed;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: rgba(24, 18, 12, 0.12);
+}
+
+.overlay.is-closing {
+  animation: overlay-out 320ms ease both;
+}
+
+.close {
+  position: absolute;
+  left: 12px;
+  z-index: 3;
+  min-width: 52px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(255, 252, 247, 0.96);
+  color: #1a1a1a;
+  font-size: 13px;
+  text-align: center;
+}
+
+.tray {
+  position: absolute;
+  z-index: 2;
+  box-sizing: border-box;
+  padding: 10px 14px 8px;
+  border-radius: 8px 8px 18px 18px;
+  background: rgba(255, 252, 247, 0.98);
+  overflow: hidden;
+}
+
+.tray.movable {
+  transition: top 220ms cubic-bezier(0.2, 0.8, 0.2, 1), left 220ms cubic-bezier(0.2, 0.8, 0.2, 1), width 220ms cubic-bezier(0.2, 0.8, 0.2, 1), height 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.mouth {
+  height: 8px;
+  margin: 0 10px 8px;
+  border-radius: 0 0 12px 12px;
+  background: rgba(26, 26, 26, 0.1);
+  transform: scaleY(0.35);
+  transform-origin: top center;
+}
+
+.tray.movable .mouth {
+  transform: scaleY(1);
+  transition: transform 200ms ease;
+}
+
+.overlay.is-closing .mouth {
+  transform: scaleY(0.35);
+}
+
+.tray-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tray-sub {
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(26, 26, 26, 0.48);
+}
+
+.list {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  z-index: 2;
+}
+
+.cards {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -4px;
+  padding-bottom: 24px;
+}
+
+.card {
+  width: calc(50% - 8px);
+  margin: 4px;
+  box-sizing: border-box;
+  padding: 12px 10px;
+  border-radius: 12px;
+  background: rgba(255, 252, 247, 0.98);
+}
+
+.card-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-place {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(26, 26, 26, 0.5);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card.fly {
+  animation: card-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.card.settle {
+  animation: card-fade 180ms ease both;
+}
+
+.card.out.fly,
+.card.out.settle {
+  animation: card-out 200ms cubic-bezier(0.4, 0, 0.8, 0.2) both;
+}
+
+.card.instant,
+.card.instant.out {
+  animation: none;
+}
+
+.empty-pocket,
+.cap {
+  padding: 28px 8px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.cap {
+  padding-top: 8px;
+  font-size: 12px;
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -28px, 0) scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes card-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes card-out {
+  from {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, -24px, 0) scale(0.72);
+  }
+}
+
+@keyframes overlay-out {
+  to {
+    opacity: 0;
+  }
+}
