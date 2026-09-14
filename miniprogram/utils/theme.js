@@ -42,6 +42,7 @@ const DEFAULT_THEME = {
   lightHeader: false,
   isPhoto: false,
   themeColor: '#3F7A88',
+  ctaGradient: '',
   background: {
     type: 'gradient',
     value: DEFAULT_GRADIENT
@@ -51,6 +52,84 @@ const DEFAULT_THEME = {
 function clamp(n) {
   return Math.max(0, Math.min(255, Math.round(n)))
 }
+
+function hexToRgb(hex) {
+  const raw = String(hex || '').replace('#', '')
+  if (!/^[0-9A-Fa-f]{6}$/.test(raw)) return null
+  return [
+    parseInt(raw.slice(0, 2), 16),
+    parseInt(raw.slice(2, 4), 16),
+    parseInt(raw.slice(4, 6), 16)
+  ]
+}
+
+function rgbToHex(r, g, b) {
+  const h = (c) => clamp(c).toString(16).padStart(2, '0')
+  return `#${h(r)}${h(g)}${h(b)}`
+}
+
+function hexToHsl(hex) {
+  const rgb = hexToRgb(hex)
+  if (!rgb) return null
+  const r = rgb[0] / 255
+  const g = rgb[1] / 255
+  const b = rgb[2] / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const l = (max + min) / 2
+  if (max === min) return { h: 0, s: 0, l }
+  const d = max - min
+  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min)
+  let h
+  if (max === r) h = (g - b) / d + (g < b ? 6 : 0)
+  else if (max === g) h = (b - r) / d + 2
+  else h = (r - g) / d + 4
+  return { h: h / 6, s, l }
+}
+
+function hueToRgb(p, q, t) {
+  let x = t
+  if (x < 0) x += 1
+  if (x > 1) x -= 1
+  if (x < 1 / 6) return p + (q - p) * 6 * x
+  if (x < 1 / 2) return q
+  if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6
+  return p
+}
+
+function hslToHex(h, s, l) {
+  if (s === 0) {
+    const v = l * 255
+    return rgbToHex(v, v, v)
+  }
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s
+  const p = 2 * l - q
+  return rgbToHex(
+    hueToRgb(p, q, h + 1 / 3) * 255,
+    hueToRgb(p, q, h) * 255,
+    hueToRgb(p, q, h - 1 / 3) * 255
+  )
+}
+
+/**
+ * 主按钮渐变：形态参考 90deg、左深右浅；色相跟主题色。
+ * 参考 #0b5db3 → #8ec5ff：同色相，明度大约 +0.4，饱和度抬向更亮的一端。
+ */
+function ctaGradient(themeColor) {
+  const base = themeColor || DEFAULT_THEME.themeColor
+  const hsl = hexToHsl(base)
+  if (!hsl) {
+    return `linear-gradient(90deg, ${DEFAULT_THEME.themeColor} -3%, #c5d9de 100%)`
+  }
+  const right = hslToHex(
+    hsl.h,
+    Math.min(1, Math.max(hsl.s, 0.45) + 0.12),
+    Math.min(0.82, hsl.l + 0.4)
+  )
+  return `linear-gradient(90deg, ${base} -3%, ${right} 100%)`
+}
+
+DEFAULT_THEME.ctaGradient = ctaGradient(DEFAULT_THEME.themeColor)
 
 function darkenHex(hex, ratio = 0.42) {
   const raw = String(hex || '').replace('#', '')
@@ -95,6 +174,7 @@ function resolveTheme(background) {
       lightHeader: false,
       isPhoto: false,
       themeColor,
+      ctaGradient: ctaGradient(themeColor),
       background: { type: 'solid', value: background.value }
     }
   }
@@ -107,6 +187,7 @@ function resolveTheme(background) {
       lightHeader: false,
       isPhoto: true,
       themeColor,
+      ctaGradient: ctaGradient(themeColor),
       background: { type: 'image', value: background.value }
     }
   }
@@ -117,6 +198,7 @@ function resolveTheme(background) {
     lightHeader: false,
     isPhoto: false,
     themeColor,
+    ctaGradient: ctaGradient(themeColor),
     background: { type: 'gradient', value: background.value }
   }
 }
@@ -174,6 +256,7 @@ function bindThemeToPage(page, patch = {}) {
   const themeChanged =
     !prev ||
     prev.themeColor !== theme.themeColor ||
+    prev.ctaGradient !== theme.ctaGradient ||
     prev.bgImage !== theme.bgImage ||
     prev.bgStyle !== theme.bgStyle ||
     prev.isPhoto !== theme.isPhoto ||
@@ -199,5 +282,6 @@ module.exports = {
   setAppFamily,
   getAppTheme,
   bindThemeToPage,
+  ctaGradient,
   applyNavBarColor
 }

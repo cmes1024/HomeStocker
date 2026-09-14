@@ -1,6 +1,6 @@
 Component({
   options: {
-    multipleSlots: false,
+    multipleSlots: true,
     styleIsolation: 'apply-shared'
   },
 
@@ -28,6 +28,14 @@ Component({
     themeColor: {
       type: String,
       value: '#3F7A88'
+    },
+    centerTitle: {
+      type: Boolean,
+      value: false
+    },
+    flushBottom: {
+      type: Boolean,
+      value: false
     }
   },
 

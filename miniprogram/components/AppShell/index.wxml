@@ -24,12 +24,20 @@
       style="margin-top: {{navContentTop}}px; height: {{navContentHeight}}px; padding-right: {{navSideWidth}}px;"
     >
       <view wx:if="{{back}}" class="nav-back" bind:tap="onBack">返回</view>
+      <view wx:elif="{{centerTitle}}" class="nav-slot">
+        <slot name="nav-left"></slot>
+      </view>
       <view wx:else class="nav-back spacer"></view>
-      <view class="nav-title">{{title}}</view>
+      <view wx:if="{{!centerTitle}}" class="nav-title">{{title}}</view>
     </view>
+    <view
+      wx:if="{{centerTitle}}"
+      class="nav-title-float"
+      style="top: {{navContentTop}}px; height: {{navContentHeight}}px;"
+    >{{title}}</view>
   </view>
 
-  <view class="body" style="padding-top: {{headerHeight + 12}}px;">
+  <view class="body {{flushBottom ? 'flush' : ''}}" style="padding-top: {{headerHeight + 12}}px; --shell-top: {{headerHeight + 12}}px;">
     <slot />
   </view>
 </view>

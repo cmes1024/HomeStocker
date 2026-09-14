@@ -14,6 +14,11 @@ async function listItems(_familyId, options = {}) {
   return (data && data.list) || []
 }
 
+async function countItems() {
+  const data = await callItem('count')
+  return Number(data && data.total) || 0
+}
+
 async function listExpiringItems(options = {}) {
   const data = await callItem('listExpiring', {
     limit: options.limit || 50
@@ -53,6 +58,7 @@ async function listItemsBySpace(spaceId, options = {}) {
 
 module.exports = {
   listItems,
+  countItems,
   listExpiringItems,
   listSpaces,
   listLocations,

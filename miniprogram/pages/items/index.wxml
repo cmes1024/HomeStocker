@@ -2,15 +2,26 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{false}}"
+  centerTitle="{{true}}"
+  flushBottom="{{true}}"
   bgStyle="{{theme.bgStyle}}"
   bgImage="{{theme.bgImage}}"
   lightHeader="{{theme.lightHeader}}"
   themeColor="{{theme.themeColor}}"
 >
+  <view slot="nav-left" class="nav-search">
+    <view class="search-icon" aria-hidden="true">
+      <view class="search-ring"></view>
+      <view class="search-handle"></view>
+    </view>
+    <text class="nav-search-ph">{{copy.searchPlaceholder}}</text>
+  </view>
+
   <loading
-    show="{{bootLoading}}"
-    text="{{copy.bootLoading}}"
+    show="{{bootLoading || spaceLoading}}"
+    text="{{spaceLoading ? copy.spaceSwitching : copy.bootLoading}}"
     glass
+    zIndex="{{200}}"
     ballColor="{{loadingColors}}"
   />
 
@@ -19,25 +30,39 @@
     <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryBoot">{{common.retry}}</view>
   </view>
 
-  <block wx:elif="{{!bootLoading}}">
-    <view class="doorplate {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="doorplate-main" hover-class="doorplate-main-hover" bind:tap="goFamily">
-        <text class="doorplate-label">{{copy.familyLabel}}</text>
-        <view class="doorplate-name-row" wx:if="{{familyName}}">
-          <text class="doorplate-name">{{familyName}}</text>
-          <text class="doorplate-chevron">›</text>
+  <view class="page-col" style="{{pageColHeight ? 'height:' + pageColHeight + 'px;' : ''}}" wx:elif="{{!bootLoading}}">
+    <view class="family-bar">
+      <view class="family-main">
+        <view class="family-name-row">
+          <text class="family-name">{{familyName}}</text>
+          <view class="family-enter" style="color: {{theme.themeColor}};" bind:tap="goFamily">
+            <text>{{copy.enterFamily}}</text>
+          </view>
         </view>
-        <text class="doorplate-hint">{{copy.familyHint}}</text>
+        <view class="family-stats">
+          <view class="stat">
+            <view wx:if="{{!statsReady.members}}" class="stat-loading"></view>
+            <text wx:else>{{memberCount}}</text>
+            <text>位成员</text>
+          </view>
+          <text class="stat-sep">/</text>
+          <view class="stat">
+            <view wx:if="{{!statsReady.items}}" class="stat-loading"></view>
+            <text wx:else>{{itemCount}}</text>
+            <text>件物品</text>
+          </view>
+          <text class="stat-sep">/</text>
+          <view class="stat">
+            <view wx:if="{{!statsReady.spaces}}" class="stat-loading"></view>
+            <text wx:else>{{spaceCount}}</text>
+            <text>个空间</text>
+          </view>
+        </view>
       </view>
-      <view
-        class="note-cta"
-        style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
-        bind:tap="goAdd"
-      >{{copy.addCta}}</view>
+      <view class="add-btn" style="background: {{theme.ctaGradient}};" bind:tap="goAdd">{{copy.addCta}}</view>
     </view>
-    <view class="ledger-hint">{{copy.ledgerHint}}</view>
 
-    <view class="expiring {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{expiringItems.length}}">
+    <view class="expiring" wx:if="{{expiringItems.length}}">
       <view class="expiring-hd">
         <view class="expiring-title">{{copy.expiringTitle}}</view>
       </view>
@@ -56,73 +81,86 @@
       </view>
     </view>
 
-    <scroll-view
-      class="filter-row"
-      scroll-x
-      wx:if="{{filterChips.length > 1}}"
-      enable-flex
-    >
-      <view
-        class="filter-chip {{filterSpaceId === item.id ? 'on' : ''}}"
-        style="{{filterSpaceId === item.id ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
-        wx:for="{{filterChips}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bind:tap="onFilter"
-      >{{item.name}}</view>
-    </scroll-view>
-
-    <scroll-view
-      class="filter-row tag-row"
-      scroll-x
-      wx:if="{{tagChips.length > 1}}"
-      enable-flex
-    >
-      <view
-        class="filter-chip {{filterTagId === item.id ? 'on' : ''}}"
-        style="{{filterTagId === item.id ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
-        wx:for="{{tagChips}}"
-        wx:key="id"
-        data-id="{{item.id}}"
-        bind:tap="onFilterTag"
-      >{{item.name}}</view>
-    </scroll-view>
-
-    <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{loading}}">
-      <view class="state-text">{{copy.listLoading}}</view>
-    </view>
-
-    <view class="state soft {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{error}}">
-      <view class="state-text error">{{error}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryList">{{common.retry}}</view>
-    </view>
-
-    <view class="empty {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{items.length === 0}}">
-      <view class="empty-title">{{copy.emptyTitle}}</view>
-      <view class="empty-sub">{{copy.emptySub}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">{{copy.addCta}}</view>
-    </view>
-
-    <view class="shelf {{theme.isPhoto ? 'on-photo' : ''}}" wx:else>
-      <view
-        class="tile {{animateTiles ? 'anim' : ''}}"
-        wx:for="{{items}}"
-        wx:key="_id"
-        style="{{animateTiles ? 'animation-delay: ' + (index % 8 * 40) + 'ms;' : ''}}"
-        data-id="{{item._id}}"
-        bind:tap="goDetail"
-      >
-        <view class="tile-top">
-          <view class="tile-name">{{item.name}}</view>
-          <view class="tile-qty" style="color: {{theme.themeColor}}; background: {{theme.themeColor}}22;">×{{item.quantity}}{{item.unit}}</view>
+    <view class="ledger-panel">
+      <view class="panel-hd">
+        <view class="panel-title">{{copy.panelTitle}}</view>
+        <view class="space-filter" bind:tap="openSpaceSheet">
+          <text class="space-filter-name">{{filterSpaceName}}</text>
+          <view class="funnel" aria-hidden="true">
+            <view class="funnel-top"></view>
+            <view class="funnel-stem"></view>
+          </view>
         </view>
-        <view class="tile-badges" wx:if="{{item.expireLabel}}">
-          <text class="badge {{item.expireStatus}}">{{item.expireLabel}}</text>
-        </view>
-        <view class="tile-note" wx:if="{{item.placeLine}}">{{item.placeLine}}</view>
-        <view class="tile-note muted" wx:elif="{{item.tagLine}}">{{item.tagLine}}</view>
-        <view class="tile-note muted" wx:else>{{copy.tileHint}}</view>
       </view>
+
+      <scroll-view class="panel-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="state soft" wx:if="{{loading}}">
+        <view class="state-text">{{copy.listLoading}}</view>
+      </view>
+
+      <view class="state soft" wx:elif="{{error}}">
+        <view class="state-text error">{{error}}</view>
+        <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetryList">{{common.retry}}</view>
+      </view>
+
+      <view class="empty" wx:elif="{{items.length === 0}}">
+        <view class="empty-title">{{copy.emptyTitle}}</view>
+        <view class="empty-sub">{{copy.emptySub}}</view>
+        <view class="pill-btn add-btn" style="background: {{theme.ctaGradient}};" bind:tap="goAdd">{{copy.addCta}}</view>
+      </view>
+
+      <view class="shelf" wx:else>
+        <view
+          class="tile {{animateTiles ? 'anim' : ''}}"
+          wx:for="{{items}}"
+          wx:key="_id"
+          style="{{animateTiles ? 'animation-delay: ' + (index % 9 * 40) + 'ms;' : ''}}"
+          data-id="{{item._id}}"
+          hover-class="tile-hover"
+          bind:tap="goDetail"
+        >
+          <view class="tile-name">{{item.name}}</view>
+          <view class="tile-qty-row">
+            <text class="tile-qty">{{item.quantity}}</text>
+            <text class="tile-unit" wx:if="{{item.unit}}">{{item.unit}}</text>
+            <text class="badge expired" wx:if="{{item.expireStatus === 'expired'}}">{{copy.badgeExpired}}</text>
+            <text class="badge expiring" wx:elif="{{item.expireStatus === 'expiring'}}">{{copy.badgeSoon}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="panel-scroll-pad"></view>
+      </scroll-view>
     </view>
-  </block>
+  </view>
 </AppShell>
+
+<page-container
+  show="{{spaceSheetOpen}}"
+  position="bottom"
+  round="{{true}}"
+  overlay="{{true}}"
+  z-index="100"
+  overlay-style="background: rgba(20, 16, 12, 0.28);"
+  custom-style="height: 56vh; background: #ffffff;"
+  bind:clickoverlay="closeSpaceSheet"
+  bind:beforeleave="closeSpaceSheet"
+>
+  <view class="sheet">
+    <view class="sheet-hd">
+      <view class="sheet-title">{{copy.spaceSheetTitle}}</view>
+      <view class="sheet-close" bind:tap="closeSpaceSheet" aria-label="关闭">×</view>
+    </view>
+    <scroll-view class="sheet-body" scroll-y>
+      <view class="space-chips">
+        <view
+          class="space-chip {{filterSpaceId === item._id ? 'on' : ''}}"
+          style="{{filterSpaceId === item._id ? 'background:' + (theme && theme.themeColor) + ';border-color:' + (theme && theme.themeColor) + ';' : ''}}"
+          wx:for="{{spaces}}"
+          wx:key="_id"
+          data-id="{{item._id}}"
+          bind:tap="onPickSpace"
+        >{{item.name}}</view>
+      </view>
+    </scroll-view>
+  </view>
+</page-container>

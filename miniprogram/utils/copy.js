@@ -17,10 +17,21 @@ const copy = {
   items: {
     bootLoading: '正在盘点所有物品…',
     listLoading: '让我看看里面有什么…',
+    spaceSwitching: '正在整理清单...',
     familyLabel: '当前家庭',
     familyHint: '点这里管理',
-    addCta: '新增物品',
+    enterFamily: '进入',
+    addCta: '添加物品',
     ledgerHint: '家里的共用台账 · 谁改都能看见',
+    searchPlaceholder: '输入物品名称',
+    panelTitle: '全部物品',
+    spaceSheetTitle: '存放位置',
+    defaultSpaceName: '仓库',
+    badgeSoon: '即将过期',
+    statsLine(memberCount, itemCount, spaceCount) {
+      const items = itemCount == null ? '—' : itemCount
+      return `${memberCount || 0}位成员 / ${items}件物品 / ${spaceCount || 0}个空间`
+    },
     emptyTitle: '还没有物品',
     emptySub: '记第一件家里的东西吧，家人都能看到',
     tileHint: '点一下看看',

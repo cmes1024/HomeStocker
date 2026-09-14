@@ -485,6 +485,30 @@ async function getItem(openid, event) {
   return ok({ _id: itemId, ...snap.data })
 }
 
+async function countItems(openid) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  // where().count() 在部分环境下会偏小，按页累加才是全家真实件数。
+  const pageSize = 100
+  let total = 0
+  let skip = 0
+  while (skip <= 1000) {
+    const res = await db
+      .collection('items')
+      .where({ familyId: ctx.familyId })
+      .field({ _id: true })
+      .skip(skip)
+      .limit(pageSize)
+      .get()
+    const n = (res.data && res.data.length) || 0
+    total += n
+    if (n < pageSize) break
+    skip += n
+  }
+  return ok({ total })
+}
+
 async function listItems(openid, event) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
@@ -604,6 +628,8 @@ exports.main = async (event) => {
         return await getItem(OPENID, event)
       case 'list':
         return await listItems(OPENID, event)
+      case 'count':
+        return await countItems(OPENID)
       case 'search':
         return await searchItems(OPENID, event)
       case 'listExpiring':
