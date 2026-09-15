@@ -2,6 +2,8 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{true}}"
+  plainBack="{{true}}"
+  flushBottom="{{!!family && !loading && !error}}"
   bgStyle="{{theme.bgStyle}}"
   bgImage="{{theme.bgImage}}"
   lightHeader="{{theme.lightHeader}}"
@@ -17,167 +19,185 @@
   </view>
 
   <block wx:elif="{{family}}">
-    <view class="home-hero">
-      <view class="home-kicker">{{copy.nowHere}}</view>
-      <view class="home-name-row">
-        <view class="home-name">{{family.name}}</view>
-        <view class="key-chip" catch:tap="openKeySheet">
-          <view class="key-icon" aria-role="img" aria-label="钥匙">
-            <view class="key-bow"></view>
-            <view class="key-shaft"></view>
-            <view class="key-bit"></view>
-          </view>
-          <text class="key-code">{{family.inviteCode}}</text>
-        </view>
+    <view class="card {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="key-title">{{copy.keyTitle}}</view>
+      <view class="key-code-row">
+        <text class="key-code">{{family.inviteCode}}</text>
+        <text
+          class="key-copy"
+          style="color: {{theme.themeColor}};"
+          hover-class="press"
+          bind:tap="onCopyCode"
+        >{{copy.keyCopy}}</text>
       </view>
-      <view class="home-meta">{{familyMeta}}</view>
+      <view class="key-hint">{{copy.keyHint}}</view>
     </view>
 
-    <view class="block tools {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="block-hd">
-        <view class="block-title">{{copy.homeTools}}</view>
-      </view>
-      <view class="cube">
-        <view class="cube-cell" bind:tap="goSpaces">
-          <view class="cube-mark">空</view>
-          <view class="cube-label">{{copy.spacesTitle}}</view>
+    <view class="card glass {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="card-title tools-title">{{copy.homeTools}}</view>
+      <view class="tool-grid">
+        <view class="tool" hover-class="tool-hover" bind:tap="goSpaces">
+          <view class="tool-icon"></view>
+          <view class="tool-name">{{copy.spacesTitle}}</view>
         </view>
-        <view class="cube-cell" bind:tap="goTags">
-          <view class="cube-mark">签</view>
-          <view class="cube-label">{{copy.tagsTitle}}</view>
+        <view class="tool" hover-class="tool-hover" bind:tap="goTags">
+          <view class="tool-icon"></view>
+          <view class="tool-name">{{copy.tagsTitle}}</view>
         </view>
-        <view class="cube-cell" bind:tap="goMessages">
-          <view class="cube-mark">讯</view>
-          <view class="cube-label">{{copy.messagesTitle}}</view>
+        <view class="tool" hover-class="tool-hover" bind:tap="goMessages">
+          <view class="tool-icon"></view>
+          <view class="tool-name">{{copy.messagesTitle}}</view>
         </view>
-        <view
-          class="cube-cell {{panel === 'background' ? 'on' : ''}}"
-          style="{{panel === 'background' ? 'color:' + theme.themeColor : ''}}"
-          bind:tap="toggleMoodPanel"
-        >
-          <view class="cube-mark">氛</view>
-          <view class="cube-label">{{copy.wallTitle}}</view>
+        <view class="tool" hover-class="tool-hover" bind:tap="openMoodSheet">
+          <view class="tool-icon"></view>
+          <view class="tool-name">{{copy.wallTitle}}</view>
         </view>
-        <view class="cube-cell" catch:tap="onToggleExpireReminder">
-          <view class="cube-mark">提</view>
-          <view class="cube-label">{{copy.reminderTitle}}</view>
-          <view class="cube-status" style="color: {{theme.themeColor}};">
-            {{family.expireReminderEnabled !== false ? copy.reminderOn : copy.reminderOff}}
-          </view>
-        </view>
-      </view>
-
-      <view
-        class="text-btn reminder-run"
-        style="color: {{theme.themeColor}};"
-        bind:tap="onRunExpireNotify"
-      >{{copy.reminderRunNow}}</view>
-
-      <view class="mood-panel" wx:if="{{panel === 'background'}}">
-        <view class="label">{{copy.gradient}}</view>
-        <view class="preset-row">
-          <view
-            class="preset-chip"
-            wx:for="{{gradients}}"
-            wx:key="id"
-            style="background: {{item.value}};"
-            data-value="{{item.value}}"
-            bind:tap="onPickGradient"
-          >
-            <text class="preset-label">{{item.label}}</text>
-          </view>
-        </view>
-        <view class="label spaced">{{copy.solid}}</view>
-        <view class="preset-row">
-          <view
-            class="preset-dot"
-            wx:for="{{solids}}"
-            wx:key="id"
-            style="background: {{item.value}};"
-            data-value="{{item.value}}"
-            bind:tap="onPickSolid"
-          />
-        </view>
-        <view class="label spaced">照片</view>
-        <view
-          class="photo-upload"
-          style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
-          hover-class="photo-upload-hover"
-          bind:tap="onPickImage"
-        >
-          <view class="photo-upload-title">{{copy.pickPhoto}}</view>
-          <view class="photo-upload-hint">{{copy.pickPhotoHint}}</view>
+        <view class="tool" hover-class="tool-hover" bind:tap="onReminderTap">
+          <view class="tool-icon"></view>
+          <view class="tool-name">{{copy.reminderTitle}}</view>
         </view>
       </view>
     </view>
 
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="block-hd">
-        <view class="block-title">{{copy.myHomes}}</view>
+    <view class="card glass {{theme.isPhoto ? 'on-photo' : ''}}">
+      <view class="card-hd">
+        <view class="card-title homes-title">{{copy.myHomes}}</view>
+        <view class="hd-links">
+          <view
+            class="hd-link {{panel === 'create' ? 'on' : ''}}"
+            style="color: {{theme.themeColor}};"
+            hover-class="press"
+            data-panel="create"
+            bind:tap="openPanel"
+          >{{copy.createAnother}}</view>
+          <view
+            class="hd-link {{panel === 'join' ? 'on' : ''}}"
+            style="color: {{theme.themeColor}};"
+            hover-class="press"
+            data-panel="join"
+            bind:tap="openPanel"
+          >{{copy.joinAnother}}</view>
+        </view>
       </view>
-      <view class="chip-row">
+
+      <view class="form" wx:if="{{panel === 'create'}}">
+        <view class="label">{{copy.createNameLabel}}</view>
+        <input
+          class="input"
+          placeholder="{{copy.createNamePlaceholder}}"
+          value="{{familyNameInput}}"
+          bindinput="onNameInput"
+          maxlength="20"
+        />
+        <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
+        <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
+        <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
+      </view>
+
+      <view class="form" wx:if="{{panel === 'join'}}">
+        <view class="label">{{copy.joinCodeLabel}}</view>
+        <input
+          class="input"
+          placeholder="{{copy.joinCodePlaceholder}}"
+          value="{{inviteCode}}"
+          bindinput="onCodeInput"
+          maxlength="6"
+        />
+        <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
+        <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">{{copy.joinSubmit}}</view>
+        <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
+      </view>
+
+      <view class="home-list">
         <view
-          class="chip {{item.isCurrent ? 'on' : ''}}"
+          class="home-item {{item.isCurrent ? 'on' : ''}}"
           wx:for="{{families}}"
           wx:key="_id"
-          style="color: {{item.isCurrent ? theme.themeColor : '#1a1a1a'}};"
+          hover-class="home-hover"
           data-id="{{item._id}}"
           bind:tap="onSwitchFamily"
         >
-          <view class="chip-name">{{item.name}}</view>
-          <view class="chip-meta">{{item.isCurrent ? copy.chipHere : copy.chipGo}} · {{item.memberCount}} 人</view>
+          <view class="home-mark" style="{{item.isCurrent ? 'background:' + theme.themeColor : ''}}"></view>
+          <view class="home-body">
+            <view class="home-name">{{item.name}}</view>
+            <view class="home-sub">{{copy.chipHere}} /{{item.memberCount || 0}}人</view>
+          </view>
         </view>
       </view>
-      <view class="action-row">
-        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="create">{{copy.createAnother}}</view>
-        <view class="text-btn" style="color: {{theme.themeColor}};" bind:tap="openPanel" data-panel="join">{{copy.joinAnother}}</view>
-      </view>
     </view>
 
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{panel === 'create'}}">
-      <view class="label">{{copy.createNameLabel}}</view>
-      <input
-        class="input"
-        placeholder="{{copy.createNamePlaceholder}}"
-        value="{{familyNameInput}}"
-        bindinput="onNameInput"
-        maxlength="20"
-      />
-      <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
-      <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
-    </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{panel === 'join'}}">
-      <view class="label">{{copy.joinCodeLabel}}</view>
-      <input
-        class="input"
-        placeholder="{{copy.joinCodePlaceholder}}"
-        value="{{inviteCode}}"
-        bindinput="onCodeInput"
-        maxlength="6"
-      />
-      <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">{{copy.joinSubmit}}</view>
-      <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
-    </view>
-
-    <view class="leave {{theme.isPhoto ? 'on-photo' : ''}}" bind:tap="onLeave">
-      {{family.isOwner ? copy.leaveOwner : copy.leaveMember}}
+    <view class="leave-spacer"></view>
+    <view class="leave-bar">
+      <view
+        class="leave-btn"
+        style="background: {{theme.themeColor}};"
+        hover-class="leave-hover"
+        bind:tap="onLeave"
+      >{{family.isOwner ? copy.leaveOwner : copy.leaveMember}}</view>
     </view>
   </block>
 </AppShell>
 
-<view class="key-sheet-mask" wx:if="{{keySheet}}" bind:tap="closeKeySheet">
-  <view class="key-sheet" catch:tap="noop">
-    <button class="key-sheet-item share-btn" open-type="share" hover-class="key-sheet-hover">
-      {{copy.inviteShare}}
-    </button>
-    <view class="key-sheet-item" hover-class="key-sheet-hover" bind:tap="onCopyCodeFromSheet">
-      {{copy.inviteCopy}}
+<page-container
+  show="{{moodSheet}}"
+  position="bottom"
+  round="{{true}}"
+  overlay="{{true}}"
+  z-index="100"
+  overlay-style="background: rgba(20, 16, 12, 0.28);"
+  custom-style="height: 72vh; background: #ffffff;"
+  bind:clickoverlay="closeMoodSheet"
+  bind:beforeleave="closeMoodSheet"
+>
+  <view class="sheet">
+    <view class="sheet-hd">
+      <view class="sheet-title">{{copy.wallTitle}}</view>
+      <view class="sheet-close" bind:tap="closeMoodSheet">×</view>
     </view>
-    <view class="key-sheet-cancel" hover-class="key-sheet-hover" bind:tap="closeKeySheet">
-      {{copy.inviteCancel}}
-    </view>
+    <scroll-view class="sheet-body" scroll-y>
+      <view class="label">{{copy.gradient}}</view>
+      <view class="preset-row">
+        <view
+          class="preset-chip {{theme && theme.background && theme.background.type === 'gradient' && theme.background.value === item.value ? 'on' : ''}}"
+          wx:for="{{gradients}}"
+          wx:key="id"
+          style="background: {{item.value}};"
+          data-value="{{item.value}}"
+          bind:tap="onPickGradient"
+        >
+          <text class="preset-label">{{item.label}}</text>
+        </view>
+      </view>
+      <view class="label spaced">{{copy.solid}}</view>
+      <view class="preset-row">
+        <view
+          class="preset-dot {{theme && theme.background && theme.background.type === 'solid' && theme.background.value === item.value ? 'on' : ''}}"
+          wx:for="{{solids}}"
+          wx:key="id"
+          style="background: {{item.value}}; {{theme && theme.background && theme.background.type === 'solid' && theme.background.value === item.value ? 'box-shadow: 0 0 0 4rpx #fff, 0 0 0 8rpx ' + theme.themeColor : ''}}"
+          data-value="{{item.value}}"
+          bind:tap="onPickSolid"
+        />
+      </view>
+      <view class="label spaced">照片</view>
+      <view
+        class="photo-upload {{theme.isPhoto && theme.bgImage ? 'has-photo' : ''}}"
+        style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
+        hover-class="photo-upload-hover"
+        bind:tap="onPickImage"
+      >
+        <block wx:if="{{theme.isPhoto && theme.bgImage}}">
+          <image class="photo-preview" src="{{theme.bgImage}}" mode="aspectFill" />
+          <view class="photo-preview-mask">
+            <view class="photo-upload-title">{{copy.photoReplace}}</view>
+          </view>
+        </block>
+        <block wx:else>
+          <view class="photo-upload-title">{{copy.pickPhoto}}</view>
+          <view class="photo-upload-hint">{{copy.pickPhotoHint}}</view>
+        </block>
+      </view>
+      <view class="sheet-pad"></view>
+    </scroll-view>
   </view>
-</view>
+</page-container>

@@ -15,7 +15,6 @@ Page({
     loading: true,
     error: '',
     family: null,
-    familyMeta: '',
     families: [],
     acting: false,
     panel: '',
@@ -26,19 +25,22 @@ Page({
     solids: SOLID_PRESETS,
     theme: null,
     headerTitle: '',
-    keySheet: false
+    moodSheet: false
   },
 
   onShow() {
-    bindThemeToPage(this, { headerTitle: '' })
-    this.load()
+    const app = getApp()
+    const cached = app && app.globalData && app.globalData.family
+    const name = (cached && cached.name) || this.data.headerTitle || ''
+    bindThemeToPage(this, name ? { headerTitle: name } : {})
+    // 从空间/标签/消息返回时页面实例还在，家庭列表没变，不再打 getMyFamily / listMyFamilies
+    if (!this.data.family) this.load()
   },
 
   onShareAppMessage() {
     const family = this.data.family
     const code = family && family.inviteCode
-    if (this.data.keySheet && code) {
-      this.setData({ keySheet: false })
+    if (code) {
       return {
         title: copy.family.inviteShareTitle(family.name || '家庭'),
         path: `/pages/onboarding/index?inviteCode=${code}`
@@ -51,7 +53,7 @@ Page({
   },
 
   async load() {
-    this.setData({ loading: true, error: '' })
+    this.setData(this.data.family ? { error: '' } : { loading: true, error: '' })
     try {
       const [family, listed] = await Promise.all([
         callFamily('getMyFamily'),
@@ -60,14 +62,12 @@ Page({
       const theme = setAppFamily(family)
       this.setData({
         family,
-        familyMeta: copy.family.meta(family.memberCount || 0),
         families: listed.list || [],
         loading: false,
         panel: '',
         formError: '',
-        keySheet: false,
         theme,
-        headerTitle: ''
+        headerTitle: family.name || '家庭'
       })
     } catch (e) {
       if (e.code === 'NO_FAMILY') {
@@ -86,21 +86,29 @@ Page({
     this.load()
   },
 
-  noop() {},
-
-  openKeySheet() {
-    if (!this.data.family || !this.data.family.inviteCode) return
-    this.setData({ keySheet: true })
+  applyCurrentFamily(family, families) {
+    const theme = setAppFamily(family)
+    const source = families || this.data.families || []
+    this.setData({
+      family,
+      families: source.map((item) => {
+        const current = item._id === family._id
+        return {
+          ...(current ? { ...item, ...family } : item),
+          isCurrent: current
+        }
+      }),
+      theme,
+      headerTitle: family.name || '家庭',
+      loading: false,
+      panel: '',
+      formError: ''
+    })
   },
 
-  closeKeySheet() {
-    this.setData({ keySheet: false })
-  },
-
-  onCopyCodeFromSheet() {
+  onCopyCode() {
     const code = this.data.family && this.data.family.inviteCode
     if (!code) return
-    this.setData({ keySheet: false })
     wx.setClipboardData({
       data: code,
       success: () => wx.showToast({ title: copy.family.inviteCopied, icon: 'success' })
@@ -119,18 +127,32 @@ Page({
     wx.navigateTo({ url: '/pages/family/messages' })
   },
 
-  toggleMoodPanel() {
-    const next = this.data.panel === 'background' ? '' : 'background'
-    this.setData({ panel: next, formError: '' })
+  openMoodSheet() {
+    this.setData({ moodSheet: true, panel: '', formError: '' })
   },
 
-  async onToggleExpireReminder() {
+  closeMoodSheet() {
+    if (!this.data.moodSheet) return
+    this.setData({ moodSheet: false })
+  },
+
+  onReminderTap() {
     if (this.data.acting || !this.data.family) return
-    const current =
-      this.data.family.expireReminderEnabled === undefined
-        ? true
-        : !!this.data.family.expireReminderEnabled
-    const next = !current
+    const enabled = this.data.family.expireReminderEnabled !== false
+    wx.showActionSheet({
+      itemList: [
+        enabled ? copy.family.reminderTurnOff : copy.family.reminderTurnOn,
+        copy.family.reminderRunNow
+      ],
+      success: (res) => {
+        if (res.tapIndex === 0) this.applyExpireReminder(!enabled)
+        if (res.tapIndex === 1) this.onRunExpireNotify()
+      }
+    })
+  },
+
+  async applyExpireReminder(next) {
+    if (this.data.acting || !this.data.family) return
     this.setData({ acting: true })
     try {
       const family = await callFamily('updateExpireReminder', { enabled: next })
@@ -138,6 +160,10 @@ Page({
       this.setData({
         family,
         acting: false
+      })
+      wx.showToast({
+        title: next ? copy.family.reminderOn : copy.family.reminderOff,
+        icon: 'none'
       })
     } catch (e) {
       this.setData({ acting: false })
@@ -180,12 +206,15 @@ Page({
 
   openPanel(e) {
     const panel = e.currentTarget.dataset.panel || ''
+    if (this.data.panel === panel) {
+      this.setData({ panel: '', formError: '' })
+      return
+    }
     this.setData({
       panel,
       formError: '',
       familyNameInput: '',
-      inviteCode: '',
-      keySheet: false
+      inviteCode: ''
     })
   },
 
@@ -251,9 +280,8 @@ Page({
     this.setData({ acting: true })
     try {
       const family = await callFamily('switchFamily', { familyId })
-      setAppFamily(family)
+      this.applyCurrentFamily(family)
       wx.showToast({ title: '已切换', icon: 'success' })
-      await this.load()
     } catch (err) {
       wx.showToast({ title: err.message || '切换失败', icon: 'none' })
     } finally {
@@ -268,9 +296,8 @@ Page({
       const theme = setAppFamily(family)
       this.setData({
         family,
-        familyMeta: copy.family.meta(family.memberCount || 0),
         theme,
-        headerTitle: ''
+        headerTitle: family.name || '家庭'
       })
       wx.showToast({ title: '已更新背景', icon: 'success' })
     } catch (e) {
@@ -357,8 +384,11 @@ Page({
           title: isOwner ? copy.family.dissolvedToast : copy.family.leftToast,
           icon: 'success'
         })
+        const rest = (this.data.families || []).filter((item) => item._id !== family._id)
+        const next = rest.find((item) => item._id === result.nextFamilyId)
         this.setData({ acting: false })
-        await this.load()
+        if (next) this.applyCurrentFamily(next, rest)
+        else await this.load()
       } else {
         setAppFamily(null)
         wx.reLaunch({ url: '/pages/onboarding/index' })

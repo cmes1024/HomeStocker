@@ -94,9 +94,33 @@
   text-shadow: none;
 }
 
+.nav-back.plain {
+  width: 88rpx;
+  min-width: 88rpx;
+  padding: 0 0 0 12rpx;
+  background: transparent;
+  border-radius: 0;
+  justify-content: flex-start;
+}
+
 .nav-back.spacer {
   visibility: hidden;
   background: transparent;
+}
+
+.nav-chevron {
+  width: 22rpx;
+  height: 22rpx;
+  margin-left: 4rpx;
+  border-left: 4rpx solid currentColor;
+  border-bottom: 4rpx solid currentColor;
+  transform: rotate(45deg);
+  box-sizing: border-box;
+}
+
+.nav.light .nav-back.plain {
+  background: transparent;
+  color: #fff;
 }
 
 .nav-slot {
@@ -120,6 +144,16 @@
   font-size: 34rpx;
   font-weight: 600;
   pointer-events: none;
+  box-sizing: border-box;
+}
+
+.nav-title-float.plain {
+  font-size: 34rpx;
+  font-weight: 500;
+}
+
+.nav-title-text {
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -131,7 +165,7 @@
 
 .nav.light .nav-title-float {
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35);
 }
 
 .nav-title {
@@ -159,7 +193,7 @@
 
 .nav.light .nav-title {
   color: #fff;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.35);
 }
 
 .body {

@@ -36,6 +36,10 @@ Component({
     flushBottom: {
       type: Boolean,
       value: false
+    },
+    plainBack: {
+      type: Boolean,
+      value: false
     }
   },
 
