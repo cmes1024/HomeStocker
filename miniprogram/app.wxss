@@ -1,10 +1,15 @@
 /**app.wxss**/
 @import "./styles/common.wxss";
+@import "./styles/theme.wxss";
 
 page {
   width: 100vw;
   height: 100vh;
   background: #f5f5f5;
+  --theme-primary: #ff5d00;
+  --theme-secondary: #ffcd70;
+  --theme-shadow: #fff0dd;
+  --theme-primary-30: #ff5d004d;
 }
 
 .flex-display {

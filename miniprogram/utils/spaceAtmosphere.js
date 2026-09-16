@@ -2,57 +2,47 @@ const { DEFAULT_THEME, getAppTheme } = require('./theme')
 
 /**
  * 空间封面预设图。仅登记真实存在的本地/CDN 资源；
- * 未登记的 coverKey 视为「无预设」，落到家庭氛围。
- * 例：'default-indoor': '/assets/space-default-indoor.jpg'
+ * 未登记的 coverKey 视为「无预设」，落到家庭主题氛围。
  */
 const SPACE_COVER_IMAGES = {
-  // 暂无打包氛围图；有文件后再挂 key → 路径
-  'default-indoor': "/assets/test.jpg"
+  'default-indoor': '/assets/test.jpg'
 }
-
-const FALLBACK_GRADIENT =
-  'linear-gradient(165deg, #E8F1F2 0%, #C5D9DE 48%, #8FB3BC 100%)'
 
 /**
  * 空间页背景优先级：
  * 1. 空间 coverKey 对应的预设图片
- * 2. 当前家庭氛围（照片 / 渐变 / 纯色）
- * 3. 默认渐变兜底
+ * 2. 当前家庭主题色（径向渐变由 AppShell / ThemeRadialBg 绘制）
+ * 3. 默认主题兜底
  */
 function resolveSpaceAtmosphere(space, familyTheme) {
   const theme = familyTheme || getAppTheme() || DEFAULT_THEME
   const coverKey = space && space.coverKey
   const coverSrc = coverKey && SPACE_COVER_IMAGES[coverKey]
 
+  const colors = {
+    primary: theme.primary || DEFAULT_THEME.primary,
+    secondary: theme.secondary || DEFAULT_THEME.secondary,
+    shadow: theme.shadow || DEFAULT_THEME.shadow,
+    themeColor: theme.primary || theme.themeColor || DEFAULT_THEME.primary,
+    themeSoft: theme.secondary || theme.themeSoft || DEFAULT_THEME.secondary
+  }
+
   if (coverSrc) {
     return {
-      bgStyle: 'background: #d8d2c8;',
       bgImage: coverSrc,
       lightHeader: false,
       isPhoto: true,
-      themeColor: theme.themeColor || DEFAULT_THEME.themeColor,
+      ...colors,
       source: 'space-cover'
     }
   }
 
-  if (theme && (theme.bgImage || theme.bgStyle)) {
-    return {
-      bgStyle: theme.bgStyle || `background: ${FALLBACK_GRADIENT};`,
-      bgImage: theme.bgImage || '',
-      lightHeader: !!theme.lightHeader,
-      isPhoto: !!theme.isPhoto,
-      themeColor: theme.themeColor || DEFAULT_THEME.themeColor,
-      source: 'family'
-    }
-  }
-
   return {
-    bgStyle: `background: ${FALLBACK_GRADIENT};`,
     bgImage: '',
     lightHeader: false,
     isPhoto: false,
-    themeColor: DEFAULT_THEME.themeColor,
-    source: 'fallback'
+    ...colors,
+    source: theme && theme.id ? 'family' : 'fallback'
   }
 }
 

@@ -2,10 +2,12 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{true}}"
-  bgStyle="{{theme.bgStyle}}"
-  bgImage="{{theme.bgImage}}"
+  plainBack="{{true}}"
+  flushBottom="{{!loading}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
-  themeColor="{{theme.themeColor}}"
 >
   <loading
     show="{{loading}}"
@@ -14,122 +16,152 @@
     ballColor="{{loadingColors}}"
   />
 
-  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{!loading}}">
-    <view class="slip-kicker">{{isEdit ? copy.kickerEdit : copy.kickerCreate}}</view>
-    <view class="slip-title">{{isEdit ? copy.titleEdit : copy.titleCreate}}</view>
+  <block wx:if="{{!loading}}">
+    <view class="edit-page">
+      <scroll-view class="slip" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="field">
+          <view class="label">{{copy.labelName}}</view>
+          <input
+            class="input"
+            placeholder="{{copy.namePlaceholder}}"
+            value="{{name}}"
+            bindinput="onName"
+            maxlength="40"
+          />
+        </view>
 
-    <view class="field">
-      <view class="label">{{copy.labelName}}</view>
-      <input class="input" placeholder="{{copy.namePlaceholder}}" value="{{name}}" bindinput="onName" maxlength="40" />
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelQty}}</view>
-      <view class="qty-row">
-        <input
-          class="input qty-num"
-          type="digit"
-          placeholder="{{copy.qtyPlaceholder}}"
-          value="{{quantity}}"
-          bindinput="onQuantity"
-        />
-        <input
-          class="input qty-unit"
-          placeholder="{{copy.unitPlaceholder}}"
-          value="{{unit}}"
-          bindinput="onUnit"
-          maxlength="10"
-        />
-      </view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelSpace}}</view>
-      <picker mode="selector" range="{{spaceNames}}" value="{{spaceIndex}}" bindchange="onSpaceChange">
-        <view class="input picker">{{spaceNames[spaceIndex] || copy.spacePlaceholder}}</view>
-      </picker>
-    </view>
-    <view class="field">
-      <view class="label-row">
-        <view class="label">{{copy.labelLocation}}</view>
-        <view class="text-link" style="color: {{theme.themeColor}};" bind:tap="openNewLocation">{{copy.newLocation}}</view>
-      </view>
-      <picker mode="selector" range="{{locationNames}}" value="{{locationIndex}}" bindchange="onLocationChange">
-        <view class="input picker">{{locationNames[locationIndex] || copy.locationNone}}</view>
-      </picker>
+        <view class="field">
+          <view class="label">{{copy.labelQty}}</view>
+          <view class="qty-row">
+            <input
+              class="input qty-num"
+              type="digit"
+              placeholder="{{copy.qtyPlaceholder}}"
+              value="{{quantity}}"
+              bindinput="onQuantity"
+            />
+            <input
+              class="input qty-unit"
+              placeholder="{{copy.unitPlaceholder}}"
+              value="{{unit}}"
+              bindinput="onUnit"
+              maxlength="10"
+            />
+          </view>
+        </view>
+
+        <view class="field">
+          <view class="label">{{copy.labelSpace}}</view>
+          <picker mode="selector" range="{{spaceNames}}" value="{{spaceIndex}}" bindchange="onSpaceChange">
+            <view class="input picker">
+              <text class="picker-text">{{spaceNames[spaceIndex] || copy.spacePlaceholder}}</text>
+              <view class="picker-chevron" aria-hidden="true"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="field">
+          <view class="label-row">
+            <view class="label">{{copy.labelLocation}}</view>
+            <view class="text-link theme-text" bind:tap="openNewLocation">{{copy.newLocation}}</view>
+          </view>
+          <picker mode="selector" range="{{locationNames}}" value="{{locationIndex}}" bindchange="onLocationChange">
+            <view class="input picker">
+              <text class="picker-text">{{locationNames[locationIndex] || copy.locationNone}}</text>
+              <view class="picker-chevron" aria-hidden="true"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="field">
+          <view class="label">{{copy.labelTags}}</view>
+          <view class="tag-row" wx:if="{{tags.length}}">
+            <view
+              class="tag-chip {{item.selected ? 'theme-btn' : ''}}"
+              wx:for="{{tags}}"
+              wx:key="_id"
+              data-id="{{item._id}}"
+              bind:tap="onToggleTag"
+            >{{item.name}}</view>
+          </view>
+          <view class="hint muted" wx:else>{{copy.tagsEmpty}}</view>
+        </view>
+
+        <view class="field">
+          <view class="label-row">
+            <view class="label">{{copy.labelProduction}}</view>
+            <view class="text-link theme-text" wx:if="{{productionDate}}" bind:tap="clearProductionDate">清除</view>
+          </view>
+          <picker mode="date" value="{{productionDate}}" bindchange="onProductionDate">
+            <view class="input picker">
+              <text class="picker-text {{productionDate ? '' : 'placeholder'}}">{{productionDate || copy.datePlaceholder}}</text>
+              <view class="picker-chevron" aria-hidden="true"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="field">
+          <view class="label-row">
+            <view class="label">{{copy.labelExpire}}</view>
+            <view class="text-link theme-text" wx:if="{{expireDate}}" bind:tap="clearExpireDate">清除</view>
+          </view>
+          <picker mode="date" value="{{expireDate}}" bindchange="onExpireDate">
+            <view class="input picker">
+              <text class="picker-text {{expireDate ? '' : 'placeholder'}}">{{expireDate || copy.datePlaceholder}}</text>
+              <view class="picker-chevron" aria-hidden="true"></view>
+            </view>
+          </picker>
+        </view>
+
+        <view class="field switch-field" wx:if="{{expireDate}}">
+          <view class="switch-text">
+            <view class="label">{{copy.labelReminder}}</view>
+            <view class="hint muted">{{copy.reminderHint}}</view>
+          </view>
+          <switch
+            checked="{{expireReminderEnabled}}"
+            color="{{theme.themeColor}}"
+            bindchange="onToggleReminder"
+          />
+        </view>
+
+        <view class="field last">
+          <view class="label">{{copy.labelNote}}</view>
+          <input
+            class="input"
+            placeholder="{{copy.notePlaceholder}}"
+            value="{{note}}"
+            bindinput="onNote"
+            maxlength="100"
+          />
+        </view>
+
+        <view class="error" wx:if="{{error}}">{{error}}</view>
+        <view class="slip-pad"></view>
+      </scroll-view>
     </view>
 
-    <view class="field">
-      <view class="label">{{copy.labelTags}}</view>
-      <view class="tag-row" wx:if="{{tags.length}}">
-        <view
-          class="tag-chip {{item.selected ? 'on' : ''}}"
-          style="{{item.selected ? 'color:' + theme.themeColor + ';border-color:' + theme.themeColor : ''}}"
-          wx:for="{{tags}}"
-          wx:key="_id"
-          data-id="{{item._id}}"
-          bind:tap="onToggleTag"
-        >{{item.name}}</view>
-      </view>
-      <view class="hint muted" wx:else>{{copy.tagsEmpty}}</view>
+    <view class="actions">
+      <mask-element
+        id="saveMask"
+        isPromise="{{true}}"
+        loadAnimation="{{true}}"
+        block="{{true}}"
+        content-class="mask-full"
+        promiseMaxTime="{{30}}"
+      >
+        <view class="save-btn theme-btn" bind:tap="onSave">{{copy.save}}</view>
+      </mask-element>
     </view>
-
-    <view class="field">
-      <view class="label-row">
-        <view class="label">{{copy.labelProduction}}</view>
-        <view class="text-link" wx:if="{{productionDate}}" style="color: {{theme.themeColor}};" bind:tap="clearProductionDate">清除</view>
-      </view>
-      <picker mode="date" value="{{productionDate}}" bindchange="onProductionDate">
-        <view class="input picker">{{productionDate || '选择日期'}}</view>
-      </picker>
-    </view>
-    <view class="field">
-      <view class="label-row">
-        <view class="label">{{copy.labelExpire}}</view>
-        <view class="text-link" wx:if="{{expireDate}}" style="color: {{theme.themeColor}};" bind:tap="clearExpireDate">清除</view>
-      </view>
-      <picker mode="date" value="{{expireDate}}" bindchange="onExpireDate">
-        <view class="input picker">{{expireDate || '选择日期'}}</view>
-      </picker>
-    </view>
-    <view class="field switch-field" wx:if="{{expireDate}}">
-      <view class="switch-text">
-        <view class="label">{{copy.labelReminder}}</view>
-        <view class="hint muted">{{copy.reminderHint}}</view>
-      </view>
-      <switch
-        checked="{{expireReminderEnabled}}"
-        color="{{theme.themeColor}}"
-        bindchange="onToggleReminder"
-      />
-    </view>
-
-    <view class="field">
-      <view class="label">{{copy.labelNote}}</view>
-      <input class="input" placeholder="{{copy.notePlaceholder}}" value="{{note}}" bindinput="onNote" maxlength="100" />
-    </view>
-
-    <view class="error" wx:if="{{error}}">{{error}}</view>
-
-    <mask-element
-      id="saveMask"
-      isPromise="{{true}}"
-      loadAnimation="{{true}}"
-      block="{{true}}"
-      content-class="mask-full"
-      promiseMaxTime="{{30}}"
-    >
-      <view
-        class="pill-btn"
-        style="background: {{theme.themeColor}};"
-        bind:tap="onSave"
-      >{{copy.save}}</view>
-    </mask-element>
-  </view>
+  </block>
 
   <view class="modal-mask" wx:if="{{showNewLocation}}" catch:tap="closeNewLocation">
     <view class="modal" catch:tap="noop">
       <view class="modal-title">{{copy.locModalTitle}}</view>
-      <view class="modal-sub">{{copy.locModalSub}}</view>
-      <view class="modal-belong" wx:if="{{spaceLabel}}">{{copy.locModalBelong}}{{spaceLabel}}</view>
+      <view class="modal-sub" wx:if="{{spaceLabel}}">
+        <text>{{copy.locModalBelong}}</text>
+        <text class="modal-space">{{spaceLabel}}</text>
+      </view>
       <input
         class="input modal-input"
         focus="{{showNewLocation}}"
@@ -142,20 +174,21 @@
       />
       <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
       <view class="modal-actions">
-        <view class="modal-btn ghost" bind:tap="closeNewLocation">{{common.cancel}}</view>
-        <mask-element
-          id="locMask"
-          isPromise="{{true}}"
-          loadAnimation="{{true}}"
-          content-class="mask-flex"
-          promiseMaxTime="{{20}}"
-        >
-          <view
-            class="modal-btn primary"
-            style="background: {{theme.themeColor}};"
-            bind:tap="onCreateLocation"
-          >{{common.save}}</view>
-        </mask-element>
+        <view class="modal-btn-cell">
+          <view class="modal-btn ghost" bind:tap="closeNewLocation">{{common.cancel}}</view>
+        </view>
+        <view class="modal-btn-cell">
+          <mask-element
+            id="locMask"
+            isPromise="{{true}}"
+            loadAnimation="{{true}}"
+            block="{{true}}"
+            content-class="mask-full"
+            promiseMaxTime="{{20}}"
+          >
+            <view class="modal-btn primary" bind:tap="onCreateLocation">{{common.save}}</view>
+          </mask-element>
+        </view>
       </view>
     </view>
   </view>

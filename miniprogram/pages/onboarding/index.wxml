@@ -2,10 +2,10 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{false}}"
-  bgStyle="{{theme.bgStyle}}"
-  bgImage="{{theme.bgImage}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
-  themeColor="{{theme.themeColor}}"
 >
   <view class="state" wx:if="{{bootLoading}}">
     <view class="state-text">{{copy.bootLoading}}</view>

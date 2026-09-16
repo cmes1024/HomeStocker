@@ -23,7 +23,7 @@
 | `inviteCode` | string | 6 位 `A-Z0-9`，唯一 |
 | `ownerOpenid` | string | |
 | `memberCount` | number | 云函数维护 |
-| `background` | object | `{ type: 'gradient'\|'solid'\|'image', value }`，家庭页全屏背景 |
+| `background` | object | `{ type: 'theme', value: themeId }`，`themeId` 如 `orange` / `red` / `blue`；客户端按名解析三色 |
 | `expireReminderEnabled` | boolean | 家庭过期提醒总开关，默认 `true`；缺省按 true 处理 |
 | `tagsSeededAt` | number \| null | 默认标签种子写入时间；有值后不再自动补种已删默认标签 |
 | `createdAt` | number | |

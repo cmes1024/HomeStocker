@@ -1,12 +1,30 @@
 const { callFamily } = require('../../utils/cloud')
 const {
-  GRADIENT_PRESETS,
-  SOLID_PRESETS,
+  THEME_PRESETS,
   setAppFamily,
-  bindThemeToPage
+  bindThemeToPage,
+  getAppTheme
 } = require('../../utils/theme')
-const { compressImageForUpload } = require('../../utils/imageCompress')
 const copy = require('../../utils/copy')
+
+const KEY_SVG_PATH = '/assets/key.svg'
+let keySvgText = ''
+
+function keyIconSrc(color) {
+  if (!keySvgText) {
+    try {
+      keySvgText = wx.getFileSystemManager().readFileSync(KEY_SVG_PATH, 'utf8')
+    } catch (e) {
+      return KEY_SVG_PATH
+    }
+  }
+  const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(String(color || ''))
+    ? color
+    : '#FF5D00'
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    keySvgText.replace(/fill="#[0-9A-Fa-f]+"/g, `fill="${fill}"`)
+  )}`
+}
 
 Page({
   data: {
@@ -21,18 +39,23 @@ Page({
     familyNameInput: '',
     inviteCode: '',
     formError: '',
-    gradients: GRADIENT_PRESETS,
-    solids: SOLID_PRESETS,
+    themes: THEME_PRESETS,
     theme: null,
     headerTitle: '',
-    moodSheet: false
+    moodSheet: false,
+    reminderEnabled: true,
+    keyIcon: ''
   },
 
   onShow() {
     const app = getApp()
     const cached = app && app.globalData && app.globalData.family
     const name = (cached && cached.name) || this.data.headerTitle || ''
-    bindThemeToPage(this, name ? { headerTitle: name } : {})
+    const theme = getAppTheme()
+    bindThemeToPage(this, {
+      ...(name ? { headerTitle: name } : {}),
+      keyIcon: keyIconSrc(theme.primary)
+    })
     // 从空间/标签/消息返回时页面实例还在，家庭列表没变，不再打 getMyFamily / listMyFamilies
     if (!this.data.family) this.load()
   },
@@ -67,7 +90,9 @@ Page({
         panel: '',
         formError: '',
         theme,
-        headerTitle: family.name || '家庭'
+        keyIcon: keyIconSrc(theme.primary),
+        headerTitle: family.name || '家庭',
+        reminderEnabled: family.expireReminderEnabled !== false
       })
     } catch (e) {
       if (e.code === 'NO_FAMILY') {
@@ -99,10 +124,12 @@ Page({
         }
       }),
       theme,
+      keyIcon: keyIconSrc(theme.primary),
       headerTitle: family.name || '家庭',
       loading: false,
       panel: '',
-      formError: ''
+      formError: '',
+      reminderEnabled: family.expireReminderEnabled !== false
     })
   },
 
@@ -136,71 +163,37 @@ Page({
     this.setData({ moodSheet: false })
   },
 
-  onReminderTap() {
-    if (this.data.acting || !this.data.family) return
-    const enabled = this.data.family.expireReminderEnabled !== false
-    wx.showActionSheet({
-      itemList: [
-        enabled ? copy.family.reminderTurnOff : copy.family.reminderTurnOn,
-        copy.family.reminderRunNow
-      ],
-      success: (res) => {
-        if (res.tapIndex === 0) this.applyExpireReminder(!enabled)
-        if (res.tapIndex === 1) this.onRunExpireNotify()
-      }
-    })
+  onTogglePush(e) {
+    const next = !!(e.detail && e.detail.value)
+    this.applyExpireReminder(next)
   },
 
   async applyExpireReminder(next) {
-    if (this.data.acting || !this.data.family) return
-    this.setData({ acting: true })
+    const current = this.data.family && this.data.family.expireReminderEnabled !== false
+    if (this.data.acting || !this.data.family) {
+      this.setData({ reminderEnabled: !!current })
+      return
+    }
+    if (next === current) return
+    this.setData({ acting: true, reminderEnabled: next })
     try {
       const family = await callFamily('updateExpireReminder', { enabled: next })
       setAppFamily(family)
       this.setData({
         family,
-        acting: false
+        acting: false,
+        reminderEnabled: family.expireReminderEnabled !== false
       })
       wx.showToast({
         title: next ? copy.family.reminderOn : copy.family.reminderOff,
         icon: 'none'
       })
     } catch (e) {
-      this.setData({ acting: false })
+      this.setData({
+        acting: false,
+        reminderEnabled: current
+      })
       wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
-    }
-  },
-
-  async onRunExpireNotify() {
-    if (this.data.acting) return
-    this.setData({ acting: true })
-    wx.showLoading({ title: copy.family.reminderRunning, mask: true })
-    try {
-      const res = await wx.cloud.callFunction({ name: 'expireNotify', data: {} })
-      const result = (res && res.result) || {}
-      const data = result.data || {}
-      wx.hideLoading()
-      if (data.failCount > 0) {
-        wx.showModal({
-          title: copy.family.reminderRunFail,
-          content: data.lastError || copy.common.opFailed,
-          showCancel: false
-        })
-      } else if (!data.sendAttempts) {
-        wx.showToast({
-          title: data.candidateCount
-            ? '有临期物品但无人授权'
-            : '当前无匹配的临期物品',
-          icon: 'none'
-        })
-      } else {
-        wx.showToast({ title: copy.family.reminderRunOk, icon: 'success' })
-      }
-    } catch (e) {
-      wx.hideLoading()
-      wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
-    } finally {
-      this.setData({ acting: false })
     }
   },
 
@@ -297,9 +290,10 @@ Page({
       this.setData({
         family,
         theme,
+        keyIcon: keyIconSrc(theme.primary),
         headerTitle: family.name || '家庭'
       })
-      wx.showToast({ title: '已更新背景', icon: 'success' })
+      wx.showToast({ title: '已更新氛围', icon: 'success' })
     } catch (e) {
       wx.showToast({ title: e.message || '设置失败', icon: 'none' })
     } finally {
@@ -307,56 +301,11 @@ Page({
     }
   },
 
-  onPickGradient(e) {
+  onPickTheme(e) {
     if (this.data.acting) return
-    const value = e.currentTarget.dataset.value
-    if (!value) return
-    this.applyBackground('gradient', value)
-  },
-
-  onPickSolid(e) {
-    if (this.data.acting) return
-    const value = e.currentTarget.dataset.value
-    if (!value) return
-    this.applyBackground('solid', value)
-  },
-
-  async onPickImage() {
-    if (this.data.acting) return
-    try {
-      const choose = await wx.chooseMedia({
-        count: 1,
-        mediaType: ['image'],
-        sourceType: ['album', 'camera'],
-        sizeType: ['compressed']
-      })
-      const file = choose.tempFiles && choose.tempFiles[0]
-      if (!file || !file.tempFilePath) return
-
-      this.setData({ acting: true })
-      wx.showLoading({ title: '上传中', mask: true })
-      const filePath = await compressImageForUpload(file.tempFilePath, {
-        maxEdge: 1600,
-        quality: 72
-      })
-      const ext = (filePath.match(/\.\w+$/) || ['.jpg'])[0]
-      const cloudPath = `family-bg/${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`
-      const upload = await wx.cloud.uploadFile({
-        cloudPath,
-        filePath
-      })
-      wx.hideLoading()
-      if (!upload.fileID) {
-        throw new Error(copy.family.uploadFailed)
-      }
-      this.setData({ acting: false })
-      await this.applyBackground('image', upload.fileID)
-    } catch (e) {
-      wx.hideLoading()
-      if (e && e.errMsg && e.errMsg.includes('cancel')) return
-      wx.showToast({ title: (e && e.message) || copy.family.uploadFailed, icon: 'none' })
-      this.setData({ acting: false })
-    }
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    this.applyBackground('theme', id)
   },
 
   async onLeave() {

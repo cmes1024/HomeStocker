@@ -4,10 +4,10 @@
   back="{{false}}"
   centerTitle="{{true}}"
   flushBottom="{{true}}"
-  bgStyle="{{theme.bgStyle}}"
-  bgImage="{{theme.bgImage}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
-  themeColor="{{theme.themeColor}}"
 >
   <view slot="nav-left" class="nav-search">
     <view class="search-icon" aria-hidden="true">
@@ -59,26 +59,21 @@
           </view>
         </view>
       </view>
-      <view class="add-btn" style="background: {{theme.ctaGradient}};" bind:tap="goAdd">{{copy.addCta}}</view>
+      <view class="add-btn theme-btn" bind:tap="goAdd">{{copy.addCta}}</view>
     </view>
 
-    <view class="expiring" wx:if="{{expiringItems.length}}">
-      <view class="expiring-hd">
-        <view class="expiring-title">{{copy.expiringTitle}}</view>
-      </view>
-      <view
-        class="expiring-row"
-        wx:for="{{expiringItems}}"
-        wx:key="_id"
-        data-id="{{item._id}}"
-        bind:tap="goDetail"
-      >
-        <view class="expiring-name">{{item.name}}</view>
-        <view class="expiring-meta">
-          <text class="badge {{item.expireStatus}}">{{item.expireLabel}}</text>
-          <text class="expiring-date">{{item.expireDate}}</text>
-        </view>
-      </view>
+    <view
+      class="expire-banner"
+      wx:if="{{expireBanner}}"
+      hover-class="expire-banner-hover"
+      bind:tap="goMessages"
+    >
+      <image class="expire-banner-icon" src="/assets/expire-alert-icon.png" mode="aspectFit" aria-hidden="true" />
+      <text class="expire-banner-body">
+        <text class="expire-banner-place" style="color: {{theme.themeColor}};" wx:if="{{expireBanner.place}}">【{{expireBanner.place}}】</text>
+        <text class="expire-banner-msg" style="color: {{theme.themeColor}};">{{expireBanner.message}}</text>
+      </text>
+      <view class="expire-banner-chevron" style="color: {{theme.themeColor}};" aria-hidden="true">›</view>
     </view>
 
     <view class="ledger-panel">
@@ -86,10 +81,7 @@
         <view class="panel-title">{{copy.panelTitle}}</view>
         <view class="space-filter" bind:tap="openSpaceSheet">
           <text class="space-filter-name">{{filterSpaceName}}</text>
-          <view class="funnel" aria-hidden="true">
-            <view class="funnel-top"></view>
-            <view class="funnel-stem"></view>
-          </view>
+          <image class="filter-icon" src="/assets/filter-icon.png" mode="aspectFit" aria-hidden="true" />
         </view>
       </view>
 
@@ -121,7 +113,7 @@
         >
           <view class="tile-name">{{item.name}}</view>
           <view class="tile-qty-row">
-            <text class="tile-qty">{{item.quantity}}</text>
+            <text class="tile-qty" style="color: {{theme.themeColor}};">{{item.quantity}}</text>
             <text class="tile-unit" wx:if="{{item.unit}}">{{item.unit}}</text>
             <text class="badge expired" wx:if="{{item.expireStatus === 'expired'}}">{{copy.badgeExpired}}</text>
             <text class="badge expiring" wx:elif="{{item.expireStatus === 'expiring'}}">{{copy.badgeSoon}}</text>
@@ -145,7 +137,7 @@
   bind:clickoverlay="closeSpaceSheet"
   bind:beforeleave="closeSpaceSheet"
 >
-  <view class="sheet">
+  <view class="sheet" style="{{theme.cssVarStyle}}">
     <view class="sheet-hd">
       <view class="sheet-title">{{copy.spaceSheetTitle}}</view>
       <view class="sheet-close" bind:tap="closeSpaceSheet" aria-label="关闭">×</view>
@@ -153,8 +145,7 @@
     <scroll-view class="sheet-body" scroll-y>
       <view class="space-chips">
         <view
-          class="space-chip {{filterSpaceId === item._id ? 'on' : ''}}"
-          style="{{filterSpaceId === item._id ? 'background:' + (theme && theme.themeColor) + ';border-color:' + (theme && theme.themeColor) + ';' : ''}}"
+          class="space-chip {{filterSpaceId === item._id ? 'theme-btn' : ''}}"
           wx:for="{{spaces}}"
           wx:key="_id"
           data-id="{{item._id}}"

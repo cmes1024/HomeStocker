@@ -24,7 +24,6 @@ Page({
     theme: null,
     headerTitle: '',
     atmosphere: {
-      bgStyle: '',
       bgImage: '',
       lightHeader: false,
       isPhoto: false

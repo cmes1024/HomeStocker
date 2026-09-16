@@ -1,0 +1,28 @@
+/* 主题工具类：依赖祖先注入的 --theme-primary / --theme-secondary / --theme-shadow */
+
+.theme-text {
+  color: var(--theme-primary);
+}
+
+.theme-btn {
+  color: #ffffff;
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary) 0%,
+    var(--theme-secondary) 100%
+  );
+}
+
+.theme-border {
+  border-color: var(--theme-primary);
+  border-style: solid;
+}
+
+.theme-divider {
+  border-color: var(--theme-primary-30);
+  border-style: solid;
+}
+
+.theme-shadow {
+  box-shadow: 0 0 2px 0 var(--theme-primary);
+}

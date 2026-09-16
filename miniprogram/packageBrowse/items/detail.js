@@ -62,7 +62,7 @@ Page({
     loading: true,
     error: '',
     removing: false,
-    headerTitle: '',
+    headerTitle: copy.detail.pageTitle,
     theme: null,
     loadingColors: ['#C4A484', '#8B6914']
   },
@@ -73,7 +73,7 @@ Page({
       itemId,
       loading: true,
       error: itemId ? '' : copy.detail.missingId,
-      headerTitle: ''
+      headerTitle: copy.detail.pageTitle
     })
     this.syncLoadingColors()
     if (itemId) {
@@ -84,7 +84,7 @@ Page({
   },
 
   onShow() {
-    bindThemeToPage(this, { headerTitle: '' })
+    bindThemeToPage(this, { headerTitle: copy.detail.pageTitle })
     this.syncLoadingColors()
     if (this.data.itemId && !this.data.loading && !this.data.removing) {
       this.load(this.data.itemId, { silent: true })

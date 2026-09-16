@@ -605,8 +605,38 @@ async function listExpiring(openid, event) {
       return { data: filtered }
     })
 
-  const list = (res.data || []).filter((item) => item.expireDate)
+  const list = await attachPlaceNames(
+    ctx.familyId,
+    (res.data || []).filter((item) => item.expireDate)
+  )
   return ok({ list, today, windowEnd: end })
+}
+
+async function attachPlaceNames(familyId, list) {
+  if (!list.length) return list
+  const spaceIds = [...new Set(list.map((i) => i.spaceId).filter(Boolean))]
+  const locationIds = [...new Set(list.map((i) => i.locationId).filter(Boolean))]
+  const [spaceRes, locRes] = await Promise.all([
+    spaceIds.length
+      ? db.collection('spaces').where({ _id: _.in(spaceIds) }).limit(100).get()
+      : Promise.resolve({ data: [] }),
+    locationIds.length
+      ? db.collection('locations').where({ _id: _.in(locationIds) }).limit(100).get()
+      : Promise.resolve({ data: [] })
+  ])
+  const spaceMap = {}
+  const locMap = {}
+  ;(spaceRes.data || []).forEach((s) => {
+    if (s.familyId === familyId) spaceMap[s._id] = s.name || ''
+  })
+  ;(locRes.data || []).forEach((l) => {
+    if (l.familyId === familyId) locMap[l._id] = l.name || ''
+  })
+  return list.map((item) => ({
+    ...item,
+    spaceName: (item.spaceId && spaceMap[item.spaceId]) || '',
+    locationName: (item.locationId && locMap[item.locationId]) || ''
+  }))
 }
 
 exports.main = async (event) => {

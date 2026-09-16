@@ -8,6 +8,7 @@ import RequestManager from "./utils/request";
 const { setStorage } = require("./utils/storage")
 const { getParamsFormWxacode } = require("./utils/util")
 const { envId: cloudEnvId } = require("./utils/cloudbase-env")
+const { getThemeColors } = require("./utils/theme")
 
 const env = "prod"
 
@@ -57,6 +58,10 @@ App({
   onError: function (error) { },
   onUnload: function () {
     wx.offMemoryWarning(() => { });
+  },
+  /** 当前家庭主题三色，供任意页面 / 组件调用 */
+  getThemeColors() {
+    return getThemeColors()
   },
   globalData: {
     config: null,

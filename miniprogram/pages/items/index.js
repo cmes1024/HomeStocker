@@ -1,9 +1,9 @@
-const { listItems, listSpaces, listItemsBySpace, listExpiringItems } = require('../../utils/db')
+const { listItems, listSpaces, countItems, listExpiringItems, listLocations } = require('../../utils/db')
 const { callSpace } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
-const { shelfLifeStatus } = require('../../utils/expireStatus')
+const { shanghaiTodayYmd, normalizeDateInput } = require('../../utils/expireStatus')
 const copy = require('../../utils/copy')
 const { appName } = require('../../config/app')
 
@@ -15,6 +15,35 @@ function pickSpace(spaces, currentId) {
   return list.find((s) => s && s.isDefault) || list[0] || null
 }
 
+function daysUntilExpire(expireDate, now = Date.now()) {
+  const date = normalizeDateInput(expireDate)
+  if (!date) return null
+  const today = shanghaiTodayYmd(now)
+  const [y1, m1, d1] = today.split('-').map(Number)
+  const [y2, m2, d2] = date.split('-').map(Number)
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000)
+}
+
+function buildExpireBanner(item, spaceName, locationName) {
+  if (!item) return null
+  const place = [spaceName, locationName].filter(Boolean).join('-')
+  const name = String(item.name || '').trim() || '物品'
+  const days = daysUntilExpire(item.expireDate)
+  let message
+  if (days == null) {
+    message = place ? `里的${name}即将到期` : `${name}即将到期`
+  } else if (days < 0) {
+    message = place ? `里的${name}已过期` : `${name}已过期`
+  } else if (days === 0) {
+    message = place ? `里的${name}将于今天到期` : `${name}将于今天到期`
+  } else {
+    message = place
+      ? `里的${name}将于${days}天后到期`
+      : `${name}将于${days}天后到期`
+  }
+  return { place, message }
+}
+
 Page({
   data: {
     copy: copy.items,
@@ -24,7 +53,7 @@ Page({
     loading: false,
     error: '',
     items: [],
-    expiringItems: [],
+    expireBanner: null,
     familyId: '',
     familyName: '',
     memberCount: 0,
@@ -93,11 +122,14 @@ Page({
   async onShow() {
     bindThemeToPage(this, { headerTitle: appName })
     this.syncLoadingColors()
-    this.setData(this.syncStats({
-      membersReady: false,
-      itemsReady: false,
-      spacesReady: false
-    }))
+    const hasStats = !!(this.data.statsReady && this.data.statsReady.items)
+    if (!hasStats) {
+      this.setData(this.syncStats({
+        membersReady: false,
+        itemsReady: false,
+        spacesReady: false
+      }))
+    }
     try {
       const session = await routeByMembership(this, 'items')
       if (!session || !session.hasFamily) return
@@ -112,8 +144,10 @@ Page({
         ...this.syncStats({ memberCount, membersReady: true })
       })
       this.syncLoadingColors()
-      await this.loadSpaces()
-      await Promise.all([this.loadList(), this.loadExpiring(), this.loadItemCount()])
+      await Promise.all([
+        this.loadSpaces().then(() => Promise.all([this.loadList(), this.loadExpiring()])),
+        this.loadItemCount()
+      ])
     } catch (e) {
       // bootError 已设置
     }
@@ -150,16 +184,8 @@ Page({
   },
 
   async loadItemCount() {
-    const spaces = this.data.spaces || []
-    if (!spaces.length) {
-      this.setData(this.syncStats({ itemCount: 0, itemsReady: true }))
-      return
-    }
     try {
-      const packs = await Promise.all(
-        spaces.map((space) => listItemsBySpace(space._id, { limit: 100 }).catch(() => ({ list: [] })))
-      )
-      const total = packs.reduce((sum, pack) => sum + ((pack && pack.list && pack.list.length) || 0), 0)
+      const total = await countItems()
       this.setData(this.syncStats({ itemCount: total, itemsReady: true }))
     } catch (e) {
       this.setData(this.syncStats({ itemCount: 0, itemsReady: true }))
@@ -198,18 +224,24 @@ Page({
 
   async loadExpiring() {
     try {
-      const { list } = await listExpiringItems({ limit: 20 })
-      const enriched = (list || []).map((item) => {
-        const life = shelfLifeStatus(item.expireDate)
-        return {
-          ...item,
-          expireStatus: life.status,
-          expireLabel: life.label
-        }
-      })
-      this.setData({ expiringItems: enriched })
+      const { list } = await listExpiringItems({ limit: 1 })
+      const item = (list || [])[0]
+      if (!item) {
+        this.setData({ expireBanner: null })
+        return
+      }
+      const spaces = this.data.spaces || []
+      const space = spaces.find((s) => s && s._id === item.spaceId)
+      const spaceName = item.spaceName || (space && space.name) || ''
+      let locationName = item.locationName || ''
+      if (!locationName && item.locationId && item.spaceId) {
+        const locs = await listLocations(item.spaceId).catch(() => [])
+        const loc = (locs || []).find((l) => l && l._id === item.locationId)
+        locationName = (loc && loc.name) || ''
+      }
+      this.setData({ expireBanner: buildExpireBanner(item, spaceName, locationName) })
     } catch (e) {
-      this.setData({ expiringItems: [] })
+      this.setData({ expireBanner: null })
     }
   },
 
@@ -268,5 +300,9 @@ Page({
 
   goFamily() {
     wx.navigateTo({ url: '/pages/family/index' })
+  },
+
+  goMessages() {
+    wx.navigateTo({ url: '/pages/family/messages' })
   }
 })

@@ -27,6 +27,8 @@
   },
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
+    "ThemeRadialBg": "/components/ThemeRadialBg/index",
+    "ThemeProvider": "/components/ThemeProvider/index",
     "loading": "/components/loading/index",
     "mask-element": "/components/maskElement/index"
   },

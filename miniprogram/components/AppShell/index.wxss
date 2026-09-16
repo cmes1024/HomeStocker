@@ -2,18 +2,31 @@
   position: relative;
   min-height: 100vh;
   box-sizing: border-box;
+  background: #ffffff;
 }
 
 .bg-layer {
   position: fixed;
   top: 0;
   right: 0;
-  bottom: 0;
   left: 0;
+  height: 28.5vh;
   z-index: 0;
   overflow: hidden;
   transition: opacity 0.45s ease;
   will-change: opacity;
+  pointer-events: none;
+  /* 底部模糊消失，避免 28.5vh 裁切出硬边；全站统一 */
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
+}
+
+/* 空间封面等图片仍铺满全屏，不做底部淡出 */
+.bg-layer.has-image {
+  bottom: 0;
+  height: auto;
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 
 .bg-image {
@@ -30,24 +43,6 @@
   bottom: 0;
   left: 0;
   pointer-events: none;
-}
-
-.bg-veil.light {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.22) 0%,
-    rgba(255, 255, 255, 0.1) 40%,
-    rgba(255, 255, 255, 0.3) 100%
-  );
-}
-
-.bg-veil.dark {
-  background: linear-gradient(
-    180deg,
-    rgba(0, 0, 0, 0.38) 0%,
-    rgba(0, 0, 0, 0.22) 45%,
-    rgba(0, 0, 0, 0.48) 100%
-  );
 }
 
 /* 照片背景：整体压一层暖白雾，保证深色字可读，仍透出照片 */
@@ -74,7 +69,7 @@
 .nav-inner {
   display: flex;
   align-items: center;
-  padding-left: 12rpx;
+  padding-left: 50rpx;
   box-sizing: border-box;
 }
 

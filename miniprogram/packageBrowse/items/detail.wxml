@@ -2,10 +2,12 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{true}}"
-  bgStyle="{{theme.bgStyle}}"
-  bgImage="{{theme.bgImage}}"
+  plainBack="{{true}}"
+  flushBottom="{{!loading && !!item}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
-  themeColor="{{theme.themeColor}}"
 >
   <loading
     show="{{loading}}"
@@ -19,66 +21,74 @@
     <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <view class="slip {{theme.isPhoto ? 'on-photo' : ''}}" wx:elif="{{!loading && item}}">
-    <view class="slip-kicker">{{copy.kicker}}</view>
-    <view class="slip-title">{{item.name}}</view>
+  <block wx:elif="{{!loading && item}}">
+    <view class="detail-page">
+      <view
+        class="slip {{theme.isPhoto ? 'on-photo' : ''}}"
+        style="box-shadow: 0 2rpx 10px 0 var(--theme-shadow);"
+      >
+        <view class="field">
+          <view class="label">{{copy.labelName}}</view>
+          <view class="value">{{item.name}}</view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelQty}}</view>
+          <view class="value">{{item.quantity}}{{item.unit}}</view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelSpace}}</view>
+          <view class="value">{{spaceName || '—'}}</view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelLocation}}</view>
+          <view class="value {{locationName ? '' : 'muted'}}">{{locationName || copy.locationNone}}</view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelTags}}</view>
+          <view class="value {{tagNames.length ? '' : 'muted'}}">
+            <block wx:if="{{tagNames.length}}">
+              <text wx:for="{{tagNames}}" wx:key="*this">{{index ? ' | ' : ''}}{{item}}</text>
+            </block>
+            <block wx:else>{{copy.tagsEmpty}}</block>
+          </view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelProduction}}</view>
+          <view class="value {{item.productionDate ? '' : 'muted'}}">{{item.productionDate || copy.dateEmpty}}</view>
+        </view>
+        <view class="field">
+          <view class="label">{{copy.labelExpire}}</view>
+          <view class="value-row">
+            <view class="value {{item.expireDate ? '' : 'muted'}}">{{item.expireDate || copy.dateEmpty}}</view>
+            <view class="badge {{expireStatus}}" wx:if="{{expireLabel}}">{{expireLabel}}</view>
+          </view>
+        </view>
+        <view class="field last">
+          <view class="label">{{copy.labelNote}}</view>
+          <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
+        </view>
 
-    <view class="field">
-      <view class="label">{{copy.labelQty}}</view>
-      <view class="value">×{{item.quantity}}{{item.unit}}</view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelSpace}}</view>
-      <view class="value">{{spaceName || '—'}}</view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelLocation}}</view>
-      <view class="value {{locationName ? '' : 'muted'}}">{{locationName || copy.locationNone}}</view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelTags}}</view>
-      <view class="value {{tagNames.length ? '' : 'muted'}}">
-        <block wx:if="{{tagNames.length}}">
-          <text wx:for="{{tagNames}}" wx:key="*this">{{index ? ' · ' : ''}}{{item}}</text>
-        </block>
-        <block wx:else>{{copy.tagsEmpty}}</block>
+        <view class="recent" wx:if="{{recentOps.length}}">
+          <view class="recent-title">{{copy.recentTitle}}</view>
+          <view class="recent-row" wx:for="{{recentOps}}" wx:key="_id">
+            <view class="recent-line">{{item.line}}</view>
+            <view class="recent-time">{{item.timeLabel}}</view>
+          </view>
+        </view>
       </view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelProduction}}</view>
-      <view class="value {{item.productionDate ? '' : 'muted'}}">{{item.productionDate || copy.dateEmpty}}</view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelExpire}}</view>
-      <view class="value-row">
-        <view class="value {{item.expireDate ? '' : 'muted'}}">{{item.expireDate || copy.dateEmpty}}</view>
-        <view class="badge {{expireStatus}}" wx:if="{{expireLabel}}">{{expireLabel}}</view>
-      </view>
-    </view>
-    <view class="field" wx:if="{{item.expireDate}}">
-      <view class="label">{{copy.labelReminder}}</view>
-      <view class="value">{{item.expireReminderEnabled ? copy.reminderOn : copy.reminderOff}}</view>
-    </view>
-    <view class="field">
-      <view class="label">{{copy.labelNote}}</view>
-      <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
-    </view>
-
-    <view class="recent" wx:if="{{recentOps.length}}">
-      <view class="label">{{copy.recentTitle}}</view>
-      <view class="recent-row" wx:for="{{recentOps}}" wx:key="_id">
-        <view class="recent-line">{{item.line}}</view>
-        <view class="recent-time">{{item.timeLabel}}</view>
-      </view>
+      <view class="actions-spacer"></view>
     </view>
 
     <view class="actions">
       <view
-        class="pill-btn"
-        style="background: {{theme.themeColor}};"
+        class="action-btn ghost"
+        style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
+        bind:tap="onRemove"
+      >{{copy.remove}}</view>
+      <view
+        class="action-btn theme-btn"
         bind:tap="goEdit"
       >{{copy.edit}}</view>
-      <view class="pill-btn ghost" bind:tap="onRemove">{{copy.remove}}</view>
     </view>
-  </view>
+  </block>
 </AppShell>

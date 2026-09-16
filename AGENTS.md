@@ -24,7 +24,7 @@
 | 标签（B） | 家庭级 `tags` 集合；默认种子 + 自建；物资可多选；清单可按标签筛 |
 | 保质期（B） | 可选日期；清单首页「即将过期」；订阅消息 3/1/0 天（物资开关默认关 + 家庭总开关默认开） |
 | 家庭消息（C） | 物资增删改写 `activities`；家庭消息流 + 详情最近操作；仍硬删物资（删除留名称快照） |
-| 家庭外观 | 背景可设渐变 / 纯色 / 自定义图片（全站主题）；换图/退家清理旧云文件（A 波） |
+| 家庭外观 | 命名主题（主色 / 副色 / 阴影色）；全站由 AppShell 注入 CSS 变量 |
 | 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除 |
 | 不做（C 波） | 软删除物资本体、评论/@/聊天、非物资写事件进消息、活动推送、对话 UI、楼层 UI、实景上传 / 3D / 看房编辑器 |
 | 后置（D） | 体验向新交互 — 见路线图 |
@@ -55,7 +55,7 @@ activities (familyId, itemId, action, actorOpenid, itemName, changedFields?, sum
 
 ## 云函数与写路径
 
-- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateBackground / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities）
+- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities）
 - `item`：create / update / remove / get / list / search / listExpiring（**物资写一律走这里**；成功后旁路写 activities）
 - `space`：ensureDefault / list / create / update / remove / listLocations / createLocation / updateLocation / removeLocation
 - `tag`：ensureDefaults / list / create / update / remove

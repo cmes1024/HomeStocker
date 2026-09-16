@@ -56,14 +56,16 @@ Page({
       isEdit,
       preferredSpaceId,
       loading: true,
-      headerTitle: ''
+      headerTitle: isEdit ? copy.edit.titleEdit : copy.edit.titleCreate
     })
     this.syncLoadingColors()
     this.bootstrap(itemId)
   },
 
   onShow() {
-    bindThemeToPage(this, { headerTitle: '' })
+    bindThemeToPage(this, {
+      headerTitle: this.data.isEdit ? copy.edit.titleEdit : copy.edit.titleCreate
+    })
     this.syncLoadingColors()
   },
 

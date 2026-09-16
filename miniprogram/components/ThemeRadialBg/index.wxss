@@ -1,0 +1,14 @@
+.theme-radial {
+  width: 100%;
+  height: 100%;
+  display: block;
+  box-sizing: border-box;
+  /* 有 props 时由 inline background 覆盖；无 inline 时吃祖先 CSS 变量 */
+  background: linear-gradient(
+    167deg,
+    var(--theme-primary, #ff5d00) 2%,
+    var(--theme-secondary, #ffcd70) 48%,
+    var(--theme-shadow, #fff0dd) 72%,
+    transparent 100%
+  );
+}

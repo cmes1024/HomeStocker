@@ -1,21 +1,26 @@
-<view class="shell" style="--main-color: {{themeColor}};">
-  <view
-    class="bg-layer"
-    style="{{layerA.bgStyle}}; opacity: {{layerA.opacity}};"
-  >
+<view
+  class="shell"
+  style="--theme-primary: {{primary}}; --theme-secondary: {{secondary}}; --theme-shadow: {{shadow}}; --theme-primary-30: {{primary}}4D;"
+>
+  <view class="bg-layer {{layerA.bgImage ? 'has-image' : ''}}" style="opacity: {{layerA.opacity}};">
     <image wx:if="{{layerA.bgImage}}" class="bg-image" src="{{layerA.bgImage}}" mode="aspectFill" />
-    <view
-      class="bg-veil {{layerA.bgImage ? 'frost' : (layerA.lightHeader ? 'dark' : 'light')}}"
-    ></view>
+    <ThemeRadialBg
+      wx:else
+      primary="{{layerA.primary}}"
+      secondary="{{layerA.secondary}}"
+      shadow="{{layerA.shadow}}"
+    />
+    <view wx:if="{{layerA.bgImage}}" class="bg-veil frost"></view>
   </view>
-  <view
-    class="bg-layer"
-    style="{{layerB.bgStyle}}; opacity: {{layerB.opacity}};"
-  >
+  <view class="bg-layer {{layerB.bgImage ? 'has-image' : ''}}" style="opacity: {{layerB.opacity}};">
     <image wx:if="{{layerB.bgImage}}" class="bg-image" src="{{layerB.bgImage}}" mode="aspectFill" />
-    <view
-      class="bg-veil {{layerB.bgImage ? 'frost' : (layerB.lightHeader ? 'dark' : 'light')}}"
-    ></view>
+    <ThemeRadialBg
+      wx:else
+      primary="{{layerB.primary}}"
+      secondary="{{layerB.secondary}}"
+      shadow="{{layerB.shadow}}"
+    />
+    <view wx:if="{{layerB.bgImage}}" class="bg-veil frost"></view>
   </view>
 
   <view class="nav {{navLight ? 'light' : 'dark'}}" style="height: {{headerHeight}}px;">

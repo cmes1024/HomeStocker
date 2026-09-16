@@ -1,4 +1,6 @@
 {
   "component": true,
-  "usingComponents": {}
+  "usingComponents": {
+    "ThemeRadialBg": "/components/ThemeRadialBg/index"
+  }
 }

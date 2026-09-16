@@ -1,4 +1,4 @@
-const { ensureSession } = require('./session')
+const { ensureSession, getCachedSession } = require('./session')
 const { setAppFamily } = require('./theme')
 
 /**
@@ -7,7 +7,10 @@ const { setAppFamily } = require('./theme')
  * @param {'onboarding' | 'items'} current
  */
 async function routeByMembership(page, current) {
-  page.setData({ bootLoading: true, bootError: '' })
+  const cached = getCachedSession()
+  if (!cached) {
+    page.setData({ bootLoading: true, bootError: '' })
+  }
   try {
     const session = await ensureSession()
     if (session.hasFamily) {

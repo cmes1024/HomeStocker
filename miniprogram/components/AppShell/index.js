@@ -1,3 +1,5 @@
+const { DEFAULT_THEME, getThemeColors } = require('../../utils/theme')
+
 Component({
   options: {
     multipleSlots: true,
@@ -13,10 +15,19 @@ Component({
       type: Boolean,
       value: false
     },
-    bgStyle: {
+    primary: {
       type: String,
       value: ''
     },
+    secondary: {
+      type: String,
+      value: ''
+    },
+    shadow: {
+      type: String,
+      value: ''
+    },
+    /** 空间封面等可选图片层；家庭氛围不再使用 */
     bgImage: {
       type: String,
       value: ''
@@ -24,10 +35,6 @@ Component({
     lightHeader: {
       type: Boolean,
       value: false
-    },
-    themeColor: {
-      type: String,
-      value: '#3F7A88'
     },
     centerTitle: {
       type: Boolean,
@@ -49,13 +56,17 @@ Component({
     navContentHeight: 32,
     navSideWidth: 88,
     layerA: {
-      bgStyle: '',
+      primary: DEFAULT_THEME.primary,
+      secondary: DEFAULT_THEME.secondary,
+      shadow: DEFAULT_THEME.shadow,
       bgImage: '',
       lightHeader: false,
       opacity: 1
     },
     layerB: {
-      bgStyle: '',
+      primary: DEFAULT_THEME.primary,
+      secondary: DEFAULT_THEME.secondary,
+      shadow: DEFAULT_THEME.shadow,
       bgImage: '',
       lightHeader: false,
       opacity: 0
@@ -80,16 +91,12 @@ Component({
   },
 
   observers: {
-    'bgStyle, bgImage, lightHeader': function (bgStyle, bgImage, lightHeader) {
+    'primary, secondary, shadow, bgImage, lightHeader': function () {
       if (!this.data.ready) {
         this.bootstrapLayers()
         return
       }
-      this.crossfadeTo({
-        bgStyle: bgStyle || '',
-        bgImage: bgImage || '',
-        lightHeader: !!lightHeader
-      })
+      this.crossfadeTo(this.currentThemePayload())
     }
   },
 
@@ -109,9 +116,30 @@ Component({
       }
     },
 
+    resolveColors() {
+      const primary = String(this.properties.primary || '').trim()
+      const secondary = String(this.properties.secondary || '').trim()
+      const shadow = String(this.properties.shadow || '').trim()
+      if (primary && secondary && shadow) {
+        return { primary, secondary, shadow }
+      }
+      try {
+        return getThemeColors()
+      } catch (e) {
+        return {
+          primary: DEFAULT_THEME.primary,
+          secondary: DEFAULT_THEME.secondary,
+          shadow: DEFAULT_THEME.shadow
+        }
+      }
+    },
+
     currentThemePayload() {
+      const colors = this.resolveColors()
       return {
-        bgStyle: this.properties.bgStyle || '',
+        primary: colors.primary,
+        secondary: colors.secondary,
+        shadow: colors.shadow,
         bgImage: this.properties.bgImage || '',
         lightHeader: !!this.properties.lightHeader
       }
@@ -121,7 +149,14 @@ Component({
       const theme = this.currentThemePayload()
       this.setData({
         layerA: { ...theme, opacity: 1 },
-        layerB: { bgStyle: '', bgImage: '', lightHeader: false, opacity: 0 },
+        layerB: {
+          primary: theme.primary,
+          secondary: theme.secondary,
+          shadow: theme.shadow,
+          bgImage: '',
+          lightHeader: false,
+          opacity: 0
+        },
         frontKey: 'A',
         navLight: theme.lightHeader,
         ready: true
@@ -129,7 +164,9 @@ Component({
     },
 
     themeKey(theme) {
-      return `${theme.bgStyle}||${theme.bgImage}||${theme.lightHeader ? 1 : 0}`
+      return `${theme.primary}|${theme.secondary}|${theme.shadow}|${theme.bgImage || ''}|${
+        theme.lightHeader ? 1 : 0
+      }`
     },
 
     crossfadeTo(next) {
@@ -146,7 +183,6 @@ Component({
         this._fadeTimer = null
       }
 
-      // 先铺好下一层（透明），再淡入/淡出
       this.setData({
         [`layer${backKey}`]: {
           ...next,

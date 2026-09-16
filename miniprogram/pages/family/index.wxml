@@ -4,10 +4,10 @@
   back="{{true}}"
   plainBack="{{true}}"
   flushBottom="{{!!family && !loading && !error}}"
-  bgStyle="{{theme.bgStyle}}"
-  bgImage="{{theme.bgImage}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
-  themeColor="{{theme.themeColor}}"
 >
   <view class="state" wx:if="{{loading}}">
     <view class="state-text">{{copy.loading}}</view>
@@ -15,17 +15,33 @@
 
   <view class="state" wx:elif="{{error}}">
     <view class="state-text error">{{error}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
   <block wx:elif="{{family}}">
-    <view class="card {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="key-title">{{copy.keyTitle}}</view>
+    <view class="card key-card">
+      <view class="key-shadow" style="background: linear-gradient(180deg, {{theme.secondary}} 3%, {{theme.shadow}} 95%, white)"></view>
+      <view class="key-hd">
+        <view class="key-title-row">
+          <text class="key-title">{{copy.keyTitle}}</text>
+          <image class="key-icon" src="{{keyIcon}}" mode="aspectFit" aria-hidden="true" />
+        </view>
+        <view class="push-row">
+          <text class="push-label">{{copy.reminderTitle}}</text>
+          <view class="push-switch">
+            <switch
+              checked="{{reminderEnabled}}"
+              color="{{theme.themeColor}}"
+              disabled="{{acting}}"
+              bindchange="onTogglePush"
+            />
+          </view>
+        </view>
+      </view>
       <view class="key-code-row">
         <text class="key-code">{{family.inviteCode}}</text>
         <text
-          class="key-copy"
-          style="color: {{theme.themeColor}};"
+          class="key-copy theme-text"
           hover-class="press"
           bind:tap="onCopyCode"
         >{{copy.keyCopy}}</text>
@@ -33,50 +49,42 @@
       <view class="key-hint">{{copy.keyHint}}</view>
     </view>
 
-    <view class="card glass {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="card-title tools-title">{{copy.homeTools}}</view>
-      <view class="tool-grid">
-        <view class="tool" hover-class="tool-hover" bind:tap="goSpaces">
-          <view class="tool-icon"></view>
-          <view class="tool-name">{{copy.spacesTitle}}</view>
-        </view>
-        <view class="tool" hover-class="tool-hover" bind:tap="goTags">
-          <view class="tool-icon"></view>
-          <view class="tool-name">{{copy.tagsTitle}}</view>
-        </view>
-        <view class="tool" hover-class="tool-hover" bind:tap="goMessages">
-          <view class="tool-icon"></view>
-          <view class="tool-name">{{copy.messagesTitle}}</view>
-        </view>
-        <view class="tool" hover-class="tool-hover" bind:tap="openMoodSheet">
-          <view class="tool-icon"></view>
-          <view class="tool-name">{{copy.wallTitle}}</view>
-        </view>
-        <view class="tool" hover-class="tool-hover" bind:tap="onReminderTap">
-          <view class="tool-icon"></view>
-          <view class="tool-name">{{copy.reminderTitle}}</view>
-        </view>
+    <view class="tool-grid">
+      <view class="tool" hover-class="tool-hover" bind:tap="goSpaces">
+        <image class="tool-icon" src="/assets/space.png" mode="aspectFit" />
+        <view class="tool-name">{{copy.spacesTitle}}</view>
+      </view>
+      <view class="tool" hover-class="tool-hover" bind:tap="goTags">
+        <image class="tool-icon" src="/assets/tag.png" mode="aspectFit" />
+        <view class="tool-name">{{copy.tagsTitle}}</view>
+      </view>
+      <view class="tool" hover-class="tool-hover" bind:tap="goMessages">
+        <image class="tool-icon" src="/assets/message.png" mode="aspectFit" />
+        <view class="tool-name">{{copy.messagesTitle}}</view>
+      </view>
+      <view class="tool" hover-class="tool-hover" bind:tap="openMoodSheet">
+        <image class="tool-icon" src="/assets/theme.png" mode="aspectFit" />
+        <view class="tool-name">{{copy.wallTitle}}</view>
       </view>
     </view>
 
-    <view class="card glass {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="card-hd">
-        <view class="card-title homes-title">{{copy.myHomes}}</view>
-        <view class="hd-links">
-          <view
-            class="hd-link {{panel === 'create' ? 'on' : ''}}"
-            style="color: {{theme.themeColor}};"
-            hover-class="press"
-            data-panel="create"
-            bind:tap="openPanel"
-          >{{copy.createAnother}}</view>
-          <view
-            class="hd-link {{panel === 'join' ? 'on' : ''}}"
-            style="color: {{theme.themeColor}};"
-            hover-class="press"
-            data-panel="join"
-            bind:tap="openPanel"
-          >{{copy.joinAnother}}</view>
+    <view class="card homes-card">
+      <view class="card-title homes-title">{{copy.myHomes}}</view>
+
+      <view class="home-list">
+        <view
+          class="home-item {{item.isCurrent ? 'on' : ''}}"
+          wx:for="{{families}}"
+          wx:key="_id"
+          hover-class="home-hover"
+          data-id="{{item._id}}"
+          bind:tap="onSwitchFamily"
+        >
+          <view class="home-mark {{item.isCurrent ? 'on' : ''}}"></view>
+          <view class="home-body">
+            <view class="home-name">{{item.name}}</view>
+            <view class="home-sub">{{copy.chipHere}} / {{item.memberCount || 0}}人</view>
+          </view>
         </view>
       </view>
 
@@ -90,8 +98,7 @@
           maxlength="20"
         />
         <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-        <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
-        <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
+        <view class="pill-btn theme-btn" bind:tap="onCreate">{{copy.createSubmit}}</view>
       </view>
 
       <view class="form" wx:if="{{panel === 'join'}}">
@@ -104,33 +111,29 @@
           maxlength="6"
         />
         <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-        <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onJoin">{{copy.joinSubmit}}</view>
-        <view class="text-btn muted" bind:tap="closePanel">{{copy.dismissPanel}}</view>
+        <view class="pill-btn theme-btn" bind:tap="onJoin">{{copy.joinSubmit}}</view>
       </view>
 
-      <view class="home-list">
+      <view class="home-actions">
         <view
-          class="home-item {{item.isCurrent ? 'on' : ''}}"
-          wx:for="{{families}}"
-          wx:key="_id"
-          hover-class="home-hover"
-          data-id="{{item._id}}"
-          bind:tap="onSwitchFamily"
-        >
-          <view class="home-mark" style="{{item.isCurrent ? 'background:' + theme.themeColor : ''}}"></view>
-          <view class="home-body">
-            <view class="home-name">{{item.name}}</view>
-            <view class="home-sub">{{copy.chipHere}} /{{item.memberCount || 0}}人</view>
-          </view>
-        </view>
+          class="outline-btn theme-text theme-border {{panel === 'create' ? 'on' : ''}}"
+          hover-class="press"
+          data-panel="create"
+          bind:tap="openPanel"
+        >{{copy.createAnother}}</view>
+        <view
+          class="outline-btn theme-text theme-border {{panel === 'join' ? 'on' : ''}}"
+          hover-class="press"
+          data-panel="join"
+          bind:tap="openPanel"
+        >{{copy.joinAnother}}</view>
       </view>
     </view>
 
-    <view class="leave-spacer"></view>
-    <view class="leave-bar">
+    <view class="actions-spacer"></view>
+    <view class="actions">
       <view
-        class="leave-btn"
-        style="background: {{theme.themeColor}};"
+        class="leave-btn theme-btn"
         hover-class="leave-hover"
         bind:tap="onLeave"
       >{{family.isOwner ? copy.leaveOwner : copy.leaveMember}}</view>
@@ -145,7 +148,7 @@
   overlay="{{true}}"
   z-index="100"
   overlay-style="background: rgba(20, 16, 12, 0.28);"
-  custom-style="height: 72vh; background: #ffffff;"
+  custom-style="height: 56vh; background: #ffffff;"
   bind:clickoverlay="closeMoodSheet"
   bind:beforeleave="closeMoodSheet"
 >
@@ -155,47 +158,30 @@
       <view class="sheet-close" bind:tap="closeMoodSheet">×</view>
     </view>
     <scroll-view class="sheet-body" scroll-y>
-      <view class="label">{{copy.gradient}}</view>
+      <view class="label">{{copy.themePick}}</view>
       <view class="preset-row">
         <view
-          class="preset-chip {{theme && theme.background && theme.background.type === 'gradient' && theme.background.value === item.value ? 'on' : ''}}"
-          wx:for="{{gradients}}"
+          class="preset-chip {{theme && theme.id === item.id ? 'on' : ''}}"
+          wx:for="{{themes}}"
           wx:key="id"
-          style="background: {{item.value}};"
-          data-value="{{item.value}}"
-          bind:tap="onPickGradient"
+          data-id="{{item.id}}"
+          bind:tap="onPickTheme"
         >
-          <text class="preset-label">{{item.label}}</text>
-        </view>
-      </view>
-      <view class="label spaced">{{copy.solid}}</view>
-      <view class="preset-row">
-        <view
-          class="preset-dot {{theme && theme.background && theme.background.type === 'solid' && theme.background.value === item.value ? 'on' : ''}}"
-          wx:for="{{solids}}"
-          wx:key="id"
-          style="background: {{item.value}}; {{theme && theme.background && theme.background.type === 'solid' && theme.background.value === item.value ? 'box-shadow: 0 0 0 4rpx #fff, 0 0 0 8rpx ' + theme.themeColor : ''}}"
-          data-value="{{item.value}}"
-          bind:tap="onPickSolid"
-        />
-      </view>
-      <view class="label spaced">照片</view>
-      <view
-        class="photo-upload {{theme.isPhoto && theme.bgImage ? 'has-photo' : ''}}"
-        style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
-        hover-class="photo-upload-hover"
-        bind:tap="onPickImage"
-      >
-        <block wx:if="{{theme.isPhoto && theme.bgImage}}">
-          <image class="photo-preview" src="{{theme.bgImage}}" mode="aspectFill" />
-          <view class="photo-preview-mask">
-            <view class="photo-upload-title">{{copy.photoReplace}}</view>
+          <view class="preset-chip-bg">
+            <ThemeRadialBg
+              primary="{{item.primary}}"
+              secondary="{{item.secondary}}"
+              shadow="{{item.shadow}}"
+            />
           </view>
-        </block>
-        <block wx:else>
-          <view class="photo-upload-title">{{copy.pickPhoto}}</view>
-          <view class="photo-upload-hint">{{copy.pickPhotoHint}}</view>
-        </block>
+          <text class="preset-label">{{item.label}}</text>
+          <view
+            class="preset-check"
+            wx:if="{{theme && theme.id === item.id}}"
+            style="color: {{theme.primary}};"
+            aria-hidden="true"
+          ></view>
+        </view>
       </view>
       <view class="sheet-pad"></view>
     </scroll-view>
