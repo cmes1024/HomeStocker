@@ -1,7 +1,9 @@
 # AI 对话助手 — 设计文档（V1）
 
-> 日期：2026-09-07 | 状态：需求讨论已收敛，待转 OpenSpec change / 进入实现
-> 关联文档：`docs/PRD-家庭物资管理小程序.md`（v1.2）、`docs/技术架构-家庭物资管理小程序.md`（v1.1）
+> 日期：2026-09-07 | 状态：**后置，未实现**  
+> 这是半屏聊天 + LangChain/LangGraph 查询与一句话录入。  
+> **不要和 09-16 的 `packageAi` 拍照录入搞混**：录入向导已合代码（归档 `openspec/changes/archive/2026-09-17-package-ai-item-capture/`），对话查询仍后接。  
+> 当前范围：[`2026-09-17-phase1-status.md`](./2026-09-17-phase1-status.md)
 
 ---
 

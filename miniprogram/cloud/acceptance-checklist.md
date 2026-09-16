@@ -1,4 +1,6 @@
-# MVP + 空间/位置 + A/B/C 波 + AI 分包 验收清单
+# 部署与回归验收清单
+
+对照 `docs/plans/2026-09-17-phase1-status.md`。AI 真机项见 `docs/plans/2026-09-16-package-ai-capture/验收.md`（未勾）。口袋页无入口，不列入主路径。
 
 部署前：按 `collections.md`「换环境部署：集合与索引」建齐集合/索引、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify` / `ai`（云端安装依赖）。  
 AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数超时 60s、允许出网。语音转写走微信服务市场「一句话识别」（公众平台开通，不是插件市场）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。

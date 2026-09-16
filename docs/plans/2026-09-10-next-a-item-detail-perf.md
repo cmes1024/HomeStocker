@@ -1,9 +1,9 @@
 # A 波设计：物品详情、氛围清理、性能
 
 > 日期：2026-09-10  
-> 状态：已确认  
+> 状态：**已落地**  
 > 路线总览：`2026-09-10-next-abcd-roadmap.md`  
-> OpenSpec：`openspec/changes/item-detail-atmosphere-perf/`
+> OpenSpec 归档：`openspec/changes/archive/2026-09-17-item-detail-atmosphere-perf/`
 
 ---
 

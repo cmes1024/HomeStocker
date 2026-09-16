@@ -36,8 +36,12 @@ Item create and update MUST accept zero or more tag ids that belong to the curre
 - **THEN** the system rejects the write and does not partially apply that tag set
 
 ### Requirement: Filter ledger by tag
-The family ledger MUST allow filtering the item list by a selected tag. Clearing the filter MUST restore the unfiltered ledger list for the current family.
+The item domain list/search API MUST accept an optional tag id and return only current-family items that include that tag. The family ledger UI currently filters by space; a visible tag filter on the ledger is deferred. Clearing a tag filter, when present, MUST restore the unfiltered (or space-only) ledger list.
 
-#### Scenario: Filter by one tag
-- **WHEN** a member selects a tag filter on the ledger
-- **THEN** the system shows only items in the current family that include that tag id
+#### Scenario: API filter by one tag
+- **WHEN** a member (or Agent) requests the item list with a tag id for the current family
+- **THEN** the system returns only items that include that tag id
+
+#### Scenario: Ledger UI has no tag chips yet
+- **WHEN** a member uses only the family ledger UI
+- **THEN** they can still attach tags on create/edit and see tag names on detail, without a required tag-filter control on the home list

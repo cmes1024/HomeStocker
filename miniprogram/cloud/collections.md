@@ -1,6 +1,6 @@
-# CloudBase 集合与索引（MVP + 空间/位置 + B 波标签/保质期 + C 波家庭消息 + AI 分包）
+# CloudBase 集合与索引
 
-对齐 `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`、`docs/plans/2026-09-10-next-spaces-locations.md` 与 `docs/plans/2026-09-10-next-abcd-roadmap.md`（B/C 波）。
+对齐代码与 `docs/plans/2026-09-17-phase1-status.md`。历史方案：MVP / 空间 / A→B→C / AI 分包。换环境步骤以本文为准。
 
 ## 集合
 
@@ -277,7 +277,7 @@
 
 - 可加入多个家庭；create 始终允许；join 仅当已是**该**家庭成员时返回 `ALREADY_IN_FAMILY`
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
-- `updateBackground` 更新当前家庭背景（渐变 / 纯色 / 云存储图片）；主题写入 `globalData.theme`，**全站页面**共用同一背景与强调色
+- `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
 - 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图写一律云函数
