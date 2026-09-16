@@ -1,5 +1,6 @@
 const { callActivity } = require('../../utils/cloud')
 const { bindThemeToPage } = require('../../utils/theme')
+const { formatActivityLine } = require('../../utils/activityLine')
 const copy = require('../../utils/copy')
 
 function formatRelativeTime(ts) {
@@ -20,27 +21,11 @@ function formatRelativeTime(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-function actionVerb(action) {
-  if (action === 'create') return copy.messages.actionCreate
-  if (action === 'update') return copy.messages.actionUpdate
-  if (action === 'remove') return copy.messages.actionRemove
-  return copy.messages.actionUpdate
-}
-
 function mapRows(list) {
   return (list || []).map((row) => {
-    const actor =
-      (row.actorNickname && String(row.actorNickname).trim()) ||
-      copy.messages.actorFallback
-    const verb = actionVerb(row.action)
-    const name = row.itemName || copy.messages.unnamedItem
-    let line = `${actor} ${verb} ${name}`
-    if (row.action === 'update' && row.summary) {
-      line = `${line}（${row.summary}）`
-    }
     return {
       _id: row._id,
-      line,
+      line: formatActivityLine(row, copy.messages),
       timeLabel: formatRelativeTime(row.createdAt),
       itemId: row.itemId,
       action: row.action
@@ -56,11 +41,11 @@ Page({
     error: '',
     rows: [],
     theme: null,
-    headerTitle: ''
+    headerTitle: copy.messages.title
   },
 
   onShow() {
-    bindThemeToPage(this, { headerTitle: '' })
+    bindThemeToPage(this, { headerTitle: copy.messages.title })
     this.load()
   },
 

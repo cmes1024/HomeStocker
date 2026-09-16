@@ -237,11 +237,6 @@
   line-height: 1.35;
 }
 
-.form {
-  margin-top: 8rpx;
-  padding: 16rpx 0 8rpx;
-}
-
 .home-actions {
   display: flex;
   align-items: center;
@@ -262,10 +257,6 @@
   font-size: 28rpx;
   font-weight: 500;
   background: #ffffff;
-}
-
-.outline-btn.on {
-  background: var(--theme-shadow);
 }
 
 .actions-spacer {
@@ -309,6 +300,93 @@
 
 .press {
   opacity: 0.6;
+}
+
+.modal-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+  box-sizing: border-box;
+}
+
+.modal {
+  width: 100%;
+  max-width: 620rpx;
+  padding: 48rpx 40rpx 36rpx;
+  border-radius: 32rpx;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.modal-title {
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.modal-input {
+  margin-top: 40rpx;
+  width: 100%;
+  height: 80rpx;
+  padding: 0 28rpx;
+  border-radius: 16rpx;
+  border: 2rpx solid var(--theme-primary);
+  background: #ffffff;
+  box-sizing: border-box;
+  font-size: 28rpx;
+  color: #1a1a1a;
+}
+
+.modal-error {
+  color: var(--error-color, #fa5151);
+  font-size: 24rpx;
+  margin: 12rpx 0 0;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 40rpx;
+}
+
+.modal-btn {
+  flex: 1;
+  min-width: 0;
+  height: 80rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.modal-btn.ghost {
+  color: var(--theme-primary);
+  background: #ffffff;
+  border: 2rpx solid var(--theme-primary);
+}
+
+.modal-btn.primary {
+  color: #ffffff;
+  border: none;
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary) 0%,
+    var(--theme-secondary) 100%
+  );
 }
 
 .sheet {
@@ -423,20 +501,6 @@
   border-right: 4rpx solid currentColor;
   border-bottom: 4rpx solid currentColor;
   transform: rotate(45deg);
-}
-
-.input {
-  background: #f4f6f8;
-  border-radius: 24rpx;
-  padding: 24rpx 28rpx;
-  font-size: 28rpx;
-  border: 2rpx solid rgba(26, 26, 26, 0.04);
-}
-
-.form-error {
-  color: #fa5151;
-  font-size: 24rpx;
-  margin-top: 16rpx;
 }
 
 .pill-btn {

@@ -35,10 +35,14 @@ Page({
     family: null,
     families: [],
     acting: false,
-    panel: '',
-    familyNameInput: '',
-    inviteCode: '',
-    formError: '',
+    showModal: false,
+    modalMode: 'create',
+    modalTitle: copy.family.createModalTitle,
+    modalPlaceholder: copy.family.createNamePlaceholder,
+    modalValue: '',
+    modalMaxlength: 20,
+    modalConfirm: copy.family.createSubmit,
+    modalError: '',
     themes: THEME_PRESETS,
     theme: null,
     headerTitle: '',
@@ -87,8 +91,6 @@ Page({
         family,
         families: listed.list || [],
         loading: false,
-        panel: '',
-        formError: '',
         theme,
         keyIcon: keyIconSrc(theme.primary),
         headerTitle: family.name || '家庭',
@@ -127,8 +129,6 @@ Page({
       keyIcon: keyIconSrc(theme.primary),
       headerTitle: family.name || '家庭',
       loading: false,
-      panel: '',
-      formError: '',
       reminderEnabled: family.expireReminderEnabled !== false
     })
   },
@@ -162,7 +162,7 @@ Page({
   },
 
   openMoodSheet() {
-    this.setData({ moodSheet: true, panel: '', formError: '' })
+    this.setData({ moodSheet: true })
   },
 
   closeMoodSheet() {
@@ -204,72 +204,84 @@ Page({
     }
   },
 
-  openPanel(e) {
-    const panel = e.currentTarget.dataset.panel || ''
-    if (this.data.panel === panel) {
-      this.setData({ panel: '', formError: '' })
-      return
-    }
+  openModal(e) {
+    if (this.data.acting) return
+    const mode = e.currentTarget.dataset.mode === 'join' ? 'join' : 'create'
+    const isJoin = mode === 'join'
     this.setData({
-      panel,
-      formError: '',
-      familyNameInput: '',
-      inviteCode: ''
+      showModal: true,
+      modalMode: mode,
+      modalTitle: isJoin ? copy.family.joinModalTitle : copy.family.createModalTitle,
+      modalPlaceholder: isJoin
+        ? copy.family.joinCodePlaceholder
+        : copy.family.createNamePlaceholder,
+      modalValue: '',
+      modalMaxlength: isJoin ? 6 : 20,
+      modalConfirm: isJoin ? copy.family.joinSubmit : copy.family.createSubmit,
+      modalError: ''
     })
   },
 
-  closePanel() {
-    this.setData({ panel: '', formError: '' })
+  closeModal() {
+    if (this.data.acting) return
+    this.setData({
+      showModal: false,
+      modalValue: '',
+      modalError: ''
+    })
   },
 
-  onNameInput(e) {
-    this.setData({ familyNameInput: e.detail.value })
+  noop() {},
+
+  onModalInput(e) {
+    let value = e.detail.value || ''
+    if (this.data.modalMode === 'join') value = value.toUpperCase()
+    this.setData({ modalValue: value, modalError: '' })
   },
 
-  onCodeInput(e) {
-    this.setData({ inviteCode: (e.detail.value || '').toUpperCase() })
+  async onSaveModal() {
+    if (this.data.modalMode === 'join') return this.onJoin()
+    return this.onCreate()
   },
 
   async onCreate() {
     if (this.data.acting) return
-    const name = (this.data.familyNameInput || '').trim()
+    const name = (this.data.modalValue || '').trim()
     if (!name) {
-      this.setData({ formError: copy.family.nameRequired })
+      this.setData({ modalError: copy.family.nameRequired })
       return
     }
-    this.setData({ acting: true, formError: '' })
+    this.setData({ acting: true, modalError: '' })
     try {
       const family = await callFamily('create', { name })
       setAppFamily(family)
+      this.setData({ showModal: false, modalValue: '', acting: false })
       wx.showToast({ title: '已创建', icon: 'success' })
       await this.load()
     } catch (e) {
-      this.setData({ formError: e.message || '创建失败' })
-    } finally {
-      this.setData({ acting: false })
+      this.setData({ acting: false, modalError: e.message || '创建失败' })
     }
   },
 
   async onJoin() {
     if (this.data.acting) return
-    const inviteCode = (this.data.inviteCode || '').trim().toUpperCase()
+    const inviteCode = (this.data.modalValue || '').trim().toUpperCase()
     if (!inviteCode) {
-      this.setData({ formError: copy.family.codeRequired })
+      this.setData({ modalError: copy.family.codeRequired })
       return
     }
-    this.setData({ acting: true, formError: '' })
+    this.setData({ acting: true, modalError: '' })
     try {
       const family = await callFamily('join', { inviteCode })
       setAppFamily(family)
+      this.setData({ showModal: false, modalValue: '', acting: false })
       wx.showToast({ title: '已加入', icon: 'success' })
       await this.load()
     } catch (e) {
       let msg = e.message || '加入失败'
       if (e.code === 'ALREADY_IN_FAMILY') msg = copy.family.alreadyIn
       if (e.code === 'INVALID_CODE') msg = copy.family.invalidCode
-      this.setData({ formError: msg })
-    } finally {
-      this.setData({ acting: false })
+      this.setData({ acting: false, modalError: msg })
     }
   },
 

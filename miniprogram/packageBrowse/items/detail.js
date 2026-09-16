@@ -2,6 +2,7 @@ const { callItem, callSpace, callTag, callActivity } = require('../../utils/clou
 const { listLocations } = require('../../utils/db')
 const { bindThemeToPage } = require('../../utils/theme')
 const { shelfLifeStatus } = require('../../utils/expireStatus')
+const { formatActivityLine } = require('../../utils/activityLine')
 const copy = require('../../utils/copy')
 
 function formatRelativeTime(ts) {
@@ -22,26 +23,11 @@ function formatRelativeTime(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
-function actionVerb(action) {
-  if (action === 'create') return copy.detail.actionCreate
-  if (action === 'update') return copy.detail.actionUpdate
-  if (action === 'remove') return copy.detail.actionRemove
-  return copy.detail.actionUpdate
-}
-
 function mapActivityRows(list) {
   return (list || []).map((row) => {
-    const actor =
-      (row.actorNickname && String(row.actorNickname).trim()) ||
-      copy.detail.actorFallback
-    const verb = actionVerb(row.action)
-    let line = `${actor} ${verb}`
-    if (row.action === 'update' && row.summary) {
-      line = `${line}（${row.summary}）`
-    }
     return {
       _id: row._id,
-      line,
+      line: formatActivityLine(row, copy.detail),
       timeLabel: formatRelativeTime(row.createdAt)
     }
   })

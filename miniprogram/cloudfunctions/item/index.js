@@ -238,7 +238,7 @@ async function resolveSpaceId(familyId, spaceId) {
 
 async function resolveLocationId(familyId, spaceId, locationId) {
   if (locationId === undefined || locationId === null || locationId === '') {
-    return { locationId: null }
+    return { locationId: null, location: null }
   }
   const snap = await db.collection('locations').doc(locationId).get().catch(() => null)
   if (!snap || !snap.data) {
@@ -247,7 +247,39 @@ async function resolveLocationId(familyId, spaceId, locationId) {
   if (snap.data.familyId !== familyId || snap.data.spaceId !== spaceId) {
     return { error: fail('INVALID_LOCATION', '位置不属于该空间') }
   }
-  return { locationId }
+  return { locationId, location: { _id: locationId, ...snap.data } }
+}
+
+async function snapshotPlace(familyId, spaceId, locationId, hints) {
+  const out = {
+    spaceId: spaceId || '',
+    spaceName: '',
+    locationId: locationId || '',
+    locationName: ''
+  }
+  try {
+    const spaceHint = hints && hints.space
+    if (spaceHint && spaceHint.name) {
+      out.spaceName = String(spaceHint.name)
+    } else if (spaceId) {
+      const snap = await db.collection('spaces').doc(spaceId).get().catch(() => null)
+      if (snap && snap.data && snap.data.familyId === familyId) {
+        out.spaceName = String(snap.data.name || '')
+      }
+    }
+    const locHint = hints && hints.location
+    if (locHint && locHint.name) {
+      out.locationName = String(locHint.name)
+    } else if (locationId) {
+      const snap = await db.collection('locations').doc(locationId).get().catch(() => null)
+      if (snap && snap.data && snap.data.familyId === familyId) {
+        out.locationName = String(snap.data.name || '')
+      }
+    }
+  } catch (e) {
+    console.warn('snapshotPlace failed', e)
+  }
+  return out
 }
 
 const ACTIVITY_FIELD_KEYS = [
@@ -395,14 +427,23 @@ async function createItem(openid, event) {
   } catch (e) {
     console.warn('syncExpireSub create failed', addRes._id, e)
   }
+  const place = await snapshotPlace(
+    ctx.familyId,
+    spaceRes.spaceId,
+    locRes.locationId,
+    { space: spaceRes.space, location: locRes.location }
+  )
   await appendActivity({
     familyId: ctx.familyId,
     itemId: addRes._id,
     action: 'create',
     actorOpenid: openid,
     itemName: name,
+    quantity,
+    unit,
     source,
-    createdAt: now
+    createdAt: now,
+    ...place
   })
   return ok({ _id: addRes._id, ...doc, expireReminderEnabled: mine })
 }
@@ -460,18 +501,23 @@ async function updateItem(openid, event) {
   const locationProvided = event.locationId !== undefined
 
   let nextSpaceId = snap.data.spaceId
+  let spaceHint = null
   if (spaceChanging) {
     const spaceRes = await resolveSpaceId(ctx.familyId, event.spaceId || null)
     if (spaceRes.error) return spaceRes.error
     nextSpaceId = spaceRes.spaceId
     patch.spaceId = nextSpaceId
+    spaceHint = spaceRes.space
   } else if (!nextSpaceId) {
     const spaceRes = await resolveSpaceId(ctx.familyId, null)
     if (spaceRes.error) return spaceRes.error
     nextSpaceId = spaceRes.spaceId
     patch.spaceId = nextSpaceId
+    spaceHint = spaceRes.space
   }
 
+  let nextLocationId = snap.data.locationId || null
+  let locHint = null
   if (locationProvided) {
     const locRes = await resolveLocationId(
       ctx.familyId,
@@ -480,9 +526,12 @@ async function updateItem(openid, event) {
     )
     if (locRes.error) return locRes.error
     patch.locationId = locRes.locationId
+    nextLocationId = locRes.locationId
+    locHint = locRes.location
   } else if (spaceChanging) {
     // Space changed without new location → clear stale pointer
     patch.locationId = null
+    nextLocationId = null
   } else if (snap.data.locationId) {
     // Validate existing location still matches space after backfill
     const locRes = await resolveLocationId(
@@ -492,6 +541,9 @@ async function updateItem(openid, event) {
     )
     if (locRes.error) {
       patch.locationId = null
+      nextLocationId = null
+    } else {
+      locHint = locRes.location
     }
   }
 
@@ -500,16 +552,23 @@ async function updateItem(openid, event) {
   const changedFields = computeChangedFields(snap.data, merged)
   if (changedFields.length) {
     const source = event.source === 'agent' ? 'agent' : 'ui'
+    const place = await snapshotPlace(ctx.familyId, nextSpaceId, nextLocationId, {
+      space: spaceHint,
+      location: locHint
+    })
     await appendActivity({
       familyId: ctx.familyId,
       itemId,
       action: 'update',
       actorOpenid: openid,
       itemName: merged.name || snap.data.name || '',
+      quantity: merged.quantity,
+      unit: merged.unit || '',
       changedFields,
       summary: summarizeChangedFields(changedFields),
       source,
-      createdAt: patch.updatedAt || Date.now()
+      createdAt: patch.updatedAt || Date.now(),
+      ...place
     })
   }
   const nextExpire = merged.expireDate
@@ -547,6 +606,12 @@ async function removeItem(openid, event) {
 
   const itemName = snap.data.name || ''
   const source = event.source === 'agent' ? 'agent' : snap.data.source === 'agent' ? 'agent' : 'ui'
+  const place = await snapshotPlace(
+    ctx.familyId,
+    snap.data.spaceId,
+    snap.data.locationId,
+    null
+  )
   await db.collection('items').doc(itemId).remove()
   await removeExpireSubsForItem(itemId).catch((e) => {
     console.warn('removeExpireSubsForItem failed', itemId, e)
@@ -558,7 +623,8 @@ async function removeItem(openid, event) {
     actorOpenid: openid,
     itemName,
     source,
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    ...place
   })
   return ok({ removed: true, itemId })
 }

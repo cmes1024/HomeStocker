@@ -88,6 +88,12 @@
 | `action` | string | `create` \| `update` \| `remove` |
 | `actorOpenid` | string | 操作者 |
 | `itemName` | string | 写入时物资名快照（删除后 feed 仍可读） |
+| `spaceId` | string | 可选；写入时空间 id |
+| `spaceName` | string | 写入时空间名快照（可空） |
+| `locationId` | string | 可选；写入时位置 id，无位置则为空 |
+| `locationName` | string | 写入时位置名快照（可空） |
+| `quantity` | number | 可选；`create` / `update` 时的数量快照 |
+| `unit` | string | 可选；`create` 时的单位快照 |
 | `changedFields` | string[] | 可选；`update` 时变更字段键（如 `name`、`quantity`） |
 | `summary` | string | 可选；中文变更摘要，供消息行展示 |
 | `source` | string | `ui` \| `agent` |

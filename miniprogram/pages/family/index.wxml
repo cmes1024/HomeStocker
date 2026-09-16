@@ -93,44 +93,18 @@
         </view>
       </view>
 
-      <view class="form" wx:if="{{panel === 'create'}}">
-        <view class="label">{{copy.createNameLabel}}</view>
-        <input
-          class="input"
-          placeholder="{{copy.createNamePlaceholder}}"
-          value="{{familyNameInput}}"
-          bindinput="onNameInput"
-          maxlength="20"
-        />
-        <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-        <view class="pill-btn theme-btn" bind:tap="onCreate">{{copy.createSubmit}}</view>
-      </view>
-
-      <view class="form" wx:if="{{panel === 'join'}}">
-        <view class="label">{{copy.joinCodeLabel}}</view>
-        <input
-          class="input"
-          placeholder="{{copy.joinCodePlaceholder}}"
-          value="{{inviteCode}}"
-          bindinput="onCodeInput"
-          maxlength="6"
-        />
-        <view class="form-error" wx:if="{{formError}}">{{formError}}</view>
-        <view class="pill-btn theme-btn" bind:tap="onJoin">{{copy.joinSubmit}}</view>
-      </view>
-
       <view class="home-actions">
         <view
-          class="outline-btn theme-text theme-border {{panel === 'create' ? 'on' : ''}}"
+          class="outline-btn theme-text theme-border"
           hover-class="press"
-          data-panel="create"
-          bind:tap="openPanel"
+          data-mode="create"
+          bind:tap="openModal"
         >{{copy.createAnother}}</view>
         <view
-          class="outline-btn theme-text theme-border {{panel === 'join' ? 'on' : ''}}"
+          class="outline-btn theme-text theme-border"
           hover-class="press"
-          data-panel="join"
-          bind:tap="openPanel"
+          data-mode="join"
+          bind:tap="openModal"
         >{{copy.joinAnother}}</view>
       </view>
     </view>
@@ -145,6 +119,27 @@
     </view>
   </block>
 </AppShell>
+
+<view class="modal-mask" wx:if="{{showModal}}" catch:tap="closeModal">
+  <view class="modal" catch:tap="noop">
+    <view class="modal-title">{{modalTitle}}</view>
+    <input
+      class="modal-input"
+      focus="{{showModal}}"
+      placeholder="{{modalPlaceholder}}"
+      value="{{modalValue}}"
+      bindinput="onModalInput"
+      maxlength="{{modalMaxlength}}"
+      confirm-type="done"
+      bindconfirm="onSaveModal"
+    />
+    <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
+    <view class="modal-actions">
+      <view class="modal-btn ghost" catch:tap="closeModal">{{common.cancel}}</view>
+      <view class="modal-btn primary" catch:tap="onSaveModal">{{modalConfirm}}</view>
+    </view>
+  </view>
+</view>
 
 <page-container
   show="{{moodSheet}}"

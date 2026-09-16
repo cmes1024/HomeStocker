@@ -2,6 +2,8 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{true}}"
+  plainBack="{{true}}"
+  flushBottom="{{true}}"
   primary="{{theme.primary}}"
   secondary="{{theme.secondary}}"
   shadow="{{theme.shadow}}"
@@ -13,62 +15,79 @@
 
   <view class="state" wx:elif="{{error}}">
     <view class="state-text error">{{error}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <block wx:else>
-    <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view class="kicker">{{copy.kicker}}</view>
-      <view class="title">{{copy.title}}</view>
-      <view class="sub">{{copy.sub}}</view>
-    </view>
+  <view class="page-col" wx:else>
+    <view class="panel">
+      <view class="intro">{{copy.sub}}</view>
 
-    <view class="space-grid {{theme.isPhoto ? 'on-photo' : ''}}">
-      <view
-        class="space-tile"
-        wx:for="{{spaces}}"
-        wx:key="_id"
-        data-id="{{item._id}}"
-        data-name="{{item.name}}"
-        bind:tap="goDetail"
-      >
-        <view class="space-name">{{item.name}}</view>
-        <view class="space-meta">{{item.isDefault ? copy.defaultMeta : copy.openMeta}}</view>
-        <view class="space-actions">
+      <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="space-grid">
           <view
-            class="link"
-            style="color: {{theme.themeColor}};"
+            class="space-tile"
+            wx:for="{{spaces}}"
+            wx:key="_id"
+            hover-class="press"
             data-id="{{item._id}}"
             data-name="{{item.name}}"
-            catch:tap="openRename"
-          >{{copy.rename}}</view>
-          <view
-            class="link danger"
-            wx:if="{{!item.isDefault}}"
-            data-id="{{item._id}}"
-            catch:tap="onRemove"
-          >{{copy.remove}}</view>
+            bind:tap="goDetail"
+          >
+            <view class="space-hd">
+              <text class="space-name">{{item.name}}</text>
+              <text class="space-default" wx:if="{{item.isDefault}}">{{copy.defaultMark}}</text>
+            </view>
+            <view class="space-ft">
+              <text class="space-look">{{copy.lookCta}}</text>
+              <view class="space-icons">
+                <view
+                  class="ico-btn"
+                  hover-class="press"
+                  data-id="{{item._id}}"
+                  data-name="{{item.name}}"
+                  catch:tap="openRename"
+                >
+                  <image class="ico" src="{{editIcon}}" mode="aspectFit" />
+                </view>
+                <view
+                  class="ico-btn"
+                  wx:if="{{!item.isDefault}}"
+                  hover-class="press"
+                  data-id="{{item._id}}"
+                  catch:tap="onRemove"
+                >
+                  <image class="ico" src="{{deleteIcon}}" mode="aspectFit" />
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
+      </scroll-view>
+
+      <view class="actions">
+        <view class="add-btn theme-btn" hover-class="press" bind:tap="openCreate">{{copy.createCta}}</view>
       </view>
     </view>
+  </view>
 
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{renamingId}}">
-      <view class="label">{{copy.renameTitle}}</view>
-      <input class="input" value="{{renameValue}}" bindinput="onRenameInput" maxlength="20" />
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRenameSave">{{copy.renameSave}}</view>
+  <view class="modal-mask" wx:if="{{showModal}}" catch:tap="closeModal">
+    <view class="modal" catch:tap="noop">
+      <view class="modal-title">{{modalTitle}}</view>
+      <input
+        class="modal-input"
+        focus="{{showModal}}"
+        placeholder="{{copy.createPlaceholder}}"
+        value="{{modalName}}"
+        bindinput="onModalName"
+        maxlength="20"
+        confirm-type="done"
+        bindconfirm="onSaveModal"
+      />
+      <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
+      <view class="modal-actions">
+        <view class="modal-btn ghost" catch:tap="closeModal">{{common.cancel}}</view>
+        <view class="modal-btn primary" catch:tap="onSaveModal">{{common.save}}</view>
+      </view>
     </view>
-
-    <view class="block {{theme.isPhoto ? 'on-photo' : ''}}" wx:if="{{showCreate}}">
-      <view class="label">{{copy.createLabel}}</view>
-      <input class="input" placeholder="{{copy.createPlaceholder}}" value="{{newName}}" bindinput="onNewName" maxlength="20" />
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onCreate">{{copy.createSubmit}}</view>
-    </view>
-
-    <view
-      class="pill-btn outline"
-      style="color: {{theme.themeColor}}; border-color: {{theme.themeColor}};"
-      wx:if="{{!showCreate}}"
-      bind:tap="openCreate"
-    >{{copy.createCta}}</view>
-  </block>
+  </view>
 </AppShell>
