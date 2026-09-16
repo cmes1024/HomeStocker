@@ -1,14 +1,4 @@
-function friendlyCloudError(e) {
-  const msg = (e && (e.errMsg || e.message)) || ''
-  if (
-    msg.includes('FUNCTION_NOT_FOUND') ||
-    msg.includes('-501000') ||
-    msg.includes('FunctionName parameter could not be found')
-  ) {
-    return '找不到云函数 family。控制台若已部署，多半是云环境不一致：请到云开发「设置」复制环境 ID，填入 utils/cloudbase-env.js 的 envId 后重新编译'
-  }
-  return msg || '网络或云开发异常'
-}
+const { callFamily, friendlyCloudError } = require('./cloud')
 
 /**
  * 读 App 全局家庭缓存。onboarding / 切家 / 离家会写 globalData.family。
@@ -33,36 +23,23 @@ function getCachedSession() {
 let inflight = null
 
 async function fetchSession() {
-  let res
   try {
-    res = await wx.cloud.callFunction({
-      name: 'family',
-      data: { action: 'getMyFamily' }
-    })
-  } catch (e) {
-    const err = new Error(friendlyCloudError(e))
-    err.code = 'CLOUD_CALL_FAILED'
-    err.cause = e
-    throw err
-  }
-  const result = (res && res.result) || {}
-  if (result.ok) {
+    const family = await callFamily('getMyFamily')
     return {
       hasFamily: true,
-      family: result.data,
-      currentFamilyId: result.data._id
+      family,
+      currentFamilyId: family._id
     }
-  }
-  if (result.code === 'NO_FAMILY') {
-    return {
-      hasFamily: false,
-      family: null,
-      currentFamilyId: null
+  } catch (e) {
+    if (e.code === 'NO_FAMILY') {
+      return {
+        hasFamily: false,
+        family: null,
+        currentFamilyId: null
+      }
     }
+    throw e
   }
-  const err = new Error(result.message || '会话初始化失败')
-  err.code = result.code || 'SESSION_ERROR'
-  throw err
 }
 
 /**

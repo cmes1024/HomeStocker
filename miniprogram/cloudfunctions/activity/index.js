@@ -86,6 +86,24 @@ async function listActivities(openid, event) {
   return ok({ list: enriched })
 }
 
+/** 物资域水位：只取最新一条的 id / createdAt，不查昵称。 */
+async function cursorActivities(openid) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  const res = await db
+    .collection('activities')
+    .where({ familyId: ctx.familyId })
+    .orderBy('createdAt', 'desc')
+    .limit(1)
+    .get()
+  const row = (res.data && res.data[0]) || null
+  return ok({
+    _id: row ? row._id : '',
+    createdAt: row ? Number(row.createdAt) || 0 : 0
+  })
+}
+
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) return fail('NO_OPENID', '无法识别用户')
@@ -94,6 +112,8 @@ exports.main = async (event) => {
   switch (action) {
     case 'list':
       return await listActivities(OPENID, event || {})
+    case 'cursor':
+      return await cursorActivities(OPENID)
     default:
       return fail('UNKNOWN_ACTION', '未知操作')
   }

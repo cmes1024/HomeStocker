@@ -93,7 +93,7 @@
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 
-仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。个人订阅开关不写 activities。
+仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。水位探针走 `activity.cursor`（最新一条的 `_id` / `createdAt`，不查昵称）。个人订阅开关不写 activities。
 
 ### `itemExpireSubs`
 

@@ -9,6 +9,7 @@ const { setStorage } = require("./utils/storage")
 const { getParamsFormWxacode } = require("./utils/util")
 const { envId: cloudEnvId } = require("./utils/cloudbase-env")
 const { getThemeColors } = require("./utils/theme")
+const { markAppHidden, markAppShown } = require("./utils/cloud")
 
 const env = "prod"
 
@@ -49,11 +50,15 @@ App({
     wx.offCopyUrl()
   },
   onShow(options) {
+    markAppShown()
     if (options?.query) {
       const { scene } = getParamsFormWxacode(options.query);
       scene && setStorage('EnterScene', scene)
     }
     autoUpdate();
+  },
+  onHide() {
+    markAppHidden()
   },
   onError: function (error) { },
   onUnload: function () {
