@@ -1,7 +1,7 @@
-# MVP + 空间/位置 + A/B/C 波 验收清单
+# MVP + 空间/位置 + A/B/C 波 + AI 分包 验收清单
 
-部署前：按 `collections.md`「换环境部署：集合与索引」建齐集合/索引、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify`（云端安装依赖）。  
-B 波另需：订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
+部署前：按 `collections.md`「换环境部署：集合与索引」建齐集合/索引、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify` / `ai`（云端安装依赖）。  
+AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数超时 60s、允许出网。语音转写走微信服务市场「一句话识别」（公众平台开通，不是插件市场）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
 
 ## 闭环（原 MVP）
 
@@ -77,9 +77,41 @@ B 波另需：订阅消息模板已配置为「商品过期提醒」`_oheW_…Ai
 - [ ] 切换家庭后消息流只显示当前家；非成员读不到他家活动
 - [ ] 解散家庭后 `activities` 一并清理
 
+## AI 分包：入口与隔离
+
+- [ ] 物资首页有 AI 浮窗，能进入 `packageAi`，返回后清单筛选/数据与进入前一致
+- [ ] 编辑物资、详情、空间、标签、消息页无 AI 逻辑、无新依赖
+- [ ] 产品 `app.json` 主包 pages 列表不恢复 `pages/chat`
+- [ ] 分包失败或未部署时，浮窗有失败提示，不能拖垮首页 `onShow`
+
+## AI 分包：密钥
+
+- [ ] 添加 key 只需粘贴密钥（可选名称），不出现 baseUrl / 模型输入框
+- [ ] `listKeys` 与页面只有掩码，没有完整 key
+- [ ] 家庭成员 B 能使用成员 A 配置的 key 完成一次识别
+- [ ] 默认一把；删掉默认后仍剩的 key 会有新默认
+- [ ] 第四把添加失败
+- [ ] 无 key 时开始识别有明确引导，不出现 Axios 堆栈
+
+## AI 分包：采集 / 识别 / 入账
+
+- [ ] 可多选照片，一行一个缩略图；每行独立语音，转写可手改
+- [ ] 只有图没有字的行不出现在识别结果里；全部行为空文字时不能发起识别
+- [ ] 两行有效文字一次识别得到两张卡片，index 与照片对应正确
+- [ ] 说到已有空间/位置名称时，保存用的是目录 id；不存在的位置会新建；不会自动新建空间或标签
+- [ ] 确认录入写入未放弃项，`items.source === 'agent'`；放弃本次则零写入、零上传
+- [ ] 回到首页能看到新物资（不要求看到照片）；家庭消息出现对应 create 记录
+- [ ] 名称为空的卡片不能被写入；连续两件时第二件失败则第一件已存在
+
+## AI 分包：解散清理
+
+- [ ] 解散家庭后该家 `familyAiKeys`、`itemMedia` 被清掉
+- [ ] 普通成员离开不影响家里剩余成员继续用 key
+- [ ] 切换家庭后，识别与密钥列表作用于新的当前家
+
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
@@ -87,5 +119,5 @@ B 波另需：订阅消息模板已配置为「商品过期提醒」`_oheW_…Ai
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`；AI 采集与密钥在分包 `packageAi`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航

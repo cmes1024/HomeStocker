@@ -153,6 +153,31 @@
   text-align: center;
 }
 
+.ai-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 24rpx;
+  padding: 28rpx 32rpx;
+  border-radius: 32rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 6rpx 40rpx 0 var(--theme-shadow);
+  box-sizing: border-box;
+}
+
+.ai-row-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.ai-row-chevron {
+  font-size: 36rpx;
+  font-weight: 300;
+  color: rgba(26, 26, 26, 0.35);
+  line-height: 1;
+}
+
 .homes-card {
   padding: 32rpx 32rpx 36rpx;
 }

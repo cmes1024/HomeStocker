@@ -17,8 +17,21 @@
         "items/detail",
         "pockets/index"
       ]
+    },
+    {
+      "root": "packageAi",
+      "name": "ai",
+      "pages": [
+        "capture/index",
+        "keys/index"
+      ]
     }
   ],
+  "permission": {
+    "scope.record": {
+      "desc": "把你说的物品信息转成文字，方便录入家庭物资"
+    }
+  },
   "preloadRule": {
     "pages/family/index": {
       "network": "wifi",
@@ -28,7 +41,6 @@
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
     "ThemeRadialBg": "/components/ThemeRadialBg/index",
-    "ThemeProvider": "/components/ThemeProvider/index",
     "loading": "/components/loading/index",
     "mask-element": "/components/maskElement/index"
   },
@@ -38,6 +50,7 @@
     "navigationBarBackgroundColor": "#ffffff",
     "navigationStyle": "custom"
   },
+  "servicemarket": true,
   "style": "v2",
   "componentFramework": "glass-easel",
   "sitemapLocation": "sitemap.json",

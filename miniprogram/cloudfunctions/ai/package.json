@@ -1,0 +1,10 @@
+{
+  "name": "ai",
+  "version": "1.0.0",
+  "description": "家庭 AI：DeepSeek 密钥、物资抽取、旁路挂图",
+  "main": "index.js",
+  "dependencies": {
+    "wx-server-sdk": "~2.6.3",
+    "axios": "^1.6.0"
+  }
+}

@@ -1,0 +1,70 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  plainBack="{{true}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
+  lightHeader="{{theme.lightHeader}}"
+>
+  <view class="state" wx:if="{{loading}}">
+    <view class="state-text">{{copy.keysTitle}}</view>
+  </view>
+
+  <view class="state" wx:elif="{{error}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="page" wx:else>
+    <view class="hero">
+      <view class="kicker">{{copy.keysKicker}}</view>
+      <view class="title">{{copy.keysTitle}}</view>
+      <view class="sub">{{copy.keysHint}}</view>
+    </view>
+
+    <view class="form">
+      <input
+        class="input"
+        password
+        placeholder="{{copy.keyPlaceholder}}"
+        value="{{apiKey}}"
+        bindinput="onKeyInput"
+      />
+      <input
+        class="input"
+        placeholder="{{copy.keyLabelPlaceholder}}"
+        value="{{label}}"
+        maxlength="20"
+        bindinput="onLabelInput"
+      />
+      <view class="pill-btn theme-btn" bind:tap="onAdd">{{copy.addKey}}</view>
+    </view>
+
+    <view class="empty" wx:if="{{keys.length === 0}}">
+      <view class="empty-title">{{copy.noKeys}}</view>
+    </view>
+
+    <view class="list" wx:else>
+      <view class="row" wx:for="{{keys}}" wx:key="_id">
+        <view class="row-body">
+          <view class="row-name">
+            {{item.label}}
+            <text class="badge" wx:if="{{item.isDefault}}">{{copy.defaultBadge}}</text>
+          </view>
+          <view class="row-hint">{{item.keyHint}}</view>
+        </view>
+        <view class="row-actions">
+          <view
+            class="text-btn theme-text"
+            wx:if="{{!item.isDefault}}"
+            data-id="{{item._id}}"
+            bind:tap="onSetDefault"
+          >{{copy.setDefault}}</view>
+          <view class="text-btn danger" data-id="{{item._id}}" bind:tap="onRemove">{{copy.removeKey}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+</AppShell>

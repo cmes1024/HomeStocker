@@ -304,5 +304,14 @@ Page({
 
   goMessages() {
     wx.navigateTo({ url: '/pages/family/messages' })
+  },
+
+  goAiCapture() {
+    wx.navigateTo({
+      url: '/packageAi/capture/index',
+      fail: () => {
+        wx.showToast({ title: copy.ai.fabFail, icon: 'none' })
+      }
+    })
   }
 })

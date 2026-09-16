@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "AI 额度",
+  "usingComponents": {
+    "AppShell": "/components/AppShell/index",
+    "ThemeRadialBg": "/components/ThemeRadialBg/index"
+  }
+}

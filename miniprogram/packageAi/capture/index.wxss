@@ -1,0 +1,399 @@
+.page {
+  padding-bottom: 24rpx;
+}
+
+.hero {
+  margin: 8rpx 0 24rpx;
+  padding: 28rpx;
+  border-radius: 28rpx;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.kicker {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin-bottom: 8rpx;
+}
+
+.title {
+  font-size: 44rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 10rpx;
+}
+
+.sub {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.45;
+}
+
+.banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+  padding: 20rpx 24rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.banner-text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #1a1a1a;
+}
+
+.row-card {
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 20rpx;
+  padding: 20rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+  box-sizing: border-box;
+}
+
+.thumb {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+  background: rgba(26, 26, 26, 0.06);
+}
+
+.row-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.row-input {
+  width: 100%;
+  min-height: 72rpx;
+  padding: 8rpx 0;
+  font-size: 26rpx;
+  line-height: 1.45;
+  color: #1a1a1a;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.voice-btn {
+  height: 56rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  font-size: 24rpx;
+  color: #333;
+  background: rgba(26, 26, 26, 0.06);
+  display: flex;
+  align-items: center;
+}
+
+.voice-btn.on {
+  color: #fff;
+}
+
+.text-btn {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.text-btn.danger {
+  color: rgba(250, 81, 81, 0.9);
+}
+
+.add-row {
+  height: 80rpx;
+  border-radius: 20rpx;
+  border-width: 2rpx;
+  border-style: dashed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.card-name {
+  font-size: 40rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  margin-bottom: 16rpx;
+}
+
+.error {
+  font-size: 26rpx;
+  color: #fa5151;
+  padding: 8rpx 0 16rpx;
+}
+
+.abandon {
+  flex-shrink: 0;
+  margin: 8rpx 0 4rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: rgba(26, 26, 26, 0.55);
+  background: rgba(26, 26, 26, 0.05);
+}
+
+.abandon.on {
+  color: #fa5151;
+  background: rgba(250, 81, 81, 0.12);
+}
+
+.text-link {
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.back-link {
+  text-align: center;
+  padding: 8rpx 0 0;
+  color: rgba(26, 26, 26, 0.5);
+}
+
+.preview-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 8;
+  background: rgba(26, 26, 26, 0.42);
+}
+
+.preview-stage {
+  position: relative;
+  z-index: 9;
+  margin: 0 -32rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-hd {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 8rpx 32rpx 8rpx;
+}
+
+.preview-hd .kicker {
+  color: rgba(255, 255, 255, 0.78);
+  margin-bottom: 6rpx;
+}
+
+.preview-swipe {
+  margin-top: 0;
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.preview-count {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.92);
+  padding-bottom: 4rpx;
+}
+
+.preview-swiper {
+  width: 100%;
+  height: calc(100vh - 400rpx);
+  min-height: 640rpx;
+  margin-top: 8rpx;
+}
+
+.float-wrap {
+  height: 60vh;
+  padding: 8rpx 16rpx 20rpx;
+  box-sizing: border-box;
+}
+
+.slip {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 8rpx 32rpx 16rpx;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 18rpx 48rpx rgba(26, 26, 26, 0.22);
+  box-sizing: border-box;
+}
+
+.slip-scroll {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}
+
+.slip.dim {
+  opacity: 0.55;
+}
+
+.slip.saved {
+  opacity: 0.78;
+}
+
+.slip-hd {
+  padding: 20rpx 0 8rpx;
+}
+
+.slip-thumb {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 16rpx;
+  background: rgba(26, 26, 26, 0.06);
+}
+
+.field {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid var(--theme-primary-30);
+}
+
+.field.last {
+  border-bottom: none;
+}
+
+.label {
+  flex-shrink: 0;
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.45);
+  line-height: 1.45;
+}
+
+.value {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 28rpx;
+  color: #1a1a1a;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+.value.muted {
+  color: rgba(26, 26, 26, 0.35);
+}
+
+.value-col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6rpx;
+}
+
+.value-col .value {
+  flex: none;
+  width: 100%;
+}
+
+.hint {
+  font-size: 22rpx;
+  text-align: right;
+  line-height: 1.35;
+}
+
+.saved-tag {
+  flex-shrink: 0;
+  margin: 8rpx 0 4rpx;
+  height: 72rpx;
+  line-height: 72rpx;
+  text-align: center;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.5);
+  background: rgba(26, 26, 26, 0.06);
+}
+
+.bottom-spacer {
+  height: 160rpx;
+  height: calc(160rpx + env(safe-area-inset-bottom));
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 16;
+  padding: 24rpx 32rpx;
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: #ffffff;
+  border-top: 1rpx solid #e6e6e6;
+}
+
+.bottom-bar.split {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+}
+
+.pill-btn {
+  height: 80rpx;
+  padding: 0 28rpx;
+  border-radius: 999rpx;
+  color: #fff;
+  font-size: 28rpx;
+  font-weight: 600;
+  line-height: 76rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.pill-btn.wide {
+  display: block;
+}
+
+.bottom-bar.split .pill-btn {
+  flex: 1;
+  min-width: 0;
+}
+
+.bottom-bar.split .pill-btn.theme-btn {
+  flex: 1.35;
+}
+
+.pill-btn.ghost {
+  background: #ffffff;
+  border: 2rpx solid currentColor;
+  line-height: 76rpx;
+}
+
+.pill-btn.off {
+  opacity: 0.45;
+}
+
+.state {
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
+.state-text {
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.65);
+  margin-bottom: 24rpx;
+}
+
+.state-text.error {
+  color: #fa5151;
+}

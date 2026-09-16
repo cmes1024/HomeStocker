@@ -68,6 +68,11 @@
       </view>
     </view>
 
+    <view class="ai-row" hover-class="tool-hover" bind:tap="goAiKeys">
+      <text class="ai-row-name">{{copy.aiQuota}}</text>
+      <text class="ai-row-chevron">›</text>
+    </view>
+
     <view class="card homes-card">
       <view class="card-title homes-title">{{copy.myHomes}}</view>
 

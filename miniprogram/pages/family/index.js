@@ -154,6 +154,13 @@ Page({
     wx.navigateTo({ url: '/pages/family/messages' })
   },
 
+  goAiKeys() {
+    wx.navigateTo({
+      url: '/packageAi/keys/index',
+      fail: () => wx.showToast({ title: copy.ai.fabFail, icon: 'none' })
+    })
+  },
+
   openMoodSheet() {
     this.setData({ moodSheet: true, panel: '', formError: '' })
   },
