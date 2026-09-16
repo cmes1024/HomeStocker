@@ -63,6 +63,12 @@
             <view class="badge {{expireStatus}}" wx:if="{{expireLabel}}">{{expireLabel}}</view>
           </view>
         </view>
+        <view class="field" wx:if="{{item.expireDate}}">
+          <view class="label">{{copy.labelReminder}}</view>
+          <view class="value {{item.expireReminderEnabled ? '' : 'muted'}}">
+            {{item.expireReminderEnabled ? copy.reminderOn : copy.reminderOff}}
+          </view>
+        </view>
         <view class="field last">
           <view class="label">{{copy.labelNote}}</view>
           <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>

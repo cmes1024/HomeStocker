@@ -66,13 +66,13 @@
 | `tagIds` | string[] | 可选；本家庭 `tags._id`，默认 `[]` |
 | `productionDate` | string \| null | 可选；生产日 `YYYY-MM-DD`（Asia/Shanghai 日历） |
 | `expireDate` | string \| null | 可选；过期日 `YYYY-MM-DD`；无此字段则无临期/过期状态 |
-| `expireReminderEnabled` | boolean | 物资级过期提醒，默认 `false` |
+| `expireReminderEnabled` | boolean | 遗留字段，不再作为提醒真相；读接口会覆盖为**当前用户**是否订阅了该物资 |
 | `createdBy` | string | openid |
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 | `updatedAt` | number | |
 
-硬删除。旧数据若缺 `spaceId`，由 `space.ensureDefault` / `item` 写路径回填。旧数据缺 `tagIds` / 日期 / 提醒字段时按空数组 / null / false 处理。
+硬删除。旧数据若缺 `spaceId`，由 `space.ensureDefault` / `item` 写路径回填。旧数据缺 `tagIds` / 日期字段时按空数组 / null 处理。物资级提醒改记在 `itemExpireSubs`，不再用本字段做全家共用开关。
 
 临期/过期状态**不持久化**：由 `expireDate` 相对「今天」（Asia/Shanghai）派生——`expired`（早于今天）、`expiring`（今天…今天+3）、`normal`（更晚）。
 
@@ -93,7 +93,21 @@
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 
-仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。
+仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。个人订阅开关不写 activities。
+
+### `itemExpireSubs`
+
+某成员对某物资的过期订阅（微信推送名单）。**不是**全家共用开关：同一花菜，A 已订阅时 B 仍可以是未订阅。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | `${itemId}_${openid}` |
+| `familyId` | string | 隔离键 |
+| `itemId` | string | |
+| `openid` | string | 订阅者 |
+| `createdAt` | number | |
+
+仅 `item` 云函数在 create/update/remove 时维护；`expireNotify` 按此集合找接收人。**成功发出一条订阅消息后删除该条记录**（微信一次性模板用掉额度，详情回到未订阅，要再推需重新打开并授权）。清空过期日或删除物资时清掉该物资全部订阅。离开/解散清对应记录。客户端写 deny。
 
 ### `spaces`
 
@@ -134,6 +148,8 @@
 | `tags` | `familyId` | 普通 | 家庭标签列表 |
 | `activities` | `familyId` ASC + `createdAt` DESC | 复合 | 家庭消息流倒序 |
 | `activities` | `itemId` ASC + `createdAt` DESC | 复合 | 物资详情最近操作 |
+| `itemExpireSubs` | `familyId` + `openid` | 复合 | 当前用户已订阅物资；离开/解散也可走此前缀 |
+| `itemExpireSubs` | `itemId` | 普通 | 临期推送按物资找订阅人 |
 | `items` | `familyId` ASC + `updatedAt` DESC | 复合 | 物资列表排序 |
 | `items` | `familyId` ASC + `spaceId` ASC | 复合 | 按空间列物资 |
 | `items` | `familyId` ASC + `expireDate` ASC | 复合 | 临期查询 / 定时提醒 |
@@ -142,13 +158,63 @@
 | `locations` | `spaceId` | 普通 | 空间下位置 |
 | `locations` | `familyId` | 普通 | 解散/家庭维度清理 |
 
-说明：按 `tagIds` 筛选可用数组包含查询；若控制台支持可为 `tagIds` 建多键索引，非必须。
+说明：按 `tagIds` 筛选可用数组包含查询；若控制台支持可为 `tagIds` 建多键索引，非必须。`_id` 主键不用手建。
+
+## 换环境部署：集合与索引（控制台）
+
+新小程序 / 新云开发环境按本节做一遍。入口：微信开发者工具 → 云开发 → 数据库。
+
+### 1. 先建集合
+
+每个集合点「添加集合」，名称必须完全一致：
+
+`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs`
+
+权限先随意；建完后把同目录 `database-rules.json` 里对应集合的规则贴进去（客户端写一律 deny）。
+
+### 2. 控制台怎么加索引
+
+打开某个集合 → 索引 → 添加索引：
+
+| 弹窗项 | 怎么填 |
+|--------|--------|
+| 索引名称 | 自定，下表「建议名称」可直接抄 |
+| 索引属性 | **唯一** 或 **非唯一**，见下表 |
+| 索引字段 | 填字段名（如 `familyId`），右边选 **升序 / 降序** |
+| `+` | 复合索引：点 `+` 再加下一字段，**顺序必须和下表一致** |
+
+单字段索引不要点 `+`。复合索引 = 同一条索引里多个字段，不是建两条。
+
+`activities` 的 `createdAt` 必须选 **降序**（消息流 `orderBy('createdAt', 'desc')`）。其余未标明的都用 **升序**。
+
+### 3. 全量索引清单（逐条建）
+
+| 集合 | 建议名称 | 属性 | 字段（按顺序） |
+|------|----------|------|----------------|
+| `families` | `inviteCode` | **唯一** | `inviteCode` 升序 |
+| `memberships` | `openid` | 非唯一 | `openid` 升序 |
+| `memberships` | `familyId` | 非唯一 | `familyId` 升序 |
+| `memberships` | `openid_familyId` | **唯一** | `openid` 升序，`+` `familyId` 升序 |
+| `items` | `familyId_updatedAt` | 非唯一 | `familyId` 升序，`+` `updatedAt` **降序** |
+| `items` | `familyId_spaceId` | 非唯一 | `familyId` 升序，`+` `spaceId` 升序 |
+| `items` | `familyId_expireDate` | 非唯一 | `familyId` 升序，`+` `expireDate` 升序 |
+| `items` | `locationId` | 非唯一 | `locationId` 升序（可选） |
+| `spaces` | `familyId` | 非唯一 | `familyId` 升序 |
+| `locations` | `spaceId` | 非唯一 | `spaceId` 升序 |
+| `locations` | `familyId` | 非唯一 | `familyId` 升序 |
+| `tags` | `familyId` | 非唯一 | `familyId` 升序 |
+| `activities` | `familyId_createdAt` | 非唯一 | `familyId` 升序，`+` `createdAt` **降序** |
+| `activities` | `itemId_createdAt` | 非唯一 | `itemId` 升序，`+` `createdAt` **降序** |
+| `itemExpireSubs` | `familyId_openid` | 非唯一 | `familyId` 升序，`+` `openid` 升序 |
+| `itemExpireSubs` | `itemId` | 非唯一 | `itemId` 升序 |
+
+`itemExpireSubs` 不要再单独建 `familyId`：复合索引左边已是 `familyId`，解散按家清理可走前缀。主键 `_id` 已是 `${itemId}_${openid}`，也不用再为这对建唯一索引。
+
+索引创建后控制台可能显示「构建中」，等变成「正常」再测列表 / 消息 / 临期推送。缺索引时云函数日志会出现「index hint」或查询失败。
 
 ## 安全规则
 
-见同目录 `database-rules.json`。部署步骤：微信开发者工具 → 云开发 → 数据库 → 各集合权限 / 安全规则，按该文件粘贴。
-
-**控制台还需手工：** 创建 `tags`、`activities` 集合；为 `items` 增加 `familyId + expireDate`；为 `activities` 增加 `familyId + createdAt`、`itemId + createdAt`（上表）。
+见同目录 `database-rules.json`。换环境：云开发 → 数据库 → 各集合权限 / 安全规则，按该文件粘贴。集合与索引逐步对照见上一节「换环境部署」。
 
 实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。客户端写一律 deny。
 
@@ -158,12 +224,12 @@
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
 - `updateBackground` 更新当前家庭背景（渐变 / 纯色 / 云存储图片）；主题写入 `globalData.theme`，**全站页面**共用同一背景与强调色
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
-- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `memberships`
-- 关系写、物资写、空间/位置写、标签写、活动写一律云函数
+- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `memberships`；成员离开时清该人在该家的 `itemExpireSubs`
+- 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写一律云函数
 
 ## 订阅消息（B 波）
 
 - 模板：**商品过期提醒**（编号 2201），tmplId `_oheW_DGsoqUxKsFIQrWSYIuoo4stYvsJv-JNf_uAiQ`
 - 字段：`thing1` 商品名称 · `date3` 过期日期 · `short_thing8` 所属仓库 · `thing9` 商品位置 · `thing10` 备注
 - 客户端：`utils/subscribeExpire.js`；云函数默认同一 tmplId，可用环境变量 `EXPIRE_SUBSCRIBE_TMPL_ID` 覆盖
-- 定时触发器每日跑 `expireNotify`：筛双开关开启且 `expireDate` 为今天 / +1 / +3 的项，向已授权成员发送；也可从家庭页「立即检查提醒」手动触发（须小程序端调用，控制台测试无效）
+- 定时触发器每日跑 `expireNotify`：筛家庭总开关开启且 `expireDate` 为今天 / +1 / +3 的项，向 **该物资的订阅人**（`itemExpireSubs`）且已授权微信订阅的成员发送；发出成功则删掉该人这条订阅。也可从家庭页「立即检查提醒」手动触发（须小程序端调用，控制台测试无效）

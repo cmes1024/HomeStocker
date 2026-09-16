@@ -19,10 +19,10 @@
 | 核心 | 创建/加入家庭 + 共享物资台账 |
 | 权限 | 邀请码直加，全员同权 |
 | 家庭数 | **多家庭**：可继续创建/加入；`memberships` 多对多 + `currentFamilyId` 切换 |
-| 物资字段 | `name` / `quantity` / `unit?` / `note` + `spaceId`（必填）/ `locationId`（可选）+ `tagIds[]` / `productionDate?` / `expireDate?` / `expireReminderEnabled`（B） |
+| 物资字段 | `name` / `quantity` / `unit?` / `note` + `spaceId`（必填）/ `locationId`（可选）+ `tagIds[]` / `productionDate?` / `expireDate?`；过期订阅见 `itemExpireSubs`（按人×物资，非物品共用开关） |
 | 空间 | 用户自建；无空间时懒创建默认「仓库」；空间浏览为辅，全家清单为主 |
 | 标签（B） | 家庭级 `tags` 集合；默认种子 + 自建；物资可多选；清单可按标签筛 |
-| 保质期（B） | 可选日期；清单首页「即将过期」；订阅消息 3/1/0 天（物资开关默认关 + 家庭总开关默认开） |
+| 保质期（B） | 可选日期；清单首页「即将过期」；订阅消息 3/1/0 天（**按人×物资**订阅 + 家庭总开关默认开） |
 | 家庭消息（C） | 物资增删改写 `activities`；家庭消息流 + 详情最近操作；仍硬删物资（删除留名称快照） |
 | 家庭外观 | 命名主题（主色 / 副色 / 阴影色）；全站由 AppShell 注入 CSS 变量 |
 | 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除 |
@@ -44,24 +44,25 @@ families (_id, inviteCode, ownerOpenid, memberCount, background, expireReminderE
 spaces (familyId, name, isDefault, coverKey?)
 locations (familyId, spaceId, name)
 tags (familyId, name, isDefault?)
-items (familyId, name, quantity, unit?, note, spaceId, locationId?, tagIds[], productionDate?, expireDate?, expireReminderEnabled, createdBy, source)
+items (familyId, name, quantity, unit?, note, spaceId, locationId?, tagIds[], productionDate?, expireDate?, createdBy, source)
+itemExpireSubs (_id=`itemId_openid`, familyId, itemId, openid, createdAt)
 activities (familyId, itemId, action, actorOpenid, itemName, changedFields?, summary?, source, createdAt)
 ```
 
 - **禁止**把成员、物资或空间树嵌进 `families` 大数组
-- 索引：`families.inviteCode`；`memberships.openid` / `familyId` / 复合唯一；`items.familyId+updatedAt` / `familyId+spaceId` / `familyId+expireDate`；`spaces.familyId`；`locations.spaceId`；`tags.familyId`；`activities.familyId+createdAt` / `itemId+createdAt`
+- 索引：`families.inviteCode`；`memberships.openid` / `familyId` / 复合唯一；`items.familyId+updatedAt` / `familyId+spaceId` / `familyId+expireDate`；`spaces.familyId`；`locations.spaceId`；`tags.familyId`；`activities.familyId+createdAt` / `itemId+createdAt`；`itemExpireSubs.familyId+openid` / `itemId`
 - 可多 membership；create 不限；join 同家重复拒绝；切换改 `currentFamilyId`
-- 字段与索引细节见 `miniprogram/cloud/collections.md`
+- 字段与索引细节、换环境控制台步骤见 `miniprogram/cloud/collections.md`
 
 ## 云函数与写路径
 
-- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities）
+- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities/itemExpireSubs）
 - `item`：create / update / remove / get / list / search / listExpiring（**物资写一律走这里**；成功后旁路写 activities）
 - `space`：ensureDefault / list / create / update / remove / listLocations / createLocation / updateLocation / removeLocation
 - `tag`：ensureDefaults / list / create / update / remove
 - `activity`：list（家庭消息 / 按 itemId 最近操作；客户端写 deny）
 - `expireNotify`：定时触发，订阅消息临期提醒（须小程序端或 IDE 定时触发器鉴权）
-- 列表**读**可走云函数；**写**禁止客户端直写 items/spaces/locations/tags/activities（安全规则 deny）
+- 列表**读**可走云函数；**写**禁止客户端直写 items/spaces/locations/tags/activities/itemExpireSubs（安全规则 deny）
 - 身份只用云函数 `OPENID` → `currentFamilyId` + membership；不信任入参伪造身份
 
 ## Agent 预留（必须遵守，本阶段不实现）

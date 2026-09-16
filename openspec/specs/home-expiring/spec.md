@@ -18,10 +18,10 @@ The family ledger page (primary home after onboarding) MUST show an 「即将过
 - **THEN** the ledger MUST NOT show an empty upcoming-expiry module as if there were alerts (it may omit the module entirely)
 
 ### Requirement: Module includes items regardless of reminder switch
-The upcoming-expiry module MUST include qualifying items whether or not `expireReminderEnabled` is on. Reminder switches MUST only affect outbound subscribe messages, not home visibility.
+The upcoming-expiry module MUST include qualifying items whether or not the current member has subscribed to expiry reminders for those items. Reminder subscriptions MUST only affect outbound subscribe messages, not home visibility.
 
 #### Scenario: Expiring item with reminder off still listed
-- **WHEN** an item is expiring and its reminder switch is off
+- **WHEN** an item is expiring and the current member has not subscribed to its reminder
 - **THEN** the upcoming-expiry module still includes that item
 
 ### Requirement: Respect current family scope

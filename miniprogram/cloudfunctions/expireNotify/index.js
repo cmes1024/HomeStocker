@@ -56,7 +56,6 @@ async function findCandidateItems(familyId, dates) {
     .collection('items')
     .where({
       familyId,
-      expireReminderEnabled: true,
       expireDate: _.in(dates)
     })
     .limit(100)
@@ -64,7 +63,7 @@ async function findCandidateItems(familyId, dates) {
     .catch(async () => {
       const all = await db
         .collection('items')
-        .where({ familyId, expireReminderEnabled: true })
+        .where({ familyId })
         .limit(100)
         .get()
       const set = {}
@@ -78,13 +77,37 @@ async function findCandidateItems(familyId, dates) {
   return res.data || []
 }
 
-async function membersWithGrant(familyId) {
+async function memberGrantMap(familyId) {
   const res = await db
     .collection('memberships')
     .where({ familyId })
     .limit(100)
     .get()
-  return (res.data || []).filter((m) => m.subscribeExpireGrantedAt)
+  const map = {}
+  ;(res.data || []).forEach((m) => {
+    if (m.openid && m.subscribeExpireGrantedAt) {
+      map[m.openid] = true
+    }
+  })
+  return map
+}
+
+async function consumeExpireSub(itemId, openid) {
+  await db
+    .collection('itemExpireSubs')
+    .doc(`${itemId}_${openid}`)
+    .remove()
+    .catch(() => null)
+}
+
+async function subscribersForItem(itemId) {
+  const res = await db
+    .collection('itemExpireSubs')
+    .where({ itemId })
+    .limit(100)
+    .get()
+    .catch(() => ({ data: [] }))
+  return res.data || []
 }
 
 async function resolvePlaceNames(item) {
@@ -159,18 +182,18 @@ exports.main = async () => {
     const items = await findCandidateItems(familyId, dates)
     if (!items.length) continue
     candidateCount += items.length
-    const members = await membersWithGrant(familyId)
-    if (!members.length) {
-      console.log('[expireNotify] no granted members', familyId, items.length)
-      continue
-    }
+    const grantMap = await memberGrantMap(familyId)
     for (let j = 0; j < items.length; j++) {
       const item = items[j]
-      for (let k = 0; k < members.length; k++) {
+      const subs = await subscribersForItem(item._id)
+      for (let k = 0; k < subs.length; k++) {
+        const openid = subs[k].openid
+        if (!openid || !grantMap[openid]) continue
         sendAttempts += 1
-        const result = await sendOne(members[k].openid, item)
+        const result = await sendOne(openid, item)
         if (result.sent) {
           sentCount += 1
+          await consumeExpireSub(item._id, openid)
         } else {
           failCount += 1
           if (result.error) lastError = result.error

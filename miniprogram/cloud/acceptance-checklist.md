@@ -1,8 +1,7 @@
 # MVP + 空间/位置 + A/B/C 波 验收清单
 
-部署前：创建集合与索引（见 `collections.md`）、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify`（云端安装依赖）。  
-B 波另需：创建 `tags` 集合；`items` 索引 `familyId + expireDate`；订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。  
-C 波另需：创建 `activities` 集合；索引 `familyId + createdAt`、`itemId + createdAt`；上传 `activity` 云函数。
+部署前：按 `collections.md`「换环境部署：集合与索引」建齐集合/索引、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify`（云端安装依赖）。  
+B 波另需：订阅消息模板已配置为「商品过期提醒」`_oheW_…AiQ`（见 `subscribeExpire.js` / `expireNotify`）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
 
 ## 闭环（原 MVP）
 
@@ -60,10 +59,12 @@ C 波另需：创建 `activities` 集合；索引 `familyId + createdAt`、`item
 
 ## B 波：订阅提醒
 
-- [ ] 物资提醒开关默认关；家庭总开关默认开（家庭页可点切换）
+- [ ] 物资提醒开关默认关，且**跟当前账号走**（A 订阅花菜后，B 打开同一条仍是未订阅）
+- [ ] B 可在同一物资上自行打开开关并弹出微信授权，互不影响
+- [ ] 家庭总开关默认开（家庭页可点切换）
 - [ ] 开启物资提醒时尝试 `requestSubscribeMessage`；拒绝不阻断保存
 - [ ] 接受授权后 `recordSubscribeExpire` 写入 membership
-- [ ] `expireNotify`：对 3 天/1 天/当天且双开关开启的物资发送订阅消息；须从小程序端或 IDE 定时触发器触发（控制台测试无 openapi 鉴权）
+- [ ] `expireNotify`：对 3 天/1 天/当天、家庭总开关开启、且该物资有订阅记录的成员发送；发送成功后该人该物品变为未订阅；须从小程序端或 IDE 定时触发器触发（控制台测试无 openapi 鉴权）
 - [ ] 控制台：上传 `expireNotify`、启用定时触发器（见 `config.json` 每日 9:00）；家庭页「立即检查提醒」可手动触发验收
 
 ## C 波：家庭消息 / 活动日志
@@ -78,7 +79,7 @@ C 波另需：创建 `activities` 集合；索引 `familyId + createdAt`、`item
 
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」

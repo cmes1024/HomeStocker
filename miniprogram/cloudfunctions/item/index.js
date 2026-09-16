@@ -82,6 +82,84 @@ function membershipId(openid, familyId) {
   return `${openid}_${familyId}`
 }
 
+function expireSubId(itemId, openid) {
+  return `${itemId}_${openid}`
+}
+
+async function removeInBatches(collection, where, batchSize = 100) {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    const res = await collection.where(where).limit(batchSize).get()
+    const list = res.data || []
+    if (!list.length) break
+    await Promise.all(list.map((doc) => collection.doc(doc._id).remove()))
+    if (list.length < batchSize) break
+  }
+}
+
+async function upsertExpireSub(familyId, itemId, openid) {
+  await db.collection('itemExpireSubs').doc(expireSubId(itemId, openid)).set({
+    data: {
+      familyId,
+      itemId,
+      openid,
+      createdAt: Date.now()
+    }
+  })
+}
+
+async function removeExpireSub(itemId, openid) {
+  await db
+    .collection('itemExpireSubs')
+    .doc(expireSubId(itemId, openid))
+    .remove()
+    .catch(() => null)
+}
+
+async function removeExpireSubsForItem(itemId) {
+  await removeInBatches(db.collection('itemExpireSubs'), { itemId })
+}
+
+async function hasExpireSub(itemId, openid) {
+  const snap = await db
+    .collection('itemExpireSubs')
+    .doc(expireSubId(itemId, openid))
+    .get()
+    .catch(() => null)
+  return !!(snap && snap.data)
+}
+
+async function subscribedItemSet(familyId, openid) {
+  const res = await db
+    .collection('itemExpireSubs')
+    .where({ familyId, openid })
+    .limit(100)
+    .get()
+    .catch(() => ({ data: [] }))
+  const set = {}
+  ;(res.data || []).forEach((row) => {
+    if (row.itemId) set[row.itemId] = true
+  })
+  return set
+}
+
+function overlayExpireReminder(item, subscribed) {
+  if (!item || !item._id) return item
+  return {
+    ...item,
+    expireReminderEnabled: !!subscribed[item._id]
+  }
+}
+
+async function syncExpireSub(familyId, itemId, openid, enabled, expireDate) {
+  if (!expireDate || !enabled) {
+    await removeExpireSub(itemId, openid)
+    return false
+  }
+  await upsertExpireSub(familyId, itemId, openid)
+  return true
+}
+
 async function resolveFamilyContext(openid) {
   const userSnap = await db.collection('users').doc(openid).get().catch(() => null)
   if (!userSnap || !userSnap.data) {
@@ -181,8 +259,7 @@ const ACTIVITY_FIELD_KEYS = [
   'locationId',
   'tagIds',
   'productionDate',
-  'expireDate',
-  'expireReminderEnabled'
+  'expireDate'
 ]
 
 const ACTIVITY_FIELD_LABELS = {
@@ -194,8 +271,7 @@ const ACTIVITY_FIELD_LABELS = {
   locationId: '位置',
   tagIds: '标签',
   productionDate: '生产日',
-  expireDate: '过期日',
-  expireReminderEnabled: '提醒开关'
+  expireDate: '过期日'
 }
 
 function sameTagIds(a, b) {
@@ -207,7 +283,6 @@ function sameTagIds(a, b) {
 
 function normalizeComparable(key, value) {
   if (key === 'tagIds') return null
-  if (key === 'expireReminderEnabled') return !!value
   if (key === 'quantity') {
     const n = Number(value)
     return Number.isFinite(n) ? n : null
@@ -289,8 +364,6 @@ async function createItem(openid, event) {
     expireDate = d
   }
 
-  const expireReminderEnabled = !!expireDate && event.expireReminderEnabled === true
-
   const doc = {
     familyId: ctx.familyId,
     name,
@@ -302,7 +375,7 @@ async function createItem(openid, event) {
     tagIds,
     productionDate,
     expireDate,
-    expireReminderEnabled,
+    expireReminderEnabled: false,
     createdBy: openid,
     source,
     createdAt: now,
@@ -310,6 +383,18 @@ async function createItem(openid, event) {
   }
 
   const addRes = await db.collection('items').add({ data: doc })
+  let mine = false
+  try {
+    mine = await syncExpireSub(
+      ctx.familyId,
+      addRes._id,
+      openid,
+      event.expireReminderEnabled === true,
+      expireDate
+    )
+  } catch (e) {
+    console.warn('syncExpireSub create failed', addRes._id, e)
+  }
   await appendActivity({
     familyId: ctx.familyId,
     itemId: addRes._id,
@@ -319,7 +404,7 @@ async function createItem(openid, event) {
     source,
     createdAt: now
   })
-  return ok({ _id: addRes._id, ...doc })
+  return ok({ _id: addRes._id, ...doc, expireReminderEnabled: mine })
 }
 
 async function updateItem(openid, event) {
@@ -369,17 +454,6 @@ async function updateItem(openid, event) {
     const d = normalizeDateInput(event.expireDate)
     if (d === undefined) return fail('INVALID_DATE', '过期日期无效')
     patch.expireDate = d
-  }
-
-  if (event.expireReminderEnabled !== undefined) {
-    patch.expireReminderEnabled = event.expireReminderEnabled === true
-  }
-
-  // 无过期日时不允许开提醒
-  const nextExpire =
-    patch.expireDate !== undefined ? patch.expireDate : snap.data.expireDate
-  if (!nextExpire) {
-    patch.expireReminderEnabled = false
   }
 
   const spaceChanging = event.spaceId !== undefined
@@ -438,7 +512,24 @@ async function updateItem(openid, event) {
       createdAt: patch.updatedAt || Date.now()
     })
   }
-  return ok({ _id: itemId, ...merged })
+  const nextExpire = merged.expireDate
+  try {
+    if (!nextExpire) {
+      await removeExpireSubsForItem(itemId)
+    } else if (event.expireReminderEnabled !== undefined) {
+      await syncExpireSub(
+        ctx.familyId,
+        itemId,
+        openid,
+        event.expireReminderEnabled === true,
+        nextExpire
+      )
+    }
+  } catch (e) {
+    console.warn('syncExpireSub update failed', itemId, e)
+  }
+  const mine = await hasExpireSub(itemId, openid)
+  return ok({ _id: itemId, ...merged, expireReminderEnabled: mine })
 }
 
 async function removeItem(openid, event) {
@@ -457,6 +548,9 @@ async function removeItem(openid, event) {
   const itemName = snap.data.name || ''
   const source = event.source === 'agent' ? 'agent' : snap.data.source === 'agent' ? 'agent' : 'ui'
   await db.collection('items').doc(itemId).remove()
+  await removeExpireSubsForItem(itemId).catch((e) => {
+    console.warn('removeExpireSubsForItem failed', itemId, e)
+  })
   await appendActivity({
     familyId: ctx.familyId,
     itemId,
@@ -482,7 +576,8 @@ async function getItem(openid, event) {
     return fail('FORBIDDEN', '无权查看该物资')
   }
 
-  return ok({ _id: itemId, ...snap.data })
+  const mine = await hasExpireSub(itemId, openid)
+  return ok({ _id: itemId, ...snap.data, expireReminderEnabled: mine })
 }
 
 async function countItems(openid) {
@@ -527,7 +622,10 @@ async function listItems(openid, event) {
     .orderBy('updatedAt', 'desc')
     .limit(limit)
     .get()
-  return ok({ list: res.data || [] })
+  const subscribed = await subscribedItemSet(ctx.familyId, openid)
+  return ok({
+    list: (res.data || []).map((item) => overlayExpireReminder(item, subscribed))
+  })
 }
 
 async function searchItems(openid, event) {
@@ -560,9 +658,11 @@ async function searchItems(openid, event) {
     .limit(100)
     .get()
   const lower = keyword.toLowerCase()
+  const subscribed = await subscribedItemSet(ctx.familyId, openid)
   const list = (res.data || [])
     .filter((item) => String(item.name || '').toLowerCase().includes(lower))
     .slice(0, limit)
+    .map((item) => overlayExpireReminder(item, subscribed))
 
   return ok({ list })
 }
@@ -605,9 +705,12 @@ async function listExpiring(openid, event) {
       return { data: filtered }
     })
 
+  const subscribed = await subscribedItemSet(ctx.familyId, openid)
   const list = await attachPlaceNames(
     ctx.familyId,
-    (res.data || []).filter((item) => item.expireDate)
+    (res.data || [])
+      .filter((item) => item.expireDate)
+      .map((item) => overlayExpireReminder(item, subscribed))
   )
   return ok({ list, today, windowEnd: end })
 }

@@ -1,5 +1,5 @@
 {
-  "_comment": "MVP+空间+B/C波：items/spaces/locations/tags/activities/families/memberships 客户端写一律 deny；列表读走云函数。users 仅本人可读。",
+  "_comment": "MVP+空间+B/C波：items/spaces/locations/tags/activities/itemExpireSubs/families/memberships 客户端写一律 deny；列表读走云函数。users 仅本人可读。",
   "users": {
     "read": "doc._id == auth.openid",
     "write": false
@@ -29,6 +29,10 @@
     "write": false
   },
   "activities": {
+    "read": false,
+    "write": false
+  },
+  "itemExpireSubs": {
     "read": false,
     "write": false
   }

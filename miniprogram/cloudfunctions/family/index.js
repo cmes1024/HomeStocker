@@ -379,6 +379,11 @@ async function leaveFamily(openid) {
     await removeInBatches(db.collection('spaces'), { familyId })
     await removeInBatches(db.collection('tags'), { familyId })
     await removeInBatches(db.collection('activities'), { familyId })
+    await removeInBatches(db.collection('itemExpireSubs'), { familyId }).catch(
+      (e) => {
+        console.warn('itemExpireSubs dissolve cleanup failed', familyId, e)
+      }
+    )
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()
@@ -391,6 +396,12 @@ async function leaveFamily(openid) {
   }
 
   // 普通成员退出：家庭仍在
+  await removeInBatches(db.collection('itemExpireSubs'), {
+    familyId,
+    openid
+  }).catch((e) => {
+    console.warn('itemExpireSubs leave cleanup failed', familyId, openid, e)
+  })
   await db.collection('memberships').doc(membershipId(openid, familyId)).remove()
   await db.collection('families').doc(familyId).update({
     data: {
