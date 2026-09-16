@@ -25,7 +25,8 @@
 | 09-11 B | 家庭标签、保质期、即将过期横幅、订阅消息 | 归档 `2026-09-11-item-tags-expiry-reminders` |
 | 09-11 C | `activities`、家庭消息、详情最近操作 | 归档 `2026-09-11-family-activity-messages` |
 | 09-13～15 | 家庭页钥匙卡与工具格；清单货架；空间口袋（**无入口**） | as-built `2026-09-17-as-built-surfaces.md`；主规格 `family-home-surface` / `item-list-browse` / `space-pockets` |
-| 09-15 | 命名主题三色 | `2026-09-15-family-theme-system.md`；主规格 `family-named-theme` |
+| 09-15 | 命名主题三色（当时 3 套） | `2026-09-15-family-theme-system.md`；主规格 `family-named-theme` |
+| 09-17 | 主题目录扩至 17 套；氛围选择器一行最多 3 个、弹层可滚 | 同上；`THEME_PRESETS` 与 `family` 的 `THEME_IDS` 同步 |
 | 09-16 | 过期订阅改为按人×物资，发出后删订阅 | 主规格 `expire-subscribe-reminders`（已含） |
 | 09-16 | 云函数读缓存 + `activity.cursor` | `2026-09-16-cloud-call-cache/`；主规格 `cloud-read-cache` |
 | 09-16 | AI 分包拍照/语音录入、家庭 DeepSeek 密钥、旁路封面 | 归档 `2026-09-17-package-ai-item-capture`；验收未勾 |

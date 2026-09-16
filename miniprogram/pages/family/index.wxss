@@ -391,6 +391,7 @@
 
 .sheet {
   height: 100%;
+  overflow: hidden;
   box-sizing: border-box;
   padding: 32rpx 32rpx 0;
   display: flex;
@@ -425,7 +426,9 @@
 }
 
 .sheet-body {
-  height: calc(72vh - 128rpx);
+  flex: 1;
+  height: 0;
+  min-height: 0;
   box-sizing: border-box;
 }
 
@@ -448,7 +451,7 @@
 
 .preset-chip {
   position: relative;
-  width: calc(50% - 16rpx);
+  width: calc(33.333% - 16rpx);
   height: 88rpx;
   margin: 8rpx;
   border-radius: 20rpx;

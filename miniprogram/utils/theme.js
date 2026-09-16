@@ -26,6 +26,104 @@ const THEME_PRESETS = [
     primary: '#0080FF',
     secondary: '#73D0FF',
     shadow: '#DDEDFF'
+  },
+  {
+    id: 'matcha',
+    label: '抹茶绿',
+    primary: '#3FAE6A',
+    secondary: '#8ED9A8',
+    shadow: '#E3F6E9'
+  },
+  {
+    id: 'milk',
+    label: '奶油白',
+    primary: '#C89B5A',
+    secondary: '#F2D9A8',
+    shadow: '#FBF3E4'
+  },
+  {
+    id: 'taro',
+    label: '香芋紫',
+    primary: '#8A6FD1',
+    secondary: '#C3B2F0',
+    shadow: '#EFEAFB'
+  },
+  {
+    id: 'sakura',
+    label: '樱花粉',
+    primary: '#F06A9A',
+    secondary: '#FFB3CC',
+    shadow: '#FFE8F0'
+  },
+  {
+    id: 'coral',
+    label: '珊瑚橘',
+    primary: '#FF7A45',
+    secondary: '#FFB08A',
+    shadow: '#FFEDE3'
+  },
+  {
+    id: 'mint',
+    label: '薄荷青',
+    primary: '#2BB8A8',
+    secondary: '#82DED2',
+    shadow: '#E0F7F4'
+  },
+  {
+    id: 'warm-gray',
+    label: '暖灰',
+    primary: '#7A6F66',
+    secondary: '#B8AEA5',
+    shadow: '#F0ECE8'
+  },
+  {
+    id: 'indigo',
+    label: '靛青',
+    primary: '#3D5AFE',
+    secondary: '#8C9EFF',
+    shadow: '#E4E8FF'
+  },
+  {
+    id: 'amber',
+    label: '琥珀黄',
+    primary: '#D99A00',
+    secondary: '#F3C95C',
+    shadow: '#FFF6D9'
+  },
+  {
+    id: 'forest',
+    label: '森林绿',
+    primary: '#2F7D5B',
+    secondary: '#7BBF9A',
+    shadow: '#E2F3EA'
+  },
+  {
+    id: 'berry',
+    label: '莓果红',
+    primary: '#C93A5B',
+    secondary: '#F08AA2',
+    shadow: '#FCE4EA'
+  },
+  {
+    id: 'clay',
+    label: '陶土棕',
+    primary: '#B46A4C',
+    secondary: '#E0A88F',
+    shadow: '#F7E8E1'
+  },
+  {
+    id: 'lavender',
+    label: '薰衣草',
+    primary: '#6C63FF',
+    secondary: '#B4B0FF',
+    shadow: '#ECEBFF'
+  },
+  {
+    id: 'olive',
+    label: '橄榄绿',
+    primary: '#7A8B3A',
+    secondary: '#B7C77A',
+    shadow: '#F0F4DC'
   }
 ].map((p) => ({
   ...p,

@@ -157,7 +157,7 @@
       <view class="sheet-title">{{copy.wallTitle}}</view>
       <view class="sheet-close" bind:tap="closeMoodSheet">×</view>
     </view>
-    <scroll-view class="sheet-body" scroll-y>
+    <scroll-view class="sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="label">{{copy.themePick}}</view>
       <view class="preset-row">
         <view

@@ -23,7 +23,7 @@
 | `inviteCode` | string | 6 位 `A-Z0-9`，唯一 |
 | `ownerOpenid` | string | |
 | `memberCount` | number | 云函数维护 |
-| `background` | object | `{ type: 'theme', value: themeId }`，`themeId` 如 `orange` / `red` / `blue`；客户端按名解析三色 |
+| `background` | object | `{ type: 'theme', value: themeId }`。合法 `themeId`：`orange`（默认）/`red`/`blue`/`matcha`/`milk`/`taro`/`sakura`/`coral`/`mint`/`warm-gray`/`indigo`/`amber`/`forest`/`berry`/`clay`/`lavender`/`olive`。客户端按 id 解析三色；非法或缺失回落 `orange`。完整色值见 `docs/plans/2026-09-15-family-theme-system.md` |
 | `expireReminderEnabled` | boolean | 家庭过期提醒总开关，默认 `true`；缺省按 true 处理 |
 | `tagsSeededAt` | number \| null | 默认标签种子写入时间；有值后不再自动补种已删默认标签 |
 | `createdAt` | number | |
@@ -277,7 +277,7 @@
 
 - 可加入多个家庭；create 始终允许；join 仅当已是**该**家庭成员时返回 `ALREADY_IN_FAMILY`
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
-- `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
+- `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），`themeId` 须在云函数 `THEME_IDS` 白名单内（与 `theme.js` 的 `THEME_PRESETS` 同步）。写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
 - 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图写一律云函数

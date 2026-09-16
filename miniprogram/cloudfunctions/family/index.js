@@ -8,7 +8,25 @@ const _ = db.command
 const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const INVITE_LEN = 6
 
-const THEME_IDS = ['orange', 'red', 'blue']
+const THEME_IDS = [
+  'orange',
+  'red',
+  'blue',
+  'matcha',
+  'milk',
+  'taro',
+  'sakura',
+  'coral',
+  'mint',
+  'warm-gray',
+  'indigo',
+  'amber',
+  'forest',
+  'berry',
+  'clay',
+  'lavender',
+  'olive'
+]
 const DEFAULT_BACKGROUND = {
   type: 'theme',
   value: 'orange'
