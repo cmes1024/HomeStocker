@@ -1,0 +1,31 @@
+<view
+  wx:if="{{show}}"
+  class="mask"
+  style="{{cssVarStyle}}"
+  catch:tap="onMaskTap"
+>
+  <view class="panel" catch:tap="onNoop">
+    <view class="title">{{title}}</view>
+    <view class="sub" wx:if="{{subtitle || subtitleEm}}">
+      <text>{{subtitle}}</text>
+      <text class="sub-em" wx:if="{{subtitleEm}}">{{subtitleEm}}</text>
+    </view>
+    <slot name="sub"></slot>
+    <input
+      class="field"
+      focus="{{show}}"
+      placeholder="{{placeholder}}"
+      value="{{value}}"
+      maxlength="{{maxlength}}"
+      confirm-type="{{confirmType}}"
+      bindinput="onInput"
+      bindconfirm="onConfirm"
+    />
+    <view class="error" wx:if="{{error}}">{{error}}</view>
+    <slot></slot>
+    <view class="actions">
+      <view class="btn ghost" catch:tap="onCancel">{{cancelText}}</view>
+      <view class="btn primary" catch:tap="onConfirm">{{confirmText}}</view>
+    </view>
+  </view>
+</view>

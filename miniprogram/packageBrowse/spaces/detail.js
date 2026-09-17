@@ -4,13 +4,6 @@ const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
 const { resolveSpaceAtmosphere } = require('../../utils/spaceAtmosphere')
 const copy = require('../../utils/copy')
 
-function unlockMask(page, id) {
-  const mask = page.selectComponent(id)
-  if (mask && typeof mask.setStatus === 'function') {
-    mask.setStatus(false)
-  }
-}
-
 Page({
   data: {
     copy: copy.spaces,
@@ -151,8 +144,6 @@ Page({
     })
   },
 
-  noop() {},
-
   onLocName(e) {
     this.setData({ locName: e.detail.value, locModalError: '' })
   },
@@ -162,14 +153,10 @@ Page({
     const name = (this.data.locName || '').trim()
     if (!name) {
       this.setData({ locModalError: copy.spaces.locNameRequired })
-      unlockMask(this, '#locMask')
       return
     }
     const spaceId = this.data.spaceId
-    if (!spaceId) {
-      unlockMask(this, '#locMask')
-      return
-    }
+    if (!spaceId) return
 
     this.setData({ locActing: true, locModalError: '' })
     try {
@@ -195,8 +182,6 @@ Page({
         locActing: false,
         locModalError: e.message || copy.common.opFailed
       })
-    } finally {
-      unlockMask(this, '#locMask')
     }
   },
 

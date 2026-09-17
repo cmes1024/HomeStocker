@@ -40,6 +40,7 @@
   },
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
+    "PromptDialog": "/components/PromptDialog/index",
     "ThemeRadialBg": "/components/ThemeRadialBg/index",
     "loading": "/components/loading/index",
     "mask-element": "/components/maskElement/index"

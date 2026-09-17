@@ -72,36 +72,18 @@
     </view>
   </block>
 
-  <view class="modal-mask" wx:if="{{showLocModal}}" catch:tap="closeLocModal">
-    <view class="modal" catch:tap="noop">
-      <view class="modal-title">{{locModalMode === 'rename' ? copy.locRenameTitle : copy.locCreateTitle}}</view>
-      <input
-        class="input modal-input"
-        focus="{{showLocModal}}"
-        placeholder="{{copy.locNamePlaceholder}}"
-        value="{{locName}}"
-        bindinput="onLocName"
-        maxlength="40"
-        confirm-type="done"
-        bindconfirm="onSaveLoc"
-      />
-      <view class="modal-error" wx:if="{{locModalError}}">{{locModalError}}</view>
-      <view class="modal-actions">
-        <view class="modal-btn ghost" bind:tap="closeLocModal">{{common.cancel}}</view>
-        <mask-element
-          id="locMask"
-          isPromise="{{true}}"
-          loadAnimation="{{true}}"
-          content-class="mask-flex"
-          promiseMaxTime="{{20}}"
-        >
-          <view
-            class="modal-btn primary"
-            style="background: {{theme.themeColor}};"
-            bind:tap="onSaveLoc"
-          >{{common.save}}</view>
-        </mask-element>
-      </view>
-    </view>
-  </view>
+  <PromptDialog
+    show="{{showLocModal}}"
+    title="{{locModalMode === 'rename' ? copy.locRenameTitle : copy.locCreateTitle}}"
+    placeholder="{{copy.locNamePlaceholder}}"
+    value="{{locName}}"
+    maxlength="{{40}}"
+    error="{{locModalError}}"
+    cancelText="{{common.cancel}}"
+    confirmText="{{common.save}}"
+    busy="{{locActing}}"
+    bind:input="onLocName"
+    bind:confirm="onSaveLoc"
+    bind:cancel="closeLocModal"
+  />
 </AppShell>

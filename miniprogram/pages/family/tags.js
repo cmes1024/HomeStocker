@@ -105,8 +105,6 @@ Page({
     })
   },
 
-  noop() {},
-
   onModalName(e) {
     this.setData({ modalName: e.detail.value, modalError: '' })
   },

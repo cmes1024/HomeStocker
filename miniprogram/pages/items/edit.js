@@ -308,8 +308,6 @@ Page({
     })
   },
 
-  noop() {},
-
   onNewLocationName(e) {
     this.setData({ newLocationName: e.detail.value, modalError: '' })
   },
@@ -319,12 +317,10 @@ Page({
     const name = (this.data.newLocationName || '').trim()
     if (!name) {
       this.setData({ modalError: copy.edit.locNameRequired })
-      unlockMask(this, '#locMask')
       return
     }
     if (!this.data.spaceId) {
       this.setData({ modalError: copy.edit.spaceRequired })
-      unlockMask(this, '#locMask')
       return
     }
     this.setData({ creatingLocation: true, modalError: '' })
@@ -345,8 +341,6 @@ Page({
         creatingLocation: false,
         modalError: e.message || copy.edit.locCreateFailed
       })
-    } finally {
-      unlockMask(this, '#locMask')
     }
   },
 

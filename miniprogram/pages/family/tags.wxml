@@ -58,24 +58,18 @@
     </view>
   </view>
 
-  <view class="modal-mask" wx:if="{{showModal}}" catch:tap="closeModal">
-    <view class="modal" catch:tap="noop">
-      <view class="modal-title">{{modalTitle}}</view>
-      <input
-        class="modal-input"
-        focus="{{showModal}}"
-        placeholder="{{copy.createPlaceholder}}"
-        value="{{modalName}}"
-        bindinput="onModalName"
-        maxlength="20"
-        confirm-type="done"
-        bindconfirm="onSaveModal"
-      />
-      <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
-      <view class="modal-actions">
-        <view class="modal-btn ghost" catch:tap="closeModal">{{common.cancel}}</view>
-        <view class="modal-btn primary" catch:tap="onSaveModal">{{common.save}}</view>
-      </view>
-    </view>
-  </view>
+  <PromptDialog
+    show="{{showModal}}"
+    title="{{modalTitle}}"
+    placeholder="{{copy.createPlaceholder}}"
+    value="{{modalName}}"
+    maxlength="{{20}}"
+    error="{{modalError}}"
+    cancelText="{{common.cancel}}"
+    confirmText="{{common.save}}"
+    busy="{{acting}}"
+    bind:input="onModalName"
+    bind:confirm="onSaveModal"
+    bind:cancel="closeModal"
+  />
 </AppShell>

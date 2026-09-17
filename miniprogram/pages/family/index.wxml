@@ -120,26 +120,20 @@
   </block>
 </AppShell>
 
-<view class="modal-mask" wx:if="{{showModal}}" catch:tap="closeModal">
-  <view class="modal" catch:tap="noop">
-    <view class="modal-title">{{modalTitle}}</view>
-    <input
-      class="modal-input"
-      focus="{{showModal}}"
-      placeholder="{{modalPlaceholder}}"
-      value="{{modalValue}}"
-      bindinput="onModalInput"
-      maxlength="{{modalMaxlength}}"
-      confirm-type="done"
-      bindconfirm="onSaveModal"
-    />
-    <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
-    <view class="modal-actions">
-      <view class="modal-btn ghost" catch:tap="closeModal">{{common.cancel}}</view>
-      <view class="modal-btn primary" catch:tap="onSaveModal">{{modalConfirm}}</view>
-    </view>
-  </view>
-</view>
+<PromptDialog
+  show="{{showModal}}"
+  title="{{modalTitle}}"
+  placeholder="{{modalPlaceholder}}"
+  value="{{modalValue}}"
+  maxlength="{{modalMaxlength}}"
+  error="{{modalError}}"
+  cancelText="{{common.cancel}}"
+  confirmText="{{modalConfirm}}"
+  busy="{{acting}}"
+  bind:input="onModalInput"
+  bind:confirm="onSaveModal"
+  bind:cancel="closeModal"
+/>
 
 <page-container
   show="{{moodSheet}}"

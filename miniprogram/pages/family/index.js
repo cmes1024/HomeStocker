@@ -231,8 +231,6 @@ Page({
     })
   },
 
-  noop() {},
-
   onModalInput(e) {
     let value = e.detail.value || ''
     if (this.data.modalMode === 'join') value = value.toUpperCase()

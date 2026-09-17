@@ -155,41 +155,20 @@
     </view>
   </block>
 
-  <view class="modal-mask" wx:if="{{showNewLocation}}" catch:tap="closeNewLocation">
-    <view class="modal" catch:tap="noop">
-      <view class="modal-title">{{copy.locModalTitle}}</view>
-      <view class="modal-sub" wx:if="{{spaceLabel}}">
-        <text>{{copy.locModalBelong}}</text>
-        <text class="modal-space">{{spaceLabel}}</text>
-      </view>
-      <input
-        class="input modal-input"
-        focus="{{showNewLocation}}"
-        placeholder="{{copy.locNamePlaceholder}}"
-        value="{{newLocationName}}"
-        bindinput="onNewLocationName"
-        maxlength="40"
-        confirm-type="done"
-        bindconfirm="onCreateLocation"
-      />
-      <view class="modal-error" wx:if="{{modalError}}">{{modalError}}</view>
-      <view class="modal-actions">
-        <view class="modal-btn-cell">
-          <view class="modal-btn ghost" bind:tap="closeNewLocation">{{common.cancel}}</view>
-        </view>
-        <view class="modal-btn-cell">
-          <mask-element
-            id="locMask"
-            isPromise="{{true}}"
-            loadAnimation="{{true}}"
-            block="{{true}}"
-            content-class="mask-full"
-            promiseMaxTime="{{20}}"
-          >
-            <view class="modal-btn primary" bind:tap="onCreateLocation">{{common.save}}</view>
-          </mask-element>
-        </view>
-      </view>
-    </view>
-  </view>
+  <PromptDialog
+    show="{{showNewLocation}}"
+    title="{{copy.locModalTitle}}"
+    subtitle="{{spaceLabel ? copy.locModalBelong : ''}}"
+    subtitleEm="{{spaceLabel}}"
+    placeholder="{{copy.locNamePlaceholder}}"
+    value="{{newLocationName}}"
+    maxlength="{{40}}"
+    error="{{modalError}}"
+    cancelText="{{common.cancel}}"
+    confirmText="{{common.save}}"
+    busy="{{creatingLocation}}"
+    bind:input="onNewLocationName"
+    bind:confirm="onCreateLocation"
+    bind:cancel="closeNewLocation"
+  />
 </AppShell>
