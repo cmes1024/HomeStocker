@@ -23,7 +23,8 @@
 
 | 文档 | 关系 |
 |------|------|
-| [`../2026-09-07-ai-assistant-design.md`](../2026-09-07-ai-assistant-design.md) | 旧 V1：半屏聊天、一句一条、查询 + 简单录入、LangGraph。**本方案不实现那套 UI**；查询对话仍后置。入账仍遵守「页面和 Agent 同一写入口」。 |
+| [`../2026-09-07-ai-assistant-design.md`](../2026-09-07-ai-assistant-design.md) | 更早的半屏聊天 + LangGraph。**本方案不实现那套 UI**。 |
+| [`../2026-09-17-ai-assistant-v2/README.md`](../2026-09-17-ai-assistant-v2/README.md) | **AI 助手 V2**（方案已写、未实施）：自然语言文本助手。本目录是 **AI V1 拍照录入**，两套并存，prompt / 分包不混用。 |
 | [`../2026-09-10-next-abcd-roadmap.md`](../2026-09-10-next-abcd-roadmap.md) | A/B/C 已完成。本方案是录入旁路，不是对话 UI，也不塞进 C 波。 |
 | [`../2026-09-16-cloud-call-cache/方案.md`](../2026-09-16-cloud-call-cache/方案.md) | 入账走现有 `callItem('create')` 即可吃到写作废，**不必为 AI 改 `cloud.js`**。 |
 | `miniprogram/cloud/collections.md` | 已含 `familyAiKeys` / `aiPrompts` / `itemMedia` 与控制台检查项。 |

@@ -1,8 +1,8 @@
 # AI 对话助手 — 设计文档（V1）
 
 > 日期：2026-09-07 | 状态：**后置，未实现**  
-> 这是半屏聊天 + LangChain/LangGraph 查询与一句话录入。  
-> **不要和 09-16 的 `packageAi` 拍照录入搞混**：录入向导已合代码（归档 `openspec/changes/archive/2026-09-17-package-ai-item-capture/`），对话查询仍后接。  
+> 这是半屏聊天 + LangChain/LangGraph 查询与一句话录入（历史上称「对话 V1」）。  
+> **不要和 09-16 的 `packageAi` 拍照录入搞混**，也 **不要和 [AI 助手 V2](./2026-09-17-ai-assistant-v2/README.md) 搞混**：V2 是自然语言 + 家庭树 + 能力表，新分包、不上本文件的 LangGraph 半屏。  
 > 当前范围：[`2026-09-17-phase1-status.md`](./2026-09-17-phase1-status.md)
 
 ---

@@ -5,7 +5,7 @@ const { DEFAULT_THEME, getAppTheme } = require('./theme')
  * 未登记的 coverKey 视为「无预设」，落到家庭主题氛围。
  */
 const SPACE_COVER_IMAGES = {
-  'default-indoor': '/assets/test.jpg'
+  // 'default-indoor': '/assets/test.jpg'
 }
 
 /**

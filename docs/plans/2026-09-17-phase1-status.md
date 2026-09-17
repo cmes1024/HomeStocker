@@ -11,7 +11,7 @@
 
 ## 1. 一句话
 
-家庭协同管物资已经能跑通：建家、加人、记账、空间位置、标签保质期、家庭消息、命名主题都在小程序里。近两日又叠了口袋页、清单改版、读缓存、AI 拍照录入。**文档已于 2026-09-17 对齐代码**（OpenSpec 归档 + 主规格 + as-built）。第一阶段还差三块：**人能互相认出来、清单能搜、AI 录入从能跑变成可用并决定对话是否进本阶段。**
+家庭协同管物资已经能跑通：建家、加人、记账、空间位置、标签保质期、家庭消息、命名主题都在小程序里。近两日又叠了口袋页、清单改版、读缓存、AI 拍照录入。**文档已于 2026-09-17 对齐代码**（OpenSpec 归档 + 主规格 + as-built）。第一阶段还差三块：**人能互相认出来、清单能搜、AI（V1 录入验收 + V2 文字助手 change）。**
 
 ---
 
@@ -45,7 +45,7 @@
 
 ## 3. 文档怎么读（2026-09-17 已对齐）
 
-入口：`docs/README.md`。现行合同在 `openspec/specs/`（21 个 capability，无进行中 change）。
+入口：`docs/README.md`。现行合同在 `openspec/specs/`（21 个 capability）。进行中 change：`ai-assistant-v2`。
 
 | 文档 | 现在的角色 |
 |------|------------|
@@ -54,7 +54,9 @@
 | `next-abcd-roadmap.md` | A/B/C **已完成**的历史路线；D / 对话仍后置 |
 | `mvp-cloudbase-redesign.md` | 基线决策；表里「体验上单家庭」是 MVP 当时的话，产品已改成多家庭 |
 | `PRD-*`、功能清单、技术架构 | 愿景；文首已标明不要当实施范围 |
-| `2026-09-07-ai-assistant-design.md` | 后置对话；与 `packageAi` 录入分开 |
+| `2026-09-07-ai-assistant-design.md` | 后置半屏对话（LangGraph）；**不是** V2 |
+| `2026-09-17-ai-assistant-v2/` | **AI 助手 V2 方案**；change：`openspec/changes/ai-assistant-v2/` |
+| `2026-09-16-package-ai-capture/` | **AI V1** 拍照录入；代码已合、验收未勾 |
 | `2026-09-17-as-built-surfaces.md` | 钥匙卡 / 货架 / 口袋（口袋无入口） |
 | `collections.md` | 集合/索引；背景已改为命名主题 |
 
@@ -90,11 +92,13 @@
 
 明确还不是本支路的：
 
-- 半屏对话、流式、LangGraph tool 循环、查物资/查临期。
+- 半屏对话、流式、LangGraph tool 循环（09-07；**不是** V2）。
 - 仓库 `agent/` 仍接 `MockBackend`，未对真云函数。
 - 视觉识别（图不送模型，只当封面）。
 
-「待完善」建议拆开看：① 录入支路真机验收与语音稳定性；② 要不要清单出图；③ 对话查询是否仍划出第一阶段。
+**AI 助手 V2**（自然语言 + 家庭树 + 能力表）方案见 [`2026-09-17-ai-assistant-v2/`](./2026-09-17-ai-assistant-v2/README.md)，实施规格 `openspec/changes/ai-assistant-v2/`，**尚未写代码**；与本小节 V1 拍照向导分开验收。
+
+「待完善」建议拆开看：① V1 录入真机验收与语音稳定性；② 要不要清单出图；③ V2 助手按该目录方案另开 change（不再默认用 09-07 半屏对话当下一刀）。
 
 ---
 
@@ -126,4 +130,4 @@
 5. `AGENTS.md` — 给后续 Agent 的约定  
 6. 旧 PRD / 功能清单 — 愿景备查  
 
-进行中的 OpenSpec change：**无**。新能力用 `openspec new change`，不要手建目录。
+进行中的 OpenSpec change：`openspec/changes/ai-assistant-v2/`。新能力用 `openspec new change`，不要手建目录。

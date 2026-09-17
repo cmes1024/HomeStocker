@@ -13,7 +13,11 @@
 | 可测试的行为合同 | [`../openspec/specs/`](../openspec/specs/) |
 | 部署前勾选 | [`../miniprogram/cloud/acceptance-checklist.md`](../miniprogram/cloud/acceptance-checklist.md) |
 
-`openspec/changes/` 下当前没有进行中的 change；已完成的在 `openspec/changes/archive/`。
+`openspec/changes/` 下进行中：[`ai-assistant-v2`](../openspec/changes/ai-assistant-v2/)。已完成的在 `openspec/changes/archive/`。
+
+## 正在设计 / 待实施
+
+- [AI 助手 V2](./plans/2026-09-17-ai-assistant-v2/README.md) — 方案源；实施规格 [`openspec/changes/ai-assistant-v2/`](../openspec/changes/ai-assistant-v2/)
 
 ## 已落地方案（历史决策，不是待做清单）
 
@@ -33,9 +37,9 @@
 - [PRD](./PRD-家庭物资管理小程序.md) v1.2（角色权限、采购、OCR 等）  
 - [功能清单](./家庭物资管理小程序-功能清单.md)  
 - [技术架构](./技术架构-家庭物资管理小程序.md) v1.1（含 ES 搜索等未采用项）  
-- [AI 对话助手](./plans/2026-09-07-ai-assistant-design.md) — 半屏聊天 + LangGraph；与 `packageAi` 录入不是同一条产品  
+- [AI 对话助手（09-07）](./plans/2026-09-07-ai-assistant-design.md) — 半屏聊天 + LangGraph；**不是** V2。现行 V2 方案见上节  
 - HTML 原型：仓库根目录 `family-supplies-prototype*`  
 
 ## 第一阶段还剩
 
-用户体系、搜索 UI、AI 录入真机验收（对话查询是否进本阶段未锁）。细节见现状快照。
+用户体系、搜索 UI、AI V1 录入真机验收。助手 V2 见 [方案](./plans/2026-09-17-ai-assistant-v2/README.md) 与 [OpenSpec change](../openspec/changes/ai-assistant-v2/)。细节见现状快照。
