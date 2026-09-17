@@ -42,6 +42,7 @@
     "AppShell": "/components/AppShell/index",
     "PromptDialog": "/components/PromptDialog/index",
     "ThemeRadialBg": "/components/ThemeRadialBg/index",
+    "ItemTile": "/components/ItemTile/index",
     "loading": "/components/loading/index",
     "mask-element": "/components/maskElement/index"
   },

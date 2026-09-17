@@ -2,6 +2,8 @@
   wx:if="{{theme}}"
   title="{{headerTitle}}"
   back="{{true}}"
+  plainBack="{{true}}"
+  flushBottom="{{true}}"
   primary="{{theme.primary}}"
   secondary="{{theme.secondary}}"
   shadow="{{theme.shadow}}"
@@ -14,63 +16,70 @@
 
   <view class="state" wx:elif="{{error}}">
     <view class="state-text error">{{error}}</view>
-    <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <block wx:else>
-    <view class="space-hero {{atmosphere.isPhoto ? 'on-photo' : ''}}">
-      <view class="kicker">{{copy.detailKicker}}</view>
-      <view class="title">{{space.name}}</view>
-      <view class="sub">{{copy.detailSub}}</view>
-    </view>
-
-    <view class="section {{atmosphere.isPhoto ? 'on-photo' : ''}}">
-      <view class="section-hd">
-        <view>
+  <view class="page-col" wx:else>
+    <view class="panel">
+      <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+        <view class="section-hd">
           <view class="section-title">{{copy.locSectionTitle}}</view>
-          <view class="section-sub">{{copy.locSectionSub}}</view>
+          <view class="section-action theme-text" bind:tap="openCreateLoc">{{copy.locCreate}}</view>
         </view>
-        <view class="section-action" style="color: {{theme.themeColor}};" bind:tap="openCreateLoc">{{copy.locCreate}}</view>
-      </view>
 
-      <block wx:if="{{locations.length}}">
-        <view class="loc-row" wx:for="{{locations}}" wx:key="_id">
-          <view class="loc-name">{{item.name}}</view>
-          <view class="loc-actions">
-            <view
-              class="link"
-              style="color: {{theme.themeColor}};"
-              data-id="{{item._id}}"
-              data-name="{{item.name}}"
-              bind:tap="openRenameLoc"
-            >{{copy.rename}}</view>
-            <view class="link danger" data-id="{{item._id}}" bind:tap="onRemoveLoc">{{copy.remove}}</view>
+        <block wx:if="{{locations.length}}">
+          <view class="loc-row" wx:for="{{locations}}" wx:key="_id">
+            <view class="loc-name">{{item.name}}</view>
+            <view class="loc-actions">
+              <view
+                class="ico-btn"
+                hover-class="press"
+                data-id="{{item._id}}"
+                data-name="{{item.name}}"
+                catch:tap="openRenameLoc"
+              >
+                <image class="ico" src="{{editIcon}}" mode="aspectFit" />
+              </view>
+              <view
+                class="ico-btn"
+                hover-class="press"
+                data-id="{{item._id}}"
+                catch:tap="onRemoveLoc"
+              >
+                <image class="ico" src="{{deleteIcon}}" mode="aspectFit" />
+              </view>
+            </view>
           </view>
+        </block>
+        <view class="loc-empty" wx:else>{{copy.locEmpty}}</view>
+
+        <view class="section-hd items-hd">
+          <view class="section-title">{{copy.locItemsTitle}}</view>
         </view>
-      </block>
-      <view class="loc-empty" wx:else>{{copy.locEmpty}}</view>
-    </view>
 
-    <view class="section-title items-title {{atmosphere.isPhoto ? 'on-photo' : ''}}">{{copy.locItemsTitle}}</view>
+        <view class="empty" wx:if="{{!items.length}}">
+          <view class="empty-text">{{copy.detailEmpty}}</view>
+          <view class="pill-btn theme-btn" bind:tap="goAdd">{{copy.detailAdd}}</view>
+        </view>
 
-    <view class="empty {{atmosphere.isPhoto ? 'on-photo' : ''}}" wx:if="{{!items.length}}">
-      <view class="empty-text">{{copy.detailEmpty}}</view>
-      <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="goAdd">{{copy.detailAdd}}</view>
-    </view>
+        <view class="shelf" wx:else>
+          <ItemTile
+            wx:for="{{items}}"
+            wx:key="_id"
+            itemId="{{item._id}}"
+            name="{{item.name}}"
+            quantity="{{item.quantity}}"
+            unit="{{item.unit}}"
+            expireStatus="{{item.expireStatus}}"
+            place="{{item.placeText}}"
+            bind:tap="goDetail"
+          />
+        </view>
 
-    <view
-      class="item-row {{atmosphere.isPhoto ? 'on-photo' : ''}}"
-      wx:for="{{items}}"
-      wx:key="_id"
-      data-id="{{item._id}}"
-      bind:tap="goDetail"
-    >
-      <view class="item-name">{{item.name}}</view>
-      <view class="item-meta">
-        × {{item.quantity}}{{item.unit}}{{item.locationName ? ' · ' + item.locationName : ''}}
-      </view>
+        <view class="scroll-pad"></view>
+      </scroll-view>
     </view>
-  </block>
+  </view>
 
   <PromptDialog
     show="{{showLocModal}}"

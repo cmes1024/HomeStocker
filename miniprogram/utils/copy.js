@@ -316,7 +316,7 @@ const copy = {
     detailEmpty: '这里还空着',
     detailAdd: '记一件进来',
     missingSpace: '缺少空间',
-    locSectionTitle: '存放位置',
+    locSectionTitle: '空间位置',
     locSectionSub: '只属于这个空间，物品可选挂在上面',
     locEmpty: '还没有位置',
     locCreate: '新建位置',
@@ -330,7 +330,8 @@ const copy = {
     locRemoveTitle: '删除这个位置？',
     locRemoveContent: '删掉后，挂在上面的物品会变成「不指定位置」。',
     locRemoveConfirm: '删除',
-    locItemsTitle: '这个空间的物品'
+    locItemsTitle: '空间物品',
+    locBelongLabel: '所属位置：'
   },
 
   onboarding: {

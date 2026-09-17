@@ -102,23 +102,18 @@
       </view>
 
       <view class="shelf" wx:else>
-        <view
-          class="tile {{animateTiles ? 'anim' : ''}}"
+        <ItemTile
           wx:for="{{items}}"
           wx:key="_id"
-          style="{{animateTiles ? 'animation-delay: ' + (index % 9 * 40) + 'ms;' : ''}}"
-          data-id="{{item._id}}"
-          hover-class="tile-hover"
+          itemId="{{item._id}}"
+          name="{{item.name}}"
+          quantity="{{item.quantity}}"
+          unit="{{item.unit}}"
+          expireStatus="{{item.expireStatus}}"
+          animate="{{animateTiles}}"
+          delay="{{index % 9 * 40}}"
           bind:tap="goDetail"
-        >
-          <view class="tile-name">{{item.name}}</view>
-          <view class="tile-qty-row">
-            <text class="tile-qty" style="color: {{theme.themeColor}};">{{item.quantity}}</text>
-            <text class="tile-unit" wx:if="{{item.unit}}">{{item.unit}}</text>
-            <text class="badge expired" wx:if="{{item.expireStatus === 'expired'}}">{{copy.badgeExpired}}</text>
-            <text class="badge expiring" wx:elif="{{item.expireStatus === 'expiring'}}">{{copy.badgeSoon}}</text>
-          </view>
-        </view>
+        />
       </view>
       <view class="panel-scroll-pad"></view>
       </scroll-view>

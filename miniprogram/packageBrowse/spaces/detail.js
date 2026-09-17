@@ -2,7 +2,39 @@ const { listItemsBySpace, listLocations } = require('../../utils/db')
 const { callSpace } = require('../../utils/cloud')
 const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
 const { resolveSpaceAtmosphere } = require('../../utils/spaceAtmosphere')
+const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const copy = require('../../utils/copy')
+
+const EDIT_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
+const DELETE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'
+
+function tintSvg(svg, color) {
+  const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(color || ''))
+    ? color
+    : '#FF5D00'
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    svg.split('#000').join(fill)
+  )}`
+}
+
+function themeIcons() {
+  const theme = getAppTheme()
+  const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
+  return {
+    editIcon: tintSvg(EDIT_SVG, color),
+    deleteIcon: tintSvg(DELETE_SVG, color)
+  }
+}
+
+function locationByIdFrom(list) {
+  const map = {}
+  ;(list || []).forEach((loc) => {
+    if (loc && loc._id) map[loc._id] = loc.name || ''
+  })
+  return map
+}
 
 Page({
   data: {
@@ -16,6 +48,8 @@ Page({
     error: '',
     theme: null,
     headerTitle: '',
+    editIcon: '',
+    deleteIcon: '',
     atmosphere: {
       bgImage: '',
       lightHeader: false,
@@ -46,7 +80,8 @@ Page({
       spaceId,
       loading: true,
       loadingText,
-      headerTitle: ''
+      headerTitle: spaceName,
+      ...themeIcons()
     })
     this.syncAtmosphere(null)
     if (spaceId) {
@@ -57,7 +92,10 @@ Page({
   },
 
   onShow() {
-    bindThemeToPage(this, { headerTitle: '' })
+    bindThemeToPage(this, {
+      headerTitle: this.data.headerTitle || (this.data.space && this.data.space.name) || '',
+      ...themeIcons()
+    })
     this.syncAtmosphere(this.data.space)
     if (this.data.spaceId && !this.data.loading) {
       this.load(this.data.spaceId, { silent: true })
@@ -77,13 +115,26 @@ Page({
         listLocations(spaceId)
       ])
       const space = spacePack.space
+      const locations = Array.isArray(locationList) ? locationList : []
+      const rawItems = await enrichLedgerItemsAsync(
+        spacePack.list || [],
+        {},
+        locationByIdFrom(locations),
+        {}
+      )
+      const items = rawItems.map((item) => ({
+        ...item,
+        placeText: `${copy.spaces.locBelongLabel}${
+          (item.locationName || '').trim() || copy.detail.locationNone
+        }`
+      }))
       const atmosphere = resolveSpaceAtmosphere(space, getAppTheme())
       this.setData({
         space,
-        items: spacePack.list || [],
-        locations: Array.isArray(locationList) ? locationList : [],
+        items,
+        locations,
         loading: false,
-        headerTitle: '',
+        headerTitle: (space && space.name) || this.data.headerTitle || '',
         atmosphere
       })
     } catch (e) {
@@ -99,7 +150,7 @@ Page({
   },
 
   goDetail(e) {
-    const id = e.currentTarget.dataset.id
+    const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
     if (!id) return
     wx.navigateTo({ url: `/packageBrowse/items/detail?id=${id}` })
   },
@@ -200,7 +251,6 @@ Page({
     if (!confirm) return
     try {
       await callSpace('removeLocation', { locationId: id })
-      // 先本地去掉，避免空态与旧行叠在一起
       const next = (this.data.locations || []).filter((l) => l._id !== id)
       this.setData({ locations: next })
       wx.showToast({ title: copy.spaces.locRemovedToast, icon: 'success' })

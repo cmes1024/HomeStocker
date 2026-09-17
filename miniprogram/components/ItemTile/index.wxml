@@ -1,0 +1,22 @@
+<view
+  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}}"
+  style="{{animate ? 'animation-delay: ' + delay + 'ms;' : ''}}"
+  hover-class="tile-hover"
+  bind:tap="onTap"
+>
+  <view class="tile-top">
+    <view class="tile-name">{{name}}</view>
+    <view class="tile-qty-inline" wx:if="{{place}}">
+      <text class="tile-qty-x">x {{quantity}}</text>
+      <text class="badge expired" wx:if="{{expireStatus === 'expired'}}">{{badgeExpired}}</text>
+      <text class="badge expiring" wx:elif="{{expireStatus === 'expiring'}}">{{badgeSoon}}</text>
+    </view>
+  </view>
+  <view class="tile-qty-row" wx:if="{{!place}}">
+    <text class="tile-qty">{{quantity}}</text>
+    <text class="tile-unit" wx:if="{{unit}}">{{unit}}</text>
+    <text class="badge expired" wx:if="{{expireStatus === 'expired'}}">{{badgeExpired}}</text>
+    <text class="badge expiring" wx:elif="{{expireStatus === 'expiring'}}">{{badgeSoon}}</text>
+  </view>
+  <view class="tile-place" wx:if="{{place}}">{{place}}</view>
+</view>
