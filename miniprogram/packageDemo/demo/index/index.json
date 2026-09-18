@@ -1,6 +1,6 @@
 {
   "usingComponents": {
-    "Header": "/components/Header/index"
+    "Header": "/packageDemo/components/Header/index"
   },
   "navigationBarTitleText": "Demo",
   "disableScroll": true

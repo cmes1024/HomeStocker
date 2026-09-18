@@ -19,7 +19,6 @@ Page({
   },
 
   onLoad(options) {
-    setAppFamily(null)
     bindThemeToPage(this, { headerTitle: '' })
     const code = String((options && options.inviteCode) || '')
       .trim()
@@ -30,7 +29,6 @@ Page({
   },
 
   async onShow() {
-    setAppFamily(null)
     bindThemeToPage(this, { headerTitle: '' })
     try {
       await routeByMembership(this, 'onboarding')

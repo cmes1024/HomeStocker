@@ -50,10 +50,10 @@ Page({
     })
   },
   goToDemo() {
-    wx.navigateTo({ url: '/pages/demo/index/index' })
+    wx.navigateTo({ url: '/packageDemo/demo/index/index' })
   },
   goToChat() {
-    wx.navigateTo({ url: '/pages/chat/chat' })
+    wx.navigateTo({ url: '/packageDemo/chat/chat' })
   },
   close() {
     const maskbtn = this.selectComponent("#closebtn");

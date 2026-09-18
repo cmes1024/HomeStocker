@@ -1,4 +1,4 @@
-const { ensureSession, getCachedSession } = require('./session')
+const { ensureSession, getCachedSession, peekSessionMemory } = require('./session')
 const { setAppFamily } = require('./theme')
 
 /**
@@ -7,7 +7,7 @@ const { setAppFamily } = require('./theme')
  * @param {'onboarding' | 'items'} current
  */
 async function routeByMembership(page, current) {
-  const cached = getCachedSession()
+  const cached = getCachedSession() || peekSessionMemory()
   if (!cached) {
     page.setData({ bootLoading: true, bootError: '' })
   }

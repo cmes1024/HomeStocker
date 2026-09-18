@@ -2,20 +2,31 @@
 require("/extend/page/index"); // 页面扩展
 require("/extend/component/index.js"); // 组件扩展
 const { autoUpdate } = require("./utils/update.js");
-import RequestUrl from "./utils/api";
-import BaseParams from "./utils/params";
-import RequestManager from "./utils/request";
 const { setStorage } = require("./utils/storage")
 const { getParamsFormWxacode } = require("./utils/util")
 const { envId: cloudEnvId } = require("./utils/cloudbase-env")
 const { getThemeColors } = require("./utils/theme")
 const { markAppHidden, markAppShown } = require("./utils/cloud")
+const { ensureSession } = require("./utils/session")
 
 const env = "prod"
 
-if (!wx._requestUrl) wx._requestUrl = new RequestUrl(env);
-if (!wx._baseParams) wx._baseParams = new BaseParams(env);
-if (!wx._requestManager) wx._requestManager = new RequestManager(env);
+/** 演示页 RequestManager 惰性挂载，避免拖慢冷启动主路径 */
+function ensureLegacyRequestStack() {
+  if (wx._requestManager) return
+  try {
+    const RequestUrl = require("./utils/api")
+    const BaseParams = require("./utils/params")
+    const RequestManager = require("./utils/request")
+    if (!wx._requestUrl) wx._requestUrl = new RequestUrl(env)
+    if (!wx._baseParams) wx._baseParams = new BaseParams(env)
+    if (!wx._requestManager) wx._requestManager = new RequestManager(env)
+  } catch (e) {
+    console.warn('[request] lazy init skipped', e)
+  }
+}
+
+wx.ensureLegacyRequestStack = ensureLegacyRequestStack
 
 // Worker 可选：失败不影响主路径（清单派生会主线程降级）
 try {
@@ -36,6 +47,8 @@ App({
       }
       wx.cloud.init(initOpts)
       console.log('[cloud] init', cloudEnvId || '(未指定 env，使用工具默认环境)')
+      // 与首屏 JS/渲染重叠：预取会话，onShow 多半直接命中
+      ensureSession().catch(() => {})
     }
     console.log("小程序冷启动入参", options)
     wx.onNetworkStatusChange(function (res) {
@@ -55,7 +68,14 @@ App({
       const { scene } = getParamsFormWxacode(options.query);
       scene && setStorage('EnterScene', scene)
     }
-    autoUpdate();
+    // 更新检查不挡首屏
+    setTimeout(() => {
+      try {
+        autoUpdate()
+      } catch (e) {
+        // ignore
+      }
+    }, 0)
   },
   onHide() {
     markAppHidden()

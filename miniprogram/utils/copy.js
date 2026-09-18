@@ -66,7 +66,7 @@ const copy = {
     noteEmpty: '无',
     tagsEmpty: '无',
     dateEmpty: '未填写',
-    assistEntry: '用文字助手',
+    assistEntry: '用家庭管家',
     edit: '还想改一下',
     remove: '删掉吧',
     removeTitle: '删掉这件物品？',
@@ -229,7 +229,7 @@ const copy = {
   },
 
   assist: {
-    pageTitle: '文字助手',
+    pageTitle: '家庭管家',
     kicker: '跟家里的本子说话',
     sub: '查库存、记一件、改一改、确认后删掉。不录音、不看图。',
     hello: '查库存、记一件、改一改都可以直接说。发完接着聊下一句就行。',
@@ -256,7 +256,7 @@ const copy = {
     goSpaces: '去空间页',
     duplicatesTitle: '可能重复（未合并）',
     focusLabel: '当前关注',
-    openFail: '文字助手暂时打不开',
+    openFail: '家庭管家暂时打不开',
     doneEmpty: '没有需要执行的操作',
     capabilityLimited: '抱歉，目前能力有限，完成不了你交给我的任务',
     timeout: '助手这次没跑完，请再试一次。若反复出现，请把云函数 ai 超时设为 60 秒并确认已开通出网',

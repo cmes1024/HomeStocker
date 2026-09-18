@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "文字助手",
+  "navigationBarTitleText": "家庭管家",
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
     "loading": "/components/loading/index"

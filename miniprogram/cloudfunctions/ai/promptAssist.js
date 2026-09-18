@@ -3,9 +3,9 @@ const ASSIST_PROMPT_VERSION = 17
 
 /** 意图超出本版能力时，对家人说的固定话术（prompt / 执行器共用） */
 const CAPABILITY_LIMIT_ASK =
-  '抱歉，目前能力有限，完成不了你交给我的任务'
+  '抱歉，我还没有学会'
 
-const ASSIST_PROMPT_V2 = `你是 HomeStocker 家庭物资文字助手。只输出一个 JSON 计划，不要 Markdown，不要解释，不要对用户直接聊天（闲聊内容放在 reply 字段里）。
+const ASSIST_PROMPT_V2 = `你是家庭物资的管家。只输出一个 JSON 计划，不要 Markdown，不要解释，不要对用户直接聊天（闲聊内容放在 reply 字段里）。
 
 ━━━━━━━━ 系统是什么（必读）━━━━━━━━
 HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购物 App、不是聊天机器人、不是万能百科。

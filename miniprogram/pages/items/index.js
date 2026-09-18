@@ -44,6 +44,8 @@ function buildExpireBanner(item, spaceName, locationName) {
   return { place, message }
 }
 
+const FILTER_SPACE_KEY = 'itemsFilterSpaceId'
+
 Page({
   data: {
     copy: copy.items,
@@ -74,7 +76,16 @@ Page({
 
   onLoad() {
     wx.setNavigationBarTitle({ title: appName })
-    bindThemeToPage(this, { headerTitle: appName })
+    let savedSpaceId = ''
+    try {
+      savedSpaceId = String(wx.getStorageSync(FILTER_SPACE_KEY) || '')
+    } catch (e) {
+      savedSpaceId = ''
+    }
+    bindThemeToPage(this, {
+      headerTitle: appName,
+      ...(savedSpaceId ? { filterSpaceId: savedSpaceId } : {})
+    })
     this.syncPageColHeight()
     this.syncLoadingColors()
   },
@@ -144,8 +155,25 @@ Page({
         ...this.syncStats({ memberCount, membersReady: true })
       })
       this.syncLoadingColors()
+
+      // 空间列表与物资列表解耦：有本地 spaceId 时可并行拉清单；临期/件数不依赖空间
+      const spaceIdHint = this.data.filterSpaceId
+      const spacesPromise = this.loadSpaces()
+      const listPromise = (async () => {
+        const resolvedSpaceId = spaceIdHint || (await spacesPromise)
+        if (!spaceIdHint && resolvedSpaceId && this.data.filterSpaceId !== resolvedSpaceId) {
+          this.setData({ filterSpaceId: resolvedSpaceId })
+        }
+        await this.loadList()
+        const finalSpaceId = await spacesPromise
+        if (finalSpaceId && finalSpaceId !== (spaceIdHint || resolvedSpaceId)) {
+          await this.loadList({ silent: true })
+        }
+      })()
       await Promise.all([
-        this.loadSpaces().then(() => Promise.all([this.loadList(), this.loadExpiring()])),
+        spacesPromise,
+        listPromise,
+        this.loadExpiring(),
         this.loadItemCount()
       ])
     } catch (e) {
@@ -165,13 +193,22 @@ Page({
         spaces = await listSpaces()
       }
       const selected = pickSpace(spaces, this.data.filterSpaceId)
+      const filterSpaceId = selected ? selected._id : ''
+      if (filterSpaceId) {
+        try {
+          wx.setStorageSync(FILTER_SPACE_KEY, filterSpaceId)
+        } catch (e) {
+          // ignore
+        }
+      }
       this.setData(this.syncStats({
         spaces,
         spaceCount: spaces.length,
         spacesReady: true,
-        filterSpaceId: selected ? selected._id : '',
+        filterSpaceId,
         filterSpaceName: (selected && selected.name) || copy.items.defaultSpaceName
       }))
+      return filterSpaceId
     } catch (e) {
       this.setData(this.syncStats({
         spaces: [],
@@ -180,6 +217,7 @@ Page({
         filterSpaceId: '',
         filterSpaceName: copy.items.defaultSpaceName
       }))
+      return ''
     }
   },
 
@@ -263,6 +301,11 @@ Page({
     if (id === this.data.filterSpaceId) {
       this.setData({ spaceSheetOpen: false })
       return
+    }
+    try {
+      wx.setStorageSync(FILTER_SPACE_KEY, id)
+    } catch (err) {
+      // ignore
     }
     this.setData({
       spaceSheetOpen: false,

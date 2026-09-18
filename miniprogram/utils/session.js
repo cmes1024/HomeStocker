@@ -21,6 +21,21 @@ function getCachedSession() {
 }
 
 let inflight = null
+/** 含无家庭结果，避免冷启动 items→onboarding 连打两次 getMyFamily */
+let memorySession = null
+
+function rememberSession(session) {
+  memorySession = session || null
+}
+
+function peekSessionMemory() {
+  return memorySession
+}
+
+function clearSessionMemory() {
+  memorySession = null
+  inflight = null
+}
 
 async function fetchSession() {
   try {
@@ -44,18 +59,29 @@ async function fetchSession() {
 
 /**
  * 会话：通过 family.getMyFamily 确保 users 存在，并判断是否已有家庭。
- * 默认复用 globalData.family，避免 onboarding → 首页连打两次。
+ * 默认复用 globalData.family / 进程内上次结果，避免首屏连打两次。
  * @param {{ force?: boolean }} [options]
  */
 async function ensureSession(options = {}) {
   if (!options.force) {
     const cached = getCachedSession()
-    if (cached) return cached
+    if (cached) {
+      memorySession = cached
+      return cached
+    }
+    if (memorySession) return memorySession
     if (inflight) return inflight
+  } else {
+    memorySession = null
   }
-  const pending = fetchSession().finally(() => {
-    if (inflight === pending) inflight = null
-  })
+  const pending = fetchSession()
+    .then((session) => {
+      memorySession = session
+      return session
+    })
+    .finally(() => {
+      if (inflight === pending) inflight = null
+    })
   inflight = pending
   return pending
 }
@@ -63,5 +89,8 @@ async function ensureSession(options = {}) {
 module.exports = {
   ensureSession,
   getCachedSession,
+  rememberSession,
+  peekSessionMemory,
+  clearSessionMemory,
   friendlyCloudError
 }

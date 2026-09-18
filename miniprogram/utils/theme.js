@@ -216,11 +216,39 @@ function getAppSafe() {
  */
 function setAppFamily(family) {
   const app = getAppSafe()
+  const prevId = app && app.globalData && app.globalData.familyId
+  const nextId = family && family._id ? family._id : null
   const theme = family ? resolveTheme(family.background) : { ...DEFAULT_THEME }
   if (app) {
     app.globalData.family = family || null
-    app.globalData.familyId = family ? family._id : null
+    app.globalData.familyId = nextId
     app.globalData.theme = theme
+  }
+  if (prevId && String(prevId) !== String(nextId || '')) {
+    try {
+      wx.removeStorageSync('itemsFilterSpaceId')
+    } catch (e) {
+      // ignore
+    }
+  }
+  try {
+    const session = require('./session')
+    if (family && family._id) {
+      session.rememberSession({
+        hasFamily: true,
+        family,
+        currentFamilyId: family._id
+      })
+    } else {
+      // 无当前家庭：写入否定会话，避免 items→onboarding 再打一次 getMyFamily
+      session.rememberSession({
+        hasFamily: false,
+        family: null,
+        currentFamilyId: null
+      })
+    }
+  } catch (e) {
+    // ignore
   }
   applyNavBarColor(theme)
   return theme

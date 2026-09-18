@@ -10,6 +10,6 @@ Page({
   },
   goToDemo(e) {
     const { id } = e.currentTarget.dataset
-    wx.navigateTo({ url: `/pages/demo/${id}/index` })
+    wx.navigateTo({ url: `/packageDemo/demo/${id}/index` })
   }
 })

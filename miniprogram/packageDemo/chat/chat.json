@@ -1,0 +1,5 @@
+{
+  "usingComponents": {
+    "Header": "/packageDemo/components/Header/index"
+  }
+}

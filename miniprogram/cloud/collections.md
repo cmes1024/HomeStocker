@@ -342,4 +342,4 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `update` / `remo
 3. `familyTrees` 不必另建索引（`_id = familyId`）；`aiCapabilities` 用固定 `_id` `assist-act-v2`。
 4. 重新上传云函数 `ai`（含 `act`）、`space`、`tag`、`family`（结构写旁路更新树；建家种子树；解散删树）。
 5. `aiPrompts.assist-act-v2` 会在 `act` 时按仓库 `promptAssist.js` 同步（不改 `item-extract-v1`）。
-6. 清单 AI 浮窗仍进 `packageAi` 采集；文字助手是新分包，无密钥引导现有 `packageAi/keys`。
+6. 清单 AI 浮窗仍进 `packageAi` 采集；家庭管家是新分包，无密钥引导现有 `packageAi/keys`。

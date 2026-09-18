@@ -1,0 +1,7 @@
+{
+  "usingComponents": {
+    "Header": "/packageDemo/components/Header/index",
+    "maskElement": "/components/maskElement/index",
+    "modal": "/packageDemo/components/Modal/index"
+  }
+}

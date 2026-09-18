@@ -858,7 +858,14 @@ async function countItems(openid) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
 
-  // where().count() 在部分环境下会偏小，按页累加才是全家真实件数。
+  // 优先 count()（单次查询）；失败再按页累加兜底
+  try {
+    const counted = await db.collection('items').where({ familyId: ctx.familyId }).count()
+    return ok({ total: Number(counted && counted.total) || 0 })
+  } catch (err) {
+    console.warn('countItems count() fallback', err && err.message)
+  }
+
   const pageSize = 100
   let total = 0
   let skip = 0

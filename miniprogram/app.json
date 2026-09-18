@@ -1,7 +1,7 @@
 {
   "pages": [
-    "pages/onboarding/index",
     "pages/items/index",
+    "pages/onboarding/index",
     "pages/items/edit",
     "pages/family/index",
     "pages/family/tags",
@@ -31,9 +31,27 @@
       "pages": [
         "assist/index"
       ]
+    },
+    {
+      "root": "packageDemo",
+      "name": "demo",
+      "pages": [
+        "demo/index/index",
+        "demo/overlay/index",
+        "demo/request/index",
+        "demo/system/index",
+        "demo/worker/index",
+        "demo/page-router/index",
+        "index/index",
+        "chat/chat"
+      ]
     }
   ],
   "preloadRule": {
+    "pages/items/index": {
+      "network": "all",
+      "packages": ["browse"]
+    },
     "pages/family/index": {
       "network": "wifi",
       "packages": ["browse", "aiAssist"]

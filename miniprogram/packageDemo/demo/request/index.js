@@ -4,8 +4,11 @@ Page({
     queueStatus: '空闲',
   },
   onLoad() {
+    if (typeof wx.ensureLegacyRequestStack === 'function') {
+      wx.ensureLegacyRequestStack()
+    }
     this.addLog('📡 RequestManager 演示')
-    this.addLog('环境: ' + wx._requestUrl.getEnvStr)
+    this.addLog('环境: ' + (wx._requestUrl && wx._requestUrl.getEnvStr))
     this.addLog('队列状态: ' + this.data.queueStatus)
   },
   // 模拟：先设置白名单，再发起"关键请求"触发阻塞

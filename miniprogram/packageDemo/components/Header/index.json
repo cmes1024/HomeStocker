@@ -2,6 +2,6 @@
   "component": true,
   "usingComponents": {
     "loading": "/components/loading/index",
-    "mini-use-agreement": "/components/agreement/index"
+    "mini-use-agreement": "/packageDemo/components/agreement/index"
   }
 }
