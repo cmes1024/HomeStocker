@@ -15,6 +15,13 @@ Assistant act MUST resolve the caller via cloud identity and current family memb
 - **WHEN** a member submits act with blank text
 - **THEN** the system does not call the model
 
+### Requirement: Follow-up turns may carry sanitized context
+Act MAY accept a short client-supplied conversation history and recent item ids. History MUST be treated as prompt context only and MUST NOT authorize writes. Recent item ids MUST be loaded from the current family and injected as opaque short refs for this turn. Database document ids MUST NOT appear in the model prompt.
+
+#### Scenario: Change the milk just recorded
+- **WHEN** a member first asks to record milk in the kitchen fridge and then says to change it to three bottles
+- **THEN** the follow-up act includes the prior turns as context and can address that item via this turn’s short ref
+
 ### Requirement: Model emits a plan not writes
 The language model MUST return a structured plan with optional clarification questions, optional one-shot inventory probe, and an ordered list of capability ids with name-based arguments. The model MUST NOT receive database document ids in the prompt except opaque short refs created for this turn from focus or probe rows. The model MUST NOT write collections itself.
 

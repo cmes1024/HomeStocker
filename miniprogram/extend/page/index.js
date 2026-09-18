@@ -36,7 +36,8 @@ const pageExtend = Page => {
       object.onShareAppMessage = function () {
         return {
           title: '家庭物资',
-          path: '/pages/items/index'
+          path: '/pages/items/index',
+          imageUrl: '/assets/shared.png'
         }
       }
     }

@@ -115,7 +115,7 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
@@ -123,5 +123,18 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`；AI 采集与密钥在分包 `packageAi`（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`；AI 采集与密钥在分包 `packageAi`；文字助手在分包 `packageAiAssist`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航
+
+## AI 助手 V2
+
+- [ ] 家庭页有「文字助手」入口，打开 `packageAiAssist`；AI 额度行仍进 `packageAi/keys`
+- [ ] 物资详情有助手入口，带上当前 `itemId` 作为 focus；编辑/删除主按钮仍在
+- [ ] ~~清单 AI 浮窗仍进入 V1 拍照采集；返回后清单拉数与筛选不变~~（已下线：首页 FAB + V1 拍照录入已移除；V2 文字助手入口在家庭页）
+- [ ] 助手页是对话列表：发送后清空输入，汇报/追问出现在气泡里；没有语音、没有选图送模型；无家时回 onboarding
+- [ ] 无密钥时不调模型，引导现有密钥页
+- [ ] 追问展示芯片或确认删；下一句带着最近对话上下文重跑 `ai.act`；两轮仍缺槽则引导现有编辑页
+- [ ] `ai.act` 走当前家庭 membership，忽略伪造 familyId；空文本拒绝
+- [ ] 计划 `ask` 非空则零写入；删除无确认不执行；`source: agent`
+- [ ] 树含空间/位置/标签、不含物资；结构写后更新；解散删树、离开不删
+- [ ] 操作汇报由代码拼出（含可能重复、不合并）；与 V1 采集/密钥并存

@@ -150,12 +150,3 @@
     </scroll-view>
   </view>
 </page-container>
-
-<view
-  wx:if="{{theme && !bootLoading && !bootError}}"
-  class="ai-fab theme-btn"
-  style="{{theme.cssVarStyle}}"
-  hover-class="ai-fab-hover"
-  bind:tap="goAiCapture"
-  aria-label="AI 录入"
->AI</view>

@@ -23,11 +23,18 @@ The assistant MUST accept typed natural-language text. This version MUST NOT req
 - **THEN** the system may call act with that text
 
 ### Requirement: Clarification returns to the same act
-When act returns clarification questions, the assistant MUST show slot choices or a confirmation, keep the original utterance available to edit, and resubmit act with the filled slots. After two clarification rounds still missing required slots, the system MUST offer the existing item edit form with any already parsed fields instead of continuing free-form questioning.
+When act returns clarification questions, the assistant MUST show them in the chat transcript with slot choices or a confirmation, and resubmit act with the member’s next utterance plus recent conversation context. After two clarification rounds still missing required slots, the system MUST offer the existing item edit form with any already parsed fields instead of continuing free-form questioning.
 
 #### Scenario: Pick which fridge
 - **WHEN** act asks which of two fridges and the member taps one chip
-- **THEN** the system calls act again with that place bound and does not start a chat transcript as the primary UI
+- **THEN** the system sends that choice as the next chat turn to act, with prior turns included as context, and the act text MUST retain the original write intent (not treat the place chip alone as a list-inventory query)
+
+### Requirement: Chat transcript is the assistant surface
+The assistant page MUST present a chat-style transcript: the member’s sent text appears as a message, the input clears after send, and the next sentence can be typed without deleting the previous one. Act reports, questions, and confirmations MUST appear as assistant messages. The page MUST NOT register the legacy `pages/chat` route.
+
+#### Scenario: Send then speak again
+- **WHEN** a member sends one sentence and the report appears
+- **THEN** the composer is empty and they can type a follow-up immediately
 
 ### Requirement: No key guides to existing key settings
 When the current family has no AI key, starting act MUST NOT call the model. The assistant MUST tell the member to configure a key and MUST offer the existing family key-settings page. The assistant MUST NOT implement a second key editor.

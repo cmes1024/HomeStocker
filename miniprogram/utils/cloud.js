@@ -293,5 +293,6 @@ module.exports = {
   callActivity,
   friendlyCloudError,
   markAppHidden,
-  markAppShown
+  markAppShown,
+  invalidateItemDomain
 }

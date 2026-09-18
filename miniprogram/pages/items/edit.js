@@ -10,6 +10,15 @@ function unlockMask(page, id) {
   }
 }
 
+function decodeOpt(value) {
+  if (value == null || value === '') return ''
+  try {
+    return decodeURIComponent(String(value))
+  } catch (e) {
+    return String(value)
+  }
+}
+
 Page({
   data: {
     copy: copy.edit,
@@ -51,6 +60,16 @@ Page({
     const itemId = (options && options.id) || ''
     const preferredSpaceId = (options && options.spaceId) || ''
     const isEdit = !!itemId
+    this.prefill = {
+      name: decodeOpt(options && options.name),
+      quantity: decodeOpt(options && options.quantity),
+      unit: decodeOpt(options && options.unit),
+      note: decodeOpt(options && options.note),
+      spaceName: decodeOpt(options && options.spaceName),
+      locationName: decodeOpt(options && options.locationName),
+      expireDate: decodeOpt(options && options.expireDate),
+      productionDate: decodeOpt(options && options.productionDate)
+    }
     bindThemeToPage(this, {
       itemId,
       isEdit,
@@ -109,8 +128,16 @@ Page({
           loading: false
         })
       } else {
-        await this.loadLocations(this.data.spaceId, '')
-        this.setData({ loading: false })
+        const prefill = this.prefill || {}
+        await this.loadLocations(this.data.spaceId, '', prefill.locationName)
+        const patch = { loading: false }
+        if (prefill.name) patch.name = prefill.name
+        if (prefill.quantity) patch.quantity = String(prefill.quantity)
+        if (prefill.unit) patch.unit = prefill.unit
+        if (prefill.note) patch.note = prefill.note
+        if (prefill.expireDate) patch.expireDate = prefill.expireDate
+        if (prefill.productionDate) patch.productionDate = prefill.productionDate
+        this.setData(patch)
       }
       this.syncLoadingColors()
     } catch (e) {
@@ -156,6 +183,9 @@ Page({
     if (preferredSpaceId) {
       const idx = spaces.findIndex((s) => s._id === preferredSpaceId)
       if (idx >= 0) spaceIndex = idx
+    } else if (this.prefill && this.prefill.spaceName) {
+      const idx = spaces.findIndex((s) => s && s.name === this.prefill.spaceName)
+      if (idx >= 0) spaceIndex = idx
     } else {
       const defIdx = spaces.findIndex((s) => s.isDefault)
       if (defIdx >= 0) spaceIndex = defIdx
@@ -171,7 +201,7 @@ Page({
     return spaceId
   },
 
-  async loadLocations(spaceId, preferredLocationId) {
+  async loadLocations(spaceId, preferredLocationId, preferredLocationName) {
     const none = copy.edit.locationNone
     if (!spaceId) {
       this.setData({
@@ -188,6 +218,9 @@ Page({
     let locationIndex = 0
     if (preferredLocationId) {
       const idx = locations.findIndex((l) => l._id === preferredLocationId)
+      if (idx >= 0) locationIndex = idx + 1
+    } else if (preferredLocationName) {
+      const idx = locations.findIndex((l) => l && l.name === preferredLocationName)
       if (idx >= 0) locationIndex = idx + 1
     }
     const locationId =

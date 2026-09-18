@@ -161,13 +161,13 @@
 
 ### `aiPrompts`
 
-应用级提示词（不是按家庭一份）。V1 文档 `_id` = `item-extract-v1`，由云函数 `ai` 在首次调用时写入；运营可在控制台改 `system`。
+应用级提示词（不是按家庭一份）。V1 文档 `_id` = `item-extract-v1`；V2 助手文档 `_id` = `assist-act-v2`。由云函数 `ai` 在对应 action 首次调用时写入；运营可在控制台改 `system`。两份文档并列，互不覆盖。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `_id` | string | 稳定 id，V1 用 `item-extract-v1` |
-| `version` | number | |
-| `system` | string | 系统提示词全文（含 `{{TODAY}}` 等占位符） |
+| `_id` | string | 稳定 id：`item-extract-v1` 或 `assist-act-v2` |
+| `version` | number | 种子更高则覆盖 |
+| `system` | string | 系统提示词全文（V1 含 `{{TODAY}}` 等；V2 含 `{{CAPABILITIES}}` `{{TREE}}` `{{FOCUS}}` `{{PROBE}}`） |
 | `updatedAt` | number | |
 
 ### `itemMedia`
@@ -181,6 +181,34 @@
 | `itemId` | string | |
 | `fileID` | string | 云存储 fileID |
 | `createdAt` | number | |
+
+### `familyTrees`
+
+每家一棵结构树，`_id` = `familyId`。只存空间 → 位置、标签骨架，**不含**物资、数量、日期、消息、成员。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | 与 `familyId` 相同 |
+| `familyId` | string | |
+| `rev` | number | 结构写入后重绘时的单调版本 |
+| `spaces` | array | `{ id, name, isDefault, locations: [{ id, name }] }[]` |
+| `tags` | array | `{ id, name }[]` |
+| `updatedAt` | number | |
+
+空间 / 位置 / 标签写成功后旁路重绘；物资写不改树。缺失或无法解析时 `ai.act` 从三集合重绘。建家在默认空间/标签就绪后写树；解散删除；成员离开不删。
+
+### `aiCapabilities`
+
+应用级能力表（不是按家庭一份）。固定 `_id` = `assist-act-v2`。提示词渲染与执行器白名单读同一份。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | 恒为 `assist-act-v2` |
+| `version` | number | 云函数种子更高则覆盖 |
+| `apis` | array | `{ id, fn, action, enabled, confirm, args, hint }[]` |
+| `updatedAt` | number | |
+
+V2 种子 enabled：`item.search` / `listExpiring` / `create` / `update` / `remove`（confirm）/ `space.createLocation`。`item.merge` 与房间/标签/家庭/密钥/抽取为 disabled。代码硬底线仍拒绝 `family.*`、密钥、extract、transcribe。成员不能从客户端改此表。
 
 ### `floors`（模型预留，本版不建集合/UI）
 
@@ -210,6 +238,8 @@
 | `itemMedia` | `itemId` | 普通 | 按物资挂图 |
 | `itemMedia` | `familyId` | 普通 | 解散清理 |
 
+`familyTrees` 以 `_id = familyId` 主键读写，不必另建索引。`aiCapabilities` / `aiPrompts` 用固定 `_id`，不必另建索引。
+
 说明：按 `tagIds` 筛选可用数组包含查询；若控制台支持可为 `tagIds` 建多键索引，非必须。`_id` 主键不用手建。`aiPrompts` 用固定 `_id`，不必另建索引。
 
 ## 换环境部署：集合与索引（控制台）
@@ -220,7 +250,7 @@
 
 每个集合点「添加集合」，名称必须完全一致：
 
-`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `itemMedia`
+`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `itemMedia` · `familyTrees` · `aiCapabilities`
 
 权限先随意；建完后把同目录 `database-rules.json` 里对应集合的规则贴进去（客户端写一律 deny）。
 
@@ -271,7 +301,7 @@
 
 见同目录 `database-rules.json`。换环境：云开发 → 数据库 → 各集合权限 / 安全规则，按该文件粘贴。集合与索引逐步对照见上一节「换环境部署」。
 
-实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。`familyAiKeys` / `aiPrompts` / `itemMedia` 读也走云函数 `ai`。客户端写一律 deny。
+实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。`familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` 读也走云函数。客户端写一律 deny。
 
 ## 多家庭体验
 
@@ -279,8 +309,8 @@
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
 - `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），`themeId` 须在云函数 `THEME_IDS` 白名单内（与 `theme.js` 的 `THEME_PRESETS` 同步）。写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
-- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥
-- 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图写一律云函数
+- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树
+- 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图/助手 act/结构树写一律云函数
 
 ## 订阅消息（B 波）
 
@@ -302,3 +332,14 @@
 7. 同步上传 `family`（解散路径会清密钥与旁路图）。
 8. 「微信同声传译」插件已停维护。真机 `wx.serviceMarket.invokeService` 会返回 `ok` 但 `data` 为空，语音转写必须走云函数 **`ai.transcribe`**（openapi `SentenceRecognitionWX`）。请把云函数 `ai` **超时改成 60 秒并重新上传**。未开通服务市场或失败时请手打文字。
 9. `aiPrompts` 文档 `item-extract-v1` 会在 `listKeys` / `addKey` / `extract` 时按仓库 `prompt.js` 同步（`version` 与 `system` 不一致则覆盖）；也可在控制台核对 `system` 正文。
+
+## AI 助手 V2（控制台检查项）
+
+部署 `packageAiAssist` / `ai.act` 前在云开发控制台核对这些项。**不要把 DeepSeek / 测试 API Key 写进仓库。**
+
+1. 集合 `familyTrees`、`aiCapabilities` 已创建（`ai.act` 首次调用也会 `createCollection`，控制台建一次更稳）。
+2. 两集合安全规则按 `database-rules.json` 粘贴：客户端读写均为 deny。
+3. `familyTrees` 不必另建索引（`_id = familyId`）；`aiCapabilities` 用固定 `_id` `assist-act-v2`。
+4. 重新上传云函数 `ai`（含 `act`）、`space`、`tag`、`family`（结构写旁路更新树；建家种子树；解散删树）。
+5. `aiPrompts.assist-act-v2` 会在 `act` 时按仓库 `promptAssist.js` 同步（不改 `item-extract-v1`）。
+6. 清单 AI 浮窗仍进 `packageAi` 采集；文字助手是新分包，无密钥引导现有 `packageAi/keys`。

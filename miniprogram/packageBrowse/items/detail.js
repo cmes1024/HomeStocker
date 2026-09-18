@@ -181,6 +181,16 @@ Page({
     this.load(this.data.itemId, { silent: false })
   },
 
+  goAssist() {
+    const id = this.data.itemId
+    const item = this.data.item
+    if (!id || !item) return
+    wx.navigateTo({
+      url: `/packageAiAssist/assist/index?itemId=${encodeURIComponent(id)}`,
+      fail: () => wx.showToast({ title: copy.assist.openFail, icon: 'none' })
+    })
+  },
+
   goEdit() {
     const id = this.data.itemId
     if (!id) return

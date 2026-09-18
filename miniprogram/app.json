@@ -22,20 +22,21 @@
       "root": "packageAi",
       "name": "ai",
       "pages": [
-        "capture/index",
         "keys/index"
+      ]
+    },
+    {
+      "root": "packageAiAssist",
+      "name": "aiAssist",
+      "pages": [
+        "assist/index"
       ]
     }
   ],
-  "permission": {
-    "scope.record": {
-      "desc": "把你说的物品信息转成文字，方便录入家庭物资"
-    }
-  },
   "preloadRule": {
     "pages/family/index": {
       "network": "wifi",
-      "packages": ["browse"]
+      "packages": ["browse", "aiAssist"]
     }
   },
   "usingComponents": {

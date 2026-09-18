@@ -56,7 +56,7 @@ Constraints: WeChat native mini program + CloudBase; client write deny on domain
 
 ### 5. One act prompt, not five scene personas
 
-**Choice:** `aiPrompts.assist-act-v2` with sectioned capability instructions. Placeholders: `TODAY` `WEEKDAY` `FAMILY_NAME` `CAPABILITIES` `TREE` `FOCUS` `PROBE`. JSON plan: `ask`, `probe`, `calls`. Client never sends the system prompt.
+**Choice:** `aiPrompts.assist-act-v2` with sectioned capability instructions. Placeholders: `TODAY` `WEEKDAY` `FAMILY_NAME` `CAPABILITIES` `TREE` `HISTORY` `FOCUS` `PROBE`. JSON plan: `ask`, `probe`, `calls`. Client never sends the system prompt. Follow-up turns pass a short sanitized transcript plus recent item ids (rendered as `R*` refs), not database ids.
 
 **Why:** The product decision is that the model chooses among listed APIs. A code `route` step would hide capabilities.
 

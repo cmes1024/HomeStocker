@@ -4,6 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
+const { touchFamilyTree } = require('./familyTree')
 
 const DEFAULT_TAG_NAMES = ['药品', '饮料', '工具', '衣物']
 
@@ -206,20 +207,38 @@ exports.main = async (event) => {
 
   const action = event && event.action
   try {
+    let result
     switch (action) {
       case 'ensureDefaults':
-        return await ensureDefaults(OPENID)
+        result = await ensureDefaults(OPENID)
+        break
       case 'list':
-        return await listTags(OPENID)
+        result = await listTags(OPENID)
+        break
       case 'create':
-        return await createTag(OPENID, event)
+        result = await createTag(OPENID, event)
+        break
       case 'update':
-        return await updateTag(OPENID, event)
+        result = await updateTag(OPENID, event)
+        break
       case 'remove':
-        return await removeTag(OPENID, event)
+        result = await removeTag(OPENID, event)
+        break
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }
+    if (
+      result &&
+      result.ok &&
+      (action === 'ensureDefaults' ||
+        action === 'create' ||
+        action === 'update' ||
+        action === 'remove')
+    ) {
+      const ctx = await resolveFamilyContext(OPENID)
+      if (!ctx.error) await touchFamilyTree(db, ctx.familyId)
+    }
+    return result
   } catch (e) {
     console.error('tag error', action, e)
     return fail('INTERNAL', e.message || String(e))

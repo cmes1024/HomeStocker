@@ -1,8 +1,7 @@
 {
-  "navigationBarTitleText": "AI 录入",
+  "navigationBarTitleText": "文字助手",
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
-    "ThemeRadialBg": "/components/ThemeRadialBg/index",
     "loading": "/components/loading/index"
   }
 }

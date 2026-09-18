@@ -70,12 +70,14 @@ Page({
     if (code) {
       return {
         title: copy.family.inviteShareTitle(family.name || '家庭'),
-        path: `/pages/onboarding/index?inviteCode=${code}`
+        path: `/pages/onboarding/index?inviteCode=${code}`,
+        imageUrl: '/assets/shared.png'
       }
     }
     return {
       title: '家庭物资',
-      path: '/pages/items/index'
+      path: '/pages/items/index',
+      imageUrl: '/assets/shared.png'
     }
   },
 
@@ -152,6 +154,13 @@ Page({
 
   goMessages() {
     wx.navigateTo({ url: '/pages/family/messages' })
+  },
+
+  goAiAssist() {
+    wx.navigateTo({
+      url: '/packageAiAssist/assist/index',
+      fail: () => wx.showToast({ title: copy.assist.openFail, icon: 'none' })
+    })
   },
 
   goAiKeys() {

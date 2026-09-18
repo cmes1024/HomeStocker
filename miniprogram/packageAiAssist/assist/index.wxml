@@ -1,0 +1,177 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  back="{{true}}"
+  plainBack="{{true}}"
+  flushBottom="{{true}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
+  lightHeader="{{theme.lightHeader}}"
+>
+  <loading
+    show="{{booting}}"
+    text="{{copy.pageTitle}}"
+    glass
+    zIndex="{{200}}"
+    ballColor="{{loadingColors}}"
+  />
+
+  <view class="state" wx:if="{{fatalError}}">
+    <view class="state-text error">{{fatalError}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="chat" wx:elif="{{!booting}}">
+    <view class="focus" wx:if="{{focusLabel}}">
+      <text class="focus-kicker">{{copy.focusLabel}}</text>
+      <text class="focus-name">{{focusLabel}}</text>
+    </view>
+
+    <view class="banner" wx:if="{{noKey}}">
+      <view class="banner-text">{{copy.noKey}}</view>
+      <view class="text-link theme-text" bind:tap="goKeys">{{copy.goKeys}}</view>
+    </view>
+
+    <scroll-view
+      class="msg-list"
+      scroll-y
+      enhanced
+      show-scrollbar="{{false}}"
+      scroll-into-view="{{scrollIntoView}}"
+      scroll-with-animation
+    >
+      <view
+        wx:for="{{messages}}"
+        wx:key="id"
+        id="msg-{{item.id}}"
+        class="msg msg-{{item.role}}"
+      >
+        <view class="bubble" wx:if="{{item.text}}">{{item.text}}</view>
+
+        <view class="blocks" wx:if="{{item.blocks && item.blocks.length}}">
+          <view
+            class="block"
+            wx:for="{{item.blocks}}"
+            wx:for-item="block"
+            wx:key="key"
+          >
+            <view
+              class="block-title tone-{{block.tone}}"
+              wx:if="{{block.title}}"
+            >{{block.title}}</view>
+            <view
+              class="card tone-{{card.tone}}"
+              wx:for="{{block.cards}}"
+              wx:for-item="card"
+              wx:key="key"
+            >
+              <view class="card-title">{{card.title}}</view>
+              <view class="card-sub" wx:if="{{card.subtitle}}">{{card.subtitle}}</view>
+              <view class="card-facts" wx:if="{{card.hasFacts}}">
+                <text
+                  class="card-fact"
+                  wx:for="{{card.facts}}"
+                  wx:for-item="fact"
+                  wx:key="*this"
+                >{{fact}}</text>
+              </view>
+              <view class="card-tags" wx:if="{{card.hasTags}}">
+                <text
+                  class="card-tag"
+                  wx:for="{{card.tags}}"
+                  wx:for-item="tag"
+                  wx:key="*this"
+                >{{tag}}</text>
+              </view>
+            </view>
+            <view class="block-footer" wx:if="{{block.footer}}">{{block.footer}}</view>
+          </view>
+        </view>
+
+        <view class="ask-block" wx:if="{{item.hasChips}}">
+          <view class="chips">
+            <block wx:for="{{item.askList}}" wx:for-item="ask" wx:key="question">
+              <view
+                class="chip theme-border theme-text"
+                wx:for="{{ask.options}}"
+                wx:for-item="opt"
+                wx:key="value"
+                data-value="{{opt.value}}"
+                data-label="{{opt.label}}"
+                bind:tap="onPickChip"
+              >{{opt.label}}</view>
+            </block>
+          </view>
+        </view>
+
+        <view class="text-link theme-text retry" wx:if="{{item.goSpaces}}" bind:tap="goSpaces">{{copy.goSpaces}}</view>
+
+        <view class="confirm-block" wx:if="{{item.confirmList && item.confirmList.length}}">
+          <view class="confirm-hint">{{item.confirmKind === 'merge' ? copy.confirmMergeHint : copy.confirmHint}}</view>
+          <view class="confirm-name" wx:for="{{item.confirmList}}" wx:for-item="row" wx:key="key">
+            {{row.displayName}}
+          </view>
+          <view class="confirm-actions">
+            <view class="ghost-btn" bind:tap="onCancelConfirm">{{copy.confirmNo}}</view>
+            <view class="pill-btn theme-btn" bind:tap="onConfirmRemove">{{item.confirmKind === 'merge' ? copy.confirmMergeYes : copy.confirmYes}}</view>
+          </view>
+        </view>
+
+        <view class="sub-block" wx:if="{{item.subscribeItems && item.subscribeItems.length}}">
+          <view class="sub-hint">{{copy.subscribeHint}}</view>
+          <view
+            class="sub-row"
+            wx:for="{{item.subscribeItems}}"
+            wx:for-item="sub"
+            wx:key="itemId"
+          >
+            <view class="sub-main">
+              <view class="sub-name">{{sub.name}}</view>
+              <view class="sub-meta">
+                <text wx:if="{{sub.expireDate}}">过期 {{sub.expireDate}}</text>
+                <text wx:if="{{sub.placeLabel}}"> · {{sub.placeLabel}}</text>
+              </view>
+            </view>
+            <switch
+              checked="{{sub.expireReminderEnabled}}"
+              color="{{theme.themeColor}}"
+              data-msgid="{{item.id}}"
+              data-itemid="{{sub.itemId}}"
+              bindchange="onToggleSubscribe"
+            />
+          </view>
+        </view>
+
+        <view class="fallback" wx:if="{{item.showEdit}}">
+          <view class="fallback-text">{{copy.needEdit}}</view>
+          <view class="text-link theme-text" bind:tap="goEdit">{{copy.goEdit}}</view>
+        </view>
+
+        <view class="text-link theme-text retry" wx:if="{{item.retry}}" bind:tap="onRetry">{{common.retry}}</view>
+      </view>
+      <view id="msg-bottom" class="msg-tail"></view>
+    </scroll-view>
+
+    <view class="composer">
+      <input
+        wx:if="{{composerOn}}"
+        class="input"
+        value="{{text}}"
+        placeholder="{{copy.placeholder}}"
+        maxlength="500"
+        confirm-type="send"
+        hold-keyboard="{{true}}"
+        adjust-position
+        cursor-spacing="24"
+        disabled="{{loading}}"
+        bindinput="onTextInput"
+        bindconfirm="onSend"
+      />
+      <view
+        class="send theme-btn {{loading || !text ? 'is-disabled' : ''}}"
+        bind:tap="onSend"
+      >{{loading ? copy.sendingShort : copy.send}}</view>
+    </view>
+  </view>
+</AppShell>

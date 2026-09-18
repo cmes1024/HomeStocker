@@ -4,6 +4,8 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
+const { touchFamilyTree } = require('./familyTree')
+const locationWriter = require('./locationWrite')(db)
 
 const DEFAULT_SPACE_NAME = '仓库'
 const DEFAULT_COVER_KEY = 'default-indoor'
@@ -289,28 +291,7 @@ async function listLocations(openid, event) {
 }
 
 async function createLocation(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
-
-  const spaceId = event.spaceId
-  if (!spaceId) return fail('INVALID_ID', '缺少 spaceId')
-
-  const name = String(event.name || '').trim()
-  if (!name) return fail('INVALID_NAME', '请输入位置名称')
-
-  const space = await getSpaceInFamily(spaceId, ctx.familyId)
-  if (!space) return fail('NOT_FOUND', '空间不存在')
-
-  const now = Date.now()
-  const doc = {
-    familyId: ctx.familyId,
-    spaceId,
-    name,
-    createdAt: now,
-    updatedAt: now
-  }
-  const addRes = await db.collection('locations').add({ data: doc })
-  return ok({ _id: addRes._id, ...doc })
+  return locationWriter.createLocation(openid, event)
 }
 
 async function updateLocation(openid, event) {
@@ -422,38 +403,69 @@ async function listItemsBySpace(openid, event) {
   return ok({ space, list })
 }
 
+function callerOpenid() {
+  const ctx = cloud.getWXContext()
+  return ctx.OPENID || ctx.FROM_OPENID || ''
+}
+
 exports.main = async (event) => {
-  const { OPENID } = cloud.getWXContext()
+  const OPENID = callerOpenid()
   if (!OPENID) {
     return fail('UNAUTHORIZED', '未登录')
   }
 
   const action = event && event.action
   try {
+    let result
     switch (action) {
       case 'ensureDefault':
-        return await ensureDefault(OPENID)
+        result = await ensureDefault(OPENID)
+        break
       case 'list':
-        return await listSpaces(OPENID)
+        result = await listSpaces(OPENID)
+        break
       case 'create':
-        return await createSpace(OPENID, event)
+        result = await createSpace(OPENID, event)
+        break
       case 'update':
-        return await updateSpace(OPENID, event)
+        result = await updateSpace(OPENID, event)
+        break
       case 'remove':
-        return await removeSpace(OPENID, event)
+        result = await removeSpace(OPENID, event)
+        break
       case 'listLocations':
-        return await listLocations(OPENID, event)
+        result = await listLocations(OPENID, event)
+        break
       case 'createLocation':
-        return await createLocation(OPENID, event)
+        result = await createLocation(OPENID, event)
+        break
       case 'updateLocation':
-        return await updateLocation(OPENID, event)
+        result = await updateLocation(OPENID, event)
+        break
       case 'removeLocation':
-        return await removeLocation(OPENID, event)
+        result = await removeLocation(OPENID, event)
+        break
       case 'listItemsBySpace':
-        return await listItemsBySpace(OPENID, event)
+        result = await listItemsBySpace(OPENID, event)
+        break
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }
+    if (
+      result &&
+      result.ok &&
+      (action === 'ensureDefault' ||
+        action === 'create' ||
+        action === 'update' ||
+        action === 'remove' ||
+        action === 'createLocation' ||
+        action === 'updateLocation' ||
+        action === 'removeLocation')
+    ) {
+      const ctx = await resolveFamilyContext(OPENID)
+      if (!ctx.error) await touchFamilyTree(db, ctx.familyId)
+    }
+    return result
   } catch (e) {
     console.error('space error', action, e)
     return fail('INTERNAL', e.message || String(e))

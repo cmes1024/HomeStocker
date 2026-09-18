@@ -74,6 +74,8 @@
           <view class="value {{item.note ? '' : 'muted'}}">{{item.note || copy.noteEmpty}}</view>
         </view>
 
+        <view class="assist-entry theme-text" bind:tap="goAssist">{{copy.assistEntry}}</view>
+
         <view class="recent" wx:if="{{recentOps.length}}">
           <view class="recent-title">{{copy.recentTitle}}</view>
           <view class="recent-row" wx:for="{{recentOps}}" wx:key="_id">

@@ -4,6 +4,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
 const _ = db.command
+const { rebuildFamilyTree, deleteFamilyTree } = require('./familyTree')
 
 const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const INVITE_LEN = 6
@@ -132,6 +133,53 @@ async function setCurrentFamily(openid, familyId) {
   })
 }
 
+async function seedStructureTree(familyId) {
+  try {
+    const existingSpaces = await db.collection('spaces').where({ familyId }).limit(10).get()
+    if (!(existingSpaces.data || []).length) {
+      const now = Date.now()
+      await db.collection('spaces').add({
+        data: {
+          familyId,
+          name: '仓库',
+          floorId: null,
+          isDefault: true,
+          coverKey: 'default-indoor',
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+    }
+
+    const famSnap = await db.collection('families').doc(familyId).get().catch(() => null)
+    if (famSnap && famSnap.data && !famSnap.data.tagsSeededAt) {
+      const existingTags = await db.collection('tags').where({ familyId }).limit(10).get()
+      if (!(existingTags.data || []).length) {
+        const now = Date.now()
+        const names = ['药品', '饮料', '工具', '衣物']
+        for (let i = 0; i < names.length; i++) {
+          await db.collection('tags').add({
+            data: {
+              familyId,
+              name: names[i],
+              isDefault: true,
+              createdAt: now + i,
+              updatedAt: now + i
+            }
+          })
+        }
+      }
+      await db.collection('families').doc(familyId).update({
+        data: { tagsSeededAt: Date.now() }
+      })
+    }
+
+    await rebuildFamilyTree(db, familyId)
+  } catch (e) {
+    console.warn('seedStructureTree failed', familyId, e && e.message)
+  }
+}
+
 async function createFamily(openid, event) {
   const name = String(event.name || '').trim()
   if (!name) return fail('INVALID_NAME', '请输入家庭名称')
@@ -174,6 +222,8 @@ async function createFamily(openid, event) {
   })
 
   await setCurrentFamily(openid, familyId)
+
+  await seedStructureTree(familyId)
 
   return ok({
     _id: familyId,
@@ -443,6 +493,7 @@ async function leaveFamily(openid) {
       }
     )
     await cleanupFamilyAiArtifacts(familyId)
+    await deleteFamilyTree(db, familyId)
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
     await db.collection('families').doc(familyId).remove()

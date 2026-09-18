@@ -2,6 +2,8 @@ const cloud = require('wx-server-sdk')
 const axios = require('axios')
 const crypto = require('crypto')
 const { EXTRACT_PROMPT_ID, EXTRACT_PROMPT_V1 } = require('./prompt')
+const { ensureCapabilities } = require('./capabilities')
+const { act } = require('./act')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -13,6 +15,8 @@ const DEEPSEEK_MODEL = 'deepseek-chat'
 const MAX_KEYS = 3
 const MAX_ROWS = 9
 const HTTP_TIMEOUT_MS = 45000
+const ACT_HTTP_TIMEOUT_MS = 20000
+const ACT_MAX_TOKENS = 800
 const WEEKDAYS = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六']
 
 function ok(data) {
@@ -72,7 +76,7 @@ async function resolveFamilyContext(openid) {
 let collectionsReady = false
 async function ensureCollections() {
   if (collectionsReady) return
-  const names = ['familyAiKeys', 'aiPrompts', 'itemMedia']
+  const names = ['familyAiKeys', 'aiPrompts', 'itemMedia', 'familyTrees', 'aiCapabilities']
   await Promise.all(
     names.map(async (name) => {
       try {
@@ -432,23 +436,26 @@ function orderKeys(list) {
   return def.concat(rest)
 }
 
-async function callDeepSeek(apiKey, system, userText) {
+async function callDeepSeek(apiKey, system, userText, options = {}) {
   const started = Date.now()
+  const timeout = Number(options.timeout) > 0 ? Number(options.timeout) : HTTP_TIMEOUT_MS
+  const body = {
+    model: DEEPSEEK_MODEL,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: userText }
+    ],
+    response_format: { type: 'json_object' },
+    stream: false,
+    temperature: 0
+  }
+  if (Number(options.maxTokens) > 0) body.max_tokens = Number(options.maxTokens)
   try {
     const res = await axios.post(
       `${DEEPSEEK_BASE_URL}/chat/completions`,
+      body,
       {
-        model: DEEPSEEK_MODEL,
-        messages: [
-          { role: 'system', content: system },
-          { role: 'user', content: userText }
-        ],
-        response_format: { type: 'json_object' },
-        stream: false,
-        temperature: 0
-      },
-      {
-        timeout: HTTP_TIMEOUT_MS,
+        timeout,
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
@@ -775,15 +782,20 @@ async function transcribe(openid, event) {
   }
 }
 
+function callerOpenid() {
+  const ctx = cloud.getWXContext()
+  return ctx.OPENID || ctx.FROM_OPENID || ''
+}
+
 exports.main = async (event) => {
-  const { OPENID } = cloud.getWXContext()
+  const OPENID = callerOpenid()
   if (!OPENID) {
     return fail('UNAUTHORIZED', '未登录')
   }
 
   const action = event && event.action
   try {
-    if (action !== 'transcribe') {
+    if (action !== 'transcribe' && action !== 'act') {
       await ensureCollections()
     }
     if (action === 'extract' || action === 'listKeys' || action === 'addKey') {
@@ -804,6 +816,22 @@ exports.main = async (event) => {
         return await transcribe(OPENID, event)
       case 'attachMedia':
         return await attachMedia(OPENID, event)
+      case 'act':
+        return await act(
+          {
+            db,
+            cloud,
+            resolveFamilyContext,
+            listKeyDocs,
+            orderKeys,
+            callDeepSeek,
+            shanghaiToday,
+            actHttpTimeoutMs: ACT_HTTP_TIMEOUT_MS,
+            actMaxTokens: ACT_MAX_TOKENS
+          },
+          OPENID,
+          event
+        )
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }
