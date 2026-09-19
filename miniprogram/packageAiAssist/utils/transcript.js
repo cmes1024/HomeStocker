@@ -96,6 +96,16 @@ function saveTurns(familyId, messages) {
   return turns
 }
 
+function clearTurns(familyId) {
+  const key = storageKey(familyId)
+  if (!key) return
+  try {
+    wx.removeStorageSync(key)
+  } catch (e) {
+    // ignore
+  }
+}
+
 /** 冷启动恢复文字 + blocks；不恢复 confirm / chips */
 function turnsToMessages(turns, nextId) {
   const idFn = typeof nextId === 'function' ? nextId : () => `r${Math.random()}`
@@ -128,6 +138,7 @@ module.exports = {
   extractTurns,
   loadTurns,
   saveTurns,
+  clearTurns,
   turnsToMessages,
   historyFromMessages
 }

@@ -118,10 +118,42 @@ function renderExecReceipt(report, treeText) {
   return lines.join('\n')
 }
 
+function providerErrorBody(err) {
+  const data = err && err.response && err.response.data
+  if (!data) return ''
+  if (typeof data === 'string') return data
+  try {
+    return JSON.stringify(data)
+  } catch (e) {
+    return String(data)
+  }
+}
+
+/** DeepSeek 402 / 余额类错误 → 明确提示；其余保持通用文案 */
+function classifyModelError(err) {
+  const status = (err && err.response && err.response.status) || 0
+  const blob = `${err && err.message ? err.message : ''} ${providerErrorBody(err)}`
+  if (
+    status === 402 ||
+    /insufficient\s*balance|余额不足|quota\s*exceeded|额度不足|余额不够/i.test(blob)
+  ) {
+    return {
+      code: 'AI_QUOTA',
+      message: '家庭 AI 额度可能已用完，请检查密钥余额或更换密钥'
+    }
+  }
+  return {
+    code: 'ACT_FAILED',
+    message: '助手暂时不可用，请稍后重试'
+  }
+}
+
 async function askModel(deps, system, userText) {
   const { callDeepSeek, keys, timeout, maxTokens } = deps
   const tryKeys = (keys || []).slice(0, 2)
+  let lastCode = 'ACT_FAILED'
   let lastMessage = '助手暂时不可用，请稍后重试'
+  let sawQuota = false
   let lastContent = ''
   // 调试：云函数日志里完整打印发给模型的内容（密钥不落日志）
   console.info('[ai.act] >>> system\n' + String(system || ''))
@@ -144,10 +176,13 @@ async function askModel(deps, system, userText) {
         }
       }
     } catch (err) {
-      lastMessage = '助手暂时不可用，请稍后重试'
+      const classified = classifyModelError(err)
+      lastCode = classified.code
+      lastMessage = classified.message
+      if (classified.code === 'AI_QUOTA') sawQuota = true
       const retryable = err.retryable === true || typeof err.retryable === 'undefined'
       if (!retryable) {
-        throw Object.assign(new Error(lastMessage), { code: 'ACT_FAILED' })
+        throw Object.assign(new Error(lastMessage), { code: lastCode })
       }
     }
   }
@@ -165,7 +200,13 @@ async function askModel(deps, system, userText) {
       // fall through
     }
   }
-  throw Object.assign(new Error(lastMessage), { code: 'ACT_FAILED' })
+  if (sawQuota) {
+    throw Object.assign(
+      new Error('家庭 AI 额度可能已用完，请检查密钥余额或更换密钥'),
+      { code: 'AI_QUOTA' }
+    )
+  }
+  throw Object.assign(new Error(lastMessage), { code: lastCode })
 }
 
 module.exports = {

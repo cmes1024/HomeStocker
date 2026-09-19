@@ -37,6 +37,13 @@
       <view class="text-link theme-text" bind:tap="goKeys">{{copy.goKeys}}</view>
     </view>
 
+    <view class="chat-tools" wx:if="{{canClear}}">
+      <view
+        class="clear-chat {{loading ? 'is-disabled' : ''}}"
+        bind:tap="onClearChat"
+      >{{copy.clearChat}}</view>
+    </view>
+
     <scroll-view
       class="msg-list"
       scroll-y
@@ -111,6 +118,8 @@
             </block>
           </view>
         </view>
+
+        <view class="text-link theme-text retry" wx:if="{{item.goKeys}}" bind:tap="goKeys">{{copy.goKeys}}</view>
 
         <view class="text-link theme-text retry" wx:if="{{item.goSpaces}}" bind:tap="goSpaces">{{copy.goSpaces}}</view>
 

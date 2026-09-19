@@ -243,6 +243,7 @@ const copy = {
     emptyText: '先写一句话',
     noKey: '还没有配置家庭 AI 密钥',
     goKeys: '去配置密钥',
+    quotaExhausted: '家庭 AI 额度可能已用完，请检查密钥余额或更换密钥',
     reportTitle: '刚才做了这些',
     askTitle: '还差这一点',
     confirmTitle: '确认要删掉吗？',
@@ -271,7 +272,12 @@ const copy = {
     subscribeOn: '已订阅',
     subscribeOff: '未订阅',
     subscribeFail: '订阅状态没改成功',
-    historyCapTip: '本地只保留最近 20 条对话，更早的已清除'
+    historyCapTip: '本地只保留最近 20 条对话，更早的已清除',
+    clearChat: '清空聊天',
+    clearChatTitle: '清空聊天记录？',
+    clearChatContent: '只清本机上的对话，不影响家里的物资台账。',
+    clearChatConfirm: '清空',
+    clearedToast: '已清空'
   },
 
   ai: {

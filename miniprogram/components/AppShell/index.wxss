@@ -2,7 +2,7 @@
   position: relative;
   min-height: 100vh;
   box-sizing: border-box;
-  background: #ffffff;
+  background: var(--theme-shadow);
 }
 
 .bg-layer {

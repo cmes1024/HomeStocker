@@ -3,6 +3,7 @@ const {
   HISTORY_LIMIT,
   loadTurns,
   saveTurns,
+  clearTurns,
   turnsToMessages,
   historyFromMessages,
   extractTurns
@@ -148,6 +149,7 @@ Page({
     composerOn: true,
     keyboardHeight: 0,
     transcriptCapped: false,
+    canClear: false,
     loadingColors: ['#C4A484', '#8B6914']
   },
 
@@ -225,24 +227,34 @@ Page({
       messages,
       pendingCalls: [],
       askRound: 0,
-      transcriptCapped: turns.length >= HISTORY_LIMIT
+      transcriptCapped: turns.length >= HISTORY_LIMIT,
+      canClear: turns.length > 0
     })
   },
 
+  syncTranscriptMeta(messages) {
+    const turns = extractTurns(messages)
+    const capped = turns.length >= HISTORY_LIMIT
+    const canClear = turns.length > 0
+    const patch = {}
+    if (capped !== this.data.transcriptCapped) patch.transcriptCapped = capped
+    if (canClear !== this.data.canClear) patch.canClear = canClear
+    if (Object.keys(patch).length) this.setData(patch)
+  },
+
   syncTranscriptCap(messages) {
-    const capped = extractTurns(messages).length >= HISTORY_LIMIT
-    if (capped !== this.data.transcriptCapped) {
-      this.setData({ transcriptCapped: capped })
-    }
+    this.syncTranscriptMeta(messages)
   },
 
   persistTranscript() {
     if (!this._familyId) return
     const turns = saveTurns(this._familyId, this._messages || this.data.messages || [])
     const capped = turns.length >= HISTORY_LIMIT
-    if (capped !== this.data.transcriptCapped) {
-      this.setData({ transcriptCapped: capped })
-    }
+    const canClear = turns.length > 0
+    const patch = {}
+    if (capped !== this.data.transcriptCapped) patch.transcriptCapped = capped
+    if (canClear !== this.data.canClear) patch.canClear = canClear
+    if (Object.keys(patch).length) this.setData(patch)
   },
 
   commitMessages(messages, extra) {
@@ -250,6 +262,37 @@ Page({
     const patch = Object.assign({ messages }, extra || {})
     this.setData(patch)
     this.persistTranscript()
+  },
+
+  async onClearChat() {
+    if (this.data.loading || this._submitting || !this.data.canClear) return
+    const ok = await new Promise((resolve) => {
+      wx.showModal({
+        title: copy.assist.clearChatTitle,
+        content: copy.assist.clearChatContent,
+        confirmText: copy.assist.clearChatConfirm,
+        cancelText: copy.common.cancel,
+        success: (res) => resolve(!!res.confirm)
+      })
+    })
+    if (!ok) return
+    clearTurns(this._familyId)
+    const messages = [helloMessage()]
+    this._messages = messages
+    this._pendingId = ''
+    this.setData({
+      messages,
+      canClear: false,
+      transcriptCapped: false,
+      pendingCalls: [],
+      askRound: 0,
+      draft: null,
+      originalText: '',
+      text: '',
+      recentItemIds: [],
+      scrollIntoView: ''
+    })
+    wx.showToast({ title: copy.assist.clearedToast, icon: 'none' })
   },
 
   syncLoadingColors() {
@@ -529,11 +572,22 @@ Page({
       if (e.code === 'NO_AI_KEY') {
         this.replacePending({
           text: copy.assist.noKey,
+          goKeys: true,
           askList: [],
           confirmList: []
         })
         this.setData({
           noKey: true
+        })
+        this.scrollToBottom()
+        return
+      }
+      if (e.code === 'AI_QUOTA') {
+        this.replacePending({
+          text: e.message || copy.assist.quotaExhausted,
+          goKeys: true,
+          askList: [],
+          confirmList: []
         })
         this.scrollToBottom()
         return
