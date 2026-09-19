@@ -48,6 +48,16 @@ function publicRecentItems(rows) {
   return out.slice(0, 6)
 }
 
+/** 取短号：优先 ref / itemRef；模型常误写 refs:["P1"]，兼容取首项 */
+function pickCallRef(call) {
+  const raw = String((call && (call.ref || call.itemRef)) || '').trim()
+  if (raw) return raw
+  if (Array.isArray(call && call.refs) && call.refs.length) {
+    return String(call.refs[0] || '').trim()
+  }
+  return ''
+}
+
 function lookupRef(call, refs) {
   const itemId = String((call && call.itemId) || '').trim()
   if (itemId) {
@@ -56,31 +66,37 @@ function lookupRef(call, refs) {
       .find((row) => row && row.itemId === itemId)
     if (hit) return hit
     return {
-      ref: String((call && call.ref) || '').trim() || 'X',
+      ref: pickCallRef(call) || 'X',
       itemId,
       name: String((call && call.name) || '').trim(),
       spaceName: '',
       locationName: ''
     }
   }
-  const raw = String(call.ref || call.itemRef || '').trim()
+  const raw = pickCallRef(call)
   if (isShortRef(raw) && refs[raw.toUpperCase()]) return refs[raw.toUpperCase()]
   const upper = raw.toUpperCase()
   if (isShortRef(upper) && refs[upper]) return refs[upper]
-  const name = String(call.name || '').trim()
+  const name = String((call && call.name) || '').trim()
   if (!name) return null
-  const keys = Object.keys(refs)
-  const spaceName = String(call.spaceName || '').trim()
-  const locationName = String(call.locationName || '').trim()
+  // spaceName/locationName 在 item.update 里是「改到哪」，不能拿来当「现在在哪」过滤
+  const hits = Object.keys(refs)
+    .map((k) => refs[k])
+    .filter((row) => row && row.name === name)
+  if (hits.length === 1) return hits[0]
+  const fromSpace = String(
+    (call && (call.fromSpaceName || call.sourceSpaceName)) || ''
+  ).trim()
+  const fromLoc = String(
+    (call && (call.fromLocationName || call.sourceLocationName)) || ''
+  ).trim()
+  if (!fromSpace && !fromLoc) return null
   return (
-    keys
-      .map((k) => refs[k])
-      .find((row) => {
-        if (!row || row.name !== name) return false
-        if (spaceName && row.spaceName !== spaceName) return false
-        if (locationName && row.locationName !== locationName) return false
-        return true
-      }) || null
+    hits.find((row) => {
+      if (fromSpace && row.spaceName !== fromSpace) return false
+      if (fromLoc && row.locationName !== fromLoc) return false
+      return true
+    }) || null
   )
 }
 
@@ -125,6 +141,7 @@ function bindCallIds(calls, refs) {
 
 module.exports = {
   isShortRef,
+  pickCallRef,
   compactItem,
   renderFocus,
   renderFocusList,

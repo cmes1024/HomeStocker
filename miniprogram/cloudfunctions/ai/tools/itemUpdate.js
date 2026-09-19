@@ -10,7 +10,10 @@ async function run(ctx, call, step) {
   let currentTree = tree
   const row = lookupRef(call, refs)
   if (!row) {
-    return { ok: false, summary: `第 ${step} 步失败：找不到要改的物品短号` }
+    return {
+      ok: false,
+      summary: `没法确定要改哪一件，请再说一下物品名称和现在在哪`
+    }
   }
   const payload = { itemId: row.itemId, source: 'agent' }
   if (call.name !== undefined) payload.name = call.name

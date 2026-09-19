@@ -28,6 +28,107 @@ function focusPublic(focus) {
   return focus && { ref: focus.ref, name: focus.name }
 }
 
+/** 从「把厨房的牛奶放到…」类话术里猜要改的物品，供澄清后补探查 */
+function guessMoveItemHintFromHistory(history, currentText) {
+  const texts = []
+  ;(history || []).forEach((row) => {
+    if (row && row.role === 'user' && row.text) texts.push(String(row.text))
+  })
+  if (currentText) texts.push(String(currentText))
+  for (let i = texts.length - 1; i >= 0; i--) {
+    const text = texts[i]
+    const m = text.match(/把(.{1,24}?)(?:放到|挪到|移到|放去|挪去|搬到)/)
+    if (!m) continue
+    const chunk = String(m[1] || '')
+      .replace(/里的|中的/g, '的')
+      .trim()
+    if (!chunk) continue
+    const parts = chunk.split('的').map((p) => p.trim()).filter(Boolean)
+    const name = (parts.length > 1 ? parts[parts.length - 1] : chunk).trim()
+    if (!name || name.length > 20) continue
+    let spaceName = ''
+    if (parts.length > 1) {
+      spaceName = parts
+        .slice(0, -1)
+        .join('')
+        .replace(/冰箱.*$|柜子.*$|冷藏.*$|冷冻.*$|货架.*$/g, '')
+        .trim()
+    }
+    return { name, spaceName }
+  }
+  return null
+}
+
+/** 改/删缺短号时先探查，避免「厨房的牛奶」或澄清芯片直接失败 */
+function ensureProbeForUnresolvedWrites(plan, refs, history, currentText) {
+  if (!plan || plan.probe || (plan.ask && plan.ask.length)) return plan
+  const calls = plan.calls || []
+  const hint = guessMoveItemHintFromHistory(history, currentText)
+  for (let i = 0; i < calls.length; i++) {
+    const call = calls[i] || {}
+    const use = String(call.use || '').trim()
+    if (use === 'item.update' || use === 'item.remove') {
+      if (lookupRef(call, refs)) continue
+      const name =
+        String(call.name || '').trim() || (hint && hint.name) || ''
+      if (name) {
+        plan.probe = {
+          name,
+          spaceName:
+            String(call.fromSpaceName || call.sourceSpaceName || '').trim() ||
+            (hint && hint.spaceName) ||
+            '',
+          locationName: String(
+            call.fromLocationName || call.sourceLocationName || ''
+          ).trim()
+        }
+        if (!call.name) call.name = name
+        return plan
+      }
+    }
+    if (use === 'item.merge') {
+      const refList = Array.isArray(call.refs) ? call.refs : call.ref ? [call.ref] : []
+      const unresolved = refList.some((raw) => !lookupRef({ ref: raw }, refs))
+      if (!unresolved && (Array.isArray(call.itemIds) ? call.itemIds.length : 0)) continue
+      if (unresolved || !refList.length) {
+        const name =
+          String(call.name || (call.names && call.names[0]) || '').trim() ||
+          (hint && hint.name) ||
+          ''
+        if (name) {
+          plan.probe = { name }
+          return plan
+        }
+      }
+    }
+  }
+  return plan
+}
+
+/** 探查后模型仍漏短号时，唯一命中则自动绑上 */
+function bindUnresolvedWritesToProbe(plan, refs, probedRows) {
+  const rows = probedRows || []
+  if (!plan || !rows.length) return plan
+  ;(plan.calls || []).forEach((call) => {
+    if (!call || typeof call !== 'object') return
+    const use = String(call.use || '').trim()
+    if (use !== 'item.update' && use !== 'item.remove') return
+    if (lookupRef(call, refs)) return
+    const name = String(call.name || '').trim()
+    let hit = null
+    if (name) {
+      const matches = rows.filter((row) => row && row.name === name)
+      if (matches.length === 1) hit = matches[0]
+    } else if (rows.length === 1) {
+      hit = rows[0]
+    }
+    if (!hit) return
+    call.ref = hit.ref
+    if (!call.name) call.name = hit.name
+  })
+  return plan
+}
+
 async function executePlanCalls(env, openid, familyId, tree, calls, refs, catalogMap, todayYmd) {
   const writers = makeWriters(env.db)
   const ctx = {
@@ -231,6 +332,8 @@ async function act(env, openid, event) {
     })
   }
 
+  ensureProbeForUnresolvedWrites(plan, refs, actCtx.history, text)
+
   let probedRows = []
   if (plan.probe) {
     probedRows = await runProbe(db, actCtx.familyId, tree, plan.probe, refs)
@@ -250,6 +353,7 @@ async function act(env, openid, event) {
     }
     // Ignore second probe (at most one probe per act)
     plan.probe = null
+    bindUnresolvedWritesToProbe(plan, refs, probedRows)
 
     if (plan.ask.length) {
       return ok({

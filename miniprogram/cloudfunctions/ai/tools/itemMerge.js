@@ -16,7 +16,10 @@ async function run(ctx, call, step) {
     for (let r = 0; r < refList.length; r++) {
       const row = lookupRef({ ref: refList[r] }, refs)
       if (!row || !row.itemId) {
-        return { ok: false, summary: `第 ${step} 步失败：找不到要合并的物品短号` }
+        return {
+          ok: false,
+          summary: `没法确定要合并哪几件，请再说一下物品名称`
+        }
       }
       if (itemIds.indexOf(row.itemId) < 0) itemIds.push(row.itemId)
     }

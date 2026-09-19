@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 6
+const CAPABILITY_VERSION = 7
 
 const HARD_DENY = {
   'family.create': true,
@@ -56,7 +56,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'ref, name?, quantity?, unit?, spaceName?, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '改已有物资的名称、数量、位置或日期。ref 只能用本轮 FOCUS/PROBE 短号。'
+      hint: '改已有物资的名称、数量、位置或日期。用本轮 FOCUS/PROBE 的 ref（单数，如 P1）；spaceName/locationName 是改到哪，不是用来找物品。'
     },
     {
       id: 'item.remove',

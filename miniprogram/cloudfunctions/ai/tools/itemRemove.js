@@ -6,7 +6,10 @@ async function run(ctx, call, step) {
   const { writers, openid, refs, familyCtx } = ctx
   const row = lookupRef(call, refs)
   if (!row) {
-    return { ok: false, summary: `第 ${step} 步失败：找不到要删的物品短号` }
+    return {
+      ok: false,
+      summary: `没法确定要删哪一件，请再说一下物品名称和现在在哪`
+    }
   }
   const res = await writers.item.removeItem(
     openid,
