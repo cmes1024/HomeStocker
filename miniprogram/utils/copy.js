@@ -261,7 +261,9 @@ const copy = {
     focusLabel: '当前关注',
     openFail: '家庭管家暂时打不开',
     doneEmpty: '没有需要执行的操作',
-    capabilityLimited: '抱歉，目前能力有限，完成不了你交给我的任务',
+    // 与 cloudfunctions/ai/promptAssist.js 固定话术保持一致（页面 ask 通常直接用云端 question）
+    capabilityLimited: '抱歉，这个我还没有学会～',
+    outOfScope: '这类事我帮不上忙呢～家里有什么想查、想记的，随时叫我',
     timeout: '助手这次没跑完，请再试一次。若反复出现，请把云函数 ai 超时设为 60 秒并确认已开通出网',
     subscribeTitle: '临期提醒订阅',
     subscribeHint: '打开开关会请求微信授权；关掉则取消该物资的提醒。',

@@ -1,5 +1,5 @@
 const { isHardDenied } = require('../capabilities')
-const { CAPABILITY_LIMIT_ASK } = require('../promptAssist')
+const { CAPABILITY_LIMIT_ASK, OUT_OF_SCOPE_ASK } = require('../promptAssist')
 
 function needsConfirm(calls, catalogMap) {
   return (calls || []).filter((call) => {
@@ -18,8 +18,17 @@ function planNeedsUnavailableCapability(calls, catalogMap) {
   })
 }
 
+/** 执行器兜底：模型编造了未开放/禁用接口时，一律按「能力边界」拒答 */
 function capabilityLimitAsk() {
   return [{ question: CAPABILITY_LIMIT_ASK, options: [] }]
+}
+
+/**
+ * 范围外拒答（与 prompt F/G 固定话术一致）。
+ * 服务端不做关键词预路由；此函数供测试/显式调用，日常靠模型走 ask。
+ */
+function outOfScopeAsk() {
+  return [{ question: OUT_OF_SCOPE_ASK, options: [] }]
 }
 
 /**
@@ -47,6 +56,7 @@ module.exports = {
   needsConfirm,
   planNeedsUnavailableCapability,
   capabilityLimitAsk,
+  outOfScopeAsk,
   inventoryAuthorityForReply,
   isHardDenied
 }

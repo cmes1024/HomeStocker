@@ -1,3 +1,7 @@
+const { CAPABILITY_LIMIT_ASK, OUT_OF_SCOPE_ASK } = require('../promptAssist')
+
+const BOUNDARY_ASKS = new Set([CAPABILITY_LIMIT_ASK, OUT_OF_SCOPE_ASK])
+
 function optionChoice(label, value) {
   const l = String(label || '').trim()
   const v = String(value || '').trim()
@@ -52,6 +56,20 @@ function normalizeReply(raw) {
   return text.slice(0, 800)
 }
 
+/**
+ * 模型偶发把拒答固定话术放进 reply：改回 ask，保证页面走澄清气泡而不是普通回复。
+ */
+function coerceBoundaryReplyToAsk(plan) {
+  if (!plan || plan.ask.length || plan.calls.length || plan.probe) return plan
+  const reply = String(plan.reply || '').trim()
+  if (!BOUNDARY_ASKS.has(reply)) return plan
+  return {
+    ...plan,
+    ask: [{ question: reply, options: [] }],
+    reply: ''
+  }
+}
+
 function parsePlan(text) {
   const raw = String(text || '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
   const parsed = JSON.parse(raw)
@@ -66,7 +84,7 @@ function parsePlan(text) {
   let reply = normalizeReply(parsed.reply || parsed.answer || parsed.message)
   // ask / calls 优先：有澄清或要执行时丢掉 reply，避免双通道
   if (ask.length || calls.length) reply = ''
-  return { ask, probe, calls, reply }
+  return coerceBoundaryReplyToAsk({ ask, probe, calls, reply })
 }
 
 function draftFromCalls(calls) {
@@ -88,6 +106,7 @@ module.exports = {
   normalizeAsk,
   normalizeProbe,
   normalizeReply,
+  coerceBoundaryReplyToAsk,
   parsePlan,
   draftFromCalls
 }
