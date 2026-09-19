@@ -36,6 +36,21 @@ The assistant page MUST present a chat-style transcript: the member’s sent tex
 - **WHEN** a member sends one sentence and the report appears
 - **THEN** the composer is empty and they can type a follow-up immediately
 
+### Requirement: Local transcript retains twenty text turns
+The assistant MUST persist at most twenty transcript turns locally as text only (`role` and `text`), scoped to the current family. The same twenty-turn window MUST be what the page sends as act `history` so on-screen context matches model context. Persisted storage MUST NOT restore confirm blocks, pending write calls, clarification chips, or item result cards after a cold start; those interactive elements MAY exist only within the current page session. When the local buffer is full, the system MUST drop the oldest text turns. When the member reaches the oldest retained message while scrolling, the UI MUST indicate that local retention does not go further. Switching the current family MUST NOT show another family’s transcript.
+
+#### Scenario: Relaunch shows recent text only
+- **WHEN** a member had a confirm-delete card on screen, leaves the mini program, and reopens the assistant for the same family
+- **THEN** at most the last twenty text turns reappear as bubbles, and no confirm actions or pending write calls are restored
+
+#### Scenario: Cap tip at the oldest bubble
+- **WHEN** the local transcript is already at twenty turns and the member scrolls to the oldest retained message
+- **THEN** the UI shows that only this many turns are kept locally
+
+#### Scenario: Family switch isolates transcript
+- **WHEN** the member switches `currentFamilyId` and opens the assistant
+- **THEN** the transcript shown is that family’s stored turns (or empty), not the previous family’s
+
 ### Requirement: No key guides to existing key settings
 When the current family has no AI key, starting act MUST NOT call the model. The assistant MUST tell the member to configure a key and MUST offer the existing family key-settings page. The assistant MUST NOT implement a second key editor.
 

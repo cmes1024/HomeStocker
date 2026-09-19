@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 5
+const CAPABILITY_VERSION = 6
 
 const HARD_DENY = {
   'family.create': true,
@@ -84,6 +84,15 @@ const CAPABILITY_SEED = {
       confirm: true,
       args: 'refs[], name?',
       hint: '把多条已有物资合成一条并加总数量。refs 为本轮 FOCUS/PROBE 短号，至少两条。须确认后执行。同空间；单位须一致。'
+    },
+    {
+      id: 'item.expireSubscribePanel',
+      fn: 'ai',
+      action: 'expireSubscribePanel',
+      enabled: true,
+      confirm: false,
+      args: '',
+      hint: '打开临期消息订阅面板（列出已设过期日的物资开关）。微信要求家人亲手点开关授权，不能代开订阅。当家人要管理临期/过期提醒订阅时用此接口，calls 里只放这一步即可。'
     },
     {
       id: 'space.create',

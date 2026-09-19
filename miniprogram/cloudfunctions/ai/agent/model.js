@@ -1,0 +1,133 @@
+const { ASSIST_PROMPT_ID, ASSIST_PROMPT_VERSION, ASSIST_PROMPT_V2 } = require('../promptAssist')
+const { parsePlan } = require('./plan')
+const { renderFocus } = require('./refs')
+
+async function ensureAssistPrompt(db) {
+  const ref = db.collection('aiPrompts').doc(ASSIST_PROMPT_ID)
+  const snap = await ref.get().catch(() => null)
+  if (snap && snap.data && snap.data.system && Number(snap.data.version) >= ASSIST_PROMPT_VERSION) {
+    return { _id: ASSIST_PROMPT_ID, ...snap.data }
+  }
+  const doc = {
+    version: ASSIST_PROMPT_VERSION,
+    system: ASSIST_PROMPT_V2,
+    updatedAt: Date.now()
+  }
+  await ref.set({ data: doc })
+  return { _id: ASSIST_PROMPT_ID, ...doc }
+}
+
+const HISTORY_LIMIT = 20
+
+function sanitizeHistory(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  for (let i = 0; i < raw.length; i++) {
+    const row = raw[i]
+    if (!row || typeof row !== 'object') continue
+    const role = row.role === 'assistant' ? 'assistant' : row.role === 'user' ? 'user' : ''
+    if (!role) continue
+    const text = String(row.text || row.content || '').trim().slice(0, 200)
+    if (!text) continue
+    out.push({ role, text })
+  }
+  return out.slice(-HISTORY_LIMIT)
+}
+
+function renderHistory(rows) {
+  if (!rows || !rows.length) return '无'
+  return rows
+    .map((row) => `${row.role === 'user' ? '家人' : '助手'}：${row.text}`)
+    .join('\n')
+}
+
+function sanitizeRecentIds(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  const seen = {}
+  for (let i = 0; i < raw.length && out.length < 6; i++) {
+    const id = String(raw[i] || '').trim()
+    if (!id || id.length > 64 || seen[id]) continue
+    seen[id] = true
+    out.push(id)
+  }
+  return out
+}
+
+function renderProbe(rows) {
+  if (!rows || !rows.length) return '无'
+  return rows.map((row) => renderFocus(row)).join('\n')
+}
+
+function fillAssistPrompt(system, vars) {
+  return String(system || '')
+    .replace(/\{\{TODAY\}\}/g, vars.today || '')
+    .replace(/\{\{WEEKDAY\}\}/g, vars.weekday || '')
+    .replace(/\{\{FAMILY_NAME\}\}/g, vars.familyName || '家庭')
+    .replace(/\{\{CAPABILITIES\}\}/g, vars.capabilities || '')
+    .replace(/\{\{TREE\}\}/g, vars.tree || '')
+    .replace(/\{\{FOCUS\}\}/g, vars.focus || '无')
+    .replace(/\{\{PROBE\}\}/g, vars.probe || '无')
+    .replace(/\{\{HISTORY\}\}/g, vars.history || '无')
+}
+
+async function askModel(deps, system, userText) {
+  const { callDeepSeek, keys, timeout, maxTokens } = deps
+  const tryKeys = (keys || []).slice(0, 2)
+  let lastMessage = '助手暂时不可用，请稍后重试'
+  let lastContent = ''
+  // 调试：云函数日志里完整打印发给模型的内容（密钥不落日志）
+  console.info('[ai.act] >>> system\n' + String(system || ''))
+  console.info('[ai.act] >>> user\n' + String(userText || ''))
+  for (let i = 0; i < tryKeys.length; i++) {
+    const key = tryKeys[i]
+    try {
+      const result = await callDeepSeek(key.apiKey, system, userText, {
+        timeout,
+        maxTokens
+      })
+      lastContent = result.content
+      console.info('[ai.act] <<< model\n' + String(result.content || ''))
+      return {
+        plan: parsePlan(result.content),
+        turn: {
+          system: String(system || ''),
+          user: String(userText || ''),
+          model: String(result.content || '')
+        }
+      }
+    } catch (err) {
+      lastMessage = '助手暂时不可用，请稍后重试'
+      const retryable = err.retryable === true || typeof err.retryable === 'undefined'
+      if (!retryable) {
+        throw Object.assign(new Error(lastMessage), { code: 'ACT_FAILED' })
+      }
+    }
+  }
+  if (lastContent) {
+    try {
+      return {
+        plan: parsePlan(lastContent),
+        turn: {
+          system: String(system || ''),
+          user: String(userText || ''),
+          model: String(lastContent || '')
+        }
+      }
+    } catch (e) {
+      // fall through
+    }
+  }
+  throw Object.assign(new Error(lastMessage), { code: 'ACT_FAILED' })
+}
+
+module.exports = {
+  ensureAssistPrompt,
+  sanitizeHistory,
+  renderHistory,
+  sanitizeRecentIds,
+  renderProbe,
+  fillAssistPrompt,
+  askModel,
+  ASSIST_PROMPT_V2
+}

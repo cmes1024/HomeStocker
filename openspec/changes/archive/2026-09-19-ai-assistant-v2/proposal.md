@@ -8,9 +8,10 @@ AI V1 只覆盖拍照抽取向导，查/改/删仍靠手填；09-07 半屏 LangG
 - 新集合 `aiCapabilities`：系统级能力表（version 覆盖）；渲染进模型与执行器白名单读同一份
 - `aiPrompts` 新增 `assist-act-v2`，与 `item-extract-v1` 并列；云函数新 action `ai.act`（文本 → 计划 → 白名单执行 → 代码汇报）
 - 新分包 `packageAiAssist`：自然语言输入、追问槽位、操作汇报；**不做语音**
+- 助手页本地最多保留 **20** 条文字气泡（按家庭隔离）；`ai.act` history 同样封顶 **20**，与界面窗口对齐；冷启动不恢复确认卡 / pending 写调用 / 芯片 / 物资结果卡
 - 家庭页增加文字助手入口；清单 **V1 拍照浮窗行为不变**；详情可带当前物资作为 focus
 - 复用 `familyAiKeys`；入账/改/删仍只调现有 `item` / `space.createLocation`，`source: agent`
-- **不做（本 change）**：语音、视觉、流式、LangGraph / `pages/chat`、自动合并、助手内建房间或改标签、切家庭、把 V1 采集改成 V2
+- **不做（本 change）**：语音、视觉、流式、LangGraph / `pages/chat`、自动合并、助手内建房间或改标签、切家庭、把 V1 采集改成 V2、云端会话存档
 
 ## Capabilities
 

@@ -16,6 +16,7 @@
 | [`prompt-assist-act-v2.md`](./prompt-assist-act-v2.md) | V2 提示词占位符与源文件指针 |
 | [`reply-blocks-design.md`](./reply-blocks-design.md) | 助手回复通用结构化块（lead + blocks/cards）展示设计 |
 | [`../../../openspec/changes/ai-assistant-v2/`](../../../openspec/changes/ai-assistant-v2/) | **实施规格**（proposal / specs / design / tasks） |
+| [`../../../openspec/changes/ai-assist-agent-runtime/`](../../../openspec/changes/ai-assist-agent-runtime/) | **控制流重构**：标准 agent 循环；模型为唯一意图路由器；无关键词预路由 |
 
 ## 和仓库里其它文档的关系
 
@@ -29,4 +30,4 @@
 
 ## 一句话
 
-新分包里用户打一句话；云函数带上家庭树和能力表请模型出调用计划；代码按白名单执行现有 action，再给操作汇报。
+新分包里用户打一句话；云函数带上家庭树和能力表请模型出调用计划；代码按白名单执行现有 action，再给操作汇报。控制流为标准 agent 循环（见 `ai-assist-agent-runtime`），**无**意图预路由。

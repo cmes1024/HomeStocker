@@ -265,7 +265,8 @@ const copy = {
     subscribeEmpty: '没有可订阅的物资',
     subscribeOn: '已订阅',
     subscribeOff: '未订阅',
-    subscribeFail: '订阅状态没改成功'
+    subscribeFail: '订阅状态没改成功',
+    historyCapTip: '本地只保留最近 20 条对话，更早的已清除'
   },
 
   ai: {

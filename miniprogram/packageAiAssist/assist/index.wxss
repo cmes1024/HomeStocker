@@ -59,6 +59,17 @@
   box-sizing: border-box;
 }
 
+.history-cap {
+  margin: 0 8rpx 16rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 16rpx;
+  font-size: 22rpx;
+  line-height: 1.4;
+  color: rgba(26, 26, 26, 0.45);
+  text-align: center;
+  background: rgba(255, 255, 255, 0.55);
+}
+
 .msg {
   display: flex;
   flex-direction: column;

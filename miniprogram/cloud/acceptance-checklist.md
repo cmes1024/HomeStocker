@@ -138,3 +138,16 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 - [ ] 计划 `ask` 非空则零写入；删除无确认不执行；`source: agent`
 - [ ] 树含空间/位置/标签、不含物资；结构写后更新；解散删树、离开不删
 - [ ] 操作汇报由代码拼出（含可能重复、不合并）；与 V1 采集/密钥并存
+- [ ] 助手本地按家庭保留最近 20 条文字气泡；`ai.act` history 同为 20；冷启动不恢复确认卡/芯片/结果卡；满额时列表顶有「只保留这么多」提示
+
+## AI 助手 agent-runtime（标准循环，无意图预路由）
+
+对照 `openspec/changes/ai-assist-agent-runtime/`。`ai.act`：Context → Model → Tools / reply → Guardrails；无关键词跳过模型。
+
+- [ ] 问「有几个空间/房间/位置」：仍调模型；用 TREE 的 reply 回答，不出现代码整树倾倒替代模型计划
+- [ ] 问「冰箱里有什么 / 家里有什么吃的」：不因正则强制 probe；由模型出 probe/search；库存事实来自探查/工具/FOCUS，非模型臆造
+- [ ] 说「打开临期订阅 / 过期提醒」：先调模型；模型可 `item.expireSubscribePanel`；端上出现订阅开关面板（`status: subscribe`），助手不能代开授权
+- [ ] 删除物资：无确认不删；确认后重放绑定 itemId 的 calls，不再问模型
+- [ ] 无家庭 AI 密钥：返回 `NO_AI_KEY`，不调模型
+- [ ] 计划含 `family.*` / `ai.*`（硬底线）或未启用能力：不执行，能力有限追问
+- [ ] 确认重放与正常回合的 done/ask/confirm/subscribe 协议字段与改前兼容（`subscribeItems` 不变）

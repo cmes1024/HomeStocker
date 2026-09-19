@@ -56,11 +56,19 @@ Constraints: WeChat native mini program + CloudBase; client write deny on domain
 
 ### 5. One act prompt, not five scene personas
 
-**Choice:** `aiPrompts.assist-act-v2` with sectioned capability instructions. Placeholders: `TODAY` `WEEKDAY` `FAMILY_NAME` `CAPABILITIES` `TREE` `HISTORY` `FOCUS` `PROBE`. JSON plan: `ask`, `probe`, `calls`. Client never sends the system prompt. Follow-up turns pass a short sanitized transcript plus recent item ids (rendered as `R*` refs), not database ids.
+**Choice:** `aiPrompts.assist-act-v2` with sectioned capability instructions. Placeholders: `TODAY` `WEEKDAY` `FAMILY_NAME` `CAPABILITIES` `TREE` `HISTORY` `FOCUS` `PROBE`. JSON plan: `ask`, `probe`, `calls`. Client never sends the system prompt. Follow-up turns pass a sanitized transcript of at most **20** text turns plus recent item ids (rendered as `R*` refs), not database ids. Client `historyPayload` and server `sanitizeHistory` share that same cap so the on-screen window matches what the model sees.
 
-**Why:** The product decision is that the model chooses among listed APIs. A code `route` step would hide capabilities.
+**Why:** The product decision is that the model chooses among listed APIs. A code `route` step would hide capabilities. Aligning UI retention with model context avoids “看得见但助手不记得”.
 
-**Alternatives:** Keyword router (rejected); five separate prompts (hides APIs).
+**Alternatives:** Keyword router (rejected); five separate prompts (hides APIs); longer local history than model context (rejected—confusing for follow-ups).
+
+### 5b. Local transcript: 20 text bubbles, no interactive restore
+
+**Choice:** Persist at most **20** assistant-page messages **as text only** (`role` + `text`) in mini-program local storage, keyed by current `familyId` (and cleared or switched when the family changes). On cold start, restore those bubbles for reading and as the act `history` source. **Do not** restore across cold start: confirm blocks, `pendingCalls`, ask chips, item result cards/`blocks`, or pending placeholders. In-session confirm / chip / card UI stays as today until the page is closed. When the buffer is full, drop the oldest text turns (FIFO). When the member scrolls to the oldest retained message, show a short tip that local retention stops there (no server transcript).
+
+**Why:** Confirm is a write gate; replaying it after the ledger may have changed risks stale deletes/merges. Text alone is enough for continuity and matches the 20-turn model window. No cloud session store in this change.
+
+**Alternatives:** Persist full message UI including confirm (rejected—stale write risk); 50–100 local / 15 model (rejected—visibility ≠ memory); server-side chat log (out of scope).
 
 ### 6. Probe and confirm stay in one cloud function
 
@@ -91,6 +99,7 @@ Constraints: WeChat native mini program + CloudBase; client write deny on domain
 - [callFunction from `ai` to `item` identity] → Rely on the same OPENID context; do not pass a forged openid. If nested call drops OPENID in this environment, fall back to requiring shared modules—but do not reimplement rules.
 - [Model invents ids] → Prompt forbids `_id`; executor only accepts short refs from this turn’s FOCUS/PROBE.
 - [Two AI entries] → Copy must distinguish「拍照录入」vs「文字助手」.
+- [Local 20-turn window] → Follow-ups that need facts outside the window fail gracefully; member rephrases or re-opens focus from detail. Tip at the oldest bubble sets expectation that nothing older exists locally.
 
 ## Migration Plan
 

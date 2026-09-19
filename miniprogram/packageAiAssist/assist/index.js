@@ -1,4 +1,12 @@
 const { callAi } = require('../utils/callAi')
+const {
+  HISTORY_LIMIT,
+  loadTurns,
+  saveTurns,
+  turnsToMessages,
+  historyFromMessages,
+  extractTurns
+} = require('../utils/transcript')
 const { ensureSession } = require('../../utils/session')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { callItem, callFamily, invalidateItemDomain } = require('../../utils/cloud')
@@ -105,6 +113,18 @@ function clearConfirmCards(messages) {
   )
 }
 
+function helloMessage() {
+  return {
+    id: 'hello',
+    role: 'assistant',
+    kind: 'hello',
+    text: copy.assist.hello,
+    askList: [],
+    confirmList: [],
+    hasChips: false
+  }
+}
+
 Page({
   data: {
     copy: copy.assist,
@@ -126,26 +146,18 @@ Page({
     pendingCalls: [],
     scrollIntoView: '',
     composerOn: true,
+    transcriptCapped: false,
     loadingColors: ['#C4A484', '#8B6914']
   },
 
   onLoad(options) {
     const focusItemId = decodeOpt(options && options.itemId)
-    const messages = [
-      {
-        id: 'hello',
-        role: 'assistant',
-        kind: 'hello',
-        text: copy.assist.hello,
-        askList: [],
-        confirmList: [],
-        hasChips: false
-      }
-    ]
+    const messages = [helloMessage()]
     this._seq = 1
     this._messages = messages
     this._pendingId = ''
     this._submitting = false
+    this._familyId = ''
     bindThemeToPage(this, {
       headerTitle: copy.assist.pageTitle,
       focusItemId,
@@ -164,6 +176,8 @@ Page({
         return
       }
       setAppFamily(session.family)
+      const familyId = String((session.family && session.family._id) || '')
+      this.hydrateTranscript(familyId)
       bindThemeToPage(this, { headerTitle: copy.assist.pageTitle, booting: false })
       this.syncLoadingColors()
       if (this.data.focusItemId) this.loadFocusLabel(this.data.focusItemId)
@@ -174,6 +188,49 @@ Page({
         fatalError: e.message || copy.common.loadFailed
       })
     }
+  },
+
+  hydrateTranscript(familyId) {
+    if (!familyId) return
+    if (this._familyId === familyId && (this._messages || []).length > 1) {
+      this.syncTranscriptCap(this._messages)
+      return
+    }
+    this._familyId = familyId
+    const turns = loadTurns(familyId)
+    const restored = turnsToMessages(turns, () => this.nextId())
+    const messages = [helloMessage()].concat(restored)
+    this._messages = messages
+    this._pendingId = ''
+    this.setData({
+      messages,
+      pendingCalls: [],
+      askRound: 0,
+      transcriptCapped: turns.length >= HISTORY_LIMIT
+    })
+  },
+
+  syncTranscriptCap(messages) {
+    const capped = extractTurns(messages).length >= HISTORY_LIMIT
+    if (capped !== this.data.transcriptCapped) {
+      this.setData({ transcriptCapped: capped })
+    }
+  },
+
+  persistTranscript() {
+    if (!this._familyId) return
+    const turns = saveTurns(this._familyId, this._messages || this.data.messages || [])
+    const capped = turns.length >= HISTORY_LIMIT
+    if (capped !== this.data.transcriptCapped) {
+      this.setData({ transcriptCapped: capped })
+    }
+  },
+
+  commitMessages(messages, extra) {
+    this._messages = messages
+    const patch = Object.assign({ messages }, extra || {})
+    this.setData(patch)
+    this.persistTranscript()
   },
 
   syncLoadingColors() {
@@ -194,14 +251,12 @@ Page({
     })
   },
 
+  onScrollToOldest() {
+    // 满额时列表顶已有 historyCapTip；滑到最上即可看见
+  },
+
   historyPayload() {
-    return (this.data.messages || [])
-      .filter((row) => row && row.text && row.kind !== 'hello' && row.kind !== 'pending')
-      .slice(-15)
-      .map((row) => ({
-        role: row.role === 'assistant' ? 'assistant' : 'user',
-        text: String(row.text).slice(0, 200)
-      }))
+    return historyFromMessages(this._messages || this.data.messages || [])
   },
 
   async loadFocusLabel(itemId) {
@@ -258,8 +313,7 @@ Page({
     const isMerge = calls.some((c) => c && c.use === 'item.merge')
     // 先收起确认卡，避免合并项无 ref / WXML join 在列表 diff 时炸 weui
     const cleared = clearConfirmCards(this._messages || this.data.messages || [])
-    this._messages = cleared
-    this.setData({ messages: cleared })
+    this.commitMessages(cleared)
     this.submit({
       resetRound: false,
       confirmed: true,
@@ -282,8 +336,7 @@ Page({
       confirmList: [],
       subscribeItems: []
     })
-    this._messages = messages
-    this.setData({ messages, pendingCalls: [] })
+    this.commitMessages(messages, { pendingCalls: [] })
     this.scrollToBottom()
   },
 
@@ -420,6 +473,7 @@ Page({
     }, () => {
       this.setData({ composerOn: true })
     })
+    this.persistTranscript()
     this.scrollToBottom()
 
     try {
@@ -490,6 +544,7 @@ Page({
     this._messages = messages
     this._pendingId = ''
     this.setData({ messages })
+    this.persistTranscript()
   },
 
   applyResult(data, askRound) {

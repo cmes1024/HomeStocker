@@ -41,3 +41,10 @@
 - [x] 6.1 对照 V1 采集：浮窗、抽取、密钥页仍可用
 - [x] 6.2 更新 `acceptance-checklist.md`（助手入口、act、树、解散、与 V1 并存）
 - [x] 6.3 更新 `docs/plans/2026-09-17-ai-assistant-v2/` 状态为实施中；密钥不进 git
+
+## 7. 本地对话窗口（20 / 20）
+
+- [x] 7.1 助手页按 `familyId` 本地持久化最多 20 条文字气泡（`role`+`text`）；FIFO 丢最旧；切家庭不串聊
+- [x] 7.2 冷启动只恢复文字气泡；不恢复 confirm / `pendingCalls` / 芯片 / `blocks` 结果卡
+- [x] 7.3 客户端 `historyPayload` 与云端 `sanitizeHistory` 统一为最近 20 条（含 `ai-assist-agent-runtime` 中的同一上限）
+- [x] 7.4 滑到最旧一条时展示「本地只保留这么多」类提示；验收清单补一条

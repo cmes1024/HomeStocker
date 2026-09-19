@@ -40,7 +40,10 @@
       show-scrollbar="{{false}}"
       scroll-into-view="{{scrollIntoView}}"
       scroll-with-animation
+      bindscrolltoupper="onScrollToOldest"
+      upper-threshold="40"
     >
+      <view class="history-cap" wx:if="{{transcriptCapped}}">{{copy.historyCapTip}}</view>
       <view
         wx:for="{{messages}}"
         wx:key="id"
