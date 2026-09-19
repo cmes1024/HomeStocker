@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 7
+const CAPABILITY_VERSION = 9
 
 const HARD_DENY = {
   'family.create': true,
@@ -47,7 +47,16 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '把还没记过的东西写成一条新物资。不要用来改已有条目，也不要用来把几条合成一条。'
+      hint: '把还没记过的东西写成一条新物资。单件用这个。不要用来改已有条目，也不要用来把几条合成一条。'
+    },
+    {
+      id: 'item.createMany',
+      fn: 'item',
+      action: 'createMany',
+      enabled: true,
+      confirm: false,
+      args: 'items[{ name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note? }]',
+      hint: '一次记下多条新物资（2～20 件）。同一次要记两件及以上时优先用这个，不要拆成多次 item.create。同名也新开，不改旧数量。'
     },
     {
       id: 'item.update',
@@ -68,13 +77,40 @@ const CAPABILITY_SEED = {
       hint: '删除物资。必须等家人确认后才执行。'
     },
     {
+      id: 'space.create',
+      fn: 'space',
+      action: 'create',
+      enabled: true,
+      confirm: false,
+      args: 'name',
+      hint: '新建一个空间（房间/大区域）。只要建一个空间时用。'
+    },
+    {
+      id: 'space.createMany',
+      fn: 'space',
+      action: 'createMany',
+      enabled: true,
+      confirm: false,
+      args: 'spaces[{ name }]',
+      hint: '一次新建多个空间（2～20）。同一次要建两个及以上空间时优先用这个。'
+    },
+    {
       id: 'space.createLocation',
       fn: 'space',
       action: 'createLocation',
       enabled: true,
       confirm: false,
       args: 'spaceName, locationName',
-      hint: '在已有空间下新建位置。不要新建空间。'
+      hint: '在已有空间下新建一个位置。只要建一个位置时用。'
+    },
+    {
+      id: 'space.createLocationMany',
+      fn: 'space',
+      action: 'createLocationMany',
+      enabled: true,
+      confirm: false,
+      args: 'locations[{ spaceName, locationName }]',
+      hint: '一次在已有空间下新建多个位置（2～20）。同一次要建两个及以上位置时优先用这个。'
     },
     {
       id: 'item.merge',
@@ -93,15 +129,6 @@ const CAPABILITY_SEED = {
       confirm: false,
       args: '',
       hint: '打开临期消息订阅面板（列出已设过期日的物资开关）。微信要求家人亲手点开关授权，不能代开订阅。当家人要管理临期/过期提醒订阅时用此接口，calls 里只放这一步即可。'
-    },
-    {
-      id: 'space.create',
-      fn: 'space',
-      action: 'create',
-      enabled: false,
-      confirm: false,
-      args: 'name',
-      hint: '新建空间。本版关闭。'
     },
     {
       id: 'space.update',

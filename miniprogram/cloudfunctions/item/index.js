@@ -25,6 +25,8 @@ exports.main = async (event) => {
     switch (action) {
       case 'create':
         return await service.createItem(OPENID, event)
+      case 'createMany':
+        return await service.createMany(OPENID, event)
       case 'update':
         return await service.updateItem(OPENID, event)
       case 'remove':

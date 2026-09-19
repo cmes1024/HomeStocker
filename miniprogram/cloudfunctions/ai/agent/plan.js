@@ -88,7 +88,22 @@ function parsePlan(text) {
 }
 
 function draftFromCalls(calls) {
-  const create = (calls || []).find((c) => c && c.use === 'item.create') || (calls || [])[0] || {}
+  const many = (calls || []).find((c) => c && c.use === 'item.createMany')
+  if (many && Array.isArray(many.items) && many.items[0]) {
+    const first = many.items[0] || {}
+    return {
+      name: String(first.name || '').trim(),
+      quantity: first.quantity,
+      unit: String(first.unit || '').trim(),
+      note: String(first.note || '').trim(),
+      spaceName: String(first.spaceName || '').trim(),
+      locationName: String(first.locationName || '').trim(),
+      expireDate: first.expireDate || '',
+      productionDate: first.productionDate || ''
+    }
+  }
+  const create =
+    (calls || []).find((c) => c && c.use === 'item.create') || (calls || [])[0] || {}
   return {
     name: String(create.name || '').trim(),
     quantity: create.quantity,

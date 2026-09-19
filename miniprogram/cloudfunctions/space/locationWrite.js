@@ -76,5 +76,85 @@ module.exports = function createLocationWriter(db) {
     return ok({ _id: addRes._id, ...doc })
   }
 
-  return { createLocation }
+  const CREATE_MANY_LIMIT = 20
+
+  function extractBatchAddIds(addRes) {
+    if (!addRes) return []
+    if (Array.isArray(addRes._ids)) return addRes._ids
+    if (Array.isArray(addRes.ids)) return addRes.ids
+    if (Array.isArray(addRes.id_list)) return addRes.id_list
+    if (addRes._id) return [addRes._id]
+    return []
+  }
+
+  /**
+   * 批量新建位置。event.locations: [{ spaceId, name }]
+   * options.spaces: { [spaceId]: hint } 可跳过重复 get。
+   * 不在此 touch 树。
+   */
+  async function createLocationMany(openid, event, options = {}) {
+    const ctx = await resolveFamilyContext(openid, options.familyCtx)
+    if (ctx.error) return ctx.error
+
+    const raw = Array.isArray(event && event.locations) ? event.locations : []
+    if (!raw.length) return fail('INVALID_ITEMS', '没有要创建的位置')
+    if (raw.length > CREATE_MANY_LIMIT) {
+      return fail('INVALID_ITEMS', `一次最多建 ${CREATE_MANY_LIMIT} 个位置`)
+    }
+
+    const prepared = []
+    for (let i = 0; i < raw.length; i++) {
+      const row = raw[i] || {}
+      const step = i + 1
+      const spaceId = row.spaceId
+      if (!spaceId) {
+        return fail('INVALID_ID', `第 ${step} 个位置缺少 spaceId`)
+      }
+      const name = String(row.name || '').trim()
+      if (!name) {
+        return fail('INVALID_NAME', `第 ${step} 个位置缺少名称`)
+      }
+
+      let space = null
+      const hint = options.spaces && options.spaces[spaceId]
+      const hintId = hint && (hint._id || hint.id)
+      if (hintId && String(hintId) === String(spaceId) && hint.name != null) {
+        space = { _id: spaceId, name: String(hint.name || ''), familyId: ctx.familyId }
+      } else {
+        space = await getSpaceInFamily(spaceId, ctx.familyId)
+      }
+      if (!space) {
+        return fail('NOT_FOUND', `第 ${step} 个位置：空间不存在`)
+      }
+
+      prepared.push({ spaceId, name, space })
+    }
+
+    const now = Date.now()
+    const docs = prepared.map((p) => ({
+      familyId: ctx.familyId,
+      spaceId: p.spaceId,
+      name: p.name,
+      createdAt: now,
+      updatedAt: now
+    }))
+
+    let addRes
+    try {
+      addRes = await db.collection('locations').add({ data: docs })
+    } catch (e) {
+      console.error('createLocationMany add failed', e)
+      return fail('INTERNAL', e.message || '批量创建位置失败')
+    }
+    const ids = extractBatchAddIds(addRes)
+    if (ids.length !== docs.length) {
+      console.error('createLocationMany id mismatch', ids.length, docs.length, addRes)
+      return fail('INTERNAL', '批量创建位置结果异常')
+    }
+
+    const list = docs.map((doc, i) => ({ _id: ids[i], ...doc }))
+    return ok({ list, count: list.length })
+  }
+
+  return { createLocation, createLocationMany }
 }

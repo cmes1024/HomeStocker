@@ -1,13 +1,12 @@
 const { matchSpace, resolveTagIds } = require('../agent/treeMatch')
 const { lookupRef } = require('../agent/refs')
-const { touchFamilyTree } = require('../familyTree')
+const { markTreeDirty } = require('../familyTree')
 const { ensureLocation } = require('./helpers')
 
 const id = 'item.update'
 
 async function run(ctx, call, step) {
-  const { writers, openid, db, familyId, tree, refs, catalogMap, familyCtx } = ctx
-  let currentTree = tree
+  const { writers, openid, tree, refs, catalogMap, familyCtx } = ctx
   const row = lookupRef(call, refs)
   if (!row) {
     return {
@@ -23,11 +22,11 @@ async function run(ctx, call, step) {
   if (call.expireDate !== undefined) payload.expireDate = call.expireDate
   if (call.productionDate !== undefined) payload.productionDate = call.productionDate
   if (Array.isArray(call.tagNames)) {
-    payload.tagIds = resolveTagIds(currentTree, call.tagNames).tagIds
+    payload.tagIds = resolveTagIds(tree, call.tagNames).tagIds
   }
   const writeOpts = { familyCtx, trustTagIds: Array.isArray(call.tagNames) }
   if (call.spaceName || call.locationName) {
-    const space = matchSpace(currentTree, call.spaceName || row.spaceName)
+    const space = matchSpace(tree, call.spaceName || row.spaceName)
     if (!space) {
       return {
         ok: false,
@@ -40,7 +39,7 @@ async function run(ctx, call, step) {
       const locRes = await ensureLocation(
         writers,
         openid,
-        currentTree,
+        tree,
         space,
         call.locationName,
         catalogMap,
@@ -57,10 +56,7 @@ async function run(ctx, call, step) {
             spaceId: space.id
           }
         : null
-      if (locRes.created) {
-        currentTree = (await touchFamilyTree(db, familyId)) || currentTree
-        ctx.tree = currentTree
-      }
+      if (locRes.created) markTreeDirty(ctx)
     } else {
       payload.locationId = null
     }

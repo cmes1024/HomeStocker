@@ -79,6 +79,48 @@ async function touchFamilyTree(db, familyId) {
   }
 }
 
+function markTreeDirty(ctx) {
+  if (ctx) ctx.treeDirty = true
+}
+
+/** 同轮链式执行：内存补空间，不打库；收尾再 flush。 */
+function patchSpaceIntoTree(tree, spaceDoc) {
+  if (!tree || !spaceDoc) return tree
+  const id = spaceDoc._id || spaceDoc.id
+  if (!id) return tree
+  if (!Array.isArray(tree.spaces)) tree.spaces = []
+  if (tree.spaces.some((s) => s && s.id === id)) return tree
+  tree.spaces.push({
+    id,
+    name: String(spaceDoc.name || ''),
+    isDefault: !!spaceDoc.isDefault,
+    locations: []
+  })
+  return tree
+}
+
+/** 同轮链式执行：内存补位置；ensureLocation 已 concat 时可只 markDirty。 */
+function patchLocationIntoTree(tree, spaceId, locDoc) {
+  if (!tree || !spaceId || !locDoc) return tree
+  const locId = locDoc._id || locDoc.id
+  if (!locId) return tree
+  const space = (tree.spaces || []).find((s) => s && s.id === spaceId)
+  if (!space) return tree
+  if (!Array.isArray(space.locations)) space.locations = []
+  if (space.locations.some((l) => l && l.id === locId)) return tree
+  space.locations.push({ id: locId, name: String(locDoc.name || '') })
+  return tree
+}
+
+/** act 一轮写完/失败后：若结构变过，从 DB 重建一次（真相源，供 replan）。 */
+async function flushFamilyTreeIfDirty(ctx) {
+  if (!ctx || !ctx.treeDirty) return ctx && ctx.tree
+  const tree = await touchFamilyTree(ctx.db, ctx.familyId)
+  if (tree) ctx.tree = tree
+  ctx.treeDirty = false
+  return ctx.tree
+}
+
 async function deleteFamilyTree(db, familyId) {
   if (!familyId) return
   try {
@@ -115,6 +157,10 @@ module.exports = {
   rebuildFamilyTree,
   getOrRebuildFamilyTree,
   touchFamilyTree,
+  markTreeDirty,
+  patchSpaceIntoTree,
+  patchLocationIntoTree,
+  flushFamilyTreeIfDirty,
   deleteFamilyTree,
   renderTreeNames,
   isUsableTree

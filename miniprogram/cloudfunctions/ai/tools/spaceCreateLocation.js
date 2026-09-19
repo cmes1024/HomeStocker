@@ -1,13 +1,12 @@
 const { matchSpace } = require('../agent/treeMatch')
-const { touchFamilyTree } = require('../familyTree')
+const { markTreeDirty } = require('../familyTree')
 const { ensureLocation } = require('./helpers')
 
 const id = 'space.createLocation'
 
 async function run(ctx, call, step) {
-  const { writers, openid, db, familyId, tree, familyCtx } = ctx
-  let currentTree = tree
-  const space = matchSpace(currentTree, call.spaceName)
+  const { writers, openid, tree, familyCtx } = ctx
+  const space = matchSpace(tree, call.spaceName)
   if (!space) {
     return {
       ok: false,
@@ -17,7 +16,7 @@ async function run(ctx, call, step) {
   const locRes = await ensureLocation(
     writers,
     openid,
-    currentTree,
+    tree,
     space,
     call.locationName || call.name,
     { 'space.createLocation': true },
@@ -26,10 +25,7 @@ async function run(ctx, call, step) {
   if (locRes.error) {
     return { ok: false, summary: `第 ${step} 步失败：${locRes.error.message}` }
   }
-  if (locRes.created) {
-    currentTree = (await touchFamilyTree(db, familyId)) || currentTree
-    ctx.tree = currentTree
-  }
+  if (locRes.created) markTreeDirty(ctx)
   return {
     ok: true,
     summary: locRes.created

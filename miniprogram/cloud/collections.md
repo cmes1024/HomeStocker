@@ -99,7 +99,7 @@
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 
-仅由 `item` 云函数在 create/update/remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。水位探针走 `activity.cursor`（最新一条的 `_id` / `createdAt`，不查昵称）。个人订阅开关不写 activities。
+仅由 `item` 云函数在 create / createMany / update / remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。水位探针走 `activity.cursor`（最新一条的 `_id` / `createdAt`，不查昵称）。个人订阅开关不写 activities。`createMany`：先全部校验，通过后一次 `items.add` 数组写入，再一次 `activities.add` 数组（一件一日志）。
 
 ### `itemExpireSubs`
 
@@ -208,7 +208,7 @@
 | `apis` | array | `{ id, fn, action, enabled, confirm, args, hint }[]` |
 | `updatedAt` | number | |
 
-V2 种子 enabled：`item.search` / `listExpiring` / `create` / `update` / `remove`（confirm）/ `space.createLocation`。`item.merge` 与房间/标签/家庭/密钥/抽取为 disabled。代码硬底线仍拒绝 `family.*`、密钥、extract、transcribe。成员不能从客户端改此表。
+V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `update` / `remove`（confirm）/ `space.create` / `space.createMany` / `space.createLocation` / `space.createLocationMany` / `item.merge`（confirm）/ `item.expireSubscribePanel`。房间改名/删除、标签/家庭/密钥/抽取为 disabled。代码硬底线仍拒绝 `family.*`、密钥、extract、transcribe。成员不能从客户端改此表。`createMany` 系列：同类 ≥2 优先批量；顺序空间 → 位置 → 物资。
 
 ### `floors`（模型预留，本版不建集合/UI）
 

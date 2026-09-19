@@ -6,6 +6,7 @@ const db = cloud.database()
 const _ = db.command
 const { touchFamilyTree } = require('./familyTree')
 const locationWriter = require('./locationWrite')(db)
+const spaceWriter = require('./spaceWrite')(db)
 
 const DEFAULT_SPACE_NAME = '仓库'
 const DEFAULT_COVER_KEY = 'default-indoor'
@@ -137,25 +138,11 @@ async function listSpaces(openid) {
 }
 
 async function createSpace(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
+  return spaceWriter.createSpace(openid, event)
+}
 
-  const name = String(event.name || '').trim()
-  if (!name) return fail('INVALID_NAME', '请输入空间名称')
-
-  const now = Date.now()
-  const existing = await listSpacesForFamily(ctx.familyId)
-  const doc = {
-    familyId: ctx.familyId,
-    name,
-    floorId: event.floorId || null,
-    isDefault: existing.length === 0,
-    coverKey: event.coverKey || DEFAULT_COVER_KEY,
-    createdAt: now,
-    updatedAt: now
-  }
-  const addRes = await db.collection('spaces').add({ data: doc })
-  return ok({ _id: addRes._id, ...doc })
+async function createManySpaces(openid, event) {
+  return spaceWriter.createMany(openid, event)
 }
 
 async function updateSpace(openid, event) {
@@ -292,6 +279,10 @@ async function listLocations(openid, event) {
 
 async function createLocation(openid, event) {
   return locationWriter.createLocation(openid, event)
+}
+
+async function createLocationMany(openid, event) {
+  return locationWriter.createLocationMany(openid, event)
 }
 
 async function updateLocation(openid, event) {
@@ -492,6 +483,9 @@ exports.main = async (event) => {
       case 'create':
         result = await createSpace(OPENID, event)
         break
+      case 'createMany':
+        result = await createManySpaces(OPENID, event)
+        break
       case 'update':
         result = await updateSpace(OPENID, event)
         break
@@ -503,6 +497,9 @@ exports.main = async (event) => {
         break
       case 'createLocation':
         result = await createLocation(OPENID, event)
+        break
+      case 'createLocationMany':
+        result = await createLocationMany(OPENID, event)
         break
       case 'updateLocation':
         result = await updateLocation(OPENID, event)
@@ -524,9 +521,11 @@ exports.main = async (event) => {
       result.ok &&
       (action === 'ensureDefault' ||
         action === 'create' ||
+        action === 'createMany' ||
         action === 'update' ||
         action === 'remove' ||
         action === 'createLocation' ||
+        action === 'createLocationMany' ||
         action === 'updateLocation' ||
         action === 'removeLocation')
     ) {

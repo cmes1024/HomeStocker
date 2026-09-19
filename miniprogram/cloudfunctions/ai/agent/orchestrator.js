@@ -1,5 +1,6 @@
 const createItemService = require('../itemService')
 const createLocationWriter = require('../locationWrite')
+const createSpaceWriter = require('../spaceWrite')
 const { ensureCapabilities } = require('../capabilities')
 const { getOrRebuildFamilyTree } = require('../familyTree')
 const { fail, ok } = require('./types')
@@ -10,17 +11,19 @@ const {
   capabilityLimitAsk,
   inventoryAuthorityForReply
 } = require('./guardrails')
-const { askModel, fillAssistPrompt, renderProbe, ASSIST_PROMPT_V2 } = require('./model')
+const { askModel, fillAssistPrompt, renderProbe, renderExecReceipt, ASSIST_PROMPT_V2 } = require('./model')
 const { loadRecentItems, runProbe } = require('./itemsQuery')
 const { publicRecentItems, bindCallIds, lookupRef } = require('./refs')
 const { draftFromCalls } = require('./plan')
-const { attachPresentation, textOnlyPresentation } = require('./presentation')
+const { attachPresentation, textOnlyPresentation, buildExecutionPresentation } = require('./presentation')
 const { runAll } = require('../tools/registry')
+const { renderTreeNames } = require('../familyTree')
 
 function makeWriters(db) {
   return {
     item: createItemService(db),
-    location: createLocationWriter(db)
+    location: createLocationWriter(db),
+    space: createSpaceWriter(db)
   }
 }
 
@@ -138,12 +141,102 @@ async function executePlanCalls(env, openid, familyId, tree, calls, refs, catalo
     familyId,
     familyCtx: { familyId, openid },
     tree,
+    treeDirty: false,
     refs,
     catalogMap,
     todayYmd,
     writers
   }
   return runAll(ctx, calls)
+}
+
+function stepOffset(report) {
+  let max = 0
+  ;[(report && report.executed) || [], (report && report.failed) || []].forEach((list) => {
+    list.forEach((row) => {
+      const n = Number(row.step) || 0
+      if (n > max) max = n
+    })
+  })
+  return max
+}
+
+function mergeCreateReports(first, second) {
+  const offset = stepOffset(first)
+  const executed = (first.executed || []).slice()
+  const failed = (first.failed || []).slice()
+  const possibleDuplicates = (first.possibleDuplicates || []).slice()
+  ;((second && second.executed) || []).forEach((row) => {
+    executed.push({ ...row, step: (Number(row.step) || 0) + offset })
+  })
+  ;((second && second.failed) || []).forEach((row) => {
+    failed.push({ ...row, step: (Number(row.step) || 0) + offset })
+  })
+  ;((second && second.possibleDuplicates) || []).forEach((row) => {
+    possibleDuplicates.push(row)
+  })
+  const presentation = buildExecutionPresentation(
+    executed,
+    failed,
+    possibleDuplicates,
+    (second && second.tree) || (first && first.tree)
+  )
+  const recentItems = []
+    .concat((first && first.recentItems) || [])
+    .concat((second && second.recentItems) || [])
+  const removedItemIds = []
+    .concat((first && first.removedItemIds) || [])
+    .concat((second && second.removedItemIds) || [])
+  return {
+    executed,
+    failed,
+    pending: (second && second.pending) || [],
+    createClassFailed: !!(second && second.createClassFailed),
+    possibleDuplicates,
+    lines: presentation.lines && presentation.lines.length ? presentation.lines : ['没有需要执行的操作'],
+    lead: presentation.lead || (first && first.lead) || '',
+    blocks: presentation.blocks || [],
+    recentItems,
+    removedItemIds,
+    wrote: !!(first && first.wrote) || !!(second && second.wrote),
+    subscribeUi: !!(second && second.subscribeUi) || !!(first && first.subscribeUi),
+    subscribeItems:
+      (second && second.subscribeItems) || (first && first.subscribeItems) || [],
+    tree: (second && second.tree) || (first && first.tree),
+    replanned: true
+  }
+}
+
+function buildDonePayload(planCalls, report, focus, sessionRecent) {
+  return {
+    status: 'done',
+    ask: [],
+    confirm: [],
+    calls: planCalls,
+    report: {
+      executed: (report.executed || []).map((row) => ({
+        step: row.step,
+        use: row.use,
+        summary: row.summary
+      })),
+      failed: report.failed,
+      possibleDuplicates: report.possibleDuplicates,
+      lines: report.lines,
+      lead: report.lead,
+      blocks: report.blocks,
+      recentItems: report.recentItems,
+      removedItemIds: report.removedItemIds,
+      wrote: report.wrote,
+      replanned: !!report.replanned
+    },
+    lead: report.lead || '',
+    blocks: report.blocks || [],
+    draft: draftFromCalls(planCalls),
+    focus: focusPublic(focus),
+    recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+    removedItemIds: report.removedItemIds || [],
+    wrote: !!report.wrote
+  }
 }
 
 function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent) {
@@ -436,32 +529,123 @@ async function act(env, openid, event) {
     today.ymd
   )
 
-  // Subscribe panel UI
-  if (report.subscribeUi || (report.executed || []).some((row) => row.ui === 'subscribePanel')) {
-    const subStep = (report.executed || []).find((r) => r.ui === 'subscribePanel')
-    const textLead = (subStep && subStep.summary) || report.lead || ''
-    return ok(
-      attachPresentation(
-        {
-          status: 'subscribe',
-          ask: [],
-          confirm: [],
-          calls: plan.calls,
-          subscribeItems: report.subscribeItems || [],
+  // 创建类失败：回灌 EXEC，最多一轮模型重编排（代码不决策如何降级）
+  let finalReport = report
+  let finalCalls = plan.calls
+  if (report.createClassFailed && !report.subscribeUi) {
+    const treeAfter = report.tree || tree
+    const treeText = renderTreeNames(treeAfter)
+    const execText = renderExecReceipt(report, treeText)
+    const replanVars = {
+      ...vars,
+      tree: treeText,
+      exec: execText,
+      probe: vars.probe || '无'
+    }
+    const replanSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, replanVars)
+    const replanUser = `${userText}\n（执行回执如下，请只重编排尚未完成的事，勿重复已成功步骤。）\n${execText}`
+    try {
+      const replan = await askModel(modelOpts, replanSystem, replanUser)
+      const nextPlan = replan.plan
+      nextPlan.probe = null
+      if (nextPlan.ask && nextPlan.ask.length) {
+        return ok({
+          status: 'ask',
+          ask: nextPlan.ask,
+          probe: null,
+          calls: [],
+          draft: draftFromCalls(nextPlan.calls),
+          focus: focusPublic(focus),
+          recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+          removedItemIds: report.removedItemIds || [],
+          wrote: !!report.wrote,
           report: {
             executed: (report.executed || []).map((row) => ({
               step: row.step,
               use: row.use,
               summary: row.summary
             })),
-            failed: report.failed || [],
-            possibleDuplicates: report.possibleDuplicates || [],
-            lines: textLead ? [textLead] : report.lines || [],
+            failed: report.failed,
+            possibleDuplicates: report.possibleDuplicates,
+            lines: report.lines,
+            wrote: report.wrote
+          }
+        })
+      }
+      if (nextPlan.calls && nextPlan.calls.length) {
+        if (planNeedsUnavailableCapability(nextPlan.calls, catalogMap)) {
+          return ok({
+            status: 'ask',
+            ask: capabilityLimitAsk(),
+            probe: null,
+            calls: [],
+            draft: draftFromCalls([]),
+            focus: focusPublic(focus),
+            recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+            removedItemIds: report.removedItemIds || [],
+            wrote: !!report.wrote
+          })
+        }
+        const confirm2 = needsConfirm(nextPlan.calls, catalogMap)
+        if (confirm2.length && !confirmed) {
+          return ok(
+            buildConfirmPayload(
+              nextPlan.calls,
+              confirm2,
+              refs,
+              focus,
+              sessionRecent.concat(report.recentItems || [])
+            )
+          )
+        }
+        const secondReport = await executePlanCalls(
+          env,
+          openid,
+          actCtx.familyId,
+          treeAfter,
+          nextPlan.calls,
+          refs,
+          catalogMap,
+          today.ymd
+        )
+        finalReport = mergeCreateReports(report, secondReport)
+        finalCalls = (plan.calls || []).concat(nextPlan.calls || [])
+      }
+    } catch (e) {
+      // 重规划失败：仍返回首轮执行结果
+      console.warn('act replan failed', e && e.message)
+    }
+  }
+
+  // Subscribe panel UI
+  if (
+    finalReport.subscribeUi ||
+    (finalReport.executed || []).some((row) => row.ui === 'subscribePanel')
+  ) {
+    const subStep = (finalReport.executed || []).find((r) => r.ui === 'subscribePanel')
+    const textLead = (subStep && subStep.summary) || finalReport.lead || ''
+    return ok(
+      attachPresentation(
+        {
+          status: 'subscribe',
+          ask: [],
+          confirm: [],
+          calls: finalCalls,
+          subscribeItems: finalReport.subscribeItems || [],
+          report: {
+            executed: (finalReport.executed || []).map((row) => ({
+              step: row.step,
+              use: row.use,
+              summary: row.summary
+            })),
+            failed: finalReport.failed || [],
+            possibleDuplicates: finalReport.possibleDuplicates || [],
+            lines: textLead ? [textLead] : finalReport.lines || [],
             recentItems: [],
             removedItemIds: [],
             wrote: false
           },
-          draft: draftFromCalls(plan.calls),
+          draft: draftFromCalls(finalCalls),
           focus: focusPublic(focus),
           recentItems: publicRecentItems(sessionRecent),
           removedItemIds: [],
@@ -472,34 +656,7 @@ async function act(env, openid, event) {
     )
   }
 
-  return ok({
-    status: 'done',
-    ask: [],
-    confirm: [],
-    calls: plan.calls,
-    report: {
-      executed: (report.executed || []).map((row) => ({
-        step: row.step,
-        use: row.use,
-        summary: row.summary
-      })),
-      failed: report.failed,
-      possibleDuplicates: report.possibleDuplicates,
-      lines: report.lines,
-      lead: report.lead,
-      blocks: report.blocks,
-      recentItems: report.recentItems,
-      removedItemIds: report.removedItemIds,
-      wrote: report.wrote
-    },
-    lead: report.lead || '',
-    blocks: report.blocks || [],
-    draft: draftFromCalls(plan.calls),
-    focus: focusPublic(focus),
-    recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
-    removedItemIds: report.removedItemIds || [],
-    wrote: !!report.wrote
-  })
+  return ok(buildDonePayload(finalCalls, finalReport, focus, sessionRecent))
 }
 
 module.exports = {

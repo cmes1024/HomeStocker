@@ -69,6 +69,53 @@ function fillAssistPrompt(system, vars) {
     .replace(/\{\{FOCUS\}\}/g, vars.focus || '无')
     .replace(/\{\{PROBE\}\}/g, vars.probe || '无')
     .replace(/\{\{HISTORY\}\}/g, vars.history || '无')
+    .replace(/\{\{EXEC\}\}/g, vars.exec || '无')
+}
+
+/** 仅根据执行回执拼场景文本，不做决策、不加查询 */
+function renderExecReceipt(report, treeText) {
+  const lines = []
+  const executed = (report && report.executed) || []
+  const failed = (report && report.failed) || []
+  const pending = (report && report.pending) || []
+  if (executed.length) {
+    lines.push('已成功：')
+    executed.forEach((row) => {
+      lines.push(`- 第 ${row.step} 步 ${row.use}：${row.summary || '完成'}`)
+    })
+  } else {
+    lines.push('已成功：无')
+  }
+  if (failed.length) {
+    lines.push('已失败：')
+    failed.forEach((row) => {
+      lines.push(`- 第 ${row.step} 步 ${row.use}：${row.summary || '失败'}`)
+      if (row.call) {
+        try {
+          lines.push(`  原调用：${JSON.stringify(row.call)}`)
+        } catch (e) {
+          // ignore
+        }
+      }
+    })
+  } else {
+    lines.push('已失败：无')
+  }
+  if (pending.length) {
+    lines.push('尚未执行（请重编排；勿重复已成功步骤）：')
+    pending.forEach((call) => {
+      try {
+        lines.push(`- ${JSON.stringify(call)}`)
+      } catch (e) {
+        lines.push(`- ${call && call.use}`)
+      }
+    })
+  } else {
+    lines.push('尚未执行：无')
+  }
+  lines.push('当前家庭结构：')
+  lines.push(treeText || '无')
+  return lines.join('\n')
 }
 
 async function askModel(deps, system, userText) {
@@ -127,6 +174,7 @@ module.exports = {
   renderHistory,
   sanitizeRecentIds,
   renderProbe,
+  renderExecReceipt,
   fillAssistPrompt,
   askModel,
   ASSIST_PROMPT_V2

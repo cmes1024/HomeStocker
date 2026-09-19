@@ -53,7 +53,8 @@ async function buildActContext(env, openid, event, familyCtx) {
     tree: renderTreeNames(tree),
     history: renderHistory(history),
     focus: renderFocusList([focus].concat(recentRows)),
-    probe: '无'
+    probe: '无',
+    exec: '无'
   }
   const system = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, vars)
   const text = String((event && event.text) || '').trim()

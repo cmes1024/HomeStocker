@@ -61,13 +61,34 @@ async function loadFocus(cloud, db, familyId, tree, itemId) {
 async function loadRecentItems(db, familyId, tree, ids, refs, skipItemId) {
   const unique = (ids || []).filter((id) => id && id !== skipItemId)
   if (!unique.length) return []
-  const snaps = await Promise.all(
-    unique.map((id) => db.collection('items').doc(id).get().catch(() => null))
-  )
+  const _ = db.command
+  let list = []
+  try {
+    const res = await db
+      .collection('items')
+      .where({ _id: _.in(unique) })
+      .limit(unique.length)
+      .get()
+    list = res.data || []
+  } catch (e) {
+    // 降级：逐条 get（兼容极端权限/索引差异）
+    const snaps = await Promise.all(
+      unique.map((id) => db.collection('items').doc(id).get().catch(() => null))
+    )
+    list = snaps
+      .map((snap, i) => (snap && snap.data ? { _id: unique[i], ...snap.data } : null))
+      .filter(Boolean)
+  }
+  const byId = {}
+  list.forEach((doc) => {
+    if (!doc || !doc._id) return
+    byId[doc._id] = doc
+  })
   const rows = []
-  snaps.forEach((snap, i) => {
-    if (!snap || !snap.data || snap.data.familyId !== familyId) return
-    const row = compactItem({ _id: unique[i], ...snap.data }, `R${rows.length + 1}`, tree)
+  unique.forEach((id) => {
+    const doc = byId[id]
+    if (!doc || doc.familyId !== familyId) return
+    const row = compactItem(doc, `R${rows.length + 1}`, tree)
     refs[row.ref] = row
     rows.push(row)
   })

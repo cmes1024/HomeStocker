@@ -1,17 +1,16 @@
 const { matchSpace, resolveTagIds, placeLabel } = require('../agent/treeMatch')
-const { touchFamilyTree } = require('../familyTree')
+const { markTreeDirty } = require('../familyTree')
 const { ensureLocation } = require('./helpers')
 
 const id = 'item.create'
 
 async function run(ctx, call, step) {
-  const { writers, openid, db, familyId, tree, catalogMap, familyCtx } = ctx
-  let currentTree = tree
+  const { writers, openid, tree, catalogMap, familyCtx } = ctx
   const name = String(call.name || '').trim()
   if (!name) {
     return { ok: false, summary: `第 ${step} 步失败：缺少物品名称` }
   }
-  const space = matchSpace(currentTree, call.spaceName)
+  const space = matchSpace(tree, call.spaceName)
   if (!space) {
     return {
       ok: false,
@@ -24,7 +23,7 @@ async function run(ctx, call, step) {
     const locRes = await ensureLocation(
       writers,
       openid,
-      currentTree,
+      tree,
       space,
       call.locationName,
       catalogMap,
@@ -35,12 +34,9 @@ async function run(ctx, call, step) {
     }
     locationId = locRes.locationId
     locationName = locRes.locationName || call.locationName
-    if (locRes.created) {
-      currentTree = (await touchFamilyTree(db, familyId)) || currentTree
-      ctx.tree = currentTree
-    }
+    if (locRes.created) markTreeDirty(ctx)
   }
-  const tags = resolveTagIds(currentTree, call.tagNames)
+  const tags = resolveTagIds(tree, call.tagNames)
   const payload = {
     name,
     quantity: call.quantity,

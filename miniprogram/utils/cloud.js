@@ -125,7 +125,7 @@ function invalidateItemDomain() {
 }
 
 function applyWriteInvalidation(name, action) {
-  if (name === 'item' && (action === 'create' || action === 'update' || action === 'remove')) {
+  if (name === 'item' && (action === 'create' || action === 'createMany' || action === 'update' || action === 'remove')) {
     invalidateItemDomain()
     return
   }

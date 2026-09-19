@@ -153,13 +153,24 @@ function overlayExpireReminder(item, subscribed) {
   }
 }
 
-async function syncExpireSub(familyId, itemId, openid, enabled, expireDate) {
+async function syncExpireSub(familyId, itemId, openid, enabled, expireDate, opts) {
   if (!expireDate || !enabled) {
-    await removeExpireSub(itemId, openid)
+    if (!(opts && opts.skipRemoveIfDisabled)) {
+      await removeExpireSub(itemId, openid)
+    }
     return false
   }
   await upsertExpireSub(familyId, itemId, openid)
   return true
+}
+
+function extractBatchAddIds(addRes) {
+  if (!addRes) return []
+  if (Array.isArray(addRes._ids)) return addRes._ids
+  if (Array.isArray(addRes.ids)) return addRes.ids
+  if (Array.isArray(addRes.id_list)) return addRes.id_list
+  if (addRes._id) return [addRes._id]
+  return []
 }
 
 async function resolveFamilyContext(openid, reuse) {
@@ -478,6 +489,198 @@ async function createItem(openid, event, options = {}) {
     ...place
   })
   return ok({ _id: addRes._id, ...doc, expireReminderEnabled: mine })
+}
+
+const CREATE_MANY_LIMIT = 20
+
+/**
+ * 批量新建：先全部校验，任一非法则零写入；通过后一次 items.add 数组 + 一次 activities.add 数组。
+ * options.spaces / options.locations 为 id→hint 映射，供跳过重复 doc.get。
+ */
+async function createMany(openid, event, options = {}) {
+  const ctx = await resolveFamilyContext(openid, options.familyCtx)
+  if (ctx.error) return ctx.error
+
+  const rawItems = Array.isArray(event && event.items) ? event.items : []
+  if (!rawItems.length) return fail('INVALID_ITEMS', '没有要写入的物资')
+  if (rawItems.length > CREATE_MANY_LIMIT) {
+    return fail('INVALID_ITEMS', `一次最多记 ${CREATE_MANY_LIMIT} 件`)
+  }
+
+  const defaultSource = event && event.source === 'agent' ? 'agent' : 'ui'
+  const now = Date.now()
+  const prepared = []
+
+  for (let i = 0; i < rawItems.length; i++) {
+    const row = rawItems[i] || {}
+    const step = i + 1
+    const name = String(row.name || '').trim()
+    if (!name) {
+      return fail('INVALID_NAME', `第 ${step} 件缺少名称`)
+    }
+
+    const quantity = normalizeQuantity(row.quantity, 1)
+    if (quantity === null) {
+      return fail('INVALID_QUANTITY', `第 ${step} 件数量无效`)
+    }
+
+    const unit = row.unit == null ? '' : String(row.unit).trim().slice(0, 10)
+    const note = row.note == null ? '' : String(row.note)
+    const source = row.source === 'agent' || defaultSource === 'agent' ? 'agent' : 'ui'
+
+    const spaceId = row.spaceId || null
+    const spaceHint =
+      (options.spaces && spaceId && options.spaces[spaceId]) ||
+      options.space ||
+      null
+    const spaceRes = await resolveSpaceId(ctx.familyId, spaceId, spaceHint)
+    if (spaceRes.error) {
+      return fail(
+        spaceRes.error.code || 'INVALID_SPACE',
+        `第 ${step} 件：${spaceRes.error.message || '空间无效'}`
+      )
+    }
+
+    const locationId =
+      row.locationId === undefined || row.locationId === null || row.locationId === ''
+        ? null
+        : row.locationId
+    const locHint =
+      (options.locations && locationId && options.locations[locationId]) ||
+      options.location ||
+      null
+    const locRes = await resolveLocationId(
+      ctx.familyId,
+      spaceRes.spaceId,
+      locationId,
+      locHint
+    )
+    if (locRes.error) {
+      return fail(
+        locRes.error.code || 'INVALID_LOCATION',
+        `第 ${step} 件：${locRes.error.message || '位置无效'}`
+      )
+    }
+
+    const tagsRes = await resolveTagIds(ctx.familyId, row.tagIds, {
+      trusted: !!options.trustTagIds
+    })
+    if (tagsRes.error) {
+      return fail(
+        tagsRes.error.code || 'INVALID_TAGS',
+        `第 ${step} 件：${tagsRes.error.message || '标签无效'}`
+      )
+    }
+    const tagIds = tagsRes.skip ? [] : tagsRes.tagIds
+
+    let productionDate = null
+    if (row.productionDate !== undefined) {
+      const d = normalizeDateInput(row.productionDate)
+      if (d === undefined) {
+        return fail('INVALID_DATE', `第 ${step} 件生产日期无效`)
+      }
+      productionDate = d
+    }
+
+    let expireDate = null
+    if (row.expireDate !== undefined) {
+      const d = normalizeDateInput(row.expireDate)
+      if (d === undefined) {
+        return fail('INVALID_DATE', `第 ${step} 件过期日期无效`)
+      }
+      expireDate = d
+    }
+
+    const wantSub = row.expireReminderEnabled === true
+    const doc = {
+      familyId: ctx.familyId,
+      name,
+      quantity,
+      unit,
+      note,
+      spaceId: spaceRes.spaceId,
+      locationId: locRes.locationId,
+      tagIds,
+      productionDate,
+      expireDate,
+      expireReminderEnabled: false,
+      createdBy: openid,
+      source,
+      createdAt: now,
+      updatedAt: now
+    }
+
+    const place = await snapshotPlace(
+      ctx.familyId,
+      spaceRes.spaceId,
+      locRes.locationId,
+      { space: spaceRes.space, location: locRes.location }
+    )
+
+    prepared.push({
+      doc,
+      place,
+      wantSub,
+      expireDate,
+      name,
+      quantity,
+      unit,
+      source
+    })
+  }
+
+  const docs = prepared.map((p) => p.doc)
+  let addRes
+  try {
+    addRes = await db.collection('items').add({ data: docs })
+  } catch (e) {
+    console.error('createMany items.add failed', e)
+    return fail('INTERNAL', e.message || '批量写入失败')
+  }
+
+  const ids = extractBatchAddIds(addRes)
+  if (ids.length !== docs.length) {
+    console.error('createMany id count mismatch', ids.length, docs.length, addRes)
+    return fail('INTERNAL', '批量写入结果异常，请核对物资列表')
+  }
+
+  for (let i = 0; i < prepared.length; i++) {
+    const p = prepared[i]
+    if (!p.wantSub || !p.expireDate) continue
+    try {
+      await syncExpireSub(ctx.familyId, ids[i], openid, true, p.expireDate, {
+        skipRemoveIfDisabled: true
+      })
+    } catch (e) {
+      console.warn('syncExpireSub createMany failed', ids[i], e)
+    }
+  }
+
+  const activityDocs = prepared.map((p, i) => ({
+    familyId: ctx.familyId,
+    itemId: ids[i],
+    action: 'create',
+    actorOpenid: openid,
+    itemName: p.name,
+    quantity: p.quantity,
+    unit: p.unit,
+    source: p.source,
+    createdAt: now,
+    ...p.place
+  }))
+
+  try {
+    await db.collection('activities').add({ data: activityDocs })
+  } catch (e) {
+    console.error('createMany activities.add failed', e)
+  }
+
+  const list = prepared.map((p, i) => ({
+    _id: ids[i],
+    ...p.doc,
+    expireReminderEnabled: !!(p.wantSub && p.expireDate)
+  }))
+  return ok({ list, count: list.length })
 }
 
 async function updateItem(openid, event, options = {}) {
@@ -1104,6 +1307,7 @@ async function home(openid, event) {
 
   return {
     createItem,
+    createMany,
     updateItem,
     removeItem,
     mergeItems,

@@ -1,16 +1,21 @@
 const { isHardDenied } = require('../capabilities')
 const { buildExecutionPresentation } = require('../agent/presentation')
 const { publicRecentItems } = require('../agent/refs')
+const { flushFamilyTreeIfDirty } = require('../familyTree')
 const { findDuplicates } = require('./helpers')
 
 const HANDLERS = [
   require('./itemSearch'),
   require('./itemListExpiring'),
   require('./itemCreate'),
+  require('./itemCreateMany'),
   require('./itemUpdate'),
   require('./itemRemove'),
   require('./itemMerge'),
+  require('./spaceCreate'),
+  require('./spaceCreateMany'),
   require('./spaceCreateLocation'),
+  require('./spaceCreateLocationMany'),
   require('./itemExpireSubscribePanel')
 ]
 
@@ -19,20 +24,63 @@ HANDLERS.forEach((h) => {
   if (h && h.id) HANDLER_MAP[h.id] = h
 })
 
+/** 创建类写：失败后可由模型重编排（代码不做降级决策） */
+function isCreateClassUse(use) {
+  return /^(item\.create|item\.createMany|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany)$/.test(
+    String(use || '').trim()
+  )
+}
+
+function compactCall(call) {
+  if (!call || typeof call !== 'object') return null
+  const use = String(call.use || '').trim()
+  if (!use) return null
+  const row = { use }
+  ;['name', 'spaceName', 'locationName', 'quantity', 'unit', 'ref', 'note'].forEach((k) => {
+    if (call[k] != null && call[k] !== '') row[k] = call[k]
+  })
+  if (Array.isArray(call.items) && call.items.length) {
+    row.items = call.items.slice(0, 20).map((it) => {
+      if (!it || typeof it !== 'object') return it
+      const o = {}
+      ;['name', 'spaceName', 'locationName', 'quantity', 'unit'].forEach((k) => {
+        if (it[k] != null && it[k] !== '') o[k] = it[k]
+      })
+      return o
+    })
+  }
+  if (Array.isArray(call.spaces) && call.spaces.length) {
+    row.spaces = call.spaces.slice(0, 20).map((s) => ({
+      name: (s && (s.name || s.spaceName)) || ''
+    }))
+  }
+  if (Array.isArray(call.locations) && call.locations.length) {
+    row.locations = call.locations.slice(0, 20).map((l) => ({
+      spaceName: (l && l.spaceName) || '',
+      locationName: (l && (l.locationName || l.name)) || ''
+    }))
+  }
+  return row
+}
+
 /**
  * Run plan calls sequentially through enabled ∩ ¬hardDeny handlers.
  * Stop on first failure; keep earlier successes.
+ * Returns pending = calls not run after the failure (for model replan).
+ * Code only executes and reports; no degrade decisions here.
  */
 async function runAll(ctx, calls) {
   const catalogMap = ctx.catalogMap || {}
   const executed = []
   const failed = []
+  const pending = []
   const recentItems = []
   const removedItemIds = []
   const createdPlaces = []
   let wrote = false
   let subscribeItems = null
   let subscribeUi = false
+  let stoppedAt = -1
 
   function remember(row) {
     if (!row) return
@@ -57,8 +105,10 @@ async function runAll(ctx, calls) {
       failed.push({
         step,
         use: use || 'unknown',
-        summary: `第 ${step} 步不能执行${use ? `（${use}）` : ''}`
+        summary: `第 ${step} 步不能执行${use ? `（${use}）` : ''}`,
+        createClass: isCreateClassUse(use)
       })
+      stoppedAt = i
       break
     }
 
@@ -68,8 +118,11 @@ async function runAll(ctx, calls) {
         failed.push({
           step,
           use,
-          summary: (result && result.summary) || `第 ${step} 步失败`
+          summary: (result && result.summary) || `第 ${step} 步失败`,
+          createClass: isCreateClassUse(use),
+          call: compactCall(call)
         })
+        stoppedAt = i
         break
       }
 
@@ -103,11 +156,24 @@ async function runAll(ctx, calls) {
       failed.push({
         step,
         use,
-        summary: `第 ${step} 步失败：${e.message || String(e)}`
+        summary: `第 ${step} 步失败：${e.message || String(e)}`,
+        createClass: isCreateClassUse(use),
+        call: compactCall(call)
       })
+      stoppedAt = i
       break
     }
   }
+
+  if (stoppedAt >= 0 && calls && calls.length) {
+    for (let j = stoppedAt + 1; j < calls.length; j++) {
+      const c = compactCall(calls[j])
+      if (c) pending.push(c)
+    }
+  }
+
+  // 结构写过：收尾从 DB 重建一次，供同轮 replan / 下一轮上下文（中途只用内存 patch）
+  await flushFamilyTreeIfDirty(ctx)
 
   const possibleDuplicates = []
   for (let i = 0; i < createdPlaces.length; i++) {
@@ -140,14 +206,10 @@ async function runAll(ctx, calls) {
       ? presentation.lines
       : ['没有需要执行的操作']
 
-  // Subscribe panel: prefer the tool summary as lead/text
   if (subscribeUi && executed.some((r) => r.ui === 'subscribePanel')) {
     const sub = executed.find((r) => r.ui === 'subscribePanel')
     if (sub && sub.summary) {
       presentation.lead = sub.summary
-      if (!presentation.lines.length || presentation.lines[0] !== sub.summary) {
-        // keep lines from presentation; textOnly path uses summary in orchestrator
-      }
     }
   }
 
@@ -161,6 +223,8 @@ async function runAll(ctx, calls) {
       inventory: row.inventory
     })),
     failed,
+    pending,
+    createClassFailed: failed.some((f) => f.createClass),
     possibleDuplicates,
     lines,
     lead: presentation.lead,
@@ -170,14 +234,19 @@ async function runAll(ctx, calls) {
     wrote:
       wrote ||
       executed.some((row) =>
-        /item\.create|item\.update|item\.remove|item\.merge|space\.createLocation/.test(row.use)
+        /item\.create|item\.createMany|item\.update|item\.remove|item\.merge|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany/.test(
+          row.use
+        )
       ),
     subscribeUi,
-    subscribeItems: subscribeItems || []
+    subscribeItems: subscribeItems || [],
+    tree: ctx.tree
   }
 }
 
 module.exports = {
   HANDLER_MAP,
-  runAll
+  runAll,
+  isCreateClassUse,
+  compactCall
 }
