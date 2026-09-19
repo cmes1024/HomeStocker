@@ -9,12 +9,15 @@
   shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
 >
-  <view slot="nav-left" class="nav-search">
-    <view class="search-icon" aria-hidden="true">
-      <view class="search-ring"></view>
-      <view class="search-handle"></view>
-    </view>
-    <text class="nav-search-ph">{{copy.searchPlaceholder}}</text>
+  <view
+    slot="nav-left"
+    class="nav-assist"
+    hover-class="nav-assist-hover"
+    bind:tap="goAssist"
+    aria-label="{{copy.assistNavAria}}"
+  >
+    <view class="nav-assist-dot" aria-hidden="true"></view>
+    <text class="nav-assist-label">{{copy.assistNav}}</text>
   </view>
 
   <loading
@@ -150,18 +153,3 @@
     </scroll-view>
   </view>
 </page-container>
-
-<view
-  wx:if="{{theme && !bootLoading && !bootError}}"
-  class="assist-fab"
-  style="{{theme.cssVarStyle}}"
-  hover-class="assist-fab-hover"
-  bind:tap="goAssist"
-  aria-label="{{copy.assistFabAria}}"
->
-  <view class="assist-fab-halo" aria-hidden="true"></view>
-  <view class="assist-fab-core">
-    <view class="assist-fab-dot" aria-hidden="true"></view>
-    <text class="assist-fab-label">{{copy.assistFab}}</text>
-  </view>
-</view>

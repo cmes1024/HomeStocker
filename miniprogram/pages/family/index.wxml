@@ -72,11 +72,6 @@
       </view>
     </view>
 
-    <view class="ai-row" hover-class="tool-hover" bind:tap="goAiAssist">
-      <text class="ai-row-name">{{copy.assistEntry}}</text>
-      <text class="ai-row-chevron">›</text>
-    </view>
-
     <view class="ai-row" hover-class="tool-hover" bind:tap="goAiKeys">
       <text class="ai-row-name">{{copy.aiQuota}}</text>
       <text class="ai-row-chevron">›</text>

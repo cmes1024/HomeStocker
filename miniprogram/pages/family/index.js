@@ -158,13 +158,6 @@ Page({
     wx.navigateTo({ url: '/pages/family/messages' })
   },
 
-  goAiAssist() {
-    wx.navigateTo({
-      url: '/packageAiAssist/assist/index',
-      fail: () => wx.showToast({ title: copy.assist.openFail, icon: 'none' })
-    })
-  },
-
   goAiKeys() {
     wx.navigateTo({
       url: '/packageAi/keys/index',

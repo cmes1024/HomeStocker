@@ -23,7 +23,6 @@ const copy = {
     enterFamily: '进入',
     addCta: '添加物品',
     ledgerHint: '家里的共用台账 · 谁改都能看见',
-    searchPlaceholder: '输入物品名称',
     panelTitle: '家庭物品',
     spaceSheetTitle: '家庭空间',
     defaultSpaceName: '仓库',
@@ -34,8 +33,8 @@ const copy = {
     },
     emptyTitle: '还没有物品',
     emptySub: '快去添加东西吧，家人都能看到',
-    assistFab: '家庭管家',
-    assistFabAria: '打开家庭管家',
+    assistNav: '家庭管家',
+    assistNavAria: '打开家庭管家',
     tileHint: '点一下看看',
     removeTitle: '去掉这件物品？',
     removeContent: '去掉后家人那边也会看不到。',
@@ -227,8 +226,7 @@ const copy = {
     alreadyIn: '已加入该家庭',
     invalidCode: '邀请码无效',
     themePick: '选择主题',
-    aiQuota: 'AI配置',
-    assistEntry: '家庭管家'
+    aiQuota: 'AI配置'
   },
 
   assist: {
