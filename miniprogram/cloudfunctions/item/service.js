@@ -1023,6 +1023,85 @@ async function attachPlaceNames(familyId, list) {
   }))
 }
 
+/**
+ * 清单首页一次取齐：当前空间列表 + 全家件数 + 临期横幅一条。
+ * 少几次客户端 callFunction（仍多笔 DB，但调用次数合计更低）。
+ */
+async function home(openid, event) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  const limit = Math.min(Math.max(Number(event.limit) || 100, 1), 100)
+  const spaceId = event.spaceId ? String(event.spaceId) : ''
+  const today = shanghaiTodayYmd()
+  const end = addDaysYmd(today, 3)
+
+  const listWhere = { familyId: ctx.familyId }
+  if (spaceId) listWhere.spaceId = spaceId
+
+  const [listRes, counted, subscribed, expiringRes] = await Promise.all([
+    db
+      .collection('items')
+      .where(listWhere)
+      .orderBy('updatedAt', 'desc')
+      .limit(limit)
+      .get(),
+    db
+      .collection('items')
+      .where({ familyId: ctx.familyId })
+      .count()
+      .catch(() => null),
+    subscribedItemSet(ctx.familyId, openid),
+    db
+      .collection('items')
+      .where({
+        familyId: ctx.familyId,
+        expireDate: _.lte(end)
+      })
+      .orderBy('expireDate', 'asc')
+      .limit(1)
+      .get()
+      .catch(async () => {
+        const all = await db
+          .collection('items')
+          .where({ familyId: ctx.familyId })
+          .limit(100)
+          .get()
+        const filtered = (all.data || [])
+          .filter((item) => {
+            const d = item.expireDate
+            return d && typeof d === 'string' && d <= end
+          })
+          .sort((a, b) => String(a.expireDate).localeCompare(String(b.expireDate)))
+          .slice(0, 1)
+        return { data: filtered }
+      })
+  ])
+
+  let total = Number(counted && counted.total) || 0
+  if (!counted) {
+    total = (listRes.data || []).length
+  }
+
+  const list = (listRes.data || []).map((item) => overlayExpireReminder(item, subscribed))
+  const rawTop = ((expiringRes && expiringRes.data) || []).find((item) => item && item.expireDate)
+  let expiringTop = null
+  if (rawTop) {
+    const withPlace = await attachPlaceNames(ctx.familyId, [
+      overlayExpireReminder(rawTop, subscribed)
+    ])
+    expiringTop = withPlace[0] || null
+  }
+
+  return ok({
+    list,
+    total,
+    expiringTop,
+    today,
+    windowEnd: end
+  })
+}
+
   return {
     createItem,
     updateItem,
@@ -1032,6 +1111,7 @@ async function attachPlaceNames(familyId, list) {
     listItems,
     countItems,
     searchItems,
-    listExpiring
+    listExpiring,
+    home
   }
 }

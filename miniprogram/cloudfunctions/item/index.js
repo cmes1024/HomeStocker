@@ -41,6 +41,8 @@ exports.main = async (event) => {
         return await service.searchItems(OPENID, event)
       case 'listExpiring':
         return await service.listExpiring(OPENID, event)
+      case 'home':
+        return await service.home(OPENID, event)
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }

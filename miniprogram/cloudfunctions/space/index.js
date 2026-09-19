@@ -403,6 +403,71 @@ async function listItemsBySpace(openid, event) {
   return ok({ space, list })
 }
 
+/** 口袋页：一次云函数拉齐各空间物资，避免 1+N 次 callFunction。 */
+async function listPockets(openid, event) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  const limit = Math.min(Math.max(Number(event.limit) || 100, 1), 100)
+  let spaces = await listSpacesForFamily(ctx.familyId)
+  if (!spaces.length) {
+    const space = await ensureDefaultSpace(ctx.familyId)
+    await touchFamilyTree(db, ctx.familyId).catch(() => null)
+    spaces = space ? [space] : []
+  }
+
+  const packs = await Promise.all(
+    spaces.map(async (space) => {
+      const res = await db
+        .collection('items')
+        .where({ familyId: ctx.familyId, spaceId: space._id })
+        .orderBy('updatedAt', 'desc')
+        .limit(limit)
+        .get()
+        .catch(async () => {
+          const fallback = await db
+            .collection('items')
+            .where({ familyId: ctx.familyId, spaceId: space._id })
+            .limit(limit)
+            .get()
+          return fallback
+        })
+      const items = res.data || []
+      const locationIds = [...new Set(items.map((i) => i.locationId).filter(Boolean))]
+      let locationMap = {}
+      if (locationIds.length) {
+        const locRes = await db
+          .collection('locations')
+          .where({ _id: _.in(locationIds) })
+          .limit(100)
+          .get()
+          .catch(() => ({ data: [] }))
+        ;(locRes.data || []).forEach((l) => {
+          locationMap[l._id] = l
+        })
+      }
+      const list = items.map((item) => ({
+        ...item,
+        locationName:
+          item.locationId && locationMap[item.locationId]
+            ? locationMap[item.locationId].name
+            : ''
+      }))
+      return {
+        space: {
+          _id: space._id,
+          name: space.name || '',
+          isDefault: !!space.isDefault
+        },
+        list,
+        capped: list.length >= limit
+      }
+    })
+  )
+
+  return ok({ pockets: packs })
+}
+
 function callerOpenid() {
   const ctx = cloud.getWXContext()
   return ctx.OPENID || ctx.FROM_OPENID || ''
@@ -447,6 +512,9 @@ exports.main = async (event) => {
         break
       case 'listItemsBySpace':
         result = await listItemsBySpace(OPENID, event)
+        break
+      case 'listPockets':
+        result = await listPockets(OPENID, event)
         break
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)

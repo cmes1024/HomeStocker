@@ -1,5 +1,6 @@
-const { listSpaces, listItemsBySpace } = require('../../utils/db')
+const { listSpaces, listItemsBySpace, listPockets } = require('../../utils/db')
 const { bindThemeToPage } = require('../../utils/theme')
+const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
 
 const FLY_LIMIT = 6
@@ -105,6 +106,19 @@ async function loadPocket(space) {
   }
 }
 
+function pocketFromPack(pack) {
+  const space = (pack && pack.space) || {}
+  const items = sortRecent((pack && pack.list) || [])
+  const name = (space.name && String(space.name).trim()) || '未命名'
+  return {
+    _id: space._id,
+    name,
+    count: items.length,
+    capped: !!(pack && pack.capped) || items.length >= 100,
+    items
+  }
+}
+
 Page({
   data: {
     common: copy.common,
@@ -207,8 +221,15 @@ Page({
       this.setData({ loading: true, error: '' })
     }
     try {
-      const spaces = await listSpaces()
-      const pockets = await Promise.all((spaces || []).map((space) => loadPocket(space)))
+      let pockets
+      try {
+        const packs = await listPockets({ limit: 100 })
+        pockets = (packs || []).map(pocketFromPack)
+      } catch (e) {
+        if (!(e && e.code === 'UNKNOWN_ACTION')) throw e
+        const spaces = await listSpaces()
+        pockets = await Promise.all((spaces || []).map((space) => loadPocket(space)))
+      }
       const patch = {
         pockets,
         loading: false,
@@ -308,11 +329,26 @@ Page({
     const id = e.currentTarget.dataset.id
     if (!id || this.data.phase === 'closing') return
     this._keepOpen = true
-    wx.navigateTo({
-      url: `/packageBrowse/items/detail?id=${id}`,
-      fail: () => {
-        this._keepOpen = false
+    const pocket = (this.data.pockets || []).find((p) => p && p._id === this.data.openId)
+    const item = pocket && (pocket.items || []).find((it) => it && it._id === id)
+    if (!item) {
+      navigateToItemDetail(id, {
+        fail: () => {
+          this._keepOpen = false
+        }
+      })
+      return
+    }
+    navigateToItemDetail(
+      {
+        ...item,
+        spaceName: item.spaceName || (pocket && pocket.name) || ''
+      },
+      {
+        fail: () => {
+          this._keepOpen = false
+        }
       }
-    })
+    )
   }
 })

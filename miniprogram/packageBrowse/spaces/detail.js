@@ -3,6 +3,7 @@ const { callSpace } = require('../../utils/cloud')
 const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
 const { resolveSpaceAtmosphere } = require('../../utils/spaceAtmosphere')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
+const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
 
 const EDIT_SVG =
@@ -152,7 +153,17 @@ Page({
   goDetail(e) {
     const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
     if (!id) return
-    wx.navigateTo({ url: `/packageBrowse/items/detail?id=${id}` })
+    const item = (this.data.items || []).find((it) => it && it._id === id)
+    if (!item) {
+      navigateToItemDetail(id)
+      return
+    }
+    const spaceName =
+      item.spaceName || (this.data.space && this.data.space.name) || this.data.headerTitle || ''
+    navigateToItemDetail({
+      ...item,
+      spaceName
+    })
   },
 
   goAdd() {

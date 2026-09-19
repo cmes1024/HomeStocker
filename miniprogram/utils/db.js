@@ -1,17 +1,27 @@
 const { callItem, callSpace } = require('./cloud')
 
 /**
- * 物资列表：走 item.search（空 keyword = 全量列表），兼容尚未部署 list action 的云函数。
- * options.spaceId / options.tagId 可选。
+ * 物资列表：优先 item.list；失败时回退 search 空 keyword（兼容未部署 list 的环境）。
  */
 async function listItems(_familyId, options = {}) {
-  const data = await callItem('search', {
-    keyword: '',
+  const payload = {
     limit: options.limit || 100,
     spaceId: options.spaceId || undefined,
     tagId: options.tagId || undefined
-  })
-  return (data && data.list) || []
+  }
+  try {
+    const data = await callItem('list', payload)
+    return (data && data.list) || []
+  } catch (e) {
+    if (e && e.code === 'UNKNOWN_ACTION') {
+      const data = await callItem('search', {
+        keyword: '',
+        ...payload
+      })
+      return (data && data.list) || []
+    }
+    throw e
+  }
 }
 
 async function countItems() {
@@ -25,6 +35,23 @@ async function listExpiringItems(options = {}) {
   })
   return {
     list: (data && data.list) || [],
+    today: data && data.today,
+    windowEnd: data && data.windowEnd
+  }
+}
+
+/**
+ * 清单首页：一次云函数取列表 + 件数 + 临期横幅。
+ */
+async function loadHomeBoard(options = {}) {
+  const data = await callItem('home', {
+    limit: options.limit || 100,
+    spaceId: options.spaceId || undefined
+  })
+  return {
+    list: (data && data.list) || [],
+    total: Number(data && data.total) || 0,
+    expiringTop: (data && data.expiringTop) || null,
     today: data && data.today,
     windowEnd: data && data.windowEnd
   }
@@ -56,11 +83,23 @@ async function listItemsBySpace(spaceId, options = {}) {
   }
 }
 
+/**
+ * 口袋页：一次拉齐各空间物资。
+ */
+async function listPockets(options = {}) {
+  const data = await callSpace('listPockets', {
+    limit: options.limit || 100
+  })
+  return (data && data.pockets) || []
+}
+
 module.exports = {
   listItems,
   countItems,
   listExpiringItems,
+  loadHomeBoard,
   listSpaces,
   listLocations,
-  listItemsBySpace
+  listItemsBySpace,
+  listPockets
 }

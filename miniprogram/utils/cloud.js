@@ -25,8 +25,8 @@ function unwrap(res) {
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
   family: { getMyFamily: true, listMyFamilies: true },
-  item: { get: true, search: true, list: true, count: true, listExpiring: true },
-  space: { list: true, listLocations: true, listItemsBySpace: true },
+  item: { get: true, search: true, list: true, count: true, listExpiring: true, home: true },
+  space: { list: true, listLocations: true, listItemsBySpace: true, listPockets: true },
   tag: { list: true, ensureDefaults: true },
   activity: { list: true }
 }
@@ -50,7 +50,12 @@ function isRead(name, action) {
 function isItemDomainRead(name, action) {
   if (name === 'item' && isRead('item', action)) return true
   if (name === 'activity' && action === 'list') return true
-  if (name === 'space' && action === 'listItemsBySpace') return true
+  if (
+    name === 'space' &&
+    (action === 'listItemsBySpace' || action === 'listPockets')
+  ) {
+    return true
+  }
   return false
 }
 
@@ -73,7 +78,9 @@ function paramsForKey(data) {
 }
 
 function extraKey(name, action) {
-  if (name === 'item' && action === 'listExpiring') return shanghaiTodayYmd()
+  if (name === 'item' && (action === 'listExpiring' || action === 'home')) {
+    return shanghaiTodayYmd()
+  }
   return ''
 }
 
@@ -113,6 +120,7 @@ function invalidateItemDomain() {
   cache.dropByName('item')
   cache.dropByName('activity')
   cache.dropNameAction('space', 'listItemsBySpace')
+  cache.dropNameAction('space', 'listPockets')
   clearCursor()
 }
 

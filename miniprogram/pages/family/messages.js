@@ -1,6 +1,7 @@
 const { callActivity } = require('../../utils/cloud')
 const { bindThemeToPage } = require('../../utils/theme')
 const { formatActivityLine } = require('../../utils/activityLine')
+const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
 
 function formatRelativeTime(ts) {
@@ -72,6 +73,6 @@ Page({
     const itemId = e.currentTarget.dataset.id
     const action = e.currentTarget.dataset.action
     if (!itemId || action === 'remove') return
-    wx.navigateTo({ url: `/packageBrowse/items/detail?id=${itemId}` })
+    navigateToItemDetail(itemId)
   }
 })

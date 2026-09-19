@@ -1,9 +1,10 @@
-const { listItems, listSpaces, countItems, listExpiringItems, listLocations } = require('../../utils/db')
+const { listItems, listSpaces, loadHomeBoard: fetchHomeBoard, countItems, listExpiringItems } = require('../../utils/db')
 const { callSpace } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const { shanghaiTodayYmd, normalizeDateInput } = require('../../utils/expireStatus')
+const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
 const { appName } = require('../../config/app')
 
@@ -156,26 +157,24 @@ Page({
       })
       this.syncLoadingColors()
 
-      // 空间列表与物资列表解耦：有本地 spaceId 时可并行拉清单；临期/件数不依赖空间
+      // 空间列表与物资看板解耦：有本地 spaceId 时可并行；看板一次取列表+件数+临期
       const spaceIdHint = this.data.filterSpaceId
       const spacesPromise = this.loadSpaces()
-      const listPromise = (async () => {
+      const boardPromise = (async () => {
         const resolvedSpaceId = spaceIdHint || (await spacesPromise)
         if (!spaceIdHint && resolvedSpaceId && this.data.filterSpaceId !== resolvedSpaceId) {
           this.setData({ filterSpaceId: resolvedSpaceId })
         }
-        await this.loadList()
+        await this.loadHomeBoard({ spaceId: resolvedSpaceId || this.data.filterSpaceId })
         const finalSpaceId = await spacesPromise
         if (finalSpaceId && finalSpaceId !== (spaceIdHint || resolvedSpaceId)) {
-          await this.loadList({ silent: true })
+          await this.loadHomeBoard({
+            silent: true,
+            spaceId: finalSpaceId
+          })
         }
       })()
-      await Promise.all([
-        spacesPromise,
-        listPromise,
-        this.loadExpiring(),
-        this.loadItemCount()
-      ])
+      await Promise.all([spacesPromise, boardPromise])
     } catch (e) {
       // bootError 已设置
     }
@@ -221,17 +220,82 @@ Page({
     }
   },
 
-  async loadItemCount() {
+  applyExpireBanner(item) {
+    if (!item) {
+      this.setData({ expireBanner: null })
+      return
+    }
+    const spaceList = this.data.spaces || []
+    const space = spaceList.find((s) => s && s._id === item.spaceId)
+    const spaceName = item.spaceName || (space && space.name) || ''
+    const locationName = item.locationName || ''
+    this.setData({ expireBanner: buildExpireBanner(item, spaceName, locationName) })
+  },
+
+  /**
+   * 首页看板：列表 + 全家件数 + 临期横幅（一次云函数）。
+   * @param {{ silent?: boolean, animate?: boolean, spaceId?: string }} [options]
+   */
+  async loadHomeBoard(options = {}) {
+    const familyId = this.data.familyId || getApp().globalData.familyId
+    if (!familyId) return
+
+    const hasItems = (this.data.items || []).length > 0
+    const silent = options.silent !== undefined ? !!options.silent : hasItems
+    const spaceId =
+      options.spaceId !== undefined ? options.spaceId : this.data.filterSpaceId
+
+    if (!silent) {
+      this.setData({ loading: true, error: '', animateTiles: true })
+    } else {
+      this.setData({ error: '', animateTiles: !!options.animate })
+    }
+
+    try {
+      const board = await fetchHomeBoard({
+        spaceId: spaceId || undefined
+      })
+      const items = await enrichLedgerItemsAsync(board.list || [], {}, {}, {})
+      this.setData(
+        this.syncStats({
+          items,
+          loading: false,
+          itemCount: board.total,
+          itemsReady: true
+        })
+      )
+      this.applyExpireBanner(board.expiringTop)
+    } catch (e) {
+      if (e && e.code === 'UNKNOWN_ACTION') {
+        await this.loadHomeBoardLegacy(options)
+        return
+      }
+      this.setData({
+        loading: false,
+        error: e.message || copy.common.loadFailed
+      })
+    }
+  },
+
+  /** 未部署 item.home 时：拆成 list + count + listExpiring */
+  async loadHomeBoardLegacy(options = {}) {
+    await this.loadList(options)
     try {
       const total = await countItems()
       this.setData(this.syncStats({ itemCount: total, itemsReady: true }))
     } catch (e) {
-      this.setData(this.syncStats({ itemCount: 0, itemsReady: true }))
+      this.setData(this.syncStats({ itemsReady: true }))
+    }
+    try {
+      const { list } = await listExpiringItems({ limit: 1 })
+      this.applyExpireBanner((list || [])[0])
+    } catch (e) {
+      this.setData({ expireBanner: null })
     }
   },
 
   /**
-   * @param {{ silent?: boolean }} [options]
+   * @param {{ silent?: boolean, animate?: boolean }} [options]
    */
   async loadList(options = {}) {
     const familyId = this.data.familyId || getApp().globalData.familyId
@@ -257,29 +321,6 @@ Page({
         loading: false,
         error: e.message || copy.common.loadFailed
       })
-    }
-  },
-
-  async loadExpiring() {
-    try {
-      const { list } = await listExpiringItems({ limit: 1 })
-      const item = (list || [])[0]
-      if (!item) {
-        this.setData({ expireBanner: null })
-        return
-      }
-      const spaces = this.data.spaces || []
-      const space = spaces.find((s) => s && s._id === item.spaceId)
-      const spaceName = item.spaceName || (space && space.name) || ''
-      let locationName = item.locationName || ''
-      if (!locationName && item.locationId && item.spaceId) {
-        const locs = await listLocations(item.spaceId).catch(() => [])
-        const loc = (locs || []).find((l) => l && l._id === item.locationId)
-        locationName = (loc && loc.name) || ''
-      }
-      this.setData({ expireBanner: buildExpireBanner(item, spaceName, locationName) })
-    } catch (e) {
-      this.setData({ expireBanner: null })
     }
   },
 
@@ -326,7 +367,7 @@ Page({
   },
 
   onRetryList() {
-    this.loadList({ silent: false })
+    this.loadHomeBoard({ silent: false })
   },
 
   goAdd() {
@@ -338,7 +379,16 @@ Page({
   goDetail(e) {
     const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
     if (!id) return
-    wx.navigateTo({ url: `/packageBrowse/items/detail?id=${id}` })
+    const item = (this.data.items || []).find((it) => it && it._id === id)
+    if (!item) {
+      navigateToItemDetail(id)
+      return
+    }
+    const space = (this.data.spaces || []).find((s) => s && s._id === item.spaceId)
+    navigateToItemDetail({
+      ...item,
+      spaceName: item.spaceName || (space && space.name) || ''
+    })
   },
 
   goFamily() {
