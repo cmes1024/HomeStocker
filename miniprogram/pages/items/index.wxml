@@ -150,3 +150,18 @@
     </scroll-view>
   </view>
 </page-container>
+
+<view
+  wx:if="{{theme && !bootLoading && !bootError}}"
+  class="assist-fab"
+  style="{{theme.cssVarStyle}}"
+  hover-class="assist-fab-hover"
+  bind:tap="goAssist"
+  aria-label="{{copy.assistFabAria}}"
+>
+  <view class="assist-fab-halo" aria-hidden="true"></view>
+  <view class="assist-fab-core">
+    <view class="assist-fab-dot" aria-hidden="true"></view>
+    <text class="assist-fab-label">{{copy.assistFab}}</text>
+  </view>
+</view>

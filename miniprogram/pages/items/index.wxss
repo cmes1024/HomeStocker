@@ -223,7 +223,7 @@
 }
 
 .panel-scroll-pad {
-  height: calc(20rpx + env(safe-area-inset-bottom));
+  height: calc(140rpx + env(safe-area-inset-bottom));
 }
 
 .panel-hd {
@@ -425,4 +425,79 @@
   color: #fff;
   font-size: 28rpx;
   line-height: 70rpx;
+}
+
+/* 清单右下角：玻璃浮片，不当实心贴片 */
+.assist-fab {
+  position: fixed;
+  right: 28rpx;
+  bottom: calc(52rpx + env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 10rpx;
+}
+
+.assist-fab-halo {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999rpx;
+  background: radial-gradient(
+    120% 120% at 30% 20%,
+    var(--theme-shadow) 0%,
+    rgba(255, 255, 255, 0) 70%
+  );
+  opacity: 0.9;
+  transform: scale(1.08);
+  pointer-events: none;
+}
+
+.assist-fab-core {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  min-height: 84rpx;
+  padding: 0 30rpx 0 22rpx;
+  box-sizing: border-box;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1rpx solid rgba(255, 255, 255, 0.92);
+  box-shadow:
+    0 18rpx 40rpx rgba(26, 16, 8, 0.14),
+    0 4rpx 12rpx rgba(26, 16, 8, 0.06),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.assist-fab-dot {
+  width: 18rpx;
+  height: 18rpx;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    var(--theme-primary) 0%,
+    var(--theme-secondary) 100%
+  );
+  box-shadow: 0 0 16rpx var(--theme-primary-30, rgba(0, 0, 0, 0.12));
+}
+
+.assist-fab-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  letter-spacing: 2rpx;
+  color: rgba(26, 26, 26, 0.78);
+  line-height: 1;
+}
+
+.assist-fab-hover .assist-fab-core {
+  background: rgba(255, 255, 255, 0.88);
+  transform: translateY(2rpx) scale(0.98);
+  box-shadow:
+    0 10rpx 24rpx rgba(26, 16, 8, 0.12),
+    0 2rpx 8rpx rgba(26, 16, 8, 0.05),
+    inset 0 1rpx 0 rgba(255, 255, 255, 0.95);
 }

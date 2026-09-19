@@ -34,6 +34,8 @@ const copy = {
     },
     emptyTitle: '还没有物品',
     emptySub: '快去添加东西吧，家人都能看到',
+    assistFab: '家庭管家',
+    assistFabAria: '打开家庭管家',
     tileHint: '点一下看看',
     removeTitle: '去掉这件物品？',
     removeContent: '去掉后家人那边也会看不到。',

@@ -395,6 +395,13 @@ Page({
     wx.navigateTo({ url: '/pages/family/index' })
   },
 
+  goAssist() {
+    wx.navigateTo({
+      url: '/packageAiAssist/assist/index',
+      fail: () => wx.showToast({ title: copy.assist.openFail, icon: 'none' })
+    })
+  },
+
   goMessages() {
     wx.navigateTo({ url: '/pages/family/messages' })
   }
