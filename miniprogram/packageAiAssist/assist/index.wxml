@@ -22,7 +22,11 @@
     <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <view class="chat" wx:elif="{{!booting}}">
+  <view
+    class="chat {{keyboardHeight ? 'keyboard-open' : ''}}"
+    style="padding-bottom: {{keyboardHeight}}px;"
+    wx:elif="{{!booting}}"
+  >
     <view class="focus" wx:if="{{focusLabel}}">
       <text class="focus-kicker">{{copy.focusLabel}}</text>
       <text class="focus-name">{{focusLabel}}</text>
@@ -165,11 +169,13 @@
         maxlength="500"
         confirm-type="send"
         hold-keyboard="{{true}}"
-        adjust-position
+        adjust-position="{{false}}"
         cursor-spacing="24"
         disabled="{{loading}}"
         bindinput="onTextInput"
         bindconfirm="onSend"
+        bindblur="onComposerBlur"
+        bindkeyboardheightchange="onKeyboardHeightChange"
       />
       <view
         class="send theme-btn {{loading || !text ? 'is-disabled' : ''}}"

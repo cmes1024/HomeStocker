@@ -383,6 +383,11 @@
   box-sizing: border-box;
 }
 
+/* 键盘弹出时由 chat 的 padding-bottom 顶起输入栏，去掉底部安全区避免空隙过大 */
+.chat.keyboard-open .composer {
+  padding-bottom: 16rpx;
+}
+
 .input {
   flex: 1;
   min-width: 0;

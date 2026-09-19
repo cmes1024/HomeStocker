@@ -1,5 +1,6 @@
 {
   "navigationBarTitleText": "家庭管家",
+  "disableScroll": true,
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
     "loading": "/components/loading/index"

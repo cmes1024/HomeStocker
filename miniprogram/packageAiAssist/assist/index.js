@@ -146,6 +146,7 @@ Page({
     pendingCalls: [],
     scrollIntoView: '',
     composerOn: true,
+    keyboardHeight: 0,
     transcriptCapped: false,
     loadingColors: ['#C4A484', '#8B6914']
   },
@@ -158,6 +159,12 @@ Page({
     this._pendingId = ''
     this._submitting = false
     this._familyId = ''
+    this._onKeyboardHeight = (res) => {
+      this.applyKeyboardHeight(Math.max(0, Number((res && res.height) || 0)))
+    }
+    if (typeof wx.onKeyboardHeightChange === 'function') {
+      wx.onKeyboardHeightChange(this._onKeyboardHeight)
+    }
     bindThemeToPage(this, {
       headerTitle: copy.assist.pageTitle,
       focusItemId,
@@ -188,6 +195,18 @@ Page({
         fatalError: e.message || copy.common.loadFailed
       })
     }
+  },
+
+  onHide() {
+    this.applyKeyboardHeight(0)
+  },
+
+  onUnload() {
+    if (this._onKeyboardHeight && typeof wx.offKeyboardHeightChange === 'function') {
+      wx.offKeyboardHeightChange(this._onKeyboardHeight)
+    }
+    this._onKeyboardHeight = null
+    this.applyKeyboardHeight(0)
   },
 
   hydrateTranscript(familyId) {
@@ -248,6 +267,23 @@ Page({
   scrollToBottom() {
     this.setData({ scrollIntoView: '' }, () => {
       this.setData({ scrollIntoView: 'msg-bottom' })
+    })
+  },
+
+  onKeyboardHeightChange(e) {
+    this.applyKeyboardHeight(Math.max(0, Number((e && e.detail && e.detail.height) || 0)))
+  },
+
+  onComposerBlur() {
+    // 部分机型收起键盘不回调 height=0，失焦时强制复位
+    this.applyKeyboardHeight(0)
+  },
+
+  applyKeyboardHeight(height) {
+    const next = Math.max(0, Number(height) || 0)
+    if (next === this.data.keyboardHeight) return
+    this.setData({ keyboardHeight: next }, () => {
+      if (next > 0) this.scrollToBottom()
     })
   },
 
