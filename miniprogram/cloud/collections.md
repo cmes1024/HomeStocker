@@ -308,6 +308,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - 可加入多个家庭；create 始终允许；join 仅当已是**该**家庭成员时返回 `ALREADY_IN_FAMILY`
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
 - `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），`themeId` 须在云函数 `THEME_IDS` 白名单内（与 `theme.js` 的 `THEME_PRESETS` 同步）。写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
+- `updateName` 更新家庭名称（`{ name, familyId? }`）；须是该家庭成员；省略 `familyId` 时改当前家庭；名称 trim 后 1–20 字
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
 - 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图/助手 act/结构树写一律云函数

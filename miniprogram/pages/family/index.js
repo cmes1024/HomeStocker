@@ -5,10 +5,45 @@ const {
   bindThemeToPage,
   getAppTheme
 } = require('../../utils/theme')
+const { getStorage, setStorage } = require('../../utils/storage')
 const copy = require('../../utils/copy')
 
 const KEY_SVG_PATH = '/assets/key.svg'
+const CODE_VISIBLE_KEY = 'familyInviteCodeVisible'
 let keySvgText = ''
+
+const EDIT_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
+const EYE_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
+const EYE_OFF_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+
+function tintSvg(svg, color) {
+  const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(color || ''))
+    ? color
+    : '#FF5D00'
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    svg.split('#000').join(fill)
+  )}`
+}
+
+function editIconSrc(theme) {
+  const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
+  return tintSvg(EDIT_SVG, color)
+}
+
+function eyeIcons(theme) {
+  const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
+  return {
+    eyeOpenIcon: tintSvg(EYE_SVG, color),
+    eyeOffIcon: tintSvg(EYE_OFF_SVG, color)
+  }
+}
+
+function readCodeVisible() {
+  return getStorage(CODE_VISIBLE_KEY) === true
+}
 
 function keyIconSrc(color) {
   if (!keySvgText) {
@@ -45,12 +80,18 @@ Page({
     modalMaxlength: 20,
     modalConfirm: copy.family.createSubmit,
     modalError: '',
+    editingFamilyId: '',
     themes: THEME_PRESETS,
     theme: null,
     headerTitle: '',
     moodSheet: false,
     reminderEnabled: true,
-    keyIcon: ''
+    keyIcon: '',
+    editIcon: '',
+    eyeOpenIcon: '',
+    eyeOffIcon: '',
+    codeVisible: false,
+    codeDisplay: ''
   },
 
   onShow() {
@@ -58,12 +99,35 @@ Page({
     const cached = app && app.globalData && app.globalData.family
     const name = (cached && cached.name) || this.data.headerTitle || ''
     const theme = getAppTheme()
+    const codeVisible = readCodeVisible()
     bindThemeToPage(this, {
       ...(name ? { headerTitle: name } : {}),
-      keyIcon: keyIconSrc(theme.primary)
+      keyIcon: keyIconSrc(theme.primary),
+      editIcon: editIconSrc(theme),
+      ...eyeIcons(theme),
+      codeVisible,
+      codeDisplay: this.formatInviteCode(
+        cached && cached.inviteCode,
+        codeVisible
+      )
     })
     // 从空间/标签/消息返回时页面实例还在，家庭列表没变，不再打 getMyFamily / listMyFamilies
     if (!this.data.family) this.load()
+  },
+
+  formatInviteCode(code, visible) {
+    const raw = String(code || '')
+    if (!raw) return ''
+    return visible ? raw : '••••••'
+  },
+
+  syncCodeDisplay(family, codeVisible) {
+    const visible = codeVisible === undefined ? this.data.codeVisible : !!codeVisible
+    const code = (family && family.inviteCode) || (this.data.family && this.data.family.inviteCode)
+    return {
+      codeVisible: visible,
+      codeDisplay: this.formatInviteCode(code, visible)
+    }
   },
 
   onShareAppMessage() {
@@ -91,12 +155,16 @@ Page({
         callFamily('listMyFamilies')
       ])
       const theme = setAppFamily(family)
+      const codeVisible = readCodeVisible()
       this.setData({
         family,
         families: listed.list || [],
         loading: false,
         theme,
         keyIcon: keyIconSrc(theme.primary),
+        editIcon: editIconSrc(theme),
+        ...eyeIcons(theme),
+        ...this.syncCodeDisplay(family, codeVisible),
         headerTitle: family.name || '家庭',
         reminderEnabled: family.expireReminderEnabled !== false
       })
@@ -131,10 +199,19 @@ Page({
       }),
       theme,
       keyIcon: keyIconSrc(theme.primary),
+      editIcon: editIconSrc(theme),
+      ...eyeIcons(theme),
+      ...this.syncCodeDisplay(family),
       headerTitle: family.name || '家庭',
       loading: false,
       reminderEnabled: family.expireReminderEnabled !== false
     })
+  },
+
+  onToggleCodeVisible() {
+    const next = !this.data.codeVisible
+    setStorage(CODE_VISIBLE_KEY, next)
+    this.setData(this.syncCodeDisplay(this.data.family, next))
   },
 
   onCopyCode() {
@@ -222,6 +299,25 @@ Page({
       modalValue: '',
       modalMaxlength: isJoin ? 6 : 20,
       modalConfirm: isJoin ? copy.family.joinSubmit : copy.family.createSubmit,
+      editingFamilyId: '',
+      modalError: ''
+    })
+  },
+
+  openRename(e) {
+    if (this.data.acting) return
+    const id = e.currentTarget.dataset.id || ''
+    const name = e.currentTarget.dataset.name || ''
+    if (!id) return
+    this.setData({
+      showModal: true,
+      modalMode: 'rename',
+      modalTitle: copy.family.renameTitle,
+      modalPlaceholder: copy.family.renamePlaceholder,
+      modalValue: name,
+      modalMaxlength: 20,
+      modalConfirm: copy.family.renameSubmit,
+      editingFamilyId: id,
       modalError: ''
     })
   },
@@ -231,6 +327,7 @@ Page({
     this.setData({
       showModal: false,
       modalValue: '',
+      editingFamilyId: '',
       modalError: ''
     })
   },
@@ -243,6 +340,7 @@ Page({
 
   async onSaveModal() {
     if (this.data.modalMode === 'join') return this.onJoin()
+    if (this.data.modalMode === 'rename') return this.onRename()
     return this.onCreate()
   },
 
@@ -262,6 +360,45 @@ Page({
       await this.load()
     } catch (e) {
       this.setData({ acting: false, modalError: e.message || '创建失败' })
+    }
+  },
+
+  async onRename() {
+    if (this.data.acting) return
+    const name = (this.data.modalValue || '').trim()
+    const familyId = this.data.editingFamilyId
+    if (!name) {
+      this.setData({ modalError: copy.family.nameRequired })
+      return
+    }
+    if (!familyId) {
+      this.setData({ modalError: copy.common.opFailed })
+      return
+    }
+    this.setData({ acting: true, modalError: '' })
+    try {
+      const updated = await callFamily('updateName', { familyId, name })
+      const isCurrent = this.data.family && this.data.family._id === familyId
+      const families = (this.data.families || []).map((item) =>
+        item._id === familyId ? { ...item, name: updated.name } : item
+      )
+      const patch = {
+        families,
+        showModal: false,
+        modalValue: '',
+        editingFamilyId: '',
+        acting: false
+      }
+      if (isCurrent) {
+        const family = { ...this.data.family, name: updated.name }
+        setAppFamily(family)
+        patch.family = family
+        patch.headerTitle = family.name || '家庭'
+      }
+      this.setData(patch)
+      wx.showToast({ title: copy.family.renamedToast, icon: 'success' })
+    } catch (e) {
+      this.setData({ acting: false, modalError: e.message || copy.common.opFailed })
     }
   },
 
@@ -312,6 +449,9 @@ Page({
         family,
         theme,
         keyIcon: keyIconSrc(theme.primary),
+        editIcon: editIconSrc(theme),
+        ...eyeIcons(theme),
+        ...this.syncCodeDisplay(family),
         headerTitle: family.name || '家庭'
       })
       wx.showToast({ title: '已更新氛围', icon: 'success' })

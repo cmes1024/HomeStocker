@@ -416,3 +416,7 @@
   font-size: 28rpx;
   line-height: 70rpx;
 }
+
+.press {
+  opacity: 0.72;
+}

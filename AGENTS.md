@@ -63,7 +63,7 @@ familyAiKeys / aiPrompts / itemMedia（AI 录入；客户端写 deny）
 
 ## 云函数与写路径
 
-- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities/itemExpireSubs/familyAiKeys/itemMedia）
+- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateName / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities/itemExpireSubs/familyAiKeys/itemMedia）
 - `item`：create / update / remove / get / list / search / listExpiring（**物资写一律走这里**；成功后旁路写 activities）
 - `space`：ensureDefault / list / create / update / remove / listLocations / createLocation / updateLocation / removeLocation / listItemsBySpace
 - `tag`：ensureDefaults / list / create / update / remove

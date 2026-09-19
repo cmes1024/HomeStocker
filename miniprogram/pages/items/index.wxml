@@ -36,9 +36,9 @@
   <view class="page-col" style="{{pageColHeight ? 'height:' + pageColHeight + 'px;' : ''}}" wx:elif="{{!bootLoading}}">
     <view class="family-bar">
       <view class="family-main">
-        <view class="family-name-row">
+        <view class="family-name-row" hover-class="press" bind:tap="goFamily">
           <text class="family-name">{{familyName}}</text>
-          <view class="family-enter" style="color: {{theme.themeColor}};" bind:tap="goFamily">
+          <view class="family-enter" style="color: {{theme.themeColor}};">
             <text>{{copy.enterFamily}}</text>
           </view>
         </view>

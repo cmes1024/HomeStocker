@@ -43,7 +43,20 @@
         </view>
       </view>
       <view class="key-code-row">
-        <text class="key-code">{{family.inviteCode}}</text>
+        <text class="key-code">{{codeDisplay}}</text>
+        <view
+          class="key-eye"
+          hover-class="press"
+          bind:tap="onToggleCodeVisible"
+          aria-role="button"
+          aria-label="{{codeVisible ? '隐藏邀请码' : '显示邀请码'}}"
+        >
+          <image
+            class="key-eye-ico"
+            src="{{codeVisible ? eyeOpenIcon : eyeOffIcon}}"
+            mode="aspectFit"
+          />
+        </view>
         <text
           class="key-copy theme-text"
           hover-class="press"
@@ -92,7 +105,16 @@
           <view class="home-mark {{item.isCurrent ? 'on' : ''}}"></view>
           <view class="home-body">
             <view class="home-name">{{item.name}}</view>
-            <view class="home-sub">{{copy.chipHere}} / {{item.memberCount || 0}}人</view>
+            <view class="home-sub">{{item.isCurrent ? copy.chipHere + " / " : ''}}{{item.memberCount || 0}}人</view>
+          </view>
+          <view
+            class="home-rename"
+            hover-class="press"
+            data-id="{{item._id}}"
+            data-name="{{item.name}}"
+            catch:tap="openRename"
+          >
+            <image class="home-rename-ico" src="{{editIcon}}" mode="aspectFit" />
           </view>
         </view>
       </view>

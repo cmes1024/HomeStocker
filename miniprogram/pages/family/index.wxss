@@ -87,10 +87,26 @@
   line-height: 1.2;
   letter-spacing: 1rpx;
   color: var(--theme-primary);
+  min-width: 0;
+}
+
+.key-eye {
+  width: 56rpx;
+  height: 56rpx;
+  margin-left: 8rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.key-eye-ico {
+  width: 28rpx;
+  height: 28rpx;
 }
 
 .key-copy {
-  margin-left: 16rpx;
+  margin-left: 8rpx;
   padding: 6rpx 22rpx;
   border-radius: 40rpx;
   font-size: 24rpx;
@@ -100,6 +116,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .key-hint {
@@ -235,6 +252,21 @@
   font-weight: 400;
   color: rgba(26, 26, 26, 0.42);
   line-height: 1.35;
+}
+
+.home-rename {
+  width: 56rpx;
+  height: 56rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.home-rename-ico {
+  width: 36rpx;
+  height: 36rpx;
 }
 
 .home-actions {

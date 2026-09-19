@@ -399,6 +399,33 @@ async function updateBackground(openid, event) {
   return ok(familySummary(familyId, { ...fam.data, background }, openid))
 }
 
+async function updateName(openid, event) {
+  const name = String(event.name || '').trim()
+  if (!name) return fail('INVALID_NAME', '请输入家庭名称')
+  if (name.length > 20) return fail('INVALID_NAME', '家庭名称过长')
+
+  const user = await ensureUser(openid)
+  const familyId = String(event.familyId || user.currentFamilyId || '').trim()
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  const famBefore = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!famBefore || !famBefore.data) {
+    return fail('NO_FAMILY', '家庭不存在')
+  }
+
+  await db.collection('families').doc(familyId).update({
+    data: { name }
+  })
+
+  return ok(familySummary(familyId, { ...famBefore.data, name }, openid))
+}
+
 async function removeInBatches(collection, where, batchSize = 100) {
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -585,6 +612,8 @@ exports.main = async (event) => {
         return await switchFamily(OPENID, event)
       case 'updateBackground':
         return await updateBackground(OPENID, event)
+      case 'updateName':
+        return await updateName(OPENID, event)
       case 'updateExpireReminder':
         return await updateExpireReminder(OPENID, event)
       case 'recordSubscribeExpire':
