@@ -31,6 +31,8 @@ Page({
     copy: copy.family,
     common: copy.common,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
+    switching: false,
     error: '',
     family: null,
     families: [],
@@ -293,18 +295,18 @@ Page({
   },
 
   async onSwitchFamily(e) {
-    if (this.data.acting) return
+    if (this.data.acting || this.data.switching) return
     const familyId = e.currentTarget.dataset.id
     if (!familyId || (this.data.family && familyId === this.data.family._id)) return
-    this.setData({ acting: true })
+    this.setData({ acting: true, switching: true })
     try {
       const family = await callFamily('switchFamily', { familyId })
       this.applyCurrentFamily(family)
+      this.setData({ acting: false, switching: false })
       wx.showToast({ title: '已切换', icon: 'success' })
     } catch (err) {
+      this.setData({ acting: false, switching: false })
       wx.showToast({ title: err.message || '切换失败', icon: 'none' })
-    } finally {
-      this.setData({ acting: false })
     }
   },
 

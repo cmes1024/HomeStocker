@@ -8,16 +8,19 @@
   shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
 >
-  <view class="state" wx:if="{{loading}}">
-    <view class="state-text">{{copy.keysTitle}}</view>
-  </view>
+  <loading
+    show="{{loading}}"
+    text="{{copy.loading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
 
-  <view class="state" wx:elif="{{error}}">
+  <view class="state" wx:if="{{!loading && error}}">
     <view class="state-text error">{{error}}</view>
     <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <view class="page" wx:else>
+  <view class="page" wx:elif="{{!loading}}">
     <view class="hero">
       <view class="kicker">{{copy.keysKicker}}</view>
       <view class="title">{{copy.keysTitle}}</view>

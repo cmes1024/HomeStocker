@@ -30,6 +30,7 @@ Page({
     copy: copy.tags,
     common: copy.common,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     tags: [],
     acting: false,

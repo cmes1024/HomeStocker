@@ -31,6 +31,7 @@ Page({
     copy: copy.spaces,
     common: copy.common,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     spaces: [],
     acting: false,

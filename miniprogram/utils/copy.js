@@ -171,6 +171,7 @@ const copy = {
 
   family: {
     loading: '打开家庭设置…',
+    switching: '正在切换家庭…',
     nowHere: '当前家庭',
     meta: (n) => `${n} 人一起管理 · 共用一份清单`,
     keyTitle: '把门钥匙给家人',
@@ -272,6 +273,7 @@ const copy = {
   ai: {
     fabFail: '暂时打不开',
     keysTitle: 'AI配置',
+    loading: '打开 AI 配置…',
     keysKicker: '全家共用额度',
     keysHint:
       '这是全家共用的 DeepSeek 密钥，加入家庭的人都能用、也能删。不要把完整密钥发给模型以外的人。',

@@ -39,6 +39,7 @@ Page({
     copy: copy.messages,
     common: copy.common,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     rows: [],
     theme: null,

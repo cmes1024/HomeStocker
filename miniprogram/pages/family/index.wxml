@@ -9,16 +9,20 @@
   shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
 >
-  <view class="state" wx:if="{{loading}}">
-    <view class="state-text">{{copy.loading}}</view>
-  </view>
+  <loading
+    show="{{loading || switching}}"
+    text="{{switching ? copy.switching : copy.loading}}"
+    glass
+    zIndex="{{200}}"
+    ballColor="{{loadingColors}}"
+  />
 
-  <view class="state" wx:elif="{{error}}">
+  <view class="state" wx:if="{{!loading && error}}">
     <view class="state-text error">{{error}}</view>
     <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <block wx:elif="{{family}}">
+  <block wx:elif="{{!loading && family}}">
     <view class="card key-card">
       <view class="key-shadow" style="background: linear-gradient(180deg, {{theme.secondary}} 3%, {{theme.shadow}} 95%, white)"></view>
       <view class="key-hd">

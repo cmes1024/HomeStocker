@@ -46,6 +46,7 @@ Page({
     items: [],
     locations: [],
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     theme: null,
     headerTitle: '',

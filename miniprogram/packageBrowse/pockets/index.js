@@ -123,6 +123,7 @@ Page({
   data: {
     common: copy.common,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     theme: null,
     headerTitle: '',

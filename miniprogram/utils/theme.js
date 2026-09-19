@@ -296,6 +296,12 @@ function bindThemeToPage(page, patch = {}) {
     data.theme = theme
   }
 
+  const color = (theme && (theme.themeColor || theme.primary)) || '#C4A484'
+  const prevColors = page.data && page.data.loadingColors
+  if (!prevColors || prevColors[0] !== color || prevColors[1] !== color) {
+    data.loadingColors = [color, color]
+  }
+
   if (Object.keys(data).length) {
     page.setData(data)
   }

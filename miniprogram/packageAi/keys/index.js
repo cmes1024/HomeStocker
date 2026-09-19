@@ -10,6 +10,7 @@ Page({
     theme: null,
     headerTitle: copy.ai.keysTitle,
     loading: true,
+    loadingColors: ['#C4A484', '#C4A484'],
     error: '',
     keys: [],
     apiKey: '',

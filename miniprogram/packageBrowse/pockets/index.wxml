@@ -7,16 +7,19 @@
   shadow="{{theme.shadow}}"
   lightHeader="{{theme.lightHeader}}"
 >
-  <view class="state" wx:if="{{loading}}">
-    <view class="state-text">看看家里有哪些口袋…</view>
-  </view>
+  <loading
+    show="{{loading}}"
+    text="看看家里有哪些口袋…"
+    glass
+    ballColor="{{loadingColors}}"
+  />
 
-  <view class="state" wx:elif="{{error}}">
+  <view class="state" wx:if="{{!loading && error}}">
     <view class="state-text error">{{error}}</view>
     <view class="pill-btn" style="background: {{theme.themeColor}};" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <block wx:else>
+  <block wx:elif="{{!loading}}">
     <view class="hero {{theme.isPhoto ? 'on-photo' : ''}}">
       <view class="kicker">逛一逛</view>
       <view class="title">家里的口袋</view>
