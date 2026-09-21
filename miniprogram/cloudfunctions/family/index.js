@@ -742,43 +742,12 @@ async function removeInBatches(collection, where, batchSize = 100) {
   }
 }
 
-async function deleteCloudFiles(fileList) {
-  const ids = (fileList || []).filter(Boolean)
-  for (let i = 0; i < ids.length; i += 50) {
-    const chunk = ids.slice(i, i + 50)
-    try {
-      await cloud.deleteFile({ fileList: chunk })
-    } catch (e) {
-      console.warn('deleteFile best-effort failed', e && e.message)
-    }
-  }
-}
-
-/** 解散家庭时清密钥与旁路图；普通成员 leave 不要调用。 */
+/** 解散家庭时清 AI 密钥；普通成员 leave 不要调用。 */
 async function cleanupFamilyAiArtifacts(familyId) {
-  const fileIDs = []
-  try {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const res = await db.collection('itemMedia').where({ familyId }).limit(100).get()
-      const list = res.data || []
-      if (!list.length) break
-      list.forEach((doc) => {
-        if (doc.fileID) fileIDs.push(doc.fileID)
-      })
-      await Promise.all(list.map((doc) => db.collection('itemMedia').doc(doc._id).remove()))
-      if (list.length < 100) break
-    }
-  } catch (e) {
-    console.warn('itemMedia dissolve cleanup failed', familyId, e && e.message)
-  }
   try {
     await removeInBatches(db.collection('familyAiKeys'), { familyId })
   } catch (e) {
     console.warn('familyAiKeys dissolve cleanup failed', familyId, e && e.message)
-  }
-  if (fileIDs.length) {
-    await deleteCloudFiles(fileIDs)
   }
 }
 

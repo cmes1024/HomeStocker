@@ -1,9 +1,9 @@
 # 部署与回归验收清单
 
-对照 `docs/plans/2026-09-17-phase1-status.md`。AI 真机项见 `docs/plans/2026-09-16-package-ai-capture/验收.md`（未勾）。口袋页无入口，不列入主路径。
+对照 `docs/plans/2026-09-17-phase1-status.md`。口袋页无入口，不列入主路径。旧拍照录入 V1 已退役，勿再按 `docs/plans/2026-09-16-package-ai-capture/验收.md` 勾选。
 
 部署前：按 `collections.md`「换环境部署：集合与索引」建齐集合/索引、粘贴安全规则、上传云函数 `family` / `item` / `space` / `tag` / `activity` / `expireNotify` / `ai`（云端安装依赖）。  
-AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数超时 60s、允许出网。语音转写走微信服务市场「一句话识别」（公众平台开通，不是插件市场）。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
+AI 另需：`collections.md`「AI 密钥与助手（控制台检查项）」——函数超时 60s、允许出网。真机推送：上传云函数后，在小程序家庭页点「立即检查提醒」（勿用控制台测试云调用）。
 
 ## 闭环（原 MVP）
 
@@ -95,41 +95,22 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 - [ ] 客户端不能直写 `users`（安全规则 write false）；须走 `family.updateProfile`
 - [ ] 上传云函数 `family`（含 `updateProfile` / `listMembers`）与 `activity`（列表带回 `actorAvatarUrl`）
 
-## AI 分包：入口与隔离
+## AI 密钥
 
-- [ ] 物资首页有 AI 浮窗，能进入 `packageAi`，返回后清单筛选/数据与进入前一致
-- [ ] 编辑物资、详情、空间、标签、消息页无 AI 逻辑、无新依赖
-- [ ] 产品 `app.json` 主包 pages 列表不恢复 `pages/chat`
-- [ ] 分包失败或未部署时，浮窗有失败提示，不能拖垮首页 `onShow`
-
-## AI 分包：密钥
-
-- [ ] 添加 key 只需粘贴密钥（可选名称），不出现 baseUrl / 模型输入框
+- [ ] 家庭页 AI 额度行进 `packageAi/keys`；添加 key 只需粘贴密钥（可选名称），不出现 baseUrl / 模型输入框
 - [ ] `listKeys` 与页面只有掩码，没有完整 key
-- [ ] 家庭成员 B 能使用成员 A 配置的 key 完成一次识别
+- [ ] 家庭成员 B 能使用成员 A 配置的 key 完成一次助手对话
 - [ ] 默认一把；删掉默认后仍剩的 key 会有新默认
 - [ ] 第四把添加失败
-- [ ] 无 key 时开始识别有明确引导，不出现 Axios 堆栈
-
-## AI 分包：采集 / 识别 / 入账
-
-- [ ] 可多选照片，一行一个缩略图；每行独立语音，转写可手改
-- [ ] 只有图没有字的行不出现在识别结果里；全部行为空文字时不能发起识别
-- [ ] 两行有效文字一次识别得到两张卡片，index 与照片对应正确
-- [ ] 说到已有空间/位置名称时，保存用的是目录 id；不存在的位置会新建；不会自动新建空间或标签
-- [ ] 确认录入写入未放弃项，`items.source === 'agent'`；放弃本次则零写入、零上传
-- [ ] 回到首页能看到新物资（不要求看到照片）；家庭消息出现对应 create 记录
-- [ ] 名称为空的卡片不能被写入；连续两件时第二件失败则第一件已存在
-
-## AI 分包：解散清理
-
-- [ ] 解散家庭后该家 `familyAiKeys`、`itemMedia` 被清掉
+- [ ] 无 key 时助手有明确引导进密钥页，不出现 Axios 堆栈
+- [ ] 解散家庭后该家 `familyAiKeys` 被清掉
 - [ ] 普通成员离开不影响家里剩余成员继续用 key
-- [ ] 切换家庭后，识别与密钥列表作用于新的当前家
+- [ ] 切换家庭后，助手与密钥列表作用于新的当前家
+- [ ] 产品 `app.json` 主包 pages 列表不恢复 `pages/chat`
 
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` / `redeemCodes` / `familySubscriptions` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `familyTrees` / `aiCapabilities` / `redeemCodes` / `familySubscriptions` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
@@ -160,25 +141,25 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 - [ ] 清单 / 搜索 / 首页加载不额外风暴式调用 `getEntitlement`
 - [ ] `createMany` 一批超过剩余名额整批失败
 - [ ] `createMany`（n≥2）只产生一条家庭消息；免费家消息总数 ≤30、加强家 ≤200
-- [ ] AI `extract` / `act` 不因「无容量会员」被拦（仍可因撞物资上限失败）
+- [ ] AI `act` 不因「无容量会员」被拦（仍可因撞物资上限失败）
 
 ## 导航
 
-- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`；AI 采集与密钥在分包 `packageAi`；家庭管家在分包 `packageAiAssist`（无 demo、chat）
+- [ ] 产品入口含 onboarding / items / family / family/tags / family/messages；空间与物品详情在分包 `packageBrowse`；AI 密钥在分包 `packageAi`；家庭管家在分包 `packageAiAssist`（无 demo、chat）
 - [ ] `chatProxy` 目录仍在，未挂产品导航
 
 ## AI 助手 V2
 
-- [ ] 家庭页有「家庭管家」入口，打开 `packageAiAssist`；AI 额度行仍进 `packageAi/keys`
+- [ ] 清单顶栏进 `packageAiAssist`（无 focus）；返回后清单拉数与筛选不变
+- [ ] 家庭页 AI 额度行仍进 `packageAi/keys`（密钥）
 - [ ] 物资详情有助手入口，带上当前 `itemId` 作为 focus；编辑/删除主按钮仍在
-- [ ] 清单右下角玻璃浮窗进 `packageAiAssist`（无 focus）；返回后清单拉数与筛选不变；家庭页入口仍保留
 - [ ] 助手页是对话列表：发送后清空输入，汇报/追问出现在气泡里；没有语音、没有选图送模型；无家时回 onboarding
 - [ ] 无密钥时不调模型，引导现有密钥页
 - [ ] 追问展示芯片或确认删；下一句带着最近对话上下文重跑 `ai.act`；两轮仍缺槽则引导现有编辑页
 - [ ] `ai.act` 走当前家庭 membership，忽略伪造 familyId；空文本拒绝
 - [ ] 计划 `ask` 非空则零写入；删除无确认不执行；`source: agent`
 - [ ] 树含空间/位置/标签、不含物资；结构写后更新；解散删树、离开不删
-- [ ] 操作汇报由代码拼出（含可能重复、不合并）；与 V1 采集/密钥并存
+- [ ] 操作汇报由代码拼出（含可能重复、不合并）；与密钥页并存
 - [ ] 助手本地按家庭保留最近 20 条文字气泡；`ai.act` history 同为 20；冷启动不恢复确认卡/芯片/结果卡；满额时列表顶有「只保留这么多」提示
 
 ## AI 助手 agent-runtime（标准循环，无意图预路由）

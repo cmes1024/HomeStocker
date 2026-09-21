@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 13
+const CAPABILITY_VERSION = 14
 
 const HARD_DENY = {
   'family.create': true,
@@ -10,13 +10,10 @@ const HARD_DENY = {
   'family.updateBackground': true,
   'family.updateExpireReminder': true,
   'family.recordSubscribeExpire': true,
-  'ai.extract': true,
-  'ai.transcribe': true,
   'ai.addKey': true,
   'ai.removeKey': true,
   'ai.listKeys': true,
-  'ai.setDefaultKey': true,
-  'ai.attachMedia': true
+  'ai.setDefaultKey': true
 }
 
 const CAPABILITY_SEED = {

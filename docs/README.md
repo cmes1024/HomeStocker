@@ -13,11 +13,11 @@
 | 可测试的行为合同 | [`../openspec/specs/`](../openspec/specs/) |
 | 部署前勾选 | [`../miniprogram/cloud/acceptance-checklist.md`](../miniprogram/cloud/acceptance-checklist.md) |
 
-`openspec/changes/` 下进行中：[`ai-assistant-v2`](../openspec/changes/ai-assistant-v2/)。已完成的在 `openspec/changes/archive/`。
+`openspec/changes/` 下进行中的 change 以目录为准；已完成的在 `openspec/changes/archive/`。
 
 ## 正在设计 / 待实施
 
-- [AI 助手 V2](./plans/2026-09-17-ai-assistant-v2/README.md) — 方案源；实施规格 [`openspec/changes/ai-assistant-v2/`](../openspec/changes/ai-assistant-v2/)
+（无进行中的 AI 大刀；助手 V2 已落地。）
 
 ## 已落地方案（历史决策，不是待做清单）
 
@@ -30,16 +30,17 @@
 5. [命名主题](./plans/2026-09-15-family-theme-system.md)  
 6. [家庭页 / 货架清单 / 口袋 as-built](./plans/2026-09-17-as-built-surfaces.md)  
 7. [云函数读缓存](./plans/2026-09-16-cloud-call-cache/方案.md)  
-8. [AI 拍照录入](./plans/2026-09-16-package-ai-capture/README.md) — 代码已合，验收清单未勾  
+8. [AI 助手 V2](./plans/2026-09-17-ai-assistant-v2/README.md) — 已实施（`packageAiAssist` + `ai.act`）  
+9. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
 
 ## 愿景（不要当本阶段范围）
 
 - [PRD](./PRD-家庭物资管理小程序.md) v1.2（角色权限、采购、OCR 等）  
 - [功能清单](./家庭物资管理小程序-功能清单.md)  
 - [技术架构](./技术架构-家庭物资管理小程序.md) v1.1（含 ES 搜索等未采用项）  
-- [AI 对话助手（09-07）](./plans/2026-09-07-ai-assistant-design.md) — 半屏聊天 + LangGraph；**不是** V2。现行 V2 方案见上节  
+- [AI 对话助手（09-07）](./plans/2026-09-07-ai-assistant-design.md) — 半屏聊天 + LangGraph；**不是** V2。现行助手见上节  
 - HTML 原型：仓库根目录 `family-supplies-prototype*`  
 
 ## 第一阶段还剩
 
-用户体系、搜索 UI、AI V1 录入真机验收。助手 V2 见 [方案](./plans/2026-09-17-ai-assistant-v2/README.md) 与 [OpenSpec change](../openspec/changes/ai-assistant-v2/)。细节见现状快照。
+用户体系、搜索 UI。AI 助手 V2 已落地；旧拍照录入 V1 已退役。细节见现状快照。

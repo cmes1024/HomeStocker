@@ -1,9 +1,9 @@
 # HomeStocker 第一阶段现状快照
 
-> 日期：2026-09-17  
-> 分支：`reDesign`（HEAD `c684d54`，2026-09-16）  
+> 日期：2026-09-21（相对 09-17 快照：AI V1 拍照录入已退役；助手 V2 已落地）  
+> 分支：`reDesign`  
 > 性质：**对照代码的现状**，用来接上近一周文档断代；不是新功能方案  
-> 第一阶段收口目标（产品口头锁定）：**用户体系、搜索、AI（待完善）**
+> 第一阶段收口目标（产品口头锁定）：**用户体系、搜索**（AI 助手已落地）
 
 完整 PRD / 功能清单 / 旧技术架构仍是愿景，**不是**本阶段范围。
 
@@ -11,7 +11,7 @@
 
 ## 1. 一句话
 
-家庭协同管物资已经能跑通：建家、加人、记账、空间位置、标签保质期、家庭消息、命名主题都在小程序里。近两日又叠了口袋页、清单改版、读缓存、AI 拍照录入。**文档已于 2026-09-17 对齐代码**（OpenSpec 归档 + 主规格 + as-built）。第一阶段还差三块：**人能互相认出来、清单能搜、AI（V1 录入验收 + V2 文字助手 change）。**
+家庭协同管物资已经能跑通：建家、加人、记账、空间位置、标签保质期、家庭消息、命名主题、读缓存、家庭管家（AI 助手 V2）都在小程序里。旧拍照录入 V1 已退役。第一阶段还差两块：**人能互相认出来、清单能搜。**
 
 ---
 
@@ -29,23 +29,25 @@
 | 09-17 | 主题目录扩至 17 套；氛围选择器一行最多 3 个、弹层可滚 | 同上；`THEME_PRESETS` 与 `family` 的 `THEME_IDS` 同步 |
 | 09-16 | 过期订阅改为按人×物资，发出后删订阅 | 主规格 `expire-subscribe-reminders`（已含） |
 | 09-16 | 云函数读缓存 + `activity.cursor` | `2026-09-16-cloud-call-cache/`；主规格 `cloud-read-cache` |
-| 09-16 | AI 分包拍照/语音录入、家庭 DeepSeek 密钥、旁路封面 | 归档 `2026-09-17-package-ai-item-capture`；验收未勾 |
+| 09-16 | 家庭 DeepSeek 密钥（BYOK）；旧拍照录入 V1 **已退役** | 历史归档 `2026-09-17-package-ai-item-capture` |
 | 09-16 | 物资日志带地点与通顺句式 | 归档 `2026-09-17-activity-place-log-copy`；已进 `item-activity-log` / `family-message-feed` |
+| 09-19～21 | AI 助手 V2：`packageAiAssist` + `ai.act`（家庭树 + 能力表 + 白名单 tool） | 归档 `2026-09-19-ai-assistant-v2` 等；方案 `2026-09-17-ai-assistant-v2/` |
 
 主包页面：`onboarding` / `items` / `items/edit` / `family` / `family/tags` / `family/messages`。  
 分包 browse：空间列表/详情、物资详情、口袋。  
-分包 ai：采集、密钥。  
+分包 `packageAi`：仅密钥页。  
+分包 `packageAiAssist`：家庭管家。  
 `pages/chat` 与 `chatProxy` **不在产品路径**。
 
 云函数：`family` `item` `space` `tag` `activity` `expireNotify` `ai`（另保留 `stt` / `chatProxy` 壳）。
 
-数据集合以 `miniprogram/cloud/collections.md` 为准（含 `familyAiKeys` / `aiPrompts` / `itemMedia`）。
+数据集合以 `miniprogram/cloud/collections.md` 为准（含 `familyAiKeys` / `aiPrompts` / `familyTrees` / `aiCapabilities`）。
 
 ---
 
-## 3. 文档怎么读（2026-09-17 已对齐）
+## 3. 文档怎么读
 
-入口：`docs/README.md`。现行合同在 `openspec/specs/`（21 个 capability）。进行中 change：`ai-assistant-v2`。
+入口：`docs/README.md`。现行合同在 `openspec/specs/`。
 
 | 文档 | 现在的角色 |
 |------|------------|
@@ -55,8 +57,8 @@
 | `mvp-cloudbase-redesign.md` | 基线决策；表里「体验上单家庭」是 MVP 当时的话，产品已改成多家庭 |
 | `PRD-*`、功能清单、技术架构 | 愿景；文首已标明不要当实施范围 |
 | `2026-09-07-ai-assistant-design.md` | 后置半屏对话（LangGraph）；**不是** V2 |
-| `2026-09-17-ai-assistant-v2/` | **AI 助手 V2 方案**；change：`openspec/changes/ai-assistant-v2/` |
-| `2026-09-16-package-ai-capture/` | **AI V1** 拍照录入；代码已合、验收未勾 |
+| `2026-09-17-ai-assistant-v2/` | **AI 助手 V2 方案**（已实施） |
+| `2026-09-16-package-ai-capture/` | **已退役** AI V1 拍照录入（历史；见 archive） |
 | `2026-09-17-as-built-surfaces.md` | 钥匙卡 / 货架 / 口袋（口袋无入口） |
 | `collections.md` | 集合/索引；背景已改为命名主题 |
 
@@ -64,7 +66,7 @@
 
 ---
 
-## 4. 第一阶段剩余三项（缺口，不是方案）
+## 4. 第一阶段剩余两项（缺口，不是方案）
 
 ### 4.1 用户体系
 
@@ -80,25 +82,23 @@
 - 清单可按空间筛；**按标签筛没有首页入口**（编辑打标已有）。
 - 不做 Elasticsearch / RAG。对话查询若后接，仍应走结构化 `item.search`。
 
-### 4.3 AI（待完善）
+### 4.3 AI（已落地；V1 已退役）
 
-已合代码、**不能当成已验收**：
+**现行路径：**
 
-- `packageAi`：选图分行 → 每行语音/手改 → `ai.extract` → 预览确认 → `item.create`（`source: agent`）+ 可选 `space.createLocation` + `ai.attachMedia`。
-- 家庭 BYOK：`familyAiKeys`，云函数代发 DeepSeek；客户端只见掩码。
-- 图进 `itemMedia`，清单/详情本版不渲染。
-- 语音：插件市场方案已失效，真机需 `ai.transcribe`（服务市场一句话识别）；失败可手打。
-- `docs/plans/2026-09-16-package-ai-capture/验收.md` **全部未勾**。
+- `packageAiAssist`：自然语言 → `ai.act` → 家庭树 + 能力表 → 白名单 tool → 现有 `item`/`space`/`tag`（`source: agent`）。
+- 家庭 BYOK：`familyAiKeys`，云函数代发 DeepSeek；客户端只见掩码；密钥 UI 在 `packageAi/keys`。
+- 清单顶栏 / 物资详情可进管家；无密钥引导密钥页。
 
-明确还不是本支路的：
+**已退役（勿再验收或接线）：**
 
-- 半屏对话、流式、LangGraph tool 循环（09-07；**不是** V2）。
-- 仓库 `agent/` 仍接 `MockBackend`，未对真云函数。
-- 视觉识别（图不送模型，只当封面）。
+- 旧 `packageAi` 拍照分行 / `ai.extract` / `ai.transcribe` / `ai.attachMedia` / `itemMedia`。
+- 历史方案见 `docs/plans/2026-09-16-package-ai-capture/` 与归档 `2026-09-17-package-ai-item-capture`。
 
-**AI 助手 V2**（自然语言 + 家庭树 + 能力表）方案见 [`2026-09-17-ai-assistant-v2/`](./2026-09-17-ai-assistant-v2/README.md)，实施规格 `openspec/changes/ai-assistant-v2/`，**尚未写代码**；与本小节 V1 拍照向导分开验收。
+仍后置、不是本支路：
 
-「待完善」建议拆开看：① V1 录入真机验收与语音稳定性；② 要不要清单出图；③ V2 助手按该目录方案另开 change（不再默认用 09-07 半屏对话当下一刀）。
+- 半屏对话、流式、LangGraph tool 循环（09-07）。
+- 仓库根 `agent/` 仍接 `MockBackend`，未对真云函数。
 
 ---
 
@@ -106,18 +106,18 @@
 
 ```
 引导（无家）
- └─ 全家清单（主路径；按空间筛；临期一条横幅；AI 浮窗）
+ └─ 全家清单（主路径；按空间筛；临期一条横幅；顶栏进管家）
       ├─ 新增/编辑物资
-      ├─ 物资详情（分包）→ 编辑/删除
+      ├─ 物资详情（分包）→ 编辑/删除；可 focus 进管家
       ├─ 家庭
-      │    ├─ 钥匙邀请码 / 主题 / 标签 / 消息 / AI 额度
+      │    ├─ 钥匙邀请码 / 主题 / 标签 / 消息 / AI 密钥
       │    ├─ 逛空间 → 空间列表 → 空间详情
       │    ├─ （口袋页已注册，暂无入口）
       │    └─ 多家庭切换、再创建/加入、离开/解散
-      └─ AI 采集（分包；非对话）
+      └─ 家庭管家（packageAiAssist；非半屏对话）
 ```
 
-写路径原则未变：页面与未来 Agent **同一套** `item` / `family` / `space` / `tag` 云函数；`ai` 只做抽取/密钥/挂图/转写，不另造创建物资。
+写路径原则未变：页面与 AI 助手 **同一套** `item` / `family` / `space` / `tag` 云函数；`ai` 只做密钥与 `act`，不另造创建物资。
 
 ---
 
@@ -130,4 +130,4 @@
 5. `AGENTS.md` — 给后续 Agent 的约定  
 6. 旧 PRD / 功能清单 — 愿景备查  
 
-进行中的 OpenSpec change：`openspec/changes/ai-assistant-v2/`。新能力用 `openspec new change`，不要手建目录。
+新能力用 `openspec new change`，不要手建目录。

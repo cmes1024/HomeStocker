@@ -151,7 +151,7 @@
 |------|------|------|
 | `_id` | string | 自动 |
 | `familyId` | string | 隔离键 |
-| `provider` | string | V1 恒为 `deepseek` |
+| `provider` | string | 恒为 `deepseek` |
 | `label` | string | 显示名，默认「DeepSeek」 |
 | `baseUrl` | string | 系统写入 `https://api.deepseek.com/v1`，界面不展示、不允许用户改 |
 | `model` | string | 系统写入 `deepseek-chat` |
@@ -165,26 +165,14 @@
 
 ### `aiPrompts`
 
-应用级提示词（不是按家庭一份）。V1 文档 `_id` = `item-extract-v1`；V2 助手文档 `_id` = `assist-act-v2`。由云函数 `ai` 在对应 action 首次调用时写入；运营可在控制台改 `system`。两份文档并列，互不覆盖。
+应用级提示词（不是按家庭一份）。助手文档 `_id` = `assist-act-v2`。由云函数 `ai` 在 `act` 首次调用时写入；运营可在控制台改 `system`。
 
 | 字段 | 类型 | 说明 |
 |------|------|------|
-| `_id` | string | 稳定 id：`item-extract-v1` 或 `assist-act-v2` |
+| `_id` | string | 稳定 id：`assist-act-v2` |
 | `version` | number | 种子更高则覆盖 |
-| `system` | string | 系统提示词全文（V1 含 `{{TODAY}}` 等；V2 含 `{{CAPABILITIES}}` `{{TREE}}` `{{FOCUS}}` `{{PROBE}}`） |
+| `system` | string | 系统提示词全文（含 `{{CAPABILITIES}}` `{{TREE}}` `{{FOCUS}}` `{{PROBE}}`） |
 | `updatedAt` | number | |
-
-### `itemMedia`
-
-物资旁路封面。清单/详情本版不渲染。V1 一件物资一封面，重复 attach 覆盖并尽力删旧文件。
-
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `_id` | string | 自动 |
-| `familyId` | string | |
-| `itemId` | string | |
-| `fileID` | string | 云存储 fileID |
-| `createdAt` | number | |
 
 ### `familyTrees`
 
@@ -212,7 +200,7 @@
 | `apis` | array | `{ id, fn, action, enabled, confirm, args, hint }[]` |
 | `updatedAt` | number | |
 
-V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `update` / `remove`（confirm）/ `space.create` / `space.createMany` / `space.createLocation` / `space.createLocationMany` / `item.merge`（confirm）/ `item.expireSubscribePanel`。房间改名/删除、标签/家庭/密钥/抽取为 disabled。代码硬底线仍拒绝 `family.*`、密钥、extract、transcribe。成员不能从客户端改此表。`createMany` 系列：同类 ≥2 优先批量；顺序空间 → 位置 → 物资。
+V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `update` / `remove`（confirm）/ `space.create` / `space.createMany` / `space.createLocation` / `space.createLocationMany` / `item.merge`（confirm）/ `item.expireSubscribePanel`。房间改名/删除、标签/家庭/密钥为 disabled。代码硬底线仍拒绝 `family.*`、密钥 CRUD。成员不能从客户端改此表。`createMany` 系列：同类 ≥2 优先批量；顺序空间 → 位置 → 物资。
 
 ### `redeemCodes`
 
@@ -277,8 +265,6 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 | `locations` | `spaceId` | 普通 | 空间下位置 |
 | `locations` | `familyId` | 普通 | 解散/家庭维度清理 |
 | `familyAiKeys` | `familyId` | 普通 | 家庭密钥列表 / 解散清理 |
-| `itemMedia` | `itemId` | 普通 | 按物资挂图 |
-| `itemMedia` | `familyId` | 普通 | 解散清理 |
 
 `familyTrees` 以 `_id = familyId` 主键读写，不必另建索引。`aiCapabilities` / `aiPrompts` 用固定 `_id`，不必另建索引。
 
@@ -292,7 +278,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 
 每个集合点「添加集合」，名称必须完全一致：
 
-`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `itemMedia` · `familyTrees` · `aiCapabilities` · `redeemCodes` · `familySubscriptions`
+`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `familyTrees` · `aiCapabilities` · `redeemCodes` · `familySubscriptions`
 
 权限先随意；建完后把同目录 `database-rules.json` 里对应集合的规则贴进去（客户端写一律 deny）。
 
@@ -332,8 +318,6 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 | `itemExpireSubs` | `familyId_openid` | 非唯一 | `familyId` 升序，`+` `openid` 升序 |
 | `itemExpireSubs` | `itemId` | 非唯一 | `itemId` 升序 |
 | `familyAiKeys` | `familyId` | 非唯一 | `familyId` 升序 |
-| `itemMedia` | `itemId` | 非唯一 | `itemId` 升序 |
-| `itemMedia` | `familyId` | 非唯一 | `familyId` 升序 |
 
 `itemExpireSubs` 不要再单独建 `familyId`：复合索引左边已是 `familyId`，解散按家清理可走前缀。主键 `_id` 已是 `${itemId}_${openid}`，也不用再为这对建唯一索引。
 
@@ -343,7 +327,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 
 见同目录 `database-rules.json`。换环境：云开发 → 数据库 → 各集合权限 / 安全规则，按该文件粘贴。集合与索引逐步对照见上一节「换环境部署」。
 
-实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。`familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` 读也走云函数。客户端写一律 deny。
+实际读路径：`items` / `spaces` / `locations` / `tags` / `activities` 列表经云函数。`familyAiKeys` / `aiPrompts` / `familyTrees` / `aiCapabilities` 读也走云函数。客户端写一律 deny。
 
 ## 多家庭体验
 
@@ -354,8 +338,8 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - `updateProfile` 更新本人称呼/头像（`{ nickname?, avatarFileID? }`）；写 `users`；头像为云存储 fileID；换头像时 best-effort 删旧文件
 - `listMembers` 返回当前家庭成员（openid / nickname / avatarUrl / isOwner / isMe）；上限 50
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
-- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `familySubscriptions` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树与订阅
-- 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图/助手 act/结构树写一律云函数
+- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `familyTrees` / `familySubscriptions` / `memberships`；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树与订阅
+- 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/助手 act/结构树写一律云函数
 
 ## 容量会员（内测兑换）
 
@@ -376,27 +360,15 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - 客户端：`utils/subscribeExpire.js`；云函数默认同一 tmplId，可用环境变量 `EXPIRE_SUBSCRIBE_TMPL_ID` 覆盖
 - 定时触发器每日跑 `expireNotify`：筛家庭总开关开启且 `expireDate` 为今天 / +1 / +3 的项，向 **该物资的订阅人**（`itemExpireSubs`）且已授权微信订阅的成员发送；发出成功则删掉该人这条订阅。也可从家庭页「立即检查提醒」手动触发（须小程序端调用，控制台测试无效）
 
-## AI 分包（控制台检查项）
+## AI 密钥与助手（控制台检查项）
 
-部署 `packageAi` 前在云开发控制台核对这些项。**不要把 DeepSeek / 测试 API Key 写进仓库或云函数环境变量截图。**
+部署 `packageAi`（密钥）/ `packageAiAssist` / `ai.act` 前在云开发控制台核对这些项。**不要把 DeepSeek / 测试 API Key 写进仓库或云函数环境变量截图。**
 
-1. 集合 `familyAiKeys`、`aiPrompts`、`itemMedia` 已创建（云函数首次调用也会 `createCollection`，控制台建一次更稳）。
-2. 三集合安全规则按 `database-rules.json` 粘贴：客户端读写均为 deny。
-3. 索引：`familyAiKeys.familyId`；`itemMedia.itemId`、`itemMedia.familyId`。
-4. 上传云函数 `ai`，云端安装依赖（含 `axios`）。
+1. 集合 `familyAiKeys`、`aiPrompts`、`familyTrees`、`aiCapabilities` 已创建（云函数首次调用也会 `createCollection`，控制台建一次更稳）。
+2. 上述集合安全规则按 `database-rules.json` 粘贴：客户端读写均为 deny。
+3. 索引：`familyAiKeys.familyId`。`familyTrees` 不必另建索引（`_id = familyId`）；`aiCapabilities` / `aiPrompts` 用固定 `_id`。
+4. 上传云函数 `ai`（含密钥 CRUD + `act`），云端安装依赖（含 `axios`）；同步上传 `space`、`tag`、`family`（结构写旁路更新树；建家种子树；解散清密钥与树）。
 5. 函数配置：**超时 60 秒**（仓库 `cloudfunctions/ai/config.json` 已写 `timeout: 60`，控制台再确认一次）。
 6. **允许云函数访问公网**（DeepSeek `https://api.deepseek.com`）。
-7. 同步上传 `family`（解散路径会清密钥与旁路图）。
-8. 「微信同声传译」插件已停维护。真机 `wx.serviceMarket.invokeService` 会返回 `ok` 但 `data` 为空，语音转写必须走云函数 **`ai.transcribe`**（openapi `SentenceRecognitionWX`）。请把云函数 `ai` **超时改成 60 秒并重新上传**。未开通服务市场或失败时请手打文字。
-9. `aiPrompts` 文档 `item-extract-v1` 会在 `listKeys` / `addKey` / `extract` 时按仓库 `prompt.js` 同步（`version` 与 `system` 不一致则覆盖）；也可在控制台核对 `system` 正文。
-
-## AI 助手 V2（控制台检查项）
-
-部署 `packageAiAssist` / `ai.act` 前在云开发控制台核对这些项。**不要把 DeepSeek / 测试 API Key 写进仓库。**
-
-1. 集合 `familyTrees`、`aiCapabilities` 已创建（`ai.act` 首次调用也会 `createCollection`，控制台建一次更稳）。
-2. 两集合安全规则按 `database-rules.json` 粘贴：客户端读写均为 deny。
-3. `familyTrees` 不必另建索引（`_id = familyId`）；`aiCapabilities` 用固定 `_id` `assist-act-v2`。
-4. 重新上传云函数 `ai`（含 `act`）、`space`、`tag`、`family`（结构写旁路更新树；建家种子树；解散删树）。
-5. `aiPrompts.assist-act-v2` 会在 `act` 时按仓库 `promptAssist.js` 同步（不改 `item-extract-v1`）。
-6. 清单 AI 浮窗仍进 `packageAi` 采集；家庭管家是新分包，无密钥引导现有 `packageAi/keys`。
+7. `aiPrompts.assist-act-v2` 会在 `act` 时按仓库 `promptAssist.js` 同步；也可在控制台核对 `system` 正文。
+8. 清单顶栏 / 详情进 `packageAiAssist`；无密钥引导现有 `packageAi/keys`。
