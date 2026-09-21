@@ -1557,7 +1557,10 @@ async function editForm(openid, event) {
     if (snap.data.familyId !== familyId) {
       return fail('FORBIDDEN', '无权查看该物资')
     }
-    const mine = await hasExpireSub(itemId, openid)
+    // 无过期日时 UI 也不会开提醒，跳过 itemExpireSubs
+    const hasExpire =
+      !!(snap.data.expireDate && String(snap.data.expireDate).trim())
+    const mine = hasExpire ? await hasExpireSub(itemId, openid) : false
     item = {
       _id: itemId,
       ...snap.data,
