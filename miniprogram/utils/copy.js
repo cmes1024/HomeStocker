@@ -26,6 +26,8 @@ const copy = {
     panelTitle: '家庭物品',
     spaceSheetTitle: '家庭空间',
     filterAll: '全部',
+    collapseSpace: '收起',
+    expandSpace: '展开',
     defaultSpaceName: '仓库',
     badgeSoon: '即将过期',
     statsLine(memberCount, itemCount, spaceCount) {

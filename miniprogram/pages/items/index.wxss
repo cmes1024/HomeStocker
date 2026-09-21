@@ -374,8 +374,18 @@
   padding: 8rpx 12rpx 10rpx;
 }
 
+.space-block-hd-hover {
+  opacity: 0.72;
+}
+
+.space-block.is-collapsed .space-block-hd {
+  /* padding-bottom: 16rpx; */
+  background: var(--theme-shadow);
+  border-radius: 8rpx;
+}
+
 .space-block-name {
-  flex: 1;
+  /* flex: 1; */
   min-width: 0;
   font-size: 28rpx;
   font-weight: 500;
@@ -385,11 +395,26 @@
   white-space: nowrap;
 }
 
+.space-block-meta {
+  flex: 1;
+  display: flex;
+  align-items: baseline;
+  flex-shrink: 0;
+  gap: 12rpx;
+  justify-content: space-between;
+}
+
 .space-block-count {
   flex-shrink: 0;
   font-size: 24rpx;
   color: rgba(26, 26, 26, 0.45);
   font-variant-numeric: tabular-nums;
+}
+
+.space-block-toggle {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  color: var(--theme-primary, #c4a484);
 }
 
 .space-block-rule {

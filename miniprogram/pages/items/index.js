@@ -194,6 +194,7 @@ Page({
     error: '',
     items: [],
     itemGroups: [],
+    collapsedSpaces: {},
     expireBanner: null,
     familyId: '',
     familyName: '',
@@ -275,12 +276,20 @@ Page({
     }
   },
 
-  applyListView(items, spaces, filterSpaceId) {
+  applyListView(items, spaces, filterSpaceId, collapsedSpaces) {
     const spaceList = spaces !== undefined ? spaces : this.data.spaces
     const spaceId = filterSpaceId !== undefined ? filterSpaceId : this.data.filterSpaceId
+    const collapsed = collapsedSpaces !== undefined ? collapsedSpaces : this.data.collapsedSpaces || {}
+    const groups = spaceId ? [] : buildItemGroups(items || [], spaceList)
+    groups.forEach((g) => {
+      const isCollapsed = !!collapsed[g.spaceId]
+      g.collapsed = isCollapsed
+      g.toggleLabel = isCollapsed ? copy.items.expandSpace : copy.items.collapseSpace
+    })
     return {
       items: items || [],
-      itemGroups: spaceId ? [] : buildItemGroups(items || [], spaceList)
+      itemGroups: groups,
+      collapsedSpaces: collapsed
     }
   },
 
@@ -508,6 +517,18 @@ Page({
       sheetOpen: true,
       sheetKind: 'space'
     })
+  },
+
+  onToggleSpaceGroup(e) {
+    const spaceId = e.currentTarget.dataset.spaceId
+    if (!spaceId) return
+    const collapsedSpaces = { ...(this.data.collapsedSpaces || {}) }
+    if (collapsedSpaces[spaceId]) {
+      delete collapsedSpaces[spaceId]
+    } else {
+      collapsedSpaces[spaceId] = true
+    }
+    this.setData(this.applyListView(this.data.items, this.data.spaces, this.data.filterSpaceId, collapsedSpaces))
   },
 
   closeSheet() {

@@ -113,27 +113,37 @@
       </view>
 
       <block wx:elif="{{!filterSpaceId}}">
-        <view class="space-block" wx:for="{{itemGroups}}" wx:key="spaceId">
-          <view class="space-block-hd">
+        <view class="space-block {{item.collapsed ? 'is-collapsed' : ''}}" wx:for="{{itemGroups}}" wx:key="spaceId">
+          <view
+            class="space-block-hd"
+            hover-class="space-block-hd-hover"
+            data-space-id="{{item.spaceId}}"
+            bind:tap="onToggleSpaceGroup"
+          >
             <text class="space-block-name">{{item.name}}</text>
-            <text class="space-block-count">{{item.count}}</text>
+            <view class="space-block-meta">
+              <text class="space-block-count">{{item.count}}</text>
+              <text class="space-block-toggle">{{item.toggleLabel}}</text>
+            </view>
           </view>
-          <view class="space-block-rule" aria-hidden="true"></view>
-          <view class="shelf">
-            <ItemTile
-              wx:for="{{item.items}}"
-              wx:for-item="tile"
-              wx:key="_id"
-              itemId="{{tile._id}}"
-              name="{{tile.name}}"
-              quantity="{{tile.quantity}}"
-              unit="{{tile.unit}}"
-              expireStatus="{{tile.expireStatus}}"
-              animate="{{animateTiles}}"
-              delay="{{index % 9 * 40}}"
-              bind:tap="goDetail"
-            />
-          </view>
+          <block wx:if="{{!item.collapsed}}">
+            <view class="space-block-rule" aria-hidden="true"></view>
+            <view class="shelf">
+              <ItemTile
+                wx:for="{{item.items}}"
+                wx:for-item="tile"
+                wx:key="_id"
+                itemId="{{tile._id}}"
+                name="{{tile.name}}"
+                quantity="{{tile.quantity}}"
+                unit="{{tile.unit}}"
+                expireStatus="{{tile.expireStatus}}"
+                animate="{{animateTiles}}"
+                delay="{{index % 9 * 40}}"
+                bind:tap="goDetail"
+              />
+            </view>
+          </block>
         </view>
       </block>
 
