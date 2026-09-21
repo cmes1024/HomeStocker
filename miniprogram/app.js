@@ -7,7 +7,6 @@ const { getParamsFormWxacode } = require("./utils/util")
 const { envId: cloudEnvId } = require("./utils/cloudbase-env")
 const { getThemeColors, hydrateThemeFromCache } = require("./utils/theme")
 const { markAppHidden, markAppShown } = require("./utils/cloud")
-const { ensureSession } = require("./utils/session")
 
 const env = "prod"
 
@@ -49,8 +48,7 @@ App({
       }
       wx.cloud.init(initOpts)
       console.log('[cloud] init', cloudEnvId || '(未指定 env，使用工具默认环境)')
-      // 与首屏 JS/渲染重叠：预取会话，onShow 多半直接命中
-      ensureSession().catch(() => {})
+      // 会话由清单 bootstrap / onboarding ensureSession 拉取，避免冷启动再打一次 getMyFamily
     }
     console.log("小程序冷启动入参", options)
     wx.onNetworkStatusChange(function (res) {

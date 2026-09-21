@@ -28,7 +28,8 @@ const READ_ACTIONS = {
   item: { get: true, search: true, list: true, count: true, listExpiring: true, home: true },
   space: { list: true, listLocations: true, listItemsBySpace: true, listPockets: true },
   tag: { list: true, ensureDefaults: true },
-  activity: { list: true }
+  activity: { list: true },
+  bootstrap: { home: true }
 }
 
 function currentFamilyId() {
@@ -48,6 +49,7 @@ function isRead(name, action) {
 }
 
 function isItemDomainRead(name, action) {
+  if (name === 'bootstrap' && action === 'home') return true
   if (name === 'item' && isRead('item', action)) return true
   if (name === 'activity' && action === 'list') return true
   if (
@@ -79,6 +81,9 @@ function paramsForKey(data) {
 
 function extraKey(name, action) {
   if (name === 'item' && (action === 'listExpiring' || action === 'home')) {
+    return shanghaiTodayYmd()
+  }
+  if (name === 'bootstrap' && action === 'home') {
     return shanghaiTodayYmd()
   }
   return ''
@@ -119,6 +124,7 @@ function cursorMatches(familyId, data) {
 function invalidateItemDomain() {
   cache.dropByName('item')
   cache.dropByName('activity')
+  cache.dropByName('bootstrap')
   cache.dropNameAction('space', 'listItemsBySpace')
   cache.dropNameAction('space', 'listPockets')
   clearCursor()
@@ -126,6 +132,7 @@ function invalidateItemDomain() {
 
 function invalidateFamilyReads() {
   cache.dropByName('family')
+  cache.dropByName('bootstrap')
 }
 
 function applyWriteInvalidation(name, action) {
@@ -135,6 +142,7 @@ function applyWriteInvalidation(name, action) {
   }
   if (name === 'space') {
     cache.dropByName('space')
+    cache.dropByName('bootstrap')
     return
   }
   if (name === 'tag') {
@@ -151,6 +159,7 @@ function applyWriteInvalidation(name, action) {
       action === 'updateProfile'
     ) {
       cache.dropByName('family')
+      cache.dropByName('bootstrap')
       if (action === 'updateProfile' || action === 'redeem') {
         cache.dropByName('activity')
       }
@@ -169,6 +178,39 @@ function applyWriteInvalidation(name, action) {
   }
   cache.clearAll()
   clearCursor()
+}
+
+/**
+ * 首页 bootstrap 成功后，把分片写入各域读缓存，其它页可直接命中。
+ */
+function seedBootstrapBundle(bundle, requestData) {
+  if (!bundle || !bundle.family || !bundle.family._id) return
+  const fid = String(bundle.family._id)
+  const params = paramsForKey(requestData || {})
+
+  cache.set(
+    cache.makeKey(fid, 'family', 'getMyFamily', {}, ''),
+    bundle.family
+  )
+  if (bundle.spaces) {
+    cache.set(cache.makeKey(fid, 'space', 'list', {}, ''), bundle.spaces)
+  }
+  if (bundle.board) {
+    const homeParams = {}
+    if (params.limit !== undefined) homeParams.limit = params.limit
+    if (params.spaceId) homeParams.spaceId = params.spaceId
+    cache.set(
+      cache.makeKey(fid, 'item', 'home', homeParams, shanghaiTodayYmd()),
+      bundle.board
+    )
+  }
+  if (bundle.cursor) {
+    rememberCursor(fid, bundle.cursor)
+  }
+  cache.set(
+    cache.makeKey(fid, 'bootstrap', 'home', params, shanghaiTodayYmd()),
+    bundle
+  )
 }
 
 async function rawCall(name, payload) {
@@ -264,9 +306,13 @@ async function invoke(name, data = {}) {
       const fid =
         familyId ||
         (name === 'family' && action === 'getMyFamily' && result && result._id) ||
+        (name === 'bootstrap' && action === 'home' && result && result.family && result.family._id) ||
         ''
       if (fid) {
         cache.set(readCacheKey(name, action, data, fid), result)
+      }
+      if (name === 'bootstrap' && action === 'home' && result) {
+        seedBootstrapBundle(result, data)
       }
       return result
     })()
@@ -306,12 +352,18 @@ async function callActivity(action, data = {}) {
   return invoke('activity', { ...data, action })
 }
 
+async function callBootstrap(action, data = {}) {
+  return invoke('bootstrap', { ...data, action })
+}
+
 module.exports = {
   callFamily,
   callItem,
   callSpace,
   callTag,
   callActivity,
+  callBootstrap,
+  seedBootstrapBundle,
   friendlyCloudError,
   markAppHidden,
   markAppShown,

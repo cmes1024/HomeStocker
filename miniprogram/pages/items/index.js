@@ -1,6 +1,7 @@
-const { listItems, listSpaces, loadHomeBoard: fetchHomeBoard, countItems, listExpiringItems } = require('../../utils/db')
+const { listItems, listSpaces, loadHomeBoard: fetchHomeBoard, loadHomeBootstrap, countItems, listExpiringItems } = require('../../utils/db')
 const { callSpace, callItem } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
+const { rememberSession } = require('../../utils/session')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const { shanghaiTodayYmd, normalizeDateInput } = require('../../utils/expireStatus')
@@ -305,36 +306,130 @@ Page({
       }))
     }
     try {
-      const session = await routeByMembership(this, 'items')
-      if (!session || !session.hasFamily) return
-      setAppFamily(session.family)
-      const familyName = (session.family && session.family.name) || ''
-      const memberCount = (session.family && session.family.memberCount) || 0
-      bindThemeToPage(this, {
-        familyId: session.currentFamilyId,
-        familyName,
-        headerTitle: appName,
-        bootLoading: false,
-        ...this.syncStats({ memberCount, membersReady: true })
-      })
-      this.syncLoadingColors()
-
       const spaceIdHint = this.data.filterSpaceId || ''
-      const spacesPromise = this.loadSpaces()
-      const boardPromise = (async () => {
-        await this.loadHomeBoard({ spaceId: spaceIdHint })
-        const finalSpaceId = await spacesPromise
-        if (finalSpaceId !== spaceIdHint) {
-          await this.loadHomeBoard({
-            silent: true,
-            spaceId: finalSpaceId
-          })
-        }
-      })()
-      await Promise.all([spacesPromise, boardPromise])
+      const booted = await this.bootFromBootstrap(spaceIdHint)
+      if (booted) return
+      await this.bootLegacy()
     } catch (e) {
       // bootError 已设置
     }
+  },
+
+  /**
+   * 优先一次 bootstrap；未部署或失败则返回 false，走老路径。
+   * @returns {Promise<boolean>}
+   */
+  async bootFromBootstrap(spaceIdHint) {
+    let bundle
+    try {
+      this.setData({ bootLoading: true, bootError: '' })
+      bundle = await loadHomeBootstrap({ spaceId: spaceIdHint || undefined })
+    } catch (e) {
+      if (e && e.code === 'NO_FAMILY') {
+        setAppFamily(null)
+        rememberSession({ hasFamily: false, family: null, currentFamilyId: null })
+        wx.reLaunch({ url: '/pages/onboarding/index' })
+        return true
+      }
+      // 未上传 bootstrap / 环境问题 → 降级
+      return false
+    }
+
+    const family = bundle.family
+    if (!family || !family._id) {
+      setAppFamily(null)
+      rememberSession({ hasFamily: false, family: null, currentFamilyId: null })
+      wx.reLaunch({ url: '/pages/onboarding/index' })
+      return true
+    }
+
+    setAppFamily(family)
+    rememberSession({
+      hasFamily: true,
+      family,
+      currentFamilyId: family._id
+    })
+
+    let spaces = spacesForLedgerFilter(bundle.spaces || [])
+    let filterSpaceId = this.data.filterSpaceId || ''
+    if (filterSpaceId && !spaces.some((s) => s && s._id === filterSpaceId)) {
+      filterSpaceId = ''
+      writeSavedFilterSpaceId('')
+    }
+
+    let board = bundle.board || { list: [], total: 0, expiringTop: null, expiringCount: 0 }
+    if (filterSpaceId !== spaceIdHint) {
+      try {
+        board = await fetchHomeBoard({ spaceId: filterSpaceId || undefined })
+      } catch (e) {
+        // 保留 bootstrap 结果
+      }
+    }
+
+    const familyName = family.name || ''
+    const memberCount = family.memberCount || 0
+    bindThemeToPage(this, {
+      familyId: family._id,
+      familyName,
+      headerTitle: appName,
+      bootLoading: false,
+      ...this.syncStats({ memberCount, membersReady: true })
+    })
+    this.syncLoadingColors()
+
+    const items = await enrichLedgerItemsAsync(board.list || [], {}, {}, {})
+    const filterSpaceName = filterLabel(spaces, filterSpaceId)
+    const managePatch = filterSpaceId ? {} : emptySelectionState()
+    this.setData(
+      this.syncStats({
+        spaces,
+        spaceCount: spaces.length,
+        spacesReady: true,
+        filterSpaceId,
+        filterSpaceName,
+        ...this.applyListView(items, spaces, filterSpaceId),
+        ...managePatch,
+        loading: false,
+        itemCount: board.total,
+        itemsReady: true
+      })
+    )
+
+    const top = board.expiringTop
+    let count = Number(board.expiringCount) || 0
+    if (top && count < 1) count = 1
+    this.applyExpireBanner(top, count || (top ? 1 : 0))
+    return true
+  },
+
+  async bootLegacy() {
+    const session = await routeByMembership(this, 'items')
+    if (!session || !session.hasFamily) return
+    setAppFamily(session.family)
+    const familyName = (session.family && session.family.name) || ''
+    const memberCount = (session.family && session.family.memberCount) || 0
+    bindThemeToPage(this, {
+      familyId: session.currentFamilyId,
+      familyName,
+      headerTitle: appName,
+      bootLoading: false,
+      ...this.syncStats({ memberCount, membersReady: true })
+    })
+    this.syncLoadingColors()
+
+    const spaceIdHint = this.data.filterSpaceId || ''
+    const spacesPromise = this.loadSpaces()
+    const boardPromise = (async () => {
+      await this.loadHomeBoard({ spaceId: spaceIdHint })
+      const finalSpaceId = await spacesPromise
+      if (finalSpaceId !== spaceIdHint) {
+        await this.loadHomeBoard({
+          silent: true,
+          spaceId: finalSpaceId
+        })
+      }
+    })()
+    await Promise.all([spacesPromise, boardPromise])
   },
 
   onHide() {

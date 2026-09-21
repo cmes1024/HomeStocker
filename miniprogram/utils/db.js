@@ -1,4 +1,4 @@
-const { callItem, callSpace } = require('./cloud')
+const { callItem, callSpace, callBootstrap } = require('./cloud')
 
 /**
  * 物资列表：优先 item.list；失败时回退 search 空 keyword（兼容未部署 list 的环境）。
@@ -58,6 +58,29 @@ async function loadHomeBoard(options = {}) {
   }
 }
 
+/**
+ * 清单首页聚合：family + spaces + board + cursor（未部署 bootstrap 时抛错由页面降级）。
+ */
+async function loadHomeBootstrap(options = {}) {
+  const data = await callBootstrap('home', {
+    limit: options.limit || 100,
+    spaceId: options.spaceId || undefined
+  })
+  return {
+    family: (data && data.family) || null,
+    spaces: (data && data.spaces && data.spaces.list) || [],
+    board: {
+      list: (data && data.board && data.board.list) || [],
+      total: Number(data && data.board && data.board.total) || 0,
+      expiringTop: (data && data.board && data.board.expiringTop) || null,
+      expiringCount: Number(data && data.board && data.board.expiringCount) || 0,
+      today: data && data.board && data.board.today,
+      windowEnd: data && data.board && data.board.windowEnd
+    },
+    cursor: (data && data.cursor) || null
+  }
+}
+
 async function listSpaces() {
   const data = await callSpace('list')
   return (data && data.list) || []
@@ -99,6 +122,7 @@ module.exports = {
   countItems,
   listExpiringItems,
   loadHomeBoard,
+  loadHomeBootstrap,
   listSpaces,
   listLocations,
   listItemsBySpace,
