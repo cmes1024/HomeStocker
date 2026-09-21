@@ -269,7 +269,7 @@ const copy = {
     aiQuota: 'AI配置',
     capacityTitle: '家庭加强版',
     capacityInactive: '未开通 · 内测兑换',
-    capacityActive: (ymd) => `Vip有效至 ${ymd}`,
+    capacityActive: (ymd) => `VIP至 ${ymd}`,
     capacityProgress: (itemCount, itemLimit, memberCount, memberLimit) => {
       const items =
         itemLimit == null
