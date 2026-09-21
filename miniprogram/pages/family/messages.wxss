@@ -9,7 +9,7 @@
   flex: 1;
   min-height: 0;
   margin: 8rpx -32rpx 0;
-  padding: 36rpx 48rpx 0;
+  padding: 20rpx 48rpx 0;
   box-sizing: border-box;
   border-radius: 36rpx 36rpx 0 0;
   background: #ffffff;
@@ -22,7 +22,7 @@
   font-size: 24rpx;
   color: rgba(26, 26, 26, 0.42);
   line-height: 1.65;
-  padding: 4rpx 4rpx 12rpx;
+  padding: 4rpx 4rpx 20rpx;
 }
 
 .empty {
@@ -102,8 +102,8 @@
 .row-line {
   flex: 1;
   min-width: 0;
-  font-size: 28rpx;
-  color: #1a1a1a;
+  font-size: 22rpx;
+  color: #666666;
   line-height: 1.5;
   word-break: break-word;
 }
@@ -118,6 +118,20 @@
 
 .list-pad {
   height: calc(24rpx + env(safe-area-inset-bottom));
+}
+
+.list-footer {
+  padding: 36rpx 8rpx 8rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.list-footer-text {
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.38);
+  line-height: 1.55;
+  text-align: center;
 }
 
 .state {

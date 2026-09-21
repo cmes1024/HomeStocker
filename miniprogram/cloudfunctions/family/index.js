@@ -119,6 +119,7 @@ async function loadCapacityFields(familyId, family) {
       itemLimit: effective.itemLimit,
       memberLimit: effective.memberLimit,
       familyLimit: effective.familyLimit,
+      activityLimit: effective.activityLimit,
       product: effective.product
     }
   }
@@ -164,7 +165,8 @@ async function writeFamilyEntitlementSnapshot(familyId, effective) {
           expiresAt: effective.expiresAt,
           itemLimit: effective.itemLimit,
           memberLimit: effective.memberLimit,
-          familyLimit: effective.familyLimit
+          familyLimit: effective.familyLimit,
+          activityLimit: effective.activityLimit
         }
       }
     })
@@ -927,6 +929,7 @@ async function getEntitlement(openid) {
     itemLimit,
     memberLimit,
     familyLimit: cap.entitlement.familyLimit,
+    activityLimit: cap.entitlement.activityLimit,
     itemCount,
     memberCount,
     remaining:
@@ -1039,7 +1042,8 @@ async function redeem(openid, event) {
         expiresAt: effective.expiresAt,
         itemLimit: effective.itemLimit,
         memberLimit: effective.memberLimit,
-        familyLimit: effective.familyLimit
+        familyLimit: effective.familyLimit,
+        activityLimit: effective.activityLimit
       }
     },
     openid

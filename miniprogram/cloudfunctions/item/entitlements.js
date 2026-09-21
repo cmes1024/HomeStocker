@@ -1,6 +1,6 @@
 /**
  * 家庭容量档：计划 / 产品常量与解析。
- * 云函数隔离部署，item / family / ai 各持一份，内容须保持一致。
+ * 云函数隔离部署，item / family / ai / activity 各持一份，内容须保持一致。
  */
 const crypto = require('crypto')
 
@@ -10,13 +10,15 @@ const PLANS = {
   free: {
     familyLimit: 1,
     memberLimit: 2,
-    itemLimit: 50
+    itemLimit: 50,
+    activityLimit: 30
   },
   capacity_std: {
-    // null = 不限
+    // null = 不限（activityLimit 除外，消息保留始终有限）
     familyLimit: null,
     memberLimit: null,
-    itemLimit: null
+    itemLimit: null,
+    activityLimit: 200
   }
 }
 
@@ -25,7 +27,7 @@ const PRODUCTS = {
   capacity_365d: { planId: 'capacity_std', days: 365 }
 }
 
-const LIMIT_KEYS = ['familyLimit', 'memberLimit', 'itemLimit']
+const LIMIT_KEYS = ['familyLimit', 'memberLimit', 'itemLimit', 'activityLimit']
 
 function normalizeCode(code) {
   return String(code || '')

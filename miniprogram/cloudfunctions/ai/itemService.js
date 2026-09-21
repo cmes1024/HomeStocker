@@ -458,9 +458,72 @@ function summarizeChangedFields(changedFields) {
     .join('、')
 }
 
+function batchItemNameSnapshot(names) {
+  const list = (names || [])
+    .map((n) => String(n || '').trim())
+    .filter(Boolean)
+  if (!list.length) return '多件物品'
+  if (list.length === 1) return list[0]
+  if (list.length === 2) return `${list[0]}、${list[1]}`
+  return `${list[0]}、${list[1]}等`
+}
+
+async function resolveActivityLimit(familyId) {
+  let sub = null
+  try {
+    const snap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (snap && snap.data) sub = snap.data
+  } catch (e) {
+    sub = null
+  }
+  const ent = entitlements.resolveEffectiveFromSub(sub)
+  const n = Number(ent.activityLimit)
+  if (!Number.isFinite(n) || n <= 0) {
+    return Number(entitlements.PLANS.free.activityLimit) || 30
+  }
+  return n
+}
+
+/** 超出档位保留上限时删最旧；失败不回滚物资写。 */
+async function trimActivities(familyId) {
+  if (!familyId) return
+  try {
+    const keepN = await resolveActivityLimit(familyId)
+    const col = db.collection('activities').where({ familyId })
+    const countRes = await col.count()
+    const total = Number(countRes && countRes.total) || 0
+    if (total <= keepN) return
+    let remaining = total - keepN
+    while (remaining > 0) {
+      const batch = Math.min(remaining, 100)
+      const old = await col.orderBy('createdAt', 'asc').limit(batch).get()
+      const rows = (old && old.data) || []
+      if (!rows.length) break
+      await Promise.all(
+        rows.map((row) =>
+          db
+            .collection('activities')
+            .doc(row._id)
+            .remove()
+            .catch((e) => {
+              console.warn('trimActivities remove failed', row._id, e && e.message)
+            })
+        )
+      )
+      remaining -= rows.length
+      if (rows.length < batch) break
+    }
+  } catch (e) {
+    console.error('trimActivities failed', familyId, e)
+  }
+}
+
 async function appendActivity(doc) {
   try {
     await db.collection('activities').add({ data: doc })
+    if (doc && doc.familyId) {
+      await trimActivities(doc.familyId)
+    }
   } catch (e) {
     console.error('appendActivity failed', e)
   }
@@ -571,7 +634,8 @@ async function createItem(openid, event, options = {}) {
 const CREATE_MANY_LIMIT = 20
 
 /**
- * 批量新建：先全部校验，任一非法则零写入；通过后一次 items.add 数组 + 一次 activities.add 数组。
+ * 批量新建：先全部校验，任一非法则零写入；通过后一次 items.add 数组。
+ * activities：n≥2 合成一条 create_batch；n=1 仍写单条 create。
  * options.spaces / options.locations 为 id→hint 映射，供跳过重复 doc.get。
  */
 async function createMany(openid, event, options = {}) {
@@ -738,21 +802,41 @@ async function createMany(openid, event, options = {}) {
     }
   }
 
-  const activityDocs = prepared.map((p, i) => ({
-    familyId: ctx.familyId,
-    itemId: ids[i],
-    action: 'create',
-    actorOpenid: openid,
-    itemName: p.name,
-    quantity: p.quantity,
-    unit: p.unit,
-    source: p.source,
-    createdAt: now,
-    ...p.place
-  }))
-
   try {
-    await db.collection('activities').add({ data: activityDocs })
+    if (prepared.length >= 2) {
+      const batchSource = prepared.some((p) => p.source === 'agent')
+        ? 'agent'
+        : defaultSource
+      await db.collection('activities').add({
+        data: {
+          familyId: ctx.familyId,
+          itemId: '',
+          action: 'create_batch',
+          actorOpenid: openid,
+          itemName: batchItemNameSnapshot(prepared.map((p) => p.name)),
+          batchCount: prepared.length,
+          source: batchSource,
+          createdAt: now
+        }
+      })
+    } else {
+      const p = prepared[0]
+      await db.collection('activities').add({
+        data: {
+          familyId: ctx.familyId,
+          itemId: ids[0],
+          action: 'create',
+          actorOpenid: openid,
+          itemName: p.name,
+          quantity: p.quantity,
+          unit: p.unit,
+          source: p.source,
+          createdAt: now,
+          ...p.place
+        }
+      })
+    }
+    await trimActivities(ctx.familyId)
   } catch (e) {
     console.error('createMany activities.add failed', e)
   }

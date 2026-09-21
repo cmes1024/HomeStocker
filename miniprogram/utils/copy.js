@@ -84,6 +84,7 @@ const copy = {
     actorFallback: '家人',
     unnamedItem: '一件物品',
     actionCreate: '加入了',
+    actionCreateBatch: (names, count) => `加入了${names}${count}件物品`,
     actionUpdate: '修改了',
     actionRemove: '删除了'
   },
@@ -97,12 +98,15 @@ const copy = {
     actorFallback: '家人',
     unnamedItem: '一件物品',
     actionCreate: '加入了',
+    actionCreateBatch: (names, count) => `加入了${names}${count}件物品`,
     actionUpdate: '修改了',
     actionRemove: '删除了',
     justNow: '刚刚',
     minutesAgo: (n) => `${n}分钟前`,
     hoursAgo: (n) => `${n}小时前`,
-    daysAgo: (n) => `${n}天前`
+    daysAgo: (n) => `${n}天前`,
+    footerFree: (n) => `免费版最多${n}条`,
+    footerActive: (n) => `消息上限${n}条`
   },
 
   edit: {

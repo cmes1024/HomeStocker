@@ -55,6 +55,10 @@
             <view class="row-time">{{item.timeLabel}}</view>
           </view>
         </view>
+
+        <view class="list-footer" wx:if="{{showFooter}}">
+          <view class="list-footer-text">{{footerText}}</view>
+        </view>
         <view class="list-pad"></view>
       </scroll-view>
     </view>

@@ -28,7 +28,7 @@
 | `expireReminderEnabled` | boolean | 家庭过期提醒总开关，默认 `true`；缺省按 true 处理 |
 | `tagsSeededAt` | number \| null | 默认标签种子写入时间；有值后不再自动补种已删默认标签 |
 | `itemCount` | number | 该家物资件数；`item.create` / `createMany` / `remove` / 合并吸收删除时由云函数维护；缺失时写路径懒 `count()` 校准。新建家庭为 `0` |
-| `entitlement` | object \| null | 可选展示快照 `{ planId, expiresAt, itemLimit, memberLimit, familyLimit }`；兑换/续期时刷新。容量真相仍以 `familySubscriptions` + 配置表为准 |
+| `entitlement` | object \| null | 可选展示快照 `{ planId, expiresAt, itemLimit, memberLimit, familyLimit, activityLimit }`；兑换/续期时刷新。容量真相仍以 `familySubscriptions` + 配置表为准 |
 | `createdAt` | number | |
 
 不存 `memberOpenids[]`，不嵌空间树或标签目录。
@@ -88,9 +88,10 @@
 | `_id` | string | 自动 |
 | `familyId` | string | 隔离键 |
 | `itemId` | string | 物资 id（硬删后仍保留，便于按 item 查历史） |
-| `action` | string | `create` \| `update` \| `remove` |
+| `action` | string | `create` \| `create_batch` \| `update` \| `remove` |
 | `actorOpenid` | string | 操作者 |
-| `itemName` | string | 写入时物资名快照（删除后 feed 仍可读） |
+| `itemName` | string | 写入时物资名快照（删除后 feed 仍可读；`create_batch` 为前若干名称拼接，如 `牛奶、纸巾等`） |
+| `batchCount` | number | 可选；仅 `create_batch`：本次批量件数 |
 | `spaceId` | string | 可选；写入时空间 id |
 | `spaceName` | string | 写入时空间名快照（可空） |
 | `locationId` | string | 可选；写入时位置 id，无位置则为空 |
@@ -102,7 +103,7 @@
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 
-仅由 `item` 云函数在 create / createMany / update / remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。水位探针走 `activity.cursor`（最新一条的 `_id` / `createdAt`，不查昵称）。个人订阅开关不写 activities。`createMany`：先全部校验，通过后一次 `items.add` 数组写入，再一次 `activities.add` 数组（一件一日志）。
+仅由 `item` 云函数在 create / createMany / update / remove **成功后**旁路写入；活动插入失败不回滚物资写。列表读走 `activity.list`。水位探针走 `activity.cursor`（最新一条的 `_id` / `createdAt`，不查昵称）。个人订阅开关不写 activities。`createMany`：先全部校验，通过后一次 `items.add` 数组写入；**n≥2 写一条 `create_batch`，n=1 写普通 `create`**。家庭消息保留上限由档位 `activityLimit` 决定（免费 30 / 加强 200）：每次写入后删最旧直至达标；`activity.list`（无 itemId）按同一上限截断。
 
 ### `itemExpireSubs`
 
@@ -361,11 +362,11 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 权威方案：`docs/plans/2026-09-21-capacity-membership-redeem/`。
 
 1. 集合 `redeemCodes`、`familySubscriptions` 已创建；安全规则客户端写 deny（见 `database-rules.json`）。
-2. 上传云函数 `family`（含 `getEntitlement` / `redeem` / `issueCodes`）、`item`（容量门控 + `itemCount`）；若用助手建物资，同步上传 `ai`（内含同款 `itemService` + `entitlements`）。
+2. 上传云函数 `family`（含 `getEntitlement` / `redeem` / `issueCodes`）、`item`（容量门控 + `itemCount` + 消息截断）、`activity`（列表按 `activityLimit` 截断）；若用助手建物资，同步上传 `ai`（内含同款 `itemService` + `entitlements`）。
 3. 云函数 `family` 环境变量配置 **`ADMIN_OPENID`**（仅该 openid 可 `issueCodes`）。不要把兑换码明文或 admin 身份写进仓库。
 4. 云函数 `ai` 若要对用户展示「申请内测」联系方式，配置 **`CAPACITY_ADMIN_WECHAT`**（管理员微信号）；未配置则知识库不输出微信号。不要把微信号写进仓库。
-5. 免费档默认 `familyLimit=1` / `memberLimit=2` / `itemLimit=50`（`entitlements.js`）；加强版三项 `null`；读路径（list/search）不查订阅。
-6. 写路径门控：`item.create(Many)`、`family.create` / `join`（家数 + 人数）；过限不踢人、不删物资。
+5. 免费档默认 `familyLimit=1` / `memberLimit=2` / `itemLimit=50` / `activityLimit=30`（`entitlements.js`）；加强版家/人/物三项 `null`，`activityLimit=200`；物资读路径（list/search）不查订阅。
+6. 写路径门控：`item.create(Many)`、`family.create` / `join`（家数 + 人数）；过限不踢人、不删物资。消息写入后按 `activityLimit` 删最旧。
 7. 手测清单见 `acceptance-checklist.md`「容量会员」。
 
 ## 订阅消息（B 波）

@@ -17,7 +17,7 @@ function itemLabel(row, unnamed) {
 }
 
 function actionVerb(action, copy) {
-  if (action === 'create') return copy.actionCreate
+  if (action === 'create' || action === 'create_batch') return copy.actionCreate
   if (action === 'remove') return copy.actionRemove
   return copy.actionUpdate
 }
@@ -28,6 +28,18 @@ function formatActivityLine(row, copy) {
     copy.actorFallback
   const unnamed = copy.unnamedItem || '一件物品'
   const verb = actionVerb(row && row.action, copy)
+
+  if (row && row.action === 'create_batch') {
+    const names = String((row && row.itemName) || '').trim() || unnamed
+    const n = Number(row.batchCount)
+    const count = Number.isFinite(n) && n > 0 ? n : 0
+    if (count > 0 && copy.actionCreateBatch) {
+      return `${actor}${copy.actionCreateBatch(names, count)}`
+    }
+    if (count > 0) return `${actor}${verb}${names}${count}件物品`
+    return `${actor}${verb}${names}`
+  }
+
   const item = itemLabel(row, unnamed)
   const place = placePhrase(row)
   if (place) return `${actor}在${place}里${verb}${item}`

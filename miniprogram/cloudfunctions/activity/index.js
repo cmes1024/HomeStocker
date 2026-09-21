@@ -1,4 +1,5 @@
 const cloud = require('wx-server-sdk')
+const entitlements = require('./entitlements')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
@@ -63,16 +64,55 @@ async function loadActorProfiles(openids) {
   return map
 }
 
+async function resolveActivityEntitlement(familyId) {
+  let sub = null
+  try {
+    const snap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (snap && snap.data) sub = snap.data
+  } catch (e) {
+    sub = null
+  }
+  const ent = entitlements.resolveEffectiveFromSub(sub)
+  const n = Number(ent.activityLimit)
+  const activityLimit =
+    Number.isFinite(n) && n > 0
+      ? n
+      : Number(entitlements.PLANS.free.activityLimit) || 30
+  return {
+    activityLimit,
+    active: !!ent.active,
+    premiumActivityLimit:
+      Number(entitlements.PLANS.capacity_std.activityLimit) || 200
+  }
+}
+
 async function listActivities(openid, event) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
 
-  const limit = Math.min(Math.max(Number(event.limit) || 30, 1), 50)
-  const skip = Math.max(Number(event.skip) || 0, 0)
+  const itemId = event.itemId ? String(event.itemId) : ''
   const where = { familyId: ctx.familyId }
-  if (event.itemId) {
-    where.itemId = String(event.itemId)
+  if (itemId) {
+    where.itemId = itemId
   }
+
+  let limit
+  let feedEnt = null
+  if (itemId) {
+    // 物资详情最近操作：小窗口，不按档位拉满
+    limit = Math.min(Math.max(Number(event.limit) || 10, 1), 10)
+  } else {
+    feedEnt = await resolveActivityEntitlement(ctx.familyId)
+    const activityLimit = feedEnt.activityLimit
+    const requested = Number(event.limit)
+    const fallback = activityLimit
+    limit = Math.min(
+      Math.max(Number.isFinite(requested) && requested > 0 ? requested : fallback, 1),
+      activityLimit
+    )
+  }
+
+  const skip = Math.max(Number(event.skip) || 0, 0)
 
   let query = db.collection('activities').where(where).orderBy('createdAt', 'desc')
   if (skip > 0) {
@@ -91,6 +131,14 @@ async function listActivities(openid, event) {
     }
   })
 
+  if (feedEnt) {
+    return ok({
+      list: enriched,
+      activityLimit: feedEnt.activityLimit,
+      premiumActivityLimit: feedEnt.premiumActivityLimit,
+      active: feedEnt.active
+    })
+  }
   return ok({ list: enriched })
 }
 

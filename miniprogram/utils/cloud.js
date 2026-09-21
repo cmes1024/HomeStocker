@@ -151,7 +151,9 @@ function applyWriteInvalidation(name, action) {
       action === 'updateProfile'
     ) {
       cache.dropByName('family')
-      if (action === 'updateProfile') cache.dropByName('activity')
+      if (action === 'updateProfile' || action === 'redeem') {
+        cache.dropByName('activity')
+      }
       return
     }
     if (
