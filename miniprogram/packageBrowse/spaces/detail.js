@@ -1,4 +1,4 @@
-const { listItemsBySpace, listLocations } = require('../../utils/db')
+const { loadSpaceDetail } = require('../../utils/db')
 const { callSpace } = require('../../utils/cloud')
 const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
 const { resolveSpaceAtmosphere } = require('../../utils/spaceAtmosphere')
@@ -112,14 +112,11 @@ Page({
       this.setData({ error: '', spaceId })
     }
     try {
-      const [spacePack, locationList] = await Promise.all([
-        listItemsBySpace(spaceId),
-        listLocations(spaceId)
-      ])
-      const space = spacePack.space
-      const locations = Array.isArray(locationList) ? locationList : []
+      const pack = await loadSpaceDetail(spaceId)
+      const space = pack.space
+      const locations = Array.isArray(pack.locations) ? pack.locations : []
       const rawItems = await enrichLedgerItemsAsync(
-        spacePack.list || [],
+        pack.list || [],
         {},
         locationByIdFrom(locations),
         {}

@@ -24,9 +24,18 @@ function unwrap(res) {
 
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
-  family: { getMyFamily: true, listMyFamilies: true, listMembers: true },
-  item: { get: true, search: true, list: true, count: true, listExpiring: true, home: true },
-  space: { list: true, listLocations: true, listItemsBySpace: true, listPockets: true },
+  family: { getMyFamily: true, listMyFamilies: true, listMembers: true, page: true },
+  item: {
+    get: true,
+    detail: true,
+    editForm: true,
+    search: true,
+    list: true,
+    count: true,
+    listExpiring: true,
+    home: true
+  },
+  space: { list: true, listLocations: true, listItemsBySpace: true, listPockets: true, detail: true },
   tag: { list: true, ensureDefaults: true },
   activity: { list: true },
   bootstrap: { home: true }
@@ -54,7 +63,7 @@ function isItemDomainRead(name, action) {
   if (name === 'activity' && action === 'list') return true
   if (
     name === 'space' &&
-    (action === 'listItemsBySpace' || action === 'listPockets')
+    (action === 'listItemsBySpace' || action === 'listPockets' || action === 'detail')
   ) {
     return true
   }
@@ -127,6 +136,7 @@ function invalidateItemDomain() {
   cache.dropByName('bootstrap')
   cache.dropNameAction('space', 'listItemsBySpace')
   cache.dropNameAction('space', 'listPockets')
+  cache.dropNameAction('space', 'detail')
   clearCursor()
 }
 
@@ -178,6 +188,39 @@ function applyWriteInvalidation(name, action) {
   }
   cache.clearAll()
   clearCursor()
+}
+
+/**
+ * 家庭页聚合成功后，分片写入 listMyFamilies / listMembers / getMyFamily 缓存。
+ */
+function seedFamilyPageBundle(bundle) {
+  if (!bundle) return
+  const fid =
+    (bundle.family && bundle.family._id) ||
+    bundle.currentFamilyId ||
+    ''
+  if (!fid) return
+
+  cache.set(cache.makeKey(fid, 'family', 'page', {}, ''), bundle)
+  cache.set(cache.makeKey(fid, 'family', 'listMyFamilies', {}, ''), {
+    currentFamilyId: bundle.currentFamilyId,
+    family: bundle.family,
+    list: bundle.list || [],
+    profile: bundle.profile || { nickname: '', avatarUrl: '' }
+  })
+  cache.set(cache.makeKey(fid, 'family', 'listMembers', {}, ''), {
+    list: bundle.members || [],
+    profile: bundle.profile || { nickname: '', avatarUrl: '' }
+  })
+  if (bundle.family && bundle.family._id) {
+    cache.set(
+      cache.makeKey(fid, 'family', 'getMyFamily', {}, ''),
+      {
+        ...bundle.family,
+        profile: bundle.profile || { nickname: '', avatarUrl: '' }
+      }
+    )
+  }
 }
 
 /**
@@ -324,6 +367,9 @@ async function invoke(name, data = {}) {
       if (isBootstrapHome && result) {
         seedBootstrapBundle(result, data)
       }
+      if (name === 'family' && action === 'page' && result) {
+        seedFamilyPageBundle(result)
+      }
       return result
     })()
 
@@ -375,6 +421,7 @@ module.exports = {
   callActivity,
   callBootstrap,
   seedBootstrapBundle,
+  seedFamilyPageBundle,
   friendlyCloudError,
   markAppHidden,
   markAppShown,

@@ -104,14 +104,30 @@ Page({
 
   async bootstrap(itemId) {
     try {
+      const preferredSpaceId = this.data.preferredSpaceId || ''
+      try {
+        const pack = await callItem('editForm', {
+          itemId: itemId || undefined,
+          spaceId: preferredSpaceId || undefined
+        })
+        this.applyEditForm(pack)
+        this.syncLoadingColors()
+        return
+      } catch (e) {
+        if (e && (e.code === 'NOT_FOUND' || e.code === 'FORBIDDEN' || e.code === 'NO_FAMILY')) {
+          throw e
+        }
+        // 未部署 item.editForm 时降级
+      }
+
       let item = null
       if (itemId) {
         item = await callItem('get', { itemId })
       }
-      const preferredSpaceId =
+      const spacePref =
         (item && item.spaceId) || this.data.preferredSpaceId || ''
       await Promise.all([
-        this.loadSpaces(preferredSpaceId),
+        this.loadSpaces(spacePref),
         this.loadTags((item && item.tagIds) || [])
       ])
       if (item) {
@@ -150,6 +166,86 @@ Page({
         error: e.message || copy.common.loadFailed
       })
     }
+  },
+
+  applyEditForm(pack) {
+    const spaces = (pack && pack.spaces) || []
+    const spaceNames = spaces.map((s) => s.name)
+    let spaceIndex = 0
+    const preferredSpaceId = (pack && pack.spaceId) || this.data.preferredSpaceId || ''
+    if (preferredSpaceId) {
+      const idx = spaces.findIndex((s) => s && s._id === preferredSpaceId)
+      if (idx >= 0) spaceIndex = idx
+    } else if (this.prefill && this.prefill.spaceName) {
+      const idx = spaces.findIndex((s) => s && s.name === this.prefill.spaceName)
+      if (idx >= 0) spaceIndex = idx
+    } else {
+      const defIdx = spaces.findIndex((s) => s && s.isDefault)
+      if (defIdx >= 0) spaceIndex = defIdx
+    }
+    const spaceId = spaces[spaceIndex] ? spaces[spaceIndex]._id : ''
+
+    const preferredIds = (pack && pack.item && pack.item.tagIds) || []
+    const tags = ((pack && pack.tags) || []).map((t) => ({
+      ...t,
+      selected: preferredIds.indexOf(t._id) >= 0
+    }))
+    const selectedTagIds = tags.filter((t) => t.selected).map((t) => t._id)
+
+    const none = copy.edit.locationNone
+    const locations = (pack && pack.locations) || []
+    const locationNames = [none].concat(locations.map((l) => l.name))
+    let locationIndex = 0
+    const preferredLocationId = (pack && pack.locationId) || ''
+    const preferredLocationName =
+      (this.prefill && this.prefill.locationName) || ''
+    if (preferredLocationId) {
+      const idx = locations.findIndex((l) => l && l._id === preferredLocationId)
+      if (idx >= 0) locationIndex = idx + 1
+    } else if (preferredLocationName) {
+      const idx = locations.findIndex((l) => l && l.name === preferredLocationName)
+      if (idx >= 0) locationIndex = idx + 1
+    }
+    const locationId =
+      locationIndex > 0 && locations[locationIndex - 1]
+        ? locations[locationIndex - 1]._id
+        : ''
+
+    const item = pack && pack.item
+    const prefill = this.prefill || {}
+    const patch = {
+      spaces,
+      spaceNames,
+      spaceIndex,
+      spaceId,
+      spaceLabel: spaces[spaceIndex] ? spaces[spaceIndex].name : '',
+      tags,
+      selectedTagIds,
+      locations,
+      locationNames,
+      locationIndex,
+      locationId,
+      showNewLocation: false,
+      newLocationName: '',
+      loading: false
+    }
+    if (item) {
+      patch.name = item.name || ''
+      patch.quantity = String(item.quantity != null ? item.quantity : 1)
+      patch.unit = item.unit || ''
+      patch.note = item.note || ''
+      patch.productionDate = item.productionDate || ''
+      patch.expireDate = item.expireDate || ''
+      patch.expireReminderEnabled = !!item.expireReminderEnabled
+    } else {
+      if (prefill.name) patch.name = prefill.name
+      if (prefill.quantity) patch.quantity = String(prefill.quantity)
+      if (prefill.unit) patch.unit = prefill.unit
+      if (prefill.note) patch.note = prefill.note
+      if (prefill.expireDate) patch.expireDate = prefill.expireDate
+      if (prefill.productionDate) patch.productionDate = prefill.productionDate
+    }
+    this.setData(patch)
   },
 
   async loadTags(preferredIds) {

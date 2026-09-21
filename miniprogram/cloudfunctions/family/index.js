@@ -584,6 +584,121 @@ async function listMembers(openid) {
   return ok({ list, profile: userProfile(user) })
 }
 
+/**
+ * 家庭页一次拉齐：我的家庭列表（含当前家容量）+ 成员。
+ * 身份只解析一次，避免 listMyFamilies ∥ listMembers 重复读 users/families。
+ */
+async function pageBundle(openid) {
+  const user = await ensureUser(openid)
+  const currentFamilyId = user.currentFamilyId || null
+  const selfProfile = userProfile(user)
+
+  const memRes = await db.collection('memberships').where({ openid }).limit(20).get()
+  const memberships = memRes.data || []
+  if (!memberships.length) {
+    return ok({
+      currentFamilyId: null,
+      family: null,
+      list: [],
+      members: [],
+      profile: selfProfile
+    })
+  }
+
+  const ids = memberships.map((m) => m.familyId)
+  const [famRes, subSnap, memberMemRes] = await Promise.all([
+    db
+      .collection('families')
+      .where({ _id: _.in(ids) })
+      .limit(20)
+      .get(),
+    currentFamilyId
+      ? db.collection('familySubscriptions').doc(currentFamilyId).get().catch(() => null)
+      : Promise.resolve(null),
+    currentFamilyId
+      ? db.collection('memberships').where({ familyId: currentFamilyId }).limit(50).get()
+      : Promise.resolve({ data: [] })
+  ])
+
+  const byId = {}
+  ;(famRes.data || []).forEach((f) => {
+    byId[f._id] = f
+  })
+
+  const list = memberships
+    .map((m) => {
+      const f = byId[m.familyId]
+      if (!f) return null
+      return {
+        ...familySummary(m.familyId, f, openid),
+        joinedAt: m.joinedAt,
+        isCurrent: m.familyId === currentFamilyId
+      }
+    })
+    .filter(Boolean)
+    .sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0))
+
+  let family = null
+  if (currentFamilyId && byId[currentFamilyId]) {
+    const famDoc = byId[currentFamilyId]
+    const sub = subSnap && subSnap.data ? subSnap.data : null
+    const now = Date.now()
+    const effective = entitlements.resolveEffectiveFromSub(sub, now)
+    let itemCount =
+      famDoc.itemCount == null || !Number.isFinite(Number(famDoc.itemCount))
+        ? null
+        : Number(famDoc.itemCount)
+    if (itemCount != null && itemCount < 0) itemCount = 0
+    family = {
+      ...familySummary(currentFamilyId, famDoc, openid),
+      itemCount,
+      entitlement: {
+        planId: effective.planId,
+        active: effective.active,
+        expiresAt: effective.expiresAt,
+        itemLimit: effective.itemLimit,
+        memberLimit: effective.memberLimit,
+        familyLimit: effective.familyLimit,
+        activityLimit: effective.activityLimit,
+        product: effective.product
+      }
+    }
+  }
+
+  const memberRows = (memberMemRes && memberMemRes.data) || []
+  const otherIds = memberRows.map((m) => m.openid).filter((id) => id && id !== openid)
+  const profiles = await loadUserProfiles(otherIds)
+  profiles[openid] = selfProfile
+  const ownerOpenid = family
+    ? family.ownerOpenid
+    : byId[currentFamilyId] && byId[currentFamilyId].ownerOpenid
+  const members = memberRows
+    .map((m) => {
+      const profile = profiles[m.openid] || { nickname: '', avatarUrl: '' }
+      return {
+        openid: m.openid,
+        nickname: profile.nickname,
+        avatarUrl: profile.avatarUrl,
+        isOwner: m.openid === ownerOpenid,
+        isMe: m.openid === openid,
+        joinedAt: m.joinedAt || 0
+      }
+    })
+    .sort((a, b) => {
+      if (a.isOwner !== b.isOwner) return a.isOwner ? -1 : 1
+      if (a.isMe !== b.isMe) return a.isMe ? -1 : 1
+      return (a.joinedAt || 0) - (b.joinedAt || 0)
+    })
+
+  return ok({
+    currentFamilyId,
+    family,
+    list,
+    members,
+    profile: selfProfile
+  })
+}
+
 async function updateProfile(openid, event) {
   await ensureUser(openid)
   const hasNickname = event && Object.prototype.hasOwnProperty.call(event, 'nickname')
@@ -1172,6 +1287,8 @@ exports.main = async (event) => {
         return await listMyFamilies(OPENID)
       case 'listMembers':
         return await listMembers(OPENID)
+      case 'page':
+        return await pageBundle(OPENID)
       case 'updateProfile':
         return await updateProfile(OPENID, event || {})
       case 'switchFamily':

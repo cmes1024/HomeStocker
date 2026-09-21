@@ -37,6 +37,10 @@ exports.main = async (event) => {
         return await service.mergeItems(OPENID, event)
       case 'get':
         return await service.getItem(OPENID, event)
+      case 'detail':
+        return await service.getItemDetail(OPENID, event)
+      case 'editForm':
+        return await service.editForm(OPENID, event)
       case 'list':
         return await service.listItems(OPENID, event)
       case 'count':

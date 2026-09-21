@@ -1338,6 +1338,277 @@ async function getItem(openid, event) {
   return ok({ _id: itemId, ...snap.data, expireReminderEnabled: mine })
 }
 
+/**
+ * 物资详情一次拉齐：本体+订阅+地点名+标签名+最近操作。
+ * 身份只解析一次，避免 get ∥ tag.list ∥ activity.list 重复读 users/memberships。
+ */
+async function getItemDetail(openid, event) {
+  const userSnap = await db.collection('users').doc(openid).get().catch(() => null)
+  if (!userSnap || !userSnap.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+  const familyId = userSnap.data.currentFamilyId
+  if (!familyId) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+  const mem = await db
+    .collection('memberships')
+    .doc(membershipId(openid, familyId))
+    .get()
+    .catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  const itemId = event.itemId ? String(event.itemId) : ''
+  if (!itemId) return fail('INVALID_ID', '缺少 itemId')
+
+  const snap = await db.collection('items').doc(itemId).get().catch(() => null)
+  if (!snap || !snap.data) return fail('NOT_FOUND', '物资不存在')
+  if (snap.data.familyId !== familyId) {
+    return fail('FORBIDDEN', '无权查看该物资')
+  }
+
+  const raw = snap.data
+  const spaceId = raw.spaceId ? String(raw.spaceId) : ''
+  const locationId = raw.locationId ? String(raw.locationId) : ''
+  const tagIds = []
+  const tagSeen = {}
+  ;(Array.isArray(raw.tagIds) ? raw.tagIds : []).forEach((tid) => {
+    const id = String(tid || '').trim()
+    if (!id || tagSeen[id]) return
+    tagSeen[id] = true
+    tagIds.push(id)
+  })
+  const activityLimit = Math.min(Math.max(Number(event.activityLimit) || 10, 1), 10)
+
+  const [mine, spaceSnap, locSnap, tagsRes, actRes] = await Promise.all([
+    hasExpireSub(itemId, openid),
+    spaceId
+      ? db.collection('spaces').doc(spaceId).get().catch(() => null)
+      : Promise.resolve(null),
+    locationId
+      ? db.collection('locations').doc(locationId).get().catch(() => null)
+      : Promise.resolve(null),
+    tagIds.length
+      ? db
+          .collection('tags')
+          .where({ _id: _.in(tagIds) })
+          .limit(50)
+          .get()
+          .catch(() => ({ data: [] }))
+      : Promise.resolve({ data: [] }),
+    db
+      .collection('activities')
+      .where({ familyId, itemId })
+      .orderBy('createdAt', 'desc')
+      .limit(activityLimit)
+      .get()
+      .catch(() => ({ data: [] }))
+  ])
+
+  let spaceName = ''
+  if (spaceSnap && spaceSnap.data && spaceSnap.data.familyId === familyId) {
+    spaceName = String(spaceSnap.data.name || '')
+  }
+  let locationName = ''
+  if (
+    locSnap &&
+    locSnap.data &&
+    locSnap.data.familyId === familyId &&
+    (!spaceId || String(locSnap.data.spaceId || '') === spaceId)
+  ) {
+    locationName = String(locSnap.data.name || '')
+  }
+
+  const tagById = {}
+  ;(tagsRes.data || []).forEach((t) => {
+    if (t && t._id && t.familyId === familyId) {
+      tagById[t._id] = String(t.name || '')
+    }
+  })
+  const tagNames = tagIds.map((id) => tagById[id]).filter(Boolean)
+
+  const activities = actRes.data || []
+  const actorIds = []
+  const actorSeen = {}
+  activities.forEach((row) => {
+    const id = row && row.actorOpenid ? String(row.actorOpenid) : ''
+    if (!id || actorSeen[id]) return
+    actorSeen[id] = true
+    actorIds.push(id)
+  })
+
+  const profiles = {}
+  profiles[openid] = {
+    nickname: userSnap.data.nickname ? String(userSnap.data.nickname).trim() : '',
+    avatarUrl: userSnap.data.avatarUrl ? String(userSnap.data.avatarUrl).trim() : ''
+  }
+
+  await Promise.all(
+    actorIds
+      .filter((id) => id !== openid)
+      .map(async (id) => {
+        const u = await db.collection('users').doc(id).get().catch(() => null)
+        profiles[id] = {
+          nickname:
+            u && u.data && u.data.nickname ? String(u.data.nickname).trim() : '',
+          avatarUrl:
+            u && u.data && u.data.avatarUrl ? String(u.data.avatarUrl).trim() : ''
+        }
+      })
+  )
+
+  const recentOps = activities.map((row) => {
+    const profile = profiles[row.actorOpenid] || { nickname: '', avatarUrl: '' }
+    return {
+      ...row,
+      actorNickname: profile.nickname || '',
+      actorAvatarUrl: profile.avatarUrl || ''
+    }
+  })
+
+  return ok({
+    item: {
+      _id: itemId,
+      ...raw,
+      expireReminderEnabled: !!mine
+    },
+    spaceName,
+    locationName,
+    tagNames,
+    recentOps
+  })
+}
+
+const EDIT_DEFAULT_TAG_NAMES = ['药品', '饮料', '工具', '衣物']
+
+async function listTagsForEdit(familyId) {
+  const res = await db.collection('tags').where({ familyId }).limit(100).get()
+  const list = res.data || []
+  list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+  return list
+}
+
+async function ensureTagsForEdit(familyId) {
+  const famSnap = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!famSnap || !famSnap.data) {
+    return { list: [], seeded: false }
+  }
+  if (famSnap.data.tagsSeededAt) {
+    return { list: await listTagsForEdit(familyId), seeded: false }
+  }
+  const existing = await listTagsForEdit(familyId)
+  if (existing.length) {
+    await db.collection('families').doc(familyId).update({
+      data: { tagsSeededAt: Date.now() }
+    })
+    return { list: existing, seeded: false }
+  }
+  const now = Date.now()
+  const created = []
+  for (let i = 0; i < EDIT_DEFAULT_TAG_NAMES.length; i++) {
+    const doc = {
+      familyId,
+      name: EDIT_DEFAULT_TAG_NAMES[i],
+      isDefault: true,
+      createdAt: now + i,
+      updatedAt: now + i
+    }
+    const addRes = await db.collection('tags').add({ data: doc })
+    created.push({ _id: addRes._id, ...doc })
+  }
+  await db.collection('families').doc(familyId).update({
+    data: { tagsSeededAt: now }
+  })
+  return { list: created, seeded: true }
+}
+
+/**
+ * 编辑页一次拉齐：可选物资 + 空间列表 + 标签 + 当前空间位置。
+ * 身份只解析一次，避免 space ∥ tag 双验。
+ */
+async function editForm(openid, event) {
+  const userSnap = await db.collection('users').doc(openid).get().catch(() => null)
+  if (!userSnap || !userSnap.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+  const familyId = userSnap.data.currentFamilyId
+  if (!familyId) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+  const mem = await db
+    .collection('memberships')
+    .doc(membershipId(openid, familyId))
+    .get()
+    .catch(() => null)
+  if (!mem || !mem.data) {
+    return fail('NO_FAMILY', '尚未加入家庭')
+  }
+
+  const itemId = event.itemId ? String(event.itemId) : ''
+  let preferredSpaceId = event.spaceId ? String(event.spaceId) : ''
+  let preferredLocationId = ''
+  let item = null
+
+  if (itemId) {
+    const snap = await db.collection('items').doc(itemId).get().catch(() => null)
+    if (!snap || !snap.data) return fail('NOT_FOUND', '物资不存在')
+    if (snap.data.familyId !== familyId) {
+      return fail('FORBIDDEN', '无权查看该物资')
+    }
+    const mine = await hasExpireSub(itemId, openid)
+    item = {
+      _id: itemId,
+      ...snap.data,
+      expireReminderEnabled: !!mine
+    }
+    if (item.spaceId) preferredSpaceId = String(item.spaceId)
+    if (item.locationId) preferredLocationId = String(item.locationId)
+  }
+
+  const [spacesRaw, tagsPack] = await Promise.all([
+    listSpacesForFamily(familyId),
+    ensureTagsForEdit(familyId)
+  ])
+
+  let spaces = spacesRaw || []
+  if (!spaces.length) {
+    const space = await ensureDefaultSpace(familyId)
+    spaces = space ? [space] : []
+  }
+
+  let spaceIndex = 0
+  if (preferredSpaceId) {
+    const idx = spaces.findIndex((s) => s && s._id === preferredSpaceId)
+    if (idx >= 0) spaceIndex = idx
+  } else {
+    const defIdx = spaces.findIndex((s) => s && s.isDefault)
+    if (defIdx >= 0) spaceIndex = defIdx
+  }
+  const spaceId = spaces[spaceIndex] ? spaces[spaceIndex]._id : ''
+
+  let locations = []
+  if (spaceId) {
+    const locRes = await db
+      .collection('locations')
+      .where({ familyId, spaceId })
+      .limit(100)
+      .get()
+      .catch(() => ({ data: [] }))
+    locations = (locRes.data || []).slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+  }
+
+  return ok({
+    item,
+    spaces,
+    tags: tagsPack.list || [],
+    locations,
+    spaceId,
+    locationId: preferredLocationId
+  })
+}
+
 async function countItems(openid) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
@@ -1608,6 +1879,8 @@ async function home(openid, event) {
     removeMany,
     mergeItems,
     getItem,
+    getItemDetail,
+    editForm,
     listItems,
     countItems,
     searchItems,

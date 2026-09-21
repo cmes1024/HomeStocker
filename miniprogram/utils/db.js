@@ -94,6 +94,35 @@ async function listLocations(spaceId) {
 }
 
 /**
+ * 单空间详情：空间 + 位置 + 物资（未部署 space.detail 时降级双请求）。
+ */
+async function loadSpaceDetail(spaceId, options = {}) {
+  const id = String(spaceId || '')
+  try {
+    const data = await callSpace('detail', {
+      spaceId: id,
+      limit: options.limit || 100
+    })
+    return {
+      space: (data && data.space) || null,
+      locations: (data && data.locations) || [],
+      list: (data && data.list) || []
+    }
+  } catch (e) {
+    if (e && e.code === 'NO_FAMILY') throw e
+    const [spacePack, locationList] = await Promise.all([
+      listItemsBySpace(id, options),
+      listLocations(id)
+    ])
+    return {
+      space: (spacePack && spacePack.space) || null,
+      locations: Array.isArray(locationList) ? locationList : [],
+      list: (spacePack && spacePack.list) || []
+    }
+  }
+}
+
+/**
  * 单空间物资（含 locationName）
  */
 async function listItemsBySpace(spaceId, options = {}) {
@@ -125,6 +154,7 @@ module.exports = {
   loadHomeBootstrap,
   listSpaces,
   listLocations,
+  loadSpaceDetail,
   listItemsBySpace,
   listPockets
 }

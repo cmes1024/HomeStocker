@@ -291,6 +291,52 @@ async function listItemsBySpace(openid, event) {
   return ok({ space, list })
 }
 
+/**
+ * 空间详情一次拉齐：空间 + 位置列表 + 物资（locationName 内存拼）。
+ * 身份 / spaces 只读一次，避免 listItemsBySpace ∥ listLocations 翻倍。
+ */
+async function detailSpace(openid, event) {
+  const ctx = await resolveFamilyContext(openid)
+  if (ctx.error) return ctx.error
+
+  const spaceId = event.spaceId ? String(event.spaceId) : ''
+  if (!spaceId) return fail('INVALID_ID', '缺少 spaceId')
+
+  const space = await getSpaceInFamily(spaceId, ctx.familyId)
+  if (!space) return fail('NOT_FOUND', '空间不存在')
+
+  const limit = Math.min(Math.max(Number(event.limit) || 100, 1), 100)
+  const [itemsRes, locsRes] = await Promise.all([
+    db
+      .collection('items')
+      .where({ familyId: ctx.familyId, spaceId })
+      .orderBy('updatedAt', 'desc')
+      .limit(limit)
+      .get(),
+    db
+      .collection('locations')
+      .where({ familyId: ctx.familyId, spaceId })
+      .limit(100)
+      .get()
+  ])
+
+  const locations = (locsRes.data || []).slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+  const locationMap = {}
+  locations.forEach((l) => {
+    if (l && l._id) locationMap[l._id] = l
+  })
+
+  const list = (itemsRes.data || []).map((item) => ({
+    ...item,
+    locationName:
+      item.locationId && locationMap[item.locationId]
+        ? locationMap[item.locationId].name || ''
+        : ''
+  }))
+
+  return ok({ space, locations, list })
+}
+
 /** 口袋页：一次云函数拉齐各空间物资，避免 1+N 次 callFunction。 */
 async function listPockets(openid, event) {
   const ctx = await resolveFamilyContext(openid)
@@ -414,6 +460,9 @@ exports.main = async (event) => {
         break
       case 'listItemsBySpace':
         result = await listItemsBySpace(OPENID, event)
+        break
+      case 'detail':
+        result = await detailSpace(OPENID, event)
         break
       case 'listPockets':
         result = await listPockets(OPENID, event)

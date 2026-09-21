@@ -197,9 +197,11 @@ Page({
         codeVisible
       )
     })
-    // 旧缓存没有 isAdmin 时重新拉一次，否则管理员看不到发码入口
-    if (!this.data.family || typeof this.data.family.isAdmin !== 'boolean') {
+    // 旧缓存没有 isAdmin 时清 family 读缓存；已有 isAdmin（如清单 bootstrap）不必整表丢掉
+    if (cached && typeof cached.isAdmin !== 'boolean') {
       invalidateFamilyReads()
+    }
+    if (!this.data.family || typeof this.data.family.isAdmin !== 'boolean') {
       this.load()
     }
   },
@@ -273,21 +275,44 @@ Page({
   async load() {
     this.setData(this.data.family ? { error: '' } : { loading: true, error: '' })
     try {
-      const [listed, membersRes] = await Promise.all([
-        callFamily('listMyFamilies'),
-        callFamily('listMembers').catch(() => ({ list: [], profile: null }))
-      ])
-      const family = await this.currentFamilyFromList(listed)
+      let family
+      let families
+      let members
+      let profile
+
+      try {
+        const page = await callFamily('page')
+        family = page.family
+        if (!family || !family._id) {
+          const err = new Error('尚未加入家庭')
+          err.code = 'NO_FAMILY'
+          throw err
+        }
+        families = page.list || []
+        members = mapMembers(page.members || [])
+        profile = page.profile || { nickname: '', avatarUrl: '' }
+      } catch (e) {
+        if (e && e.code === 'NO_FAMILY') throw e
+        // 未部署 family.page 时降级
+        const [listed, membersRes] = await Promise.all([
+          callFamily('listMyFamilies'),
+          callFamily('listMembers').catch(() => ({ list: [], profile: null }))
+        ])
+        family = await this.currentFamilyFromList(listed)
+        families = listed.list || []
+        members = mapMembers((membersRes && membersRes.list) || [])
+        profile =
+          (membersRes && membersRes.profile) ||
+          (listed && listed.profile) ||
+          { nickname: '', avatarUrl: '' }
+      }
+
       const theme = setAppFamily(family)
       const codeVisible = readCodeVisible()
-      const profile =
-        (membersRes && membersRes.profile) ||
-        (listed && listed.profile) ||
-        { nickname: '', avatarUrl: '' }
       this.setData({
         family,
-        families: listed.list || [],
-        members: mapMembers((membersRes && membersRes.list) || []),
+        families,
+        members,
         ...profileView(profile),
         loading: false,
         theme,

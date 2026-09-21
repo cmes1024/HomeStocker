@@ -217,45 +217,29 @@ async function ensureSpaces(familyId) {
   return [{ _id: addRes._id, ...doc }]
 }
 
-async function subscribedItemSet(familyId, openid) {
-  const res = await db
-    .collection('itemExpireSubs')
-    .where({ familyId, openid })
-    .limit(100)
-    .get()
-    .catch(() => ({ data: [] }))
-  const set = {}
-  ;(res.data || []).forEach((row) => {
-    if (row.itemId) set[row.itemId] = true
-  })
-  return set
-}
-
-function overlayExpireReminder(item, subscribed) {
-  if (!item || !item._id) return item
-  return {
-    ...item,
-    expireReminderEnabled: !!subscribed[item._id]
-  }
-}
-
-async function attachPlaceNames(familyId, list) {
+async function attachPlaceNames(familyId, list, spacesHint) {
   if (!list.length) return list
+  const spaceMap = {}
+  if (Array.isArray(spacesHint) && spacesHint.length) {
+    spacesHint.forEach((s) => {
+      if (s && s._id) spaceMap[s._id] = s.name || ''
+    })
+  }
   const spaceIds = [...new Set(list.map((i) => i.spaceId).filter(Boolean))]
   const locationIds = [...new Set(list.map((i) => i.locationId).filter(Boolean))]
+  const needSpaces = spaceIds.some((id) => spaceMap[id] === undefined)
   const [spaceRes, locRes] = await Promise.all([
-    spaceIds.length
+    needSpaces
       ? db.collection('spaces').where({ _id: _.in(spaceIds) }).limit(100).get()
       : Promise.resolve({ data: [] }),
     locationIds.length
       ? db.collection('locations').where({ _id: _.in(locationIds) }).limit(100).get()
       : Promise.resolve({ data: [] })
   ])
-  const spaceMap = {}
-  const locMap = {}
   ;(spaceRes.data || []).forEach((s) => {
     if (s.familyId === familyId) spaceMap[s._id] = s.name || ''
   })
+  const locMap = {}
   ;(locRes.data || []).forEach((l) => {
     if (l.familyId === familyId) locMap[l._id] = l.name || ''
   })
@@ -266,7 +250,10 @@ async function attachPlaceNames(familyId, list) {
   }))
 }
 
-async function loadBoard(familyId, openid, event) {
+/** 临期扫描上限：免费档物资上限 50，此窗口内 length 即准确件数 */
+const EXPIRING_SCAN_LIMIT = 50
+
+async function loadBoard(familyId, event, familyItemCount) {
   const limit = Math.min(Math.max(Number(event.limit) || 100, 1), 100)
   const spaceId = event.spaceId ? String(event.spaceId) : ''
   const today = shanghaiTodayYmd()
@@ -278,24 +265,29 @@ async function loadBoard(familyId, openid, event) {
   const listWhere = { familyId }
   if (spaceId) listWhere.spaceId = spaceId
 
-  const [listRes, counted, subscribed, expiringRes, expiringCounted] = await Promise.all([
+  const hasCachedTotal =
+    familyItemCount != null && Number.isFinite(Number(familyItemCount)) && Number(familyItemCount) >= 0
+
+  // 首页不查订阅；件数优先用 families.itemCount；临期一次查询兼 top+count
+  const [listRes, counted, expiringRes] = await Promise.all([
     db
       .collection('items')
       .where(listWhere)
       .orderBy('updatedAt', 'desc')
       .limit(limit)
       .get(),
-    db
-      .collection('items')
-      .where({ familyId })
-      .count()
-      .catch(() => null),
-    subscribedItemSet(familyId, openid),
+    hasCachedTotal
+      ? Promise.resolve(null)
+      : db
+          .collection('items')
+          .where({ familyId })
+          .count()
+          .catch(() => null),
     db
       .collection('items')
       .where(expiringWhere)
       .orderBy('expireDate', 'asc')
-      .limit(1)
+      .limit(EXPIRING_SCAN_LIMIT)
       .get()
       .catch(async () => {
         const all = await db.collection('items').where({ familyId }).limit(100).get()
@@ -305,42 +297,39 @@ async function loadBoard(familyId, openid, event) {
             return d && typeof d === 'string' && d <= end
           })
           .sort((a, b) => String(a.expireDate).localeCompare(String(b.expireDate)))
-          .slice(0, 1)
+          .slice(0, EXPIRING_SCAN_LIMIT)
         return { data: filtered }
-      }),
-    db
+      })
+  ])
+
+  let total = hasCachedTotal
+    ? Number(familyItemCount)
+    : Number(counted && counted.total) || 0
+  if (!hasCachedTotal && !counted) {
+    total = (listRes.data || []).length
+  }
+
+  const expiringRows = ((expiringRes && expiringRes.data) || []).filter(
+    (item) => item && item.expireDate
+  )
+  const rawTop = expiringRows[0] || null
+  let expiringCount = expiringRows.length
+  // 扫满上限时可能还有更多，补一次 count（加强档才常见）
+  if (expiringRows.length >= EXPIRING_SCAN_LIMIT) {
+    const capped = await db
       .collection('items')
       .where(expiringWhere)
       .count()
       .catch(() => null)
-  ])
-
-  let total = Number(counted && counted.total) || 0
-  if (!counted) {
-    total = (listRes.data || []).length
-  }
-
-  const list = (listRes.data || []).map((item) => overlayExpireReminder(item, subscribed))
-  const rawTop = ((expiringRes && expiringRes.data) || []).find((item) => item && item.expireDate)
-  let expiringTop = null
-  if (rawTop) {
-    const withPlace = await attachPlaceNames(familyId, [
-      overlayExpireReminder(rawTop, subscribed)
-    ])
-    expiringTop = withPlace[0] || null
-  }
-
-  let expiringCount = Number(expiringCounted && expiringCounted.total) || 0
-  if (!expiringCounted) {
-    expiringCount = expiringTop ? 1 : 0
-  } else if (expiringTop && expiringCount < 1) {
-    expiringCount = 1
+    if (capped && Number.isFinite(Number(capped.total))) {
+      expiringCount = Number(capped.total)
+    }
   }
 
   return {
-    list,
+    list: listRes.data || [],
     total,
-    expiringTop,
+    expiringTop: rawTop,
     expiringCount,
     today,
     windowEnd: end
@@ -369,9 +358,15 @@ async function home(openid, event) {
   const { familyId, family } = session
   const [spaces, board, cursor] = await Promise.all([
     ensureSpaces(familyId),
-    loadBoard(familyId, openid, event || {}),
+    loadBoard(familyId, event || {}, family.itemCount),
     loadCursor(familyId)
   ])
+
+  // 临期横幅地点：复用已拉的 spaces，避免再查 spaces；有 locationId 才查 locations
+  if (board.expiringTop) {
+    const withPlace = await attachPlaceNames(familyId, [board.expiringTop], spaces)
+    board.expiringTop = withPlace[0] || board.expiringTop
+  }
 
   return ok({
     family,

@@ -288,11 +288,36 @@ Page({
     }
 
     try {
-      const item = await callItem('get', { itemId })
-      if (seq !== this._loadSeq) return
+      let item
+      let place
+      let recentOps
 
-      const place = await this.resolvePlaceAndTags(item, soft)
-      if (seq !== this._loadSeq) return
+      try {
+        const pack = await callItem('detail', { itemId, activityLimit: 10 })
+        if (seq !== this._loadSeq) return
+        item = pack && pack.item
+        if (!item || !item._id) {
+          const err = new Error(copy.detail.missingId)
+          err.code = 'NOT_FOUND'
+          throw err
+        }
+        place = {
+          spaceName: (pack && pack.spaceName) || '',
+          locationName: (pack && pack.locationName) || '',
+          tagNames: (pack && pack.tagNames) || []
+        }
+        recentOps = mapActivityRows((pack && pack.recentOps) || [])
+      } catch (e) {
+        if (e && (e.code === 'NOT_FOUND' || e.code === 'FORBIDDEN' || e.code === 'NO_FAMILY')) {
+          throw e
+        }
+        // 未部署 item.detail 时降级旧路径
+        item = await callItem('get', { itemId })
+        if (seq !== this._loadSeq) return
+        place = await this.resolvePlaceAndTags(item, soft)
+        if (seq !== this._loadSeq) return
+        recentOps = null
+      }
 
       const sameBody = soft && itemCoreEqual(this.data.item, item)
       const samePlace =
@@ -311,10 +336,14 @@ Page({
         this.setData({ loading: false, error: '' })
       }
 
-      // 活动流后置，不挡物资本体
-      const recentOps = await this.loadRecentOps(itemId)
-      if (seq !== this._loadSeq) return
-      this.setData({ recentOps })
+      if (recentOps) {
+        if (seq !== this._loadSeq) return
+        this.setData({ recentOps })
+      } else {
+        const ops = await this.loadRecentOps(itemId)
+        if (seq !== this._loadSeq) return
+        this.setData({ recentOps: ops })
+      }
     } catch (e) {
       if (seq !== this._loadSeq) return
       if (e.code === 'NOT_FOUND') {
