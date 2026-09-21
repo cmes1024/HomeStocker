@@ -174,15 +174,16 @@ exports.main = async (event) => {
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }
+    // ensureDefaults 已种子时只是读列表，勿整树重建；仅首次真正写入默认标签才 touch
     if (
       result &&
       result.ok &&
-      (action === 'ensureDefaults' ||
-        action === 'create' ||
+      (action === 'create' ||
         action === 'createMany' ||
         action === 'update' ||
         action === 'remove' ||
-        action === 'removeMany')
+        action === 'removeMany' ||
+        (action === 'ensureDefaults' && result.data && result.data.seeded))
     ) {
       const ctx = await resolveFamilyContext(OPENID)
       if (!ctx.error) await touchFamilyTree(db, ctx.familyId)
