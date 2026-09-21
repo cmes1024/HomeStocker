@@ -1,4 +1,4 @@
-const { lookupRef } = require('../agent/refs')
+const { lookupRef, matchNamePreferRecent } = require('../agent/refs')
 
 const id = 'item.removeMany'
 const MAX_ITEMS = 20
@@ -27,6 +27,38 @@ async function run(ctx, call, step) {
         itemIds.push(row.itemId)
         names.push(row.name || '')
       }
+    }
+  }
+  // 同名冲突：若模型带了更多样的 names，按名重绑（优先 R*）
+  const hintNames = Array.isArray(call.names)
+    ? call.names.map((n) => String(n || '').trim()).filter(Boolean)
+    : []
+  const uniqueHints = []
+  hintNames.forEach((n) => {
+    if (uniqueHints.indexOf(n) < 0) uniqueHints.push(n)
+  })
+  const uniqueBound = []
+  ;(itemIds || []).forEach((id) => {
+    const row = lookupRef({ itemId: id }, refs)
+    const n = (row && row.name) || ''
+    if (n && uniqueBound.indexOf(n) < 0) uniqueBound.push(n)
+  })
+  if (
+    uniqueHints.length >= 2 &&
+    (itemIds.length < uniqueHints.length || uniqueBound.length < uniqueHints.length)
+  ) {
+    itemIds = []
+    names.length = 0
+    for (let i = 0; i < hintNames.length; i++) {
+      const row = matchNamePreferRecent(hintNames[i], refs, itemIds)
+      if (!row || !row.itemId) {
+        return {
+          ok: false,
+          summary: `没法对准「${hintNames[i]}」，请再说清楚是哪几件`
+        }
+      }
+      itemIds.push(row.itemId)
+      names.push(row.name || hintNames[i])
     }
   }
   if (itemIds.length < 2) {

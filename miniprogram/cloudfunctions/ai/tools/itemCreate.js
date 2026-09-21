@@ -68,7 +68,8 @@ async function run(ctx, call, step) {
     wrote: true,
     remember: {
       itemId: res.data && (res.data._id || res.data.id),
-      name
+      name,
+      op: 'create'
     },
     duplicateCheck: {
       name,

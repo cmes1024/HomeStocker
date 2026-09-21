@@ -40,6 +40,42 @@ function mergeRecentIds(prev, incoming, removed) {
   return out.slice(0, 6)
 }
 
+/** 保留 id+name+op，供「刚加的」删除确认区分新开 vs 改数量 */
+function mergeRecentItems(prev, incoming, removed) {
+  const drop = {}
+  ;(removed || []).forEach((id) => {
+    if (id) drop[id] = true
+  })
+  const out = []
+  const seen = {}
+  function push(row) {
+    const id = row && (row.itemId || row._id)
+    if (!id || seen[id] || drop[id]) return
+    seen[id] = true
+    const entry = {
+      itemId: id,
+      name: String((row && row.name) || '').trim()
+    }
+    const op = String((row && row.op) || '').trim()
+    if (op === 'create' || op === 'update') entry.op = op
+    if (row && row.quantityBefore != null && row.quantityBefore !== '') {
+      entry.quantityBefore = row.quantityBefore
+    }
+    if (row && row.quantityAfter != null && row.quantityAfter !== '') {
+      entry.quantityAfter = row.quantityAfter
+    }
+    out.push(entry)
+  }
+  ;(incoming || []).forEach(push)
+  ;(prev || []).forEach(push)
+  return out.slice(0, 6)
+}
+
+function isDeleteAffirmChip(text) {
+  const t = String(text || '').trim()
+  return /^(确认删除|确认删掉|删掉吧|删了吧|都删掉|全部删掉|好的?删除)$/.test(t)
+}
+
 /** 确认卡展示名与稳定 key；WXML 不能安全调用 Array.join，合并项也没有 ref */
 function normalizeConfirmList(raw) {
   return (raw || []).map((row, index) => {
@@ -61,9 +97,63 @@ function normalizeConfirmList(raw) {
   })
 }
 
+function asArray(value) {
+  return Array.isArray(value) ? value : []
+}
+
+function cleanDraft(draft) {
+  if (!draft || typeof draft !== 'object') return null
+  return {
+    name: String(draft.name || '').trim(),
+    quantity: draft.quantity != null && draft.quantity !== '' ? draft.quantity : '',
+    unit: String(draft.unit || '').trim(),
+    note: String(draft.note || '').trim(),
+    spaceName: String(draft.spaceName || '').trim(),
+    locationName: String(draft.locationName || '').trim(),
+    expireDate: draft.expireDate || '',
+    productionDate: draft.productionDate || ''
+  }
+}
+
+/** 气泡文案：lead + 卡片标题，保证不依赖 blocks 渲染也能看见结果 */
+function buildResultText(lead, blocks, lines, wrote) {
+  const cardLines = []
+  asArray(blocks).forEach((block) => {
+    asArray(block && block.cards).forEach((card) => {
+      const title = String((card && card.title) || '').trim()
+      if (title) cardLines.push(title)
+    })
+  })
+  const parts = []
+  const head = String(lead || '').trim()
+  if (head) parts.push(head)
+  cardLines.forEach((line) => {
+    if (parts.indexOf(line) < 0) parts.push(line)
+  })
+  if (!parts.length) {
+    asArray(lines)
+      .map((l) => String(l || '').trim())
+      .filter(Boolean)
+      .forEach((line) => parts.push(line))
+  }
+  if (!parts.length && wrote) return '已处理完成'
+  if (!parts.length) return copy.assist.doneEmpty
+  return parts.join('\n')
+}
+
+/** 把裸卡片（只有 title、无 cards）收成一块，兼容旧回包 */
+function coerceBlocks(raw) {
+  const list = asArray(raw)
+  if (!list.length) return []
+  const hasNested = list.some((b) => b && Array.isArray(b.cards))
+  if (hasNested) return list
+  const cards = list.filter((row) => row && String(row.title || '').trim())
+  return cards.length ? [{ cards }] : []
+}
+
 /** 通用结果块：补 key、滤空 facts/tags，供 WXML 渲染 */
 function normalizeBlocks(raw) {
-  return (raw || [])
+  return coerceBlocks(raw)
     .filter((block) => block && Array.isArray(block.cards) && block.cards.length)
     .map((block, bi) => ({
       key: `b${bi}`,
@@ -73,14 +163,14 @@ function normalizeBlocks(raw) {
       cards: (block.cards || [])
         .filter((card) => card && String(card.title || '').trim())
         .map((card, ci) => {
-          const facts = (card.facts || [])
+          const facts = asArray(card.facts)
             .map((f) => String(f || '').trim())
             .filter(Boolean)
-          const tags = (card.tags || [])
+          const tags = asArray(card.tags)
             .map((t) => String(t || '').trim())
             .filter(Boolean)
           return {
-            key: card.itemId || `c${bi}-${ci}`,
+            key: String(card.itemId || `c${bi}-${ci}`),
             title: String(card.title || '').trim(),
             subtitle: String(card.subtitle || '').trim(),
             facts,
@@ -88,7 +178,7 @@ function normalizeBlocks(raw) {
             hasFacts: facts.length > 0,
             hasTags: tags.length > 0,
             tone: card.tone || block.tone || 'neutral',
-            itemId: card.itemId || ''
+            itemId: String(card.itemId || '')
           }
         })
     }))
@@ -178,6 +268,7 @@ Page({
     draft: null,
     messages: [],
     recentItemIds: [],
+    recentItems: [],
     pendingCalls: [],
     scrollIntoView: '',
     composerOn: true,
@@ -249,6 +340,11 @@ Page({
 
   hydrateTranscript(familyId) {
     if (!familyId) return
+    // 请求进行中不要用本地缓存回放覆盖，否则会把 pending/结果气泡冲掉
+    if (this._submitting || this.data.loading) {
+      if (this._familyId !== familyId) this._familyId = familyId
+      return
+    }
     if (this._familyId === familyId && (this._messages || []).length > 1) {
       this.syncTranscriptCap(this._messages)
       return
@@ -327,6 +423,7 @@ Page({
       text: '',
       inputHeight: this._composerMinH || this.data.inputHeight,
       recentItemIds: [],
+      recentItems: [],
       scrollIntoView: ''
     })
     wx.showToast({ title: copy.assist.clearedToast, icon: 'none' })
@@ -396,7 +493,12 @@ Page({
       if (!item || !item._id) return
       this.setData({
         focusLabel: item.name || copy.assist.focusLabel,
-        recentItemIds: mergeRecentIds(this.data.recentItemIds, [item._id], [])
+        recentItemIds: mergeRecentIds(this.data.recentItemIds, [item._id], []),
+        recentItems: mergeRecentItems(
+          this.data.recentItems,
+          [{ itemId: item._id, name: item.name || '' }],
+          []
+        )
       })
     } catch (e) {
       this.setData({ focusItemId: '', focusLabel: '' })
@@ -456,6 +558,83 @@ Page({
     const ds = e.currentTarget.dataset || {}
     const text = String(ds.label || ds.value || '').trim()
     if (!text || this.data.loading) return
+
+    // 删除软确认芯片：直接用本轮刚加物资出硬确认，避免二轮模型绑成两个同名旧条
+    if (isDeleteAffirmChip(text)) {
+      const askText = (() => {
+        const last = [...(this._messages || this.data.messages || [])]
+          .reverse()
+          .find((row) => row && row.role === 'assistant' && row.askList && row.askList.length)
+        if (!last) return ''
+        return (last.askList || []).map((a) => a.question || '').join(' ')
+      })()
+      const recent = this.data.recentItems || []
+      let picks = []
+      if (askText && recent.length) {
+        const nameCandidates = []
+        recent.forEach((r) => {
+          const name = String((r && r.name) || '').trim()
+          if (name && nameCandidates.indexOf(name) < 0) nameCandidates.push(name)
+        })
+        nameCandidates.sort((a, b) => b.length - a.length)
+        const namesInQ = []
+        nameCandidates.forEach((name) => {
+          if (askText.indexOf(name) < 0) return
+          if (namesInQ.indexOf(name) >= 0) return
+          namesInQ.push(name)
+        })
+        namesInQ.sort((a, b) => askText.indexOf(a) - askText.indexOf(b))
+        const used = {}
+        namesInQ.forEach((name) => {
+          const hit = recent.find(
+            (r) => r && r.name === name && r.itemId && !used[r.itemId]
+          )
+          if (!hit) return
+          picks.push(hit)
+          used[hit.itemId] = true
+        })
+      }
+      if (picks.length < 2 && recent.length >= 2) {
+        picks = recent.slice(0, 2)
+      }
+      if (picks.length >= 2) {
+        const names = picks.map((r) => r.name || '物资')
+        const itemIds = picks.map((r) => r.itemId)
+        const allUpdates = picks.every((r) => String((r && r.op) || '') === 'update')
+        const calls = [
+          {
+            use: 'item.removeMany',
+            itemIds,
+            names,
+            name: names[0]
+          }
+        ]
+        const userBubble = {
+          id: this.nextId(),
+          role: 'user',
+          kind: 'user',
+          text
+        }
+        const confirmMsg = {
+          id: this.nextId(),
+          role: 'assistant',
+          kind: 'result',
+          text: allUpdates ? copy.assist.confirmTitleUpdated : copy.assist.confirmTitle,
+          confirmHint: allUpdates ? copy.assist.confirmHintUpdated : '',
+          askList: [],
+          confirmList: normalizeConfirmList([
+            { use: 'item.removeMany', names, itemIds, name: names[0] }
+          ]),
+          confirmKind: allUpdates ? 'removeUpdated' : 'remove'
+        }
+        const messages = clearConfirmCards(this._messages || this.data.messages || [])
+          .concat([userBubble, confirmMsg])
+        this.commitMessages(messages, { pendingCalls: calls })
+        this.scrollToBottom()
+        return
+      }
+    }
+
     // 气泡只显示点选文案；act 必须带上澄清前的原句，否则只剩「厨房/冰箱」会被当成查库存
     const original = String(this.data.originalText || '').trim()
     const actText =
@@ -643,6 +822,7 @@ Page({
         confirmed: !!options.confirmed,
         history,
         recentItemIds: this.data.recentItemIds || [],
+        recentItems: this.data.recentItems || [],
         calls: options.calls || undefined
       })
       if (data && data.wrote) {
@@ -651,16 +831,15 @@ Page({
       this.applyResult(data, askRound)
     } catch (e) {
       if (e.code === 'NO_AI_KEY') {
-        this.replacePending({
-          text: copy.assist.noKey,
-          goKeys: true,
-          askList: [],
-          confirmList: []
-        })
-        this.setData({
-          noKey: true
-        })
-        this.scrollToBottom()
+        this.replacePending(
+          {
+            text: copy.assist.noKey,
+            goKeys: true,
+            askList: [],
+            confirmList: []
+          },
+          { noKey: true }
+        )
         return
       }
       if (e.code === 'AI_QUOTA') {
@@ -670,7 +849,6 @@ Page({
           askList: [],
           confirmList: []
         })
-        this.scrollToBottom()
         return
       }
       if (e.code === 'NO_FAMILY') {
@@ -684,14 +862,13 @@ Page({
         askList: [],
         confirmList: []
       })
-      this.scrollToBottom()
     } finally {
       this._submitting = false
-      this.setData({ loading: false })
+      if (this.data.loading) this.setData({ loading: false })
     }
   },
 
-  replacePending(patch) {
+  replacePending(patch, extra) {
     const messages = (this._messages || this.data.messages || []).slice()
     let realIdx = -1
     if (this._pendingId) {
@@ -701,115 +878,141 @@ Page({
       const idx = [...messages].reverse().findIndex((row) => row && row.kind === 'pending')
       realIdx = idx >= 0 ? messages.length - 1 - idx : -1
     }
+    // 换新 id：pending→结果结构变化大，同 id 差分偶发把气泡渲成空白
     const next = {
-      id: realIdx >= 0 ? messages[realIdx].id : this.nextId(),
+      id: this.nextId(),
       role: 'assistant',
       kind: 'result',
+      text: '',
       askList: [],
       confirmList: [],
       hasChips: false,
+      blocks: [],
+      subscribeItems: [],
       ...patch
+    }
+    if (!String(next.text || '').trim()) {
+      next.text = copy.assist.doneEmpty
     }
     if (realIdx >= 0) messages[realIdx] = next
     else messages.push(next)
     this._messages = messages
     this._pendingId = ''
-    this.setData({ messages })
+    const data = Object.assign({ messages, loading: false }, extra || {})
+    this.setData(data)
     this.persistTranscript()
+    this.scrollToBottom()
   },
 
   applyResult(data, askRound) {
     const status = data && data.status
-    const draft = (data && data.draft) || this.data.draft
+    const draft = cleanDraft((data && data.draft) || this.data.draft)
     const recentItemIds = mergeRecentIds(
       this.data.recentItemIds,
-      ((data && data.recentItems) || []).map((row) => row && row.itemId),
-      (data && data.removedItemIds) || []
+      asArray(data && data.recentItems).map((row) => row && row.itemId),
+      asArray(data && data.removedItemIds)
+    )
+    const recentItems = mergeRecentItems(
+      this.data.recentItems,
+      asArray(data && data.recentItems),
+      asArray(data && data.removedItemIds)
     )
 
     if (status === 'ask') {
       const nextRound = askRound + 1
-      const askList = (data && data.ask) || []
+      const askList = asArray(data && data.ask)
       const text =
         askList.map((row) => row.question).filter(Boolean).join('\n') || copy.assist.askTitle
       const hasChips = askList.some((row) => row && row.options && row.options.length)
       const goSpaces = !hasChips && /不能删除房间|不能删除空间|不能新建空间|不能新建房间/.test(text)
-      this.replacePending({
-        text,
-        askList,
-        hasChips,
-        goSpaces,
-        confirmList: [],
-        showEdit: nextRound >= 2 && hasChips
-      })
-      this.setData({
-        askRound: nextRound,
-        draft,
-        recentItemIds
-      })
-      this.scrollToBottom()
+      this.replacePending(
+        {
+          text,
+          askList,
+          hasChips,
+          goSpaces,
+          confirmList: [],
+          showEdit: nextRound >= 2 && hasChips
+        },
+        {
+          askRound: nextRound,
+          draft,
+          recentItemIds,
+          recentItems
+        }
+      )
       return
     }
 
     if (status === 'confirm') {
-      const confirmList = normalizeConfirmList((data && data.confirm) || [])
+      const confirmList = normalizeConfirmList(asArray(data && data.confirm))
       const confirmKind = confirmList.some((row) => row && row.use === 'item.merge')
         ? 'merge'
-        : 'remove'
-      this.replacePending({
-        text:
-          confirmKind === 'merge' ? copy.assist.confirmMergeTitle : copy.assist.confirmTitle,
-        askList: [],
-        confirmList,
-        confirmKind,
-        subscribeItems: []
-      })
-      this.setData({
-        draft,
-        recentItemIds,
-        pendingCalls: (data && data.calls) || []
-      })
-      this.scrollToBottom()
+        : data && data.confirmKind === 'removeUpdated'
+          ? 'removeUpdated'
+          : 'remove'
+      const title =
+        (data && data.confirmTitle) ||
+        (confirmKind === 'merge'
+          ? copy.assist.confirmMergeTitle
+          : confirmKind === 'removeUpdated'
+            ? copy.assist.confirmTitleUpdated
+            : copy.assist.confirmTitle)
+      const confirmHint =
+        (data && data.confirmHint) ||
+        (confirmKind === 'removeUpdated' ? copy.assist.confirmHintUpdated : '')
+      this.replacePending(
+        {
+          text: title,
+          confirmHint,
+          askList: [],
+          confirmList,
+          confirmKind,
+          subscribeItems: []
+        },
+        {
+          draft,
+          recentItemIds,
+          recentItems,
+          pendingCalls: asArray(data && data.calls)
+        }
+      )
       return
     }
 
     if (status === 'subscribe') {
       const { lead, blocks, report } = pickPresentation(data)
-      const lines = (report.lines || []).filter(Boolean)
-      this.replacePending({
-        text: lead || lines.join('\n').trim() || copy.assist.subscribeTitle,
-        blocks,
-        askList: [],
-        confirmList: [],
-        subscribeItems: (data && data.subscribeItems) || []
-      })
-      this.setData({
-        askRound: 0,
-        draft,
-        recentItemIds,
-        pendingCalls: []
-      })
-      this.scrollToBottom()
+      const lines = asArray(report.lines).filter(Boolean)
+      this.replacePending(
+        {
+          text: buildResultText(lead, blocks, lines, false) || copy.assist.subscribeTitle,
+          blocks,
+          askList: [],
+          confirmList: [],
+          subscribeItems: asArray(data && data.subscribeItems)
+        },
+        {
+          askRound: 0,
+          draft,
+          recentItemIds,
+          recentItems,
+          pendingCalls: []
+        }
+      )
       return
     }
 
     const { lead, blocks, report } = pickPresentation(data)
-    const fallbackReport = report.lines
-      ? report
-      : {
-          lines: [copy.assist.doneEmpty],
-          possibleDuplicates: []
-        }
-    const lines = (fallbackReport.lines || []).slice().filter(Boolean)
+    const lines = asArray(report.lines).filter(Boolean)
     if (
       !blocks.length &&
-      fallbackReport.possibleDuplicates &&
-      fallbackReport.possibleDuplicates.length
+      report.possibleDuplicates &&
+      report.possibleDuplicates.length
     ) {
       lines.push(
         copy.assist.duplicatesTitle +
           '：' +
-          fallbackReport.possibleDuplicates
+          report.possibleDuplicates
             .map((item) => {
               const place = [item.spaceName, item.locationName].filter(Boolean).join(' / ')
               return `${item.name}${place ? `（${place}）` : ''} ${item.count} 条`
@@ -817,28 +1020,22 @@ Page({
             .join('；')
       )
     }
-    // 有结构化块时 lead 作气泡；无块时退回 lines 文本兜底
-    let text = lead
-    if (!blocks.length) {
-      text = lines.join('\n').trim()
-    }
-    if (!text && !blocks.length && data && data.wrote) {
-      text = '已处理完成'
-    }
-    if (!text && !blocks.length) text = copy.assist.doneEmpty
-    this.replacePending({
-      text,
-      blocks,
-      askList: [],
-      confirmList: [],
-      subscribeItems: []
-    })
-    this.setData({
-      askRound: 0,
-      draft,
-      recentItemIds,
-      pendingCalls: []
-    })
-    this.scrollToBottom()
+    const text = buildResultText(lead, blocks, lines, !!(data && data.wrote))
+    this.replacePending(
+      {
+        text,
+        blocks,
+        askList: [],
+        confirmList: [],
+        subscribeItems: []
+      },
+      {
+        askRound: 0,
+        draft,
+        recentItemIds,
+        recentItems,
+        pendingCalls: []
+      }
+    )
   }
 })

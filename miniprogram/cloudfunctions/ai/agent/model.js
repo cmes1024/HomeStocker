@@ -54,6 +54,30 @@ function sanitizeRecentIds(raw) {
   return out
 }
 
+function sanitizeRecentMeta(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  const seen = {}
+  for (let i = 0; i < raw.length && out.length < 6; i++) {
+    const row = raw[i]
+    if (!row || typeof row !== 'object') continue
+    const itemId = String(row.itemId || row._id || '').trim()
+    if (!itemId || itemId.length > 64 || seen[itemId]) continue
+    seen[itemId] = true
+    const entry = { itemId, name: String(row.name || '').trim().slice(0, 40) }
+    const op = String(row.op || '').trim()
+    if (op === 'create' || op === 'update') entry.op = op
+    if (row.quantityBefore != null && row.quantityBefore !== '') {
+      entry.quantityBefore = row.quantityBefore
+    }
+    if (row.quantityAfter != null && row.quantityAfter !== '') {
+      entry.quantityAfter = row.quantityAfter
+    }
+    out.push(entry)
+  }
+  return out
+}
+
 function renderProbe(rows) {
   if (!rows || !rows.length) return '无'
   return rows.map((row) => renderFocus(row)).join('\n')
@@ -216,6 +240,7 @@ module.exports = {
   sanitizeHistory,
   renderHistory,
   sanitizeRecentIds,
+  sanitizeRecentMeta,
   renderProbe,
   renderExecReceipt,
   fillAssistPrompt,

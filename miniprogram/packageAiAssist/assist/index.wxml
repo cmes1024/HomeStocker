@@ -47,7 +47,6 @@
     <scroll-view
       class="msg-list"
       scroll-y
-      enhanced
       show-scrollbar="{{false}}"
       scroll-into-view="{{scrollIntoView}}"
       scroll-with-animation
@@ -67,16 +66,16 @@
           <view
             class="block"
             wx:for="{{item.blocks}}"
-            wx:for-item="block"
+            wx:for-item="grp"
             wx:key="key"
           >
             <view
-              class="block-title tone-{{block.tone}}"
-              wx:if="{{block.title}}"
-            >{{block.title}}</view>
+              class="block-title tone-{{grp.tone}}"
+              wx:if="{{grp.title}}"
+            >{{grp.title}}</view>
             <view
               class="card tone-{{card.tone}}"
-              wx:for="{{block.cards}}"
+              wx:for="{{grp.cards}}"
               wx:for-item="card"
               wx:key="key"
             >
@@ -99,7 +98,7 @@
                 >{{tag}}</text>
               </view>
             </view>
-            <view class="block-footer" wx:if="{{block.footer}}">{{block.footer}}</view>
+            <view class="block-footer" wx:if="{{grp.footer}}">{{grp.footer}}</view>
           </view>
         </view>
 
@@ -124,7 +123,10 @@
         <view class="text-link theme-text retry" wx:if="{{item.goSpaces}}" bind:tap="goSpaces">{{copy.goSpaces}}</view>
 
         <view class="confirm-block" wx:if="{{item.confirmList && item.confirmList.length}}">
-          <view class="confirm-hint">{{item.confirmKind === 'merge' ? copy.confirmMergeHint : copy.confirmHint}}</view>
+          <view class="confirm-hint" wx:if="{{item.confirmHint}}">{{item.confirmHint}}</view>
+          <view class="confirm-hint" wx:elif="{{item.confirmKind === 'merge'}}">{{copy.confirmMergeHint}}</view>
+          <view class="confirm-hint" wx:elif="{{item.confirmKind === 'removeUpdated'}}">{{copy.confirmHintUpdated}}</view>
+          <view class="confirm-hint" wx:else>{{copy.confirmHint}}</view>
           <view class="confirm-name" wx:for="{{item.confirmList}}" wx:for-item="row" wx:key="key">
             {{row.displayName}}
           </view>

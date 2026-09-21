@@ -18,8 +18,7 @@ async function run(ctx, call, step) {
   return {
     ok: true,
     summary: inv.lead,
-    inventory: list,
-    remember: list.slice(0, 8)
+    inventory: list
   }
 }
 

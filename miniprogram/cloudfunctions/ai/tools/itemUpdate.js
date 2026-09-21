@@ -69,7 +69,13 @@ async function run(ctx, call, step) {
     ok: true,
     summary: `已修改 ${row.name}`,
     wrote: true,
-    remember: row
+    remember: {
+      itemId: row.itemId,
+      name: row.name || '',
+      op: 'update',
+      quantityBefore: row.quantity,
+      quantityAfter: call.quantity !== undefined ? call.quantity : row.quantity
+    }
   }
 }
 

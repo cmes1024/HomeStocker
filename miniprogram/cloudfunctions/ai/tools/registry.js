@@ -113,10 +113,19 @@ async function runAll(ctx, calls) {
     }
     const itemId = row.itemId || row._id
     if (!itemId) return
-    recentItems.push({
+    const entry = {
       itemId,
       name: row.name || ''
-    })
+    }
+    const op = String(row.op || '').trim()
+    if (op) entry.op = op
+    if (row.quantityBefore != null && row.quantityBefore !== '') {
+      entry.quantityBefore = row.quantityBefore
+    }
+    if (row.quantityAfter != null && row.quantityAfter !== '') {
+      entry.quantityAfter = row.quantityAfter
+    }
+    recentItems.push(entry)
   }
 
   for (let i = 0; i < (calls || []).length; i++) {

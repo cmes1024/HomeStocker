@@ -14,7 +14,7 @@ const {
 } = require('./guardrails')
 const { askModel, fillAssistPrompt, renderProbe, renderExecReceipt, ASSIST_PROMPT_V2 } = require('./model')
 const { loadRecentItems, runProbe } = require('./itemsQuery')
-const { publicRecentItems, bindCallIds, lookupRef } = require('./refs')
+const { publicRecentItems, mergeRecentTouchedFirst, bindCallIds, lookupRef, compactItem } = require('./refs')
 const { draftFromCalls } = require('./plan')
 const { attachPresentation, textOnlyPresentation, buildExecutionPresentation } = require('./presentation')
 const { runAll } = require('../tools/registry')
@@ -33,61 +33,156 @@ function focusPublic(focus) {
   return focus && { ref: focus.ref, name: focus.name }
 }
 
-/** 从「把厨房的牛奶放到…」类话术里猜要改的物品，供澄清后补探查 */
-function guessMoveItemHintFromHistory(history, currentText) {
-  const texts = []
-  ;(history || []).forEach((row) => {
-    if (row && row.role === 'user' && row.text) texts.push(String(row.text))
-  })
-  if (currentText) texts.push(String(currentText))
-  for (let i = texts.length - 1; i >= 0; i--) {
-    const text = texts[i]
-    const m = text.match(/把(.{1,24}?)(?:放到|挪到|移到|放去|挪去|搬到)/)
-    if (!m) continue
-    const chunk = String(m[1] || '')
-      .replace(/里的|中的/g, '的')
-      .trim()
-    if (!chunk) continue
-    const parts = chunk.split('的').map((p) => p.trim()).filter(Boolean)
-    const name = (parts.length > 1 ? parts[parts.length - 1] : chunk).trim()
-    if (!name || name.length > 20) continue
-    let spaceName = ''
-    if (parts.length > 1) {
-      spaceName = parts
-        .slice(0, -1)
-        .join('')
-        .replace(/冰箱.*$|柜子.*$|冷藏.*$|冷冻.*$|货架.*$/g, '')
-        .trim()
-    }
-    return { name, spaceName }
-  }
-  return null
+function isIdlePlan(plan) {
+  if (!plan) return true
+  if (plan.ask && plan.ask.length) return false
+  if (plan.probe) return false
+  if (plan.calls && plan.calls.length) return false
+  if (String(plan.reply || '').trim()) return false
+  return true
 }
 
-/** 改/删缺短号时先探查，避免「厨房的牛奶」或澄清芯片直接失败 */
-function ensureProbeForUnresolvedWrites(plan, refs, history, currentText) {
+/** 计划是否仅为库存只读（search / listExpiring）——这类要像 probe 一样回灌再编一轮 */
+function isInventoryReadOnlyCalls(calls) {
+  const list = calls || []
+  if (!list.length) return false
+  return list.every((c) => {
+    const use = String((c && c.use) || '').trim()
+    return use === 'item.search' || use === 'item.listExpiring'
+  })
+}
+
+/** 把查询结果灌进 refs 短号 P*，供下一轮改/删 */
+function ingestInventoryToProbeRefs(executed, tree, refs) {
+  const rows = []
+  const seen = {}
+  let n = 0
+  Object.keys(refs || {}).forEach((k) => {
+    const m = /^P(\d+)$/i.exec(k)
+    if (m) n = Math.max(n, Number(m[1]) || 0)
+  })
+  ;(executed || []).forEach((row) => {
+    if (!row || !Array.isArray(row.inventory)) return
+    row.inventory.forEach((item) => {
+      if (!item) return
+      const id = item._id || item.itemId
+      if (!id || seen[id]) return
+      seen[id] = true
+      n += 1
+      const compact = compactItem(item, `P${n}`, tree)
+      refs[compact.ref] = compact
+      rows.push(compact)
+    })
+  })
+  return rows
+}
+
+/** 模型用 ask 软确认删除时，从问句 + 本轮 R* 直接升成硬确认，避免二轮误绑同名旧条 */
+function isSoftDeleteAsk(plan) {
+  if (!plan || !Array.isArray(plan.ask) || !plan.ask.length) return false
+  if (plan.calls && plan.calls.length) return false
+  const q = plan.ask.map((a) => String((a && a.question) || '')).join(' ')
+  if (!/删/.test(q)) return false
+  const opts = []
+  plan.ask.forEach((a) => {
+    ;(a.options || []).forEach((o) => {
+      opts.push(String((o && (o.label || o.value)) || ''))
+    })
+  })
+  if (opts.some((o) => /确认|删掉|删除|好的|可以/.test(o))) return true
+  return /确认.*删|要删掉|删掉吗/.test(q)
+}
+
+function pickItemsForDeleteAsk(question, sessionRecent) {
+  const recent = (sessionRecent || []).filter((r) => r && r.itemId)
+  if (recent.length < 2) return []
+  const q = String(question || '')
+  const ordered = recent.slice().sort((a, b) => {
+    const ra = /^R(\d+)$/i.exec(String(a.ref || ''))
+    const rb = /^R(\d+)$/i.exec(String(b.ref || ''))
+    if (ra && rb) return Number(ra[1]) - Number(rb[1])
+    if (ra) return -1
+    if (rb) return 1
+    return 0
+  })
+
+  // 问句里出现的品名：每个名字只取一条，优先本轮新开(create)，其次 R*
+  const nameCandidates = []
+  ordered.forEach((r) => {
+    const name = String(r.name || '').trim()
+    if (name && nameCandidates.indexOf(name) < 0) nameCandidates.push(name)
+  })
+  nameCandidates.sort((a, b) => b.length - a.length)
+  const namesInQ = []
+  nameCandidates.forEach((name) => {
+    if (q.indexOf(name) < 0) return
+    if (namesInQ.indexOf(name) >= 0) return
+    namesInQ.push(name)
+  })
+  namesInQ.sort((a, b) => q.indexOf(a) - q.indexOf(b))
+
+  const picks = []
+  const used = {}
+  namesInQ.forEach((name) => {
+    const hits = ordered.filter(
+      (r) => r.name === name && r.itemId && !used[r.itemId]
+    )
+    if (!hits.length) return
+    const created = hits.filter((r) => String(r.op || '') === 'create')
+    const recentHits = hits.filter((r) => /^R\d+$/i.test(String(r.ref || '')))
+    const pick = created[0] || recentHits[0] || hits[0]
+    picks.push(pick)
+    used[pick.itemId] = true
+  })
+  if (picks.length >= 2) return picks
+
+  const createdOnly = ordered.filter((r) => String(r.op || '') === 'create')
+  if (createdOnly.length >= 2 && /刚加|刚才|刚记|刚写|两[个条]|都删/.test(q)) {
+    return createdOnly.slice(0, 2)
+  }
+
+  if (/刚加|刚才|刚记|刚写|两[个条]|都删/.test(q)) {
+    return ordered.slice(0, 2)
+  }
+  return []
+}
+
+function promoteSoftDeleteAsk(plan, sessionRecent) {
+  if (!isSoftDeleteAsk(plan)) return null
+  const question = plan.ask.map((a) => String((a && a.question) || '')).join(' ')
+  const picks = pickItemsForDeleteAsk(question, sessionRecent)
+  if (picks.length < 2) return null
+  return [
+    {
+      use: 'item.removeMany',
+      refs: picks.map((p) => p.ref).filter(Boolean),
+      itemIds: picks.map((p) => p.itemId),
+      names: picks.map((p) => p.name || ''),
+      name: picks[0].name || ''
+    }
+  ]
+}
+
+/** 改/删缺短号时，若 call 已带 name 则先探查（不按话术正则猜意图） */
+function ensureProbeForUnresolvedWrites(plan, refs) {
   if (!plan || plan.probe || (plan.ask && plan.ask.length)) return plan
   const calls = plan.calls || []
-  const hint = guessMoveItemHintFromHistory(history, currentText)
   for (let i = 0; i < calls.length; i++) {
     const call = calls[i] || {}
     const use = String(call.use || '').trim()
     if (use === 'item.update' || use === 'item.remove') {
       if (lookupRef(call, refs)) continue
-      const name =
-        String(call.name || '').trim() || (hint && hint.name) || ''
+      const name = String(call.name || '').trim()
       if (name) {
         plan.probe = {
           name,
-          spaceName:
-            String(call.fromSpaceName || call.sourceSpaceName || '').trim() ||
-            (hint && hint.spaceName) ||
-            '',
+          spaceName: String(
+            call.fromSpaceName || call.sourceSpaceName || ''
+          ).trim(),
           locationName: String(
             call.fromLocationName || call.sourceLocationName || ''
           ).trim()
         }
-        if (!call.name) call.name = name
         return plan
       }
     }
@@ -96,10 +191,9 @@ function ensureProbeForUnresolvedWrites(plan, refs, history, currentText) {
       const unresolved = refList.some((raw) => !lookupRef({ ref: raw }, refs))
       if (!unresolved && (Array.isArray(call.itemIds) ? call.itemIds.length : 0)) continue
       if (unresolved || !refList.length) {
-        const name =
-          String(call.name || (call.names && call.names[0]) || '').trim() ||
-          (hint && hint.name) ||
-          ''
+        const name = String(
+          call.name || (call.names && call.names[0]) || ''
+        ).trim()
         if (name) {
           plan.probe = { name }
           return plan
@@ -267,38 +361,69 @@ function buildDonePayload(planCalls, report, focus, sessionRecent) {
     blocks: report.blocks || [],
     draft: draftFromCalls(planCalls),
     focus: focusPublic(focus),
-    recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+    recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
     removedItemIds: report.removedItemIds || [],
     wrote: !!report.wrote
   }
 }
 
+/** 删除目标若本轮只是「改过数量」的原有物资，确认文案必须说清楚会整条删掉 */
+function removeConfirmWarnForUpdates(boundCalls, sessionRecent) {
+  const recentById = {}
+  ;(sessionRecent || []).forEach((row) => {
+    if (row && row.itemId) recentById[row.itemId] = row
+  })
+  const ids = []
+  ;(boundCalls || []).forEach((c) => {
+    const use = String((c && c.use) || '').trim()
+    if (use !== 'item.remove' && use !== 'item.removeMany') return
+    if (Array.isArray(c.itemIds)) {
+      c.itemIds.forEach((id) => {
+        if (id) ids.push(String(id))
+      })
+    } else if (c.itemId) {
+      ids.push(String(c.itemId))
+    }
+  })
+  if (!ids.length) return null
+  const touched = ids.map((id) => recentById[id]).filter(Boolean)
+  if (!touched.length) return null
+  const allUpdates = touched.every((r) => String(r.op || '') === 'update')
+  if (!allUpdates) return null
+  return {
+    title: '确定整条删除吗？',
+    hint: '刚才是改了原有物资的数量，不是新开条目。删掉会把原来的库存一并去掉，不只是撤销刚才 +1。'
+  }
+}
+
 function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent) {
   const boundCalls = bindCallIds(planCalls, refs)
+  const removeWarn = removeConfirmWarnForUpdates(boundCalls, sessionRecent)
   return {
     status: 'confirm',
     ask: [],
+    confirmKind: removeWarn ? 'removeUpdated' : undefined,
+    confirmTitle: removeWarn ? removeWarn.title : undefined,
+    confirmHint: removeWarn ? removeWarn.hint : undefined,
     confirm: confirmCalls.map((call) => {
       const bound = bindCallIds([call], refs)[0] || call
       const use = String(call.use || '').trim()
       if (use === 'item.merge' || use === 'item.removeMany') {
-        const names =
-          (bound.names && bound.names.filter(Boolean).length
-            ? bound.names.filter(Boolean)
-            : null) ||
-          (Array.isArray(bound.itemIds)
-            ? bound.itemIds.map((id) => {
-                const row = lookupRef({ itemId: id }, refs)
-                return (row && row.name) || ''
-              })
-            : []
-          ).filter(Boolean)
+        // 展示名只信短号/itemId 解析结果，不沿用模型随意填的 names
+        const names = (Array.isArray(bound.itemIds) ? bound.itemIds : [])
+          .map((id) => {
+            const row = lookupRef({ itemId: id }, refs)
+            return (row && row.name) || ''
+          })
+          .filter(Boolean)
+        const fallback = (bound.names || []).filter(Boolean)
+        const show = names.length ? names : fallback
         return {
           use: call.use,
           refs: bound.refs || [],
           itemIds: bound.itemIds || [],
-          name: bound.name || names[0] || '物资',
-          names
+          name: bound.name || show[0] || '物资',
+          names: show
         }
       }
       if (
@@ -498,20 +623,25 @@ async function act(env, openid, event) {
   }
 
   if (plan.ask.length) {
-    return ok({
-      status: 'ask',
-      ask: plan.ask,
-      probe: null,
-      calls: [],
-      draft: draftFromCalls(plan.calls),
-      focus: focusPublic(focus),
-      recentItems: publicRecentItems(sessionRecent),
-      removedItemIds: [],
-      wrote: false
-    })
+    const promoted = promoteSoftDeleteAsk(plan, sessionRecent)
+    if (promoted) {
+      plan = { ask: [], probe: null, calls: promoted, reply: '' }
+    } else {
+      return ok({
+        status: 'ask',
+        ask: plan.ask,
+        probe: null,
+        calls: [],
+        draft: draftFromCalls(plan.calls),
+        focus: focusPublic(focus),
+        recentItems: publicRecentItems(sessionRecent),
+        removedItemIds: [],
+        wrote: false
+      })
+    }
   }
 
-  ensureProbeForUnresolvedWrites(plan, refs, actCtx.history, text)
+  ensureProbeForUnresolvedWrites(plan, refs)
 
   let probedRows = []
   if (plan.probe) {
@@ -535,18 +665,43 @@ async function act(env, openid, event) {
     bindUnresolvedWritesToProbe(plan, refs, probedRows)
 
     if (plan.ask.length) {
-      return ok({
-        status: 'ask',
-        ask: plan.ask,
-        probe: null,
-        calls: [],
-        draft: draftFromCalls(plan.calls),
-        focus: focusPublic(focus),
-        recentItems: publicRecentItems(sessionRecent),
-        removedItemIds: [],
-        wrote: false
-      })
+      const promoted2 = promoteSoftDeleteAsk(plan, sessionRecent)
+      if (promoted2) {
+        plan = { ask: [], probe: null, calls: promoted2, reply: '' }
+      } else {
+        return ok({
+          status: 'ask',
+          ask: plan.ask,
+          probe: null,
+          calls: [],
+          draft: draftFromCalls(plan.calls),
+          focus: focusPublic(focus),
+          recentItems: publicRecentItems(sessionRecent),
+          removedItemIds: [],
+          wrote: false
+        })
+      }
     }
+  }
+
+  // 模型偶发空计划：勿用「没有需要执行的操作」糊弄家人
+  if (isIdlePlan(plan)) {
+    return ok({
+      status: 'ask',
+      ask: [
+        {
+          question: '这句我还没编排成具体操作。是要新记几件，还是改已有数量？说下名字和数量就行～',
+          options: []
+        }
+      ],
+      probe: null,
+      calls: [],
+      draft: draftFromCalls([]),
+      focus: focusPublic(focus),
+      recentItems: publicRecentItems(sessionRecent),
+      removedItemIds: [],
+      wrote: false
+    })
   }
 
   // Direct reply without tools
@@ -599,8 +754,140 @@ async function act(env, openid, event) {
     })
   }
 
+  // 只读查询：执行后回灌短号，再问一轮（对齐 probe；避免「查完就停」写不下去）
+  let inventoryReadReport = null
+  if (isInventoryReadOnlyCalls(plan.calls)) {
+    const readCalls = plan.calls
+    inventoryReadReport = await executePlanCalls(
+      env,
+      openid,
+      actCtx.familyId,
+      tree,
+      readCalls,
+      refs,
+      catalogMap,
+      today.ymd
+    )
+    const invRows = ingestInventoryToProbeRefs(
+      inventoryReadReport.executed,
+      inventoryReadReport.tree || tree,
+      refs
+    )
+    sessionRecent = sessionRecent.concat(invRows)
+
+    const invVars = { ...vars, probe: renderProbe(invRows) }
+    const invSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, invVars)
+    const invNote = invRows.length
+      ? `查询结果已写入本轮短号：\n${renderProbe(invRows)}`
+      : '查询结果：无匹配物资'
+    const invUser = `${userText}\n${invNote}`
+    try {
+      const second = await askModel(modelOpts, invSystem, invUser)
+      plan = second.plan
+    } catch (e) {
+      return fail(e.code || 'ACT_FAILED', e.message || '助手暂时不可用，请稍后重试')
+    }
+    plan.probe = null
+
+    if (plan.ask && plan.ask.length) {
+      const promotedInv = promoteSoftDeleteAsk(plan, sessionRecent)
+      if (promotedInv) {
+        plan = { ask: [], probe: null, calls: promotedInv, reply: '' }
+      } else {
+        return ok({
+          status: 'ask',
+          ask: plan.ask,
+          probe: null,
+          calls: [],
+          draft: draftFromCalls(plan.calls),
+          focus: focusPublic(focus),
+          recentItems: publicRecentItems(sessionRecent),
+          removedItemIds: [],
+          wrote: false
+        })
+      }
+    }
+
+    // 二轮仍只读/空：把首轮查询结果原样返回（真是查库存）
+    if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls)) {
+      return ok(buildDonePayload(readCalls, inventoryReadReport, focus, sessionRecent))
+    }
+
+    if (plan.reply && !(plan.calls && plan.calls.length)) {
+      return ok(
+        attachPresentation(
+          {
+            status: 'done',
+            ask: [],
+            confirm: [],
+            calls: readCalls,
+            report: {
+              executed: (inventoryReadReport.executed || []).map((row) => ({
+                step: row.step,
+                use: row.use,
+                summary: row.summary
+              })),
+              failed: inventoryReadReport.failed || [],
+              possibleDuplicates: [],
+              lines: [plan.reply],
+              recentItems: inventoryReadReport.recentItems || [],
+              removedItemIds: [],
+              wrote: false
+            },
+            draft: draftFromCalls([]),
+            focus: focusPublic(focus),
+            recentItems: publicRecentItems(sessionRecent),
+            removedItemIds: [],
+            wrote: false
+          },
+          textOnlyPresentation(plan.reply)
+        )
+      )
+    }
+
+    if (planNeedsUnavailableCapability(plan.calls, catalogMap)) {
+      return ok({
+        status: 'ask',
+        ask: capabilityLimitAsk(),
+        probe: null,
+        calls: [],
+        draft: draftFromCalls([]),
+        focus: focusPublic(focus),
+        recentItems: publicRecentItems(sessionRecent),
+        removedItemIds: [],
+        wrote: false
+      })
+    }
+  }
+
   const confirmCalls = needsConfirm(plan.calls, catalogMap)
   if (confirmCalls.length && !confirmed) {
+    const boundPreview = bindCallIds(plan.calls, refs)
+    const unresolvedMulti = boundPreview.some((c) => {
+      if (!c) return false
+      const use = String(c.use || '').trim()
+      if (use !== 'item.removeMany' && use !== 'item.merge') return false
+      const ids = Array.isArray(c.itemIds) ? c.itemIds.filter(Boolean) : []
+      return ids.length < 2
+    })
+    if (unresolvedMulti) {
+      return ok({
+        status: 'ask',
+        ask: [
+          {
+            question: '还没法对准要处理的那几条，请再说一下具体是哪几件（或先让我查一下）',
+            options: []
+          }
+        ],
+        probe: null,
+        calls: [],
+        draft: draftFromCalls([]),
+        focus: focusPublic(focus),
+        recentItems: publicRecentItems(sessionRecent),
+        removedItemIds: [],
+        wrote: false
+      })
+    }
     return ok(buildConfirmPayload(plan.calls, confirmCalls, refs, focus, sessionRecent))
   }
 
@@ -642,7 +929,7 @@ async function act(env, openid, event) {
           calls: [],
           draft: draftFromCalls(nextPlan.calls),
           focus: focusPublic(focus),
-          recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+          recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
           removedItemIds: report.removedItemIds || [],
           wrote: !!report.wrote,
           report: {
@@ -667,7 +954,7 @@ async function act(env, openid, event) {
             calls: [],
             draft: draftFromCalls([]),
             focus: focusPublic(focus),
-            recentItems: publicRecentItems(sessionRecent.concat(report.recentItems || [])),
+            recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
             removedItemIds: report.removedItemIds || [],
             wrote: !!report.wrote
           })
@@ -680,7 +967,7 @@ async function act(env, openid, event) {
               confirm2,
               refs,
               focus,
-              sessionRecent.concat(report.recentItems || [])
+              mergeRecentTouchedFirst(report.recentItems, sessionRecent)
             )
           )
         }

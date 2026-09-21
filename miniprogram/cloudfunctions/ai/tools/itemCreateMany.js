@@ -119,7 +119,8 @@ async function run(ctx, call, step) {
   const list = (res.data && res.data.list) || []
   const remember = list.map((row) => ({
     itemId: row._id || row.id,
-    name: row.name || ''
+    name: row.name || '',
+    op: 'create'
   }))
 
   const preview =
