@@ -286,14 +286,24 @@ async function invoke(name, data = {}) {
   }
 
   if (isRead(name, action)) {
-    if (isItemDomainRead(name, action)) {
+    const isBootstrapHome = name === 'bootstrap' && action === 'home'
+
+    if (isBootstrapHome && needsItemRevalidate) {
+      // bootstrap 自带 cursor，勿先打 activity.cursor（会重复 users/memberships/activities）
+      needsItemRevalidate = false
+      cache.dropByName('bootstrap')
+      cache.dropByName('item')
+      cache.dropByName('activity')
+      cache.dropNameAction('space', 'listItemsBySpace')
+      cache.dropNameAction('space', 'listPockets')
+    } else if (isItemDomainRead(name, action)) {
       await revalidateItemDomainIfNeeded()
     }
 
     const familyId = currentFamilyId()
     const key = readCacheKey(name, action, data, familyId)
     if (key && cache.has(key)) {
-      if (isItemDomainRead(name, action)) kickCursorSeed()
+      if (isItemDomainRead(name, action) && !isBootstrapHome) kickCursorSeed()
       return cache.get(key)
     }
     if (key) {
@@ -306,12 +316,12 @@ async function invoke(name, data = {}) {
       const fid =
         familyId ||
         (name === 'family' && action === 'getMyFamily' && result && result._id) ||
-        (name === 'bootstrap' && action === 'home' && result && result.family && result.family._id) ||
+        (isBootstrapHome && result && result.family && result.family._id) ||
         ''
       if (fid) {
         cache.set(readCacheKey(name, action, data, fid), result)
       }
-      if (name === 'bootstrap' && action === 'home' && result) {
+      if (isBootstrapHome && result) {
         seedBootstrapBundle(result, data)
       }
       return result
@@ -320,7 +330,8 @@ async function invoke(name, data = {}) {
     if (key) cache.setInflight(key, run)
     try {
       const result = await run
-      if (isItemDomainRead(name, action)) kickCursorSeed()
+      // bootstrap 已写入 cursor，不必再 kick activity.cursor
+      if (isItemDomainRead(name, action) && !isBootstrapHome) kickCursorSeed()
       return result
     } finally {
       if (key) cache.clearInflight(key)
