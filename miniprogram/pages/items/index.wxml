@@ -99,10 +99,35 @@
       </view>
 
       <view class="empty" wx:elif="{{items.length === 0}}">
-        <view class="empty-title">{{copy.emptyTitle}}</view>
-        <view class="empty-sub">{{copy.emptySub}}</view>
+        <view class="empty-title">{{filterSpaceId ? copy.emptySpaceTitle : copy.emptyTitle}}</view>
+        <view class="empty-sub">{{filterSpaceId ? copy.emptySpaceSub : copy.emptySub}}</view>
         <view class="pill-btn add-btn" style="background: {{theme.ctaGradient}};" bind:tap="goAdd">{{copy.addCta}}</view>
       </view>
+
+      <block wx:elif="{{!filterSpaceId}}">
+        <view class="space-block" wx:for="{{itemGroups}}" wx:key="spaceId">
+          <view class="space-block-hd">
+            <text class="space-block-name">{{item.name}}</text>
+            <text class="space-block-count">{{item.count}}</text>
+          </view>
+          <view class="space-block-rule" aria-hidden="true"></view>
+          <view class="shelf">
+            <ItemTile
+              wx:for="{{item.items}}"
+              wx:for-item="tile"
+              wx:key="_id"
+              itemId="{{tile._id}}"
+              name="{{tile.name}}"
+              quantity="{{tile.quantity}}"
+              unit="{{tile.unit}}"
+              expireStatus="{{tile.expireStatus}}"
+              animate="{{animateTiles}}"
+              delay="{{index % 9 * 40}}"
+              bind:tap="goDetail"
+            />
+          </view>
+        </view>
+      </block>
 
       <view class="shelf" wx:else>
         <ItemTile
@@ -142,6 +167,11 @@
     </view>
     <scroll-view class="sheet-body" scroll-y>
       <view class="space-chips">
+        <view
+          class="space-chip {{!filterSpaceId ? 'theme-btn' : ''}}"
+          data-id="__all__"
+          bind:tap="onPickSpace"
+        >{{copy.filterAll}}</view>
         <view
           class="space-chip {{filterSpaceId === item._id ? 'theme-btn' : ''}}"
           wx:for="{{spaces}}"

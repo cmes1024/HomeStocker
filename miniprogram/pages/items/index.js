@@ -8,12 +8,108 @@ const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
 const { appName } = require('../../config/app')
 
-function pickSpace(spaces, currentId) {
-  const list = spaces || []
-  if (currentId && list.some((s) => s && s._id === currentId)) {
-    return list.find((s) => s._id === currentId)
+/** v2：空字符串 = 全部；旧 key 不再读取，避免默认卡在空仓库 */
+const FILTER_SPACE_KEY = 'itemsFilterSpaceId_v2'
+const FILTER_ALL_ID = '__all__'
+
+function readSavedFilterSpaceId() {
+  try {
+    const raw = wx.getStorageSync(FILTER_SPACE_KEY)
+    if (raw === undefined || raw === null || raw === '') return ''
+    return String(raw)
+  } catch (e) {
+    return ''
   }
-  return list.find((s) => s && s.isDefault) || list[0] || null
+}
+
+function writeSavedFilterSpaceId(id) {
+  try {
+    if (!id) {
+      wx.removeStorageSync(FILTER_SPACE_KEY)
+    } else {
+      wx.setStorageSync(FILTER_SPACE_KEY, id)
+    }
+  } catch (e) {
+    // ignore
+  }
+}
+
+function filterLabel(spaces, filterSpaceId) {
+  if (!filterSpaceId) return copy.items.filterAll
+  const space = (spaces || []).find((s) => s && s._id === filterSpaceId)
+  return (space && space.name) || copy.items.defaultSpaceName
+}
+
+/** 清单筛选 / 分块：非默认在前，isDefault 兜底空间沉底（不看名称） */
+function spacesForLedgerFilter(spaces) {
+  const normal = []
+  const defaults = []
+  ;(spaces || []).forEach((s) => {
+    if (!s) return
+    if (s.isDefault) defaults.push(s)
+    else normal.push(s)
+  })
+  return normal.concat(defaults)
+}
+
+/**
+ * 全部视图：按空间列表顺序分块；空空间不出现；未知空间挂到末尾。
+ */
+function buildItemGroups(items, spaces) {
+  const list = items || []
+  if (!list.length) return []
+
+  const buckets = Object.create(null)
+  const orphans = []
+  list.forEach((item) => {
+    if (!item) return
+    const sid = item.spaceId ? String(item.spaceId) : ''
+    if (!sid) {
+      orphans.push(item)
+      return
+    }
+    if (!buckets[sid]) buckets[sid] = []
+    buckets[sid].push(item)
+  })
+
+  const groups = []
+  const seen = Object.create(null)
+  ;(spaces || []).forEach((space) => {
+    if (!space || !space._id) return
+    const sid = String(space._id)
+    const gItems = buckets[sid]
+    if (!gItems || !gItems.length) return
+    seen[sid] = true
+    groups.push({
+      spaceId: sid,
+      name: space.name || copy.items.defaultSpaceName,
+      count: gItems.length,
+      items: gItems
+    })
+  })
+
+  Object.keys(buckets).forEach((sid) => {
+    if (seen[sid]) return
+    const gItems = buckets[sid]
+    if (!gItems || !gItems.length) return
+    groups.push({
+      spaceId: sid,
+      name: (gItems[0] && gItems[0].spaceName) || copy.items.defaultSpaceName,
+      count: gItems.length,
+      items: gItems
+    })
+  })
+
+  if (orphans.length) {
+    groups.push({
+      spaceId: '_orphan',
+      name: copy.items.defaultSpaceName,
+      count: orphans.length,
+      items: orphans
+    })
+  }
+
+  return groups
 }
 
 function daysUntilExpire(expireDate, now = Date.now()) {
@@ -45,8 +141,6 @@ function buildExpireBanner(item, spaceName, locationName) {
   return { place, message }
 }
 
-const FILTER_SPACE_KEY = 'itemsFilterSpaceId'
-
 Page({
   data: {
     copy: copy.items,
@@ -56,6 +150,7 @@ Page({
     loading: false,
     error: '',
     items: [],
+    itemGroups: [],
     expireBanner: null,
     familyId: '',
     familyName: '',
@@ -67,7 +162,7 @@ Page({
     theme: null,
     spaces: [],
     filterSpaceId: '',
-    filterSpaceName: copy.items.defaultSpaceName,
+    filterSpaceName: copy.items.filterAll,
     spaceSheetOpen: false,
     spaceLoading: false,
     pageColHeight: 0,
@@ -77,15 +172,11 @@ Page({
 
   onLoad() {
     wx.setNavigationBarTitle({ title: appName })
-    let savedSpaceId = ''
-    try {
-      savedSpaceId = String(wx.getStorageSync(FILTER_SPACE_KEY) || '')
-    } catch (e) {
-      savedSpaceId = ''
-    }
+    const savedSpaceId = readSavedFilterSpaceId()
     bindThemeToPage(this, {
       headerTitle: appName,
-      ...(savedSpaceId ? { filterSpaceId: savedSpaceId } : {})
+      filterSpaceId: savedSpaceId,
+      filterSpaceName: savedSpaceId ? copy.items.defaultSpaceName : copy.items.filterAll
     })
     this.syncPageColHeight()
     this.syncLoadingColors()
@@ -131,6 +222,15 @@ Page({
     }
   },
 
+  applyListView(items, spaces, filterSpaceId) {
+    const spaceList = spaces !== undefined ? spaces : this.data.spaces
+    const spaceId = filterSpaceId !== undefined ? filterSpaceId : this.data.filterSpaceId
+    return {
+      items: items || [],
+      itemGroups: spaceId ? [] : buildItemGroups(items || [], spaceList)
+    }
+  },
+
   async onShow() {
     bindThemeToPage(this, { headerTitle: appName })
     this.syncLoadingColors()
@@ -157,17 +257,12 @@ Page({
       })
       this.syncLoadingColors()
 
-      // 空间列表与物资看板解耦：有本地 spaceId 时可并行；看板一次取列表+件数+临期
-      const spaceIdHint = this.data.filterSpaceId
+      const spaceIdHint = this.data.filterSpaceId || ''
       const spacesPromise = this.loadSpaces()
       const boardPromise = (async () => {
-        const resolvedSpaceId = spaceIdHint || (await spacesPromise)
-        if (!spaceIdHint && resolvedSpaceId && this.data.filterSpaceId !== resolvedSpaceId) {
-          this.setData({ filterSpaceId: resolvedSpaceId })
-        }
-        await this.loadHomeBoard({ spaceId: resolvedSpaceId || this.data.filterSpaceId })
+        await this.loadHomeBoard({ spaceId: spaceIdHint })
         const finalSpaceId = await spacesPromise
-        if (finalSpaceId && finalSpaceId !== (spaceIdHint || resolvedSpaceId)) {
+        if (finalSpaceId !== spaceIdHint) {
           await this.loadHomeBoard({
             silent: true,
             spaceId: finalSpaceId
@@ -191,21 +286,21 @@ Page({
         await callSpace('ensureDefault').catch(() => null)
         spaces = await listSpaces()
       }
-      const selected = pickSpace(spaces, this.data.filterSpaceId)
-      const filterSpaceId = selected ? selected._id : ''
-      if (filterSpaceId) {
-        try {
-          wx.setStorageSync(FILTER_SPACE_KEY, filterSpaceId)
-        } catch (e) {
-          // ignore
-        }
+      spaces = spacesForLedgerFilter(spaces)
+      let filterSpaceId = this.data.filterSpaceId || ''
+      if (filterSpaceId && !(spaces || []).some((s) => s && s._id === filterSpaceId)) {
+        filterSpaceId = ''
+        writeSavedFilterSpaceId('')
       }
+      const filterSpaceName = filterLabel(spaces, filterSpaceId)
+      const listPatch = this.applyListView(this.data.items, spaces, filterSpaceId)
       this.setData(this.syncStats({
         spaces,
         spaceCount: spaces.length,
         spacesReady: true,
         filterSpaceId,
-        filterSpaceName: (selected && selected.name) || copy.items.defaultSpaceName
+        filterSpaceName,
+        ...listPatch
       }))
       return filterSpaceId
     } catch (e) {
@@ -213,10 +308,9 @@ Page({
         spaces: [],
         spaceCount: 0,
         spacesReady: true,
-        filterSpaceId: '',
-        filterSpaceName: copy.items.defaultSpaceName
+        itemGroups: []
       }))
-      return ''
+      return this.data.filterSpaceId || ''
     }
   },
 
@@ -258,7 +352,7 @@ Page({
       const items = await enrichLedgerItemsAsync(board.list || [], {}, {}, {})
       this.setData(
         this.syncStats({
-          items,
+          ...this.applyListView(items, this.data.spaces, spaceId || ''),
           loading: false,
           itemCount: board.total,
           itemsReady: true
@@ -295,7 +389,7 @@ Page({
   },
 
   /**
-   * @param {{ silent?: boolean, animate?: boolean }} [options]
+   * @param {{ silent?: boolean, animate?: boolean, spaceId?: string }} [options]
    */
   async loadList(options = {}) {
     const familyId = this.data.familyId || getApp().globalData.familyId
@@ -303,6 +397,8 @@ Page({
 
     const hasItems = (this.data.items || []).length > 0
     const silent = options.silent !== undefined ? !!options.silent : hasItems
+    const spaceId =
+      options.spaceId !== undefined ? options.spaceId : this.data.filterSpaceId
 
     if (!silent) {
       this.setData({ loading: true, error: '', animateTiles: true })
@@ -312,10 +408,13 @@ Page({
 
     try {
       const raw = await listItems(familyId, {
-        spaceId: this.data.filterSpaceId || undefined
+        spaceId: spaceId || undefined
       })
       const items = await enrichLedgerItemsAsync(raw, {}, {}, {})
-      this.setData({ items, loading: false })
+      this.setData({
+        ...this.applyListView(items, this.data.spaces, spaceId || ''),
+        loading: false
+      })
     } catch (e) {
       this.setData({
         loading: false,
@@ -333,30 +432,35 @@ Page({
   },
 
   async onPickSpace(e) {
-    const id = e.currentTarget.dataset.id || ''
-    const space = (this.data.spaces || []).find((s) => s && s._id === id)
-    if (!space) {
+    let id = e.currentTarget.dataset.id
+    if (id === FILTER_ALL_ID || id === undefined || id === null) id = ''
+    else id = String(id)
+
+    const isAll = !id
+    const space = isAll
+      ? null
+      : (this.data.spaces || []).find((s) => s && s._id === id)
+    if (!isAll && !space) {
       this.setData({ spaceSheetOpen: false })
       return
     }
-    if (id === this.data.filterSpaceId) {
+    if (id === (this.data.filterSpaceId || '')) {
       this.setData({ spaceSheetOpen: false })
       return
     }
-    try {
-      wx.setStorageSync(FILTER_SPACE_KEY, id)
-    } catch (err) {
-      // ignore
-    }
+
+    writeSavedFilterSpaceId(id)
     this.setData({
       spaceSheetOpen: false,
       filterSpaceId: id,
-      filterSpaceName: space.name || copy.items.defaultSpaceName,
+      filterSpaceName: isAll
+        ? copy.items.filterAll
+        : space.name || copy.items.defaultSpaceName,
       spaceLoading: true
     })
     const started = Date.now()
     try {
-      await this.loadList({ silent: true, animate: true })
+      await this.loadHomeBoard({ silent: true, animate: true, spaceId: id })
     } finally {
       const wait = 420 - (Date.now() - started)
       if (wait > 0) {

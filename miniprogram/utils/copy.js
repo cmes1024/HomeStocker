@@ -25,6 +25,7 @@ const copy = {
     ledgerHint: '家里的共用台账 · 谁改都能看见',
     panelTitle: '家庭物品',
     spaceSheetTitle: '家庭空间',
+    filterAll: '全部',
     defaultSpaceName: '仓库',
     badgeSoon: '即将过期',
     statsLine(memberCount, itemCount, spaceCount) {
@@ -33,6 +34,8 @@ const copy = {
     },
     emptyTitle: '还没有物品',
     emptySub: '快去添加东西吧，家人都能看到',
+    emptySpaceTitle: '这个空间还没有物品',
+    emptySpaceSub: '换个空间看看，或添加一件',
     assistNav: '家庭管家',
     assistNavAria: '打开家庭管家',
     tileHint: '点一下看看',
