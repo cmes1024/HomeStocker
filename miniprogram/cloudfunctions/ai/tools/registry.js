@@ -16,7 +16,8 @@ const HANDLERS = [
   require('./spaceCreateMany'),
   require('./spaceCreateLocation'),
   require('./spaceCreateLocationMany'),
-  require('./itemExpireSubscribePanel')
+  require('./itemExpireSubscribePanel'),
+  require('./knowledgeGet')
 ]
 
 const HANDLER_MAP = {}
@@ -36,7 +37,7 @@ function compactCall(call) {
   const use = String(call.use || '').trim()
   if (!use) return null
   const row = { use }
-  ;['name', 'spaceName', 'locationName', 'quantity', 'unit', 'ref', 'note'].forEach((k) => {
+  ;['name', 'spaceName', 'locationName', 'quantity', 'unit', 'ref', 'note', 'topicId'].forEach((k) => {
     if (call[k] != null && call[k] !== '') row[k] = call[k]
   })
   if (Array.isArray(call.items) && call.items.length) {

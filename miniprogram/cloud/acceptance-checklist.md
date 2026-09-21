@@ -129,6 +129,7 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 
 - [ ] 集合 `redeemCodes`、`familySubscriptions` 已建；规则按 `database-rules.json` 粘贴
 - [ ] 云函数 `family` 配置环境变量 `ADMIN_OPENID`；上传 `family` / `item`（助手建物资则同步 `ai`）
+- [ ] 云函数 `ai` 若需展示申请内测联系方式，配置 `CAPACITY_ADMIN_WECHAT`（勿写进仓库）
 - [ ] `families` 新文档含 `itemCount: 0`（老家庭首次创建物资时会懒校准）
 
 ### 手测

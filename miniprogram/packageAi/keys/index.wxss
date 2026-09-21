@@ -109,6 +109,85 @@
   color: rgba(26, 26, 26, 0.55);
 }
 
+.faq {
+  margin-top: 28rpx;
+  padding: 28rpx 24rpx 32rpx;
+  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.94);
+}
+
+.faq-hd {
+  margin-bottom: 12rpx;
+}
+
+.faq-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+}
+
+.faq-sub {
+  margin-top: 8rpx;
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.45);
+  line-height: 1.4;
+}
+
+.faq-item {
+  border-top: 1rpx solid rgba(26, 26, 26, 0.06);
+}
+
+.faq-item:first-of-type {
+  border-top: none;
+  margin-top: 8rpx;
+}
+
+.faq-q {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 24rpx 0;
+}
+
+.faq-q-text {
+  flex: 1;
+  min-width: 0;
+  font-size: 28rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+  line-height: 1.4;
+}
+
+.faq-chevron {
+  flex-shrink: 0;
+  width: 40rpx;
+  text-align: center;
+  font-size: 32rpx;
+  color: rgba(26, 26, 26, 0.35);
+  line-height: 1;
+}
+
+.faq-a {
+  padding: 0 0 24rpx;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.58);
+  line-height: 1.55;
+}
+
+.faq-link {
+  margin-top: 8rpx;
+  height: 72rpx;
+  border-radius: 999rpx;
+  border-width: 2rpx;
+  border-style: solid;
+  font-size: 26rpx;
+  font-weight: 500;
+  line-height: 68rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
 .pill-btn {
   height: 80rpx;
   padding: 0 40rpx;

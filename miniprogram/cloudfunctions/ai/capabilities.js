@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 9
+const CAPABILITY_VERSION = 10
 
 const HARD_DENY = {
   'family.create': true,
@@ -129,6 +129,15 @@ const CAPABILITY_SEED = {
       confirm: false,
       args: '',
       hint: '打开临期消息订阅面板（列出已设过期日的物资开关）。微信要求家人亲手点开关授权，不能代开订阅。当家人要管理临期/过期提醒订阅时用此接口，calls 里只放这一步即可。'
+    },
+    {
+      id: 'knowledge.get',
+      fn: 'ai',
+      action: 'knowledgeGet',
+      enabled: true,
+      confirm: false,
+      args: 'topicId',
+      hint: '按知识目录的 topicId 读取一条产品说明（如 capacity=加强版/免费档上限）。问 VIP/会员/兑换/家数人数物资上限时用。一次只取一个 topic；不要编造目录外内容。'
     },
     {
       id: 'space.update',

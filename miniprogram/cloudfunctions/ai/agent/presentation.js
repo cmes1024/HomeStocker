@@ -120,6 +120,20 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
       ;(inv.blocks || []).forEach((b) => blocks.push(b))
       return
     }
+    if (row && row.use === 'knowledge.get' && row.summary) {
+      const parts = String(row.summary)
+        .split('\n')
+        .map((s) => s.trim())
+        .filter(Boolean)
+      const title = parts[0] || '产品说明'
+      if (!inventoryLead) inventoryLead = title
+      parts.forEach((l) => inventoryLines.push(l))
+      const facts = parts.slice(1, 13)
+      const card = { title }
+      if (facts.length) card.facts = facts
+      blocks.push({ cards: [card] })
+      return
+    }
     if (row && row.summary) {
       actionCards.push({ title: String(row.summary), tone: 'ok' })
     }

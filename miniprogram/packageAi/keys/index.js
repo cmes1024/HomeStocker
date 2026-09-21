@@ -15,7 +15,9 @@ Page({
     keys: [],
     apiKey: '',
     label: '',
-    acting: false
+    acting: false,
+    faqItems: copy.ai.faqItems || [],
+    openFaqId: ''
   },
 
   onLoad() {
@@ -132,5 +134,23 @@ Page({
       this.setData({ acting: false })
       wx.showToast({ title: err.message || copy.common.opFailed, icon: 'none' })
     }
+  },
+
+  onToggleFaq(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    this.setData({
+      openFaqId: this.data.openFaqId === id ? '' : id
+    })
+  },
+
+  onCopyDeepseekLink() {
+    const url = copy.ai.deepseekPlatformUrl || 'https://platform.deepseek.com/api_keys'
+    wx.setClipboardData({
+      data: url,
+      success: () => {
+        wx.showToast({ title: copy.ai.faqCopied, icon: 'success' })
+      }
+    })
   }
 })

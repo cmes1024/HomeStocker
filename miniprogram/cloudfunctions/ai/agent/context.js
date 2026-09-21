@@ -3,6 +3,7 @@ const { getOrRebuildFamilyTree, renderTreeNames } = require('../familyTree')
 const { ensureAssistPrompt, sanitizeHistory, sanitizeRecentIds, renderHistory, fillAssistPrompt, ASSIST_PROMPT_V2 } = require('./model')
 const { loadFocus, loadRecentItems } = require('./itemsQuery')
 const { renderFocusList } = require('./refs')
+const { renderIndex } = require('../knowledge')
 
 function enabledMap(catalog) {
   const map = {}
@@ -54,7 +55,8 @@ async function buildActContext(env, openid, event, familyCtx) {
     history: renderHistory(history),
     focus: renderFocusList([focus].concat(recentRows)),
     probe: '无',
-    exec: '无'
+    exec: '无',
+    knowledgeIndex: renderIndex()
   }
   const system = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, vars)
   const text = String((event && event.text) || '').trim()

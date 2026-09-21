@@ -69,5 +69,34 @@
         </view>
       </view>
     </view>
+
+    <view class="faq">
+      <view class="faq-hd">
+        <view class="faq-title">{{copy.faqTitle}}</view>
+        <view class="faq-sub">{{copy.faqHint}}</view>
+      </view>
+      <view
+        class="faq-item"
+        wx:for="{{faqItems}}"
+        wx:key="id"
+      >
+        <view
+          class="faq-q"
+          hover-class="press"
+          data-id="{{item.id}}"
+          bind:tap="onToggleFaq"
+          aria-role="button"
+        >
+          <text class="faq-q-text">{{item.q}}</text>
+          <text class="faq-chevron">{{openFaqId === item.id ? '−' : '+'}}</text>
+        </view>
+        <view class="faq-a" wx:if="{{openFaqId === item.id}}">{{item.a}}</view>
+      </view>
+      <view
+        class="faq-link theme-text theme-border"
+        hover-class="press"
+        bind:tap="onCopyDeepseekLink"
+      >{{copy.faqCopyLink}}</view>
+    </view>
   </view>
 </AppShell>

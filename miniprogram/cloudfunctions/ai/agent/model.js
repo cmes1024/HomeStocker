@@ -70,6 +70,7 @@ function fillAssistPrompt(system, vars) {
     .replace(/\{\{PROBE\}\}/g, vars.probe || '无')
     .replace(/\{\{HISTORY\}\}/g, vars.history || '无')
     .replace(/\{\{EXEC\}\}/g, vars.exec || '无')
+    .replace(/\{\{KNOWLEDGE_INDEX\}\}/g, vars.knowledgeIndex || '无')
 }
 
 /** 仅根据执行回执拼场景文本，不做决策、不加查询 */

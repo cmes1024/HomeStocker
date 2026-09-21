@@ -335,7 +335,38 @@ const copy = {
     maxKeys: '每家最多 3 把密钥',
     keyRequired: '先粘贴密钥',
     noKeys: '还没有密钥',
-    needFamily: '请先加入家庭'
+    needFamily: '请先加入家庭',
+    faqTitle: '常见问题',
+    faqHint: '不知道密钥从哪来、配了还不能用，先看这里',
+    faqCopyLink: '复制开通链接',
+    faqCopied: '已复制链接',
+    faqItems: [
+      {
+        id: 'where',
+        q: 'API Key 在哪里获取？',
+        a:
+          '本产品只用 DeepSeek。用浏览器打开 platform.deepseek.com → 注册/登录 →「API keys」→ 创建密钥 → 复制整串（一般以 sk- 开头）。小程序里打不开该网站时，可点下方按钮复制链接，到手机浏览器打开。'
+      },
+      {
+        id: 'how',
+        q: '怎么配到家里？',
+        a:
+          '把密钥粘贴到上方输入框，名称可空，点「添加」。第一把会自动设为默认。密钥保存在当前家庭，全家成员共用，每个人不必各配一把。'
+      },
+      {
+        id: 'still',
+        q: '配置了还是不能用？',
+        a:
+          '常见原因：① DeepSeek 账户余额不足或未充值（控制台看用量/账单）；② 密钥复制少了字符或含空格；③ 删掉了默认密钥且没有设新的默认；④ 当前不在已加入的家庭里。拍照录入、家庭管家都走这把家庭密钥，与「加强版/VIP」无关。'
+      },
+      {
+        id: 'safe',
+        q: '密钥安全吗？谁能看见？',
+        a:
+          '完整密钥只存在云端，列表里只显示掩码。同家庭成员都能用、也能删除，请只把密钥给可信家人。不要发到群聊或交给不明小程序。'
+      }
+    ],
+    deepseekPlatformUrl: 'https://platform.deepseek.com/api_keys'
   },
 
   spaces: {

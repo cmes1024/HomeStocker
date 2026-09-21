@@ -360,9 +360,10 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 1. 集合 `redeemCodes`、`familySubscriptions` 已创建；安全规则客户端写 deny（见 `database-rules.json`）。
 2. 上传云函数 `family`（含 `getEntitlement` / `redeem` / `issueCodes`）、`item`（容量门控 + `itemCount`）；若用助手建物资，同步上传 `ai`（内含同款 `itemService` + `entitlements`）。
 3. 云函数 `family` 环境变量配置 **`ADMIN_OPENID`**（仅该 openid 可 `issueCodes`）。不要把兑换码明文或 admin 身份写进仓库。
-4. 免费档默认 `familyLimit=1` / `memberLimit=2` / `itemLimit=50`（`entitlements.js`）；加强版三项 `null`；读路径（list/search）不查订阅。
-5. 写路径门控：`item.create(Many)`、`family.create` / `join`（家数 + 人数）；过限不踢人、不删物资。
-6. 手测清单见 `acceptance-checklist.md`「容量会员」。
+4. 云函数 `ai` 若要对用户展示「申请内测」联系方式，配置 **`CAPACITY_ADMIN_WECHAT`**（管理员微信号）；未配置则知识库不输出微信号。不要把微信号写进仓库。
+5. 免费档默认 `familyLimit=1` / `memberLimit=2` / `itemLimit=50`（`entitlements.js`）；加强版三项 `null`；读路径（list/search）不查订阅。
+6. 写路径门控：`item.create(Many)`、`family.create` / `join`（家数 + 人数）；过限不踢人、不删物资。
+7. 手测清单见 `acceptance-checklist.md`「容量会员」。
 
 ## 订阅消息（B 波）
 
