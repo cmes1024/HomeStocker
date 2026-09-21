@@ -3,8 +3,8 @@ const cloud = require('wx-server-sdk')
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 
 const db = cloud.database()
-const _ = db.command
 const { touchFamilyTree } = require('./familyTree')
+const tagWriter = require('./tagWrite')(db)
 
 const DEFAULT_TAG_NAMES = ['药品', '饮料', '工具', '衣物']
 
@@ -41,14 +41,7 @@ async function resolveFamilyContext(openid) {
 }
 
 async function listTagsForFamily(familyId) {
-  const res = await db
-    .collection('tags')
-    .where({ familyId })
-    .limit(100)
-    .get()
-  const list = res.data || []
-  list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
-  return list
+  return tagWriter.listTagsForFamily(familyId)
 }
 
 /**
@@ -106,27 +99,11 @@ async function listTags(openid) {
 }
 
 async function createTag(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
+  return tagWriter.createTag(openid, event)
+}
 
-  const name = String(event.name || '').trim().slice(0, 20)
-  if (!name) return fail('INVALID_NAME', '请输入标签名称')
-
-  const existing = await listTagsForFamily(ctx.familyId)
-  if (existing.some((t) => t.name === name)) {
-    return fail('DUPLICATE_NAME', '已有同名标签')
-  }
-
-  const now = Date.now()
-  const doc = {
-    familyId: ctx.familyId,
-    name,
-    isDefault: false,
-    createdAt: now,
-    updatedAt: now
-  }
-  const addRes = await db.collection('tags').add({ data: doc })
-  return ok({ _id: addRes._id, ...doc })
+async function createManyTags(openid, event) {
+  return tagWriter.createMany(openid, event)
 }
 
 async function updateTag(openid, event) {
@@ -155,48 +132,12 @@ async function updateTag(openid, event) {
   return ok({ _id: tagId, ...snap.data, ...patch })
 }
 
-async function stripTagFromItems(familyId, tagId) {
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const res = await db
-      .collection('items')
-      .where({
-        familyId,
-        tagIds: tagId
-      })
-      .limit(100)
-      .get()
-    const list = res.data || []
-    if (!list.length) break
-    const now = Date.now()
-    await Promise.all(
-      list.map((item) => {
-        const next = (item.tagIds || []).filter((id) => id !== tagId)
-        return db.collection('items').doc(item._id).update({
-          data: { tagIds: next, updatedAt: now }
-        })
-      })
-    )
-    if (list.length < 100) break
-  }
+async function removeTag(openid, event) {
+  return tagWriter.removeTag(openid, event)
 }
 
-async function removeTag(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
-
-  const tagId = String(event.tagId || '').trim()
-  if (!tagId) return fail('INVALID_ID', '缺少 tagId')
-
-  const snap = await db.collection('tags').doc(tagId).get().catch(() => null)
-  if (!snap || !snap.data) return fail('NOT_FOUND', '标签不存在')
-  if (snap.data.familyId !== ctx.familyId) {
-    return fail('FORBIDDEN', '无权操作该标签')
-  }
-
-  await stripTagFromItems(ctx.familyId, tagId)
-  await db.collection('tags').doc(tagId).remove()
-  return ok({ removed: true, tagId })
+async function removeManyTags(openid, event) {
+  return tagWriter.removeMany(openid, event)
 }
 
 exports.main = async (event) => {
@@ -218,11 +159,17 @@ exports.main = async (event) => {
       case 'create':
         result = await createTag(OPENID, event)
         break
+      case 'createMany':
+        result = await createManyTags(OPENID, event)
+        break
       case 'update':
         result = await updateTag(OPENID, event)
         break
       case 'remove':
         result = await removeTag(OPENID, event)
+        break
+      case 'removeMany':
+        result = await removeManyTags(OPENID, event)
         break
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
@@ -232,8 +179,10 @@ exports.main = async (event) => {
       result.ok &&
       (action === 'ensureDefaults' ||
         action === 'create' ||
+        action === 'createMany' ||
         action === 'update' ||
-        action === 'remove')
+        action === 'remove' ||
+        action === 'removeMany')
     ) {
       const ctx = await resolveFamilyContext(OPENID)
       if (!ctx.error) await touchFamilyTree(db, ctx.familyId)

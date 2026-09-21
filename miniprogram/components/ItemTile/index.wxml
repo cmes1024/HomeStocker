@@ -1,9 +1,12 @@
 <view
-  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}}"
+  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}} {{selectable ? 'selectable' : ''}} {{selected ? 'selected' : ''}}"
   style="{{animate ? 'animation-delay: ' + delay + 'ms;' : ''}}"
   hover-class="tile-hover"
   bind:tap="onTap"
 >
+  <view class="tile-check" wx:if="{{selectable}}" aria-hidden="true">
+    <view class="tile-check-dot {{selected ? 'on' : ''}}"></view>
+  </view>
   <view class="tile-top">
     <view class="tile-name">{{name}}</view>
     <view class="tile-qty-inline" wx:if="{{place}}">

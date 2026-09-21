@@ -103,7 +103,8 @@ function lookupRef(call, refs) {
 function bindCallIds(calls, refs) {
   return (calls || []).map((call) => {
     if (!call || typeof call !== 'object') return call
-    if (String(call.use || '').trim() === 'item.merge') {
+    const use = String(call.use || '').trim()
+    if (use === 'item.merge' || use === 'item.removeMany') {
       const refList = Array.isArray(call.refs)
         ? call.refs
         : call.ref

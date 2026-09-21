@@ -1,6 +1,7 @@
 const createItemService = require('../itemService')
 const createLocationWriter = require('../locationWrite')
 const createSpaceWriter = require('../spaceWrite')
+const createTagWriter = require('../tagWrite')
 const { ensureCapabilities } = require('../capabilities')
 const { getOrRebuildFamilyTree } = require('../familyTree')
 const { fail, ok } = require('./types')
@@ -23,7 +24,8 @@ function makeWriters(db) {
   return {
     item: createItemService(db),
     location: createLocationWriter(db),
-    space: createSpaceWriter(db)
+    space: createSpaceWriter(db),
+    tag: createTagWriter(db)
   }
 }
 
@@ -89,7 +91,7 @@ function ensureProbeForUnresolvedWrites(plan, refs, history, currentText) {
         return plan
       }
     }
-    if (use === 'item.merge') {
+    if (use === 'item.merge' || use === 'item.removeMany') {
       const refList = Array.isArray(call.refs) ? call.refs : call.ref ? [call.ref] : []
       const unresolved = refList.some((raw) => !lookupRef({ ref: raw }, refs))
       if (!unresolved && (Array.isArray(call.itemIds) ? call.itemIds.length : 0)) continue
@@ -278,7 +280,8 @@ function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent
     ask: [],
     confirm: confirmCalls.map((call) => {
       const bound = bindCallIds([call], refs)[0] || call
-      if (String(call.use || '').trim() === 'item.merge') {
+      const use = String(call.use || '').trim()
+      if (use === 'item.merge' || use === 'item.removeMany') {
         const names =
           (bound.names && bound.names.filter(Boolean).length
             ? bound.names.filter(Boolean)
@@ -297,6 +300,57 @@ function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent
           name: bound.name || names[0] || '物资',
           names
         }
+      }
+      if (
+        use === 'space.removeMany' ||
+        use === 'tag.removeMany' ||
+        use === 'tag.createMany'
+      ) {
+        let names = Array.isArray(bound.names)
+          ? bound.names.map((n) => String(n || '').trim()).filter(Boolean)
+          : []
+        if (!names.length && Array.isArray(bound.spaces)) {
+          names = bound.spaces
+            .map((s) => String((s && (s.name || s.spaceName)) || '').trim())
+            .filter(Boolean)
+        }
+        if (!names.length && Array.isArray(bound.tags)) {
+          names = bound.tags
+            .map((t) => String((t && (t.name || t.tagName)) || '').trim())
+            .filter(Boolean)
+        }
+        return {
+          use: call.use,
+          names,
+          name: names[0] || bound.name || '多项'
+        }
+      }
+      if (use === 'space.removeLocationMany') {
+        const labels = (Array.isArray(bound.locations) ? bound.locations : [])
+          .map((l) => {
+            const sn = String((l && l.spaceName) || '').trim()
+            const ln = String((l && (l.locationName || l.name)) || '').trim()
+            if (sn && ln) return `${sn}/${ln}`
+            return ln || sn
+          })
+          .filter(Boolean)
+        return {
+          use: call.use,
+          names: labels,
+          name: labels[0] || '位置'
+        }
+      }
+      if (use === 'space.remove' || use === 'tag.remove' || use === 'tag.create') {
+        const name = String(
+          bound.spaceName || bound.name || bound.tagName || ''
+        ).trim()
+        return { use: call.use, name: name || '项目', names: name ? [name] : [] }
+      }
+      if (use === 'space.removeLocation') {
+        const sn = String(bound.spaceName || '').trim()
+        const ln = String(bound.locationName || bound.name || '').trim()
+        const label = sn && ln ? `${sn}/${ln}` : ln || sn || '位置'
+        return { use: call.use, name: label, names: [label] }
       }
       const row = lookupRef(call, refs)
       return {

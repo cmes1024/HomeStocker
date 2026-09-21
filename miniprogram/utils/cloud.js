@@ -129,7 +129,7 @@ function invalidateFamilyReads() {
 }
 
 function applyWriteInvalidation(name, action) {
-  if (name === 'item' && (action === 'create' || action === 'createMany' || action === 'update' || action === 'remove')) {
+  if (name === 'item' && (action === 'create' || action === 'createMany' || action === 'update' || action === 'remove' || action === 'removeMany' || action === 'merge')) {
     invalidateItemDomain()
     return
   }

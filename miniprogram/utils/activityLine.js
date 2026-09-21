@@ -18,7 +18,7 @@ function itemLabel(row, unnamed) {
 
 function actionVerb(action, copy) {
   if (action === 'create' || action === 'create_batch') return copy.actionCreate
-  if (action === 'remove') return copy.actionRemove
+  if (action === 'remove' || action === 'remove_batch') return copy.actionRemove
   return copy.actionUpdate
 }
 
@@ -35,6 +35,17 @@ function formatActivityLine(row, copy) {
     const count = Number.isFinite(n) && n > 0 ? n : 0
     if (count > 0 && copy.actionCreateBatch) {
       return `${actor}${copy.actionCreateBatch(names, count)}`
+    }
+    if (count > 0) return `${actor}${verb}${names}${count}件物品`
+    return `${actor}${verb}${names}`
+  }
+
+  if (row && row.action === 'remove_batch') {
+    const names = String((row && row.itemName) || '').trim() || unnamed
+    const n = Number(row.batchCount)
+    const count = Number.isFinite(n) && n > 0 ? n : 0
+    if (count > 0 && copy.actionRemoveBatch) {
+      return `${actor}${copy.actionRemoveBatch(names, count)}`
     }
     if (count > 0) return `${actor}${verb}${names}${count}件物品`
     return `${actor}${verb}${names}`

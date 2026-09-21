@@ -11,11 +11,20 @@ const HANDLERS = [
   require('./itemCreateMany'),
   require('./itemUpdate'),
   require('./itemRemove'),
+  require('./itemRemoveMany'),
   require('./itemMerge'),
   require('./spaceCreate'),
   require('./spaceCreateMany'),
   require('./spaceCreateLocation'),
   require('./spaceCreateLocationMany'),
+  require('./spaceRemove'),
+  require('./spaceRemoveMany'),
+  require('./spaceRemoveLocation'),
+  require('./spaceRemoveLocationMany'),
+  require('./tagCreate'),
+  require('./tagCreateMany'),
+  require('./tagRemove'),
+  require('./tagRemoveMany'),
   require('./itemExpireSubscribePanel'),
   require('./knowledgeGet')
 ]
@@ -27,7 +36,7 @@ HANDLERS.forEach((h) => {
 
 /** 创建类写：失败后可由模型重编排（代码不做降级决策） */
 function isCreateClassUse(use) {
-  return /^(item\.create|item\.createMany|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany)$/.test(
+  return /^(item\.create|item\.createMany|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany|tag\.create|tag\.createMany)$/.test(
     String(use || '').trim()
   )
 }
@@ -60,6 +69,19 @@ function compactCall(call) {
       spaceName: (l && l.spaceName) || '',
       locationName: (l && (l.locationName || l.name)) || ''
     }))
+  }
+  if (Array.isArray(call.refs) && call.refs.length) {
+    row.refs = call.refs.slice(0, 20).map((r) => String(r || '').trim()).filter(Boolean)
+  }
+  if (Array.isArray(call.names) && call.names.length) {
+    row.names = call.names.slice(0, 20).map((n) => String(n || '').trim()).filter(Boolean)
+  }
+  if (Array.isArray(call.tags) && call.tags.length) {
+    row.tags = call.tags.slice(0, 20).map((t) => {
+      if (t == null) return t
+      if (typeof t === 'string') return { name: t }
+      return { name: String((t && (t.name || t.tagName)) || '').trim() }
+    })
   }
   return row
 }
@@ -237,7 +259,7 @@ async function runAll(ctx, calls) {
     wrote:
       wrote ||
       executed.some((row) =>
-        /item\.create|item\.createMany|item\.update|item\.remove|item\.merge|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany/.test(
+        /item\.create|item\.createMany|item\.update|item\.remove|item\.removeMany|item\.merge|space\.create|space\.createMany|space\.createLocation|space\.createLocationMany|space\.remove|space\.removeMany|space\.removeLocation|space\.removeLocationMany|tag\.create|tag\.createMany|tag\.remove|tag\.removeMany/.test(
           row.use
         )
       ),

@@ -112,6 +112,41 @@ function patchLocationIntoTree(tree, spaceId, locDoc) {
   return tree
 }
 
+function patchTagIntoTree(tree, tagDoc) {
+  if (!tree || !tagDoc) return tree
+  const id = tagDoc._id || tagDoc.id
+  if (!id) return tree
+  if (!Array.isArray(tree.tags)) tree.tags = []
+  if (tree.tags.some((t) => t && t.id === id)) return tree
+  tree.tags.push({ id, name: String(tagDoc.name || '') })
+  return tree
+}
+
+function removeSpaceFromTree(tree, spaceId) {
+  if (!tree || !spaceId || !Array.isArray(tree.spaces)) return tree
+  tree.spaces = tree.spaces.filter((s) => s && s.id !== spaceId)
+  return tree
+}
+
+function removeLocationFromTree(tree, spaceId, locationId) {
+  if (!tree || !locationId) return tree
+  const spaces = tree.spaces || []
+  const space = spaceId
+    ? spaces.find((s) => s && s.id === spaceId)
+    : spaces.find(
+        (s) => s && (s.locations || []).some((l) => l && l.id === locationId)
+      )
+  if (!space || !Array.isArray(space.locations)) return tree
+  space.locations = space.locations.filter((l) => l && l.id !== locationId)
+  return tree
+}
+
+function removeTagFromTree(tree, tagId) {
+  if (!tree || !tagId || !Array.isArray(tree.tags)) return tree
+  tree.tags = tree.tags.filter((t) => t && t.id !== tagId)
+  return tree
+}
+
 /** act 一轮写完/失败后：若结构变过，从 DB 重建一次（真相源，供 replan）。 */
 async function flushFamilyTreeIfDirty(ctx) {
   if (!ctx || !ctx.treeDirty) return ctx && ctx.tree
@@ -160,6 +195,10 @@ module.exports = {
   markTreeDirty,
   patchSpaceIntoTree,
   patchLocationIntoTree,
+  patchTagIntoTree,
+  removeSpaceFromTree,
+  removeLocationFromTree,
+  removeTagFromTree,
   flushFamilyTreeIfDirty,
   deleteFamilyTree,
   renderTreeNames,

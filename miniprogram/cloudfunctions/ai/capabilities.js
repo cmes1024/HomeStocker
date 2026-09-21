@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 10
+const CAPABILITY_VERSION = 13
 
 const HARD_DENY = {
   'family.create': true,
@@ -74,7 +74,16 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'ref',
-      hint: '删除物资。必须等家人确认后才执行。'
+      hint: '删除一件物资。必须等家人确认后才执行。只删一件时用这个。'
+    },
+    {
+      id: 'item.removeMany',
+      fn: 'item',
+      action: 'removeMany',
+      enabled: true,
+      confirm: true,
+      args: 'refs[]',
+      hint: '一次删除多件已有物资（2～20）。refs 为本轮 FOCUS/PROBE 短号，至少两条。同一次要删两件及以上时优先用这个，不要拆成多次 item.remove。须确认后执行。'
     },
     {
       id: 'space.create',
@@ -113,6 +122,78 @@ const CAPABILITY_SEED = {
       hint: '一次在已有空间下新建多个位置（2～20）。同一次要建两个及以上位置时优先用这个。'
     },
     {
+      id: 'space.remove',
+      fn: 'space',
+      action: 'remove',
+      enabled: true,
+      confirm: true,
+      args: 'spaceName',
+      hint: '删除一个空间。默认仓库不能删。空间里的物资会迁到默认仓库并去掉具体位置。须确认后执行。只删一个时用。'
+    },
+    {
+      id: 'space.removeMany',
+      fn: 'space',
+      action: 'removeMany',
+      enabled: true,
+      confirm: true,
+      args: 'spaces[{ name }] 或 names[]',
+      hint: '一次删除多个空间（2～20）。默认仓库不能删；至少保留一个空间。物资迁到保留的默认仓。≥2 优先用这个。须确认。'
+    },
+    {
+      id: 'space.removeLocation',
+      fn: 'space',
+      action: 'removeLocation',
+      enabled: true,
+      confirm: true,
+      args: 'spaceName, locationName',
+      hint: '删除某个空间下的一个位置。物资保留在该空间，只清空具体位置。须确认。'
+    },
+    {
+      id: 'space.removeLocationMany',
+      fn: 'space',
+      action: 'removeLocationMany',
+      enabled: true,
+      confirm: true,
+      args: 'locations[{ spaceName, locationName }]',
+      hint: '一次删除多个位置（2～20）。物资保留所属空间，只清空具体位置。≥2 优先。须确认。'
+    },
+    {
+      id: 'tag.create',
+      fn: 'tag',
+      action: 'create',
+      enabled: true,
+      confirm: false,
+      args: 'name',
+      hint: '新建一个家庭级标签名。只要建一个时用。'
+    },
+    {
+      id: 'tag.createMany',
+      fn: 'tag',
+      action: 'createMany',
+      enabled: true,
+      confirm: false,
+      args: 'tags[{ name }] 或 names[]',
+      hint: '一次新建多个家庭级标签（2～20）。≥2 优先。不要用来给物资挂签。'
+    },
+    {
+      id: 'tag.remove',
+      fn: 'tag',
+      action: 'remove',
+      enabled: true,
+      confirm: true,
+      args: 'name',
+      hint: '删除一个家庭级标签；物资上的该标签会一起去掉。须确认。只删一个时用。'
+    },
+    {
+      id: 'tag.removeMany',
+      fn: 'tag',
+      action: 'removeMany',
+      enabled: true,
+      confirm: true,
+      args: 'names[] 或 tags[{ name }]',
+      hint: '一次删除多个家庭级标签（2～20）；物资上的这些标签会一起去掉。≥2 优先。须确认。'
+    },
+    {
       id: 'item.merge',
       fn: 'item',
       action: 'merge',
@@ -149,40 +230,13 @@ const CAPABILITY_SEED = {
       hint: '改空间名。本版关闭。'
     },
     {
-      id: 'space.remove',
-      fn: 'space',
-      action: 'remove',
-      enabled: false,
-      confirm: false,
-      args: '',
-      hint: '删除空间。本版关闭。'
-    },
-    {
-      id: 'tag.create',
-      fn: 'tag',
-      action: 'create',
-      enabled: false,
-      confirm: false,
-      args: 'name',
-      hint: '新建标签。本版关闭。'
-    },
-    {
       id: 'tag.update',
       fn: 'tag',
       action: 'update',
       enabled: false,
       confirm: false,
       args: 'name',
-      hint: '改标签。本版关闭。'
-    },
-    {
-      id: 'tag.remove',
-      fn: 'tag',
-      action: 'remove',
-      enabled: false,
-      confirm: false,
-      args: '',
-      hint: '删除标签。本版关闭。'
+      hint: '改标签名。本版关闭。'
     }
   ]
 }

@@ -192,6 +192,7 @@
 }
 
 .ledger-panel {
+  position: relative;
   flex: 1;
   height: 0;
   display: flex;
@@ -231,13 +232,36 @@
   color: #1a1a1a;
 }
 
+.panel-hd-right {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  min-width: 0;
+  flex: 1;
+  justify-content: space-between;
+}
+
+.manage-btn {
+  flex-shrink: 0;
+  padding: 8rpx 12rpx;
+  font-size: 24rpx;
+  color: var(--theme-primary);
+  line-height: 1.2;
+}
+
+.manage-btn-hover {
+  opacity: 0.65;
+}
+
 .space-filter {
   flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 8rpx;
-  max-width: 240rpx;
+  max-width: 200rpx;
   padding: 8rpx 4rpx;
+  margin-left: auto;
 }
 
 .space-filter-name {
@@ -253,6 +277,56 @@
   height: 22rpx;
   flex-shrink: 0;
   margin-left: 10rpx;
+}
+
+.panel-scroll-pad.with-batch {
+  height: calc(140rpx + env(safe-area-inset-bottom));
+}
+
+.batch-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 20rpx 32rpx calc(20rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -8rpx 28rpx rgba(20, 16, 12, 0.06);
+}
+
+.batch-bar-count {
+  font-size: 28rpx;
+  color: rgba(26, 26, 26, 0.55);
+  font-variant-numeric: tabular-nums;
+}
+
+.batch-bar-btn {
+  flex-shrink: 0;
+  min-width: 180rpx;
+  height: 72rpx;
+  padding: 0 28rpx;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #ffffff;
+  background: #fa5151;
+}
+
+.batch-bar-btn-hover {
+  opacity: 0.82;
+}
+
+.batch-bar-btn.disabled {
+  opacity: 0.38;
 }
 
 .funnel {

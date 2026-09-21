@@ -82,9 +82,17 @@
     <view class="ledger-panel">
       <view class="panel-hd">
         <view class="panel-title">{{copy.panelTitle}}</view>
-        <view class="space-filter" bind:tap="openSpaceSheet">
-          <text class="space-filter-name">{{filterSpaceName}}</text>
-          <image class="filter-icon" src="/assets/filter-icon.png" mode="aspectFit" aria-hidden="true" />
+        <view class="panel-hd-right">
+          <view
+            wx:if="{{filterSpaceId}}"
+            class="manage-btn"
+            hover-class="manage-btn-hover"
+            catch:tap="onToggleManage"
+          >{{managing ? copy.manageDone : copy.manageEnter}}</view>
+          <view class="space-filter" bind:tap="openSpaceSheet">
+            <text class="space-filter-name">{{filterSpaceName}}</text>
+            <image class="filter-icon" src="/assets/filter-icon.png" mode="aspectFit" aria-hidden="true" />
+          </view>
         </view>
       </view>
 
@@ -140,11 +148,22 @@
           expireStatus="{{item.expireStatus}}"
           animate="{{animateTiles}}"
           delay="{{index % 9 * 40}}"
-          bind:tap="goDetail"
+          selectable="{{managing}}"
+          selected="{{selectedMap[item._id] || false}}"
+          bind:tap="onTileTap"
         />
       </view>
-      <view class="panel-scroll-pad"></view>
+      <view class="panel-scroll-pad {{managing ? 'with-batch' : ''}}"></view>
       </scroll-view>
+
+      <view class="batch-bar" wx:if="{{managing}}">
+        <text class="batch-bar-count">{{selectedCountLabel}}</text>
+        <view
+          class="batch-bar-btn {{selectedCount && !batchRemoving ? '' : 'disabled'}}"
+          hover-class="{{selectedCount && !batchRemoving ? 'batch-bar-btn-hover' : ''}}"
+          bind:tap="onBatchRemove"
+        >{{batchRemoveLabel}}</view>
+      </view>
     </view>
   </view>
 </AppShell>

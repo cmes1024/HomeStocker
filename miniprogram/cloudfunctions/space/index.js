@@ -173,82 +173,11 @@ async function updateSpace(openid, event) {
 }
 
 async function removeSpace(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
+  return spaceWriter.removeSpace(openid, event)
+}
 
-  const spaceId = event.spaceId
-  if (!spaceId) return fail('INVALID_ID', '缺少 spaceId')
-
-  const snap = await db.collection('spaces').doc(spaceId).get().catch(() => null)
-  if (!snap || !snap.data) return fail('NOT_FOUND', '空间不存在')
-  if (snap.data.familyId !== ctx.familyId) {
-    return fail('FORBIDDEN', '无权操作该空间')
-  }
-
-  // 默认仓库只能改名，不能删
-  if (snap.data.isDefault) {
-    return fail('DEFAULT_SPACE', '默认仓库只能改名，不能删除')
-  }
-
-  const all = await listSpacesForFamily(ctx.familyId)
-  if (all.length <= 1) {
-    return fail('LAST_SPACE', '至少保留一个空间')
-  }
-
-  const target =
-    all.find((s) => s._id !== spaceId && s.isDefault) ||
-    all.find((s) => s._id !== spaceId)
-  if (!target) {
-    return fail('LAST_SPACE', '至少保留一个空间')
-  }
-
-  const now = Date.now()
-
-  // 物品迁到默认仓库（或其它保留空间），并清掉具体位置
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const itemRes = await db
-      .collection('items')
-      .where({ familyId: ctx.familyId, spaceId })
-      .limit(100)
-      .get()
-    const items = itemRes.data || []
-    if (!items.length) break
-    await Promise.all(
-      items.map((item) =>
-        db.collection('items').doc(item._id).update({
-          data: {
-            spaceId: target._id,
-            locationId: null,
-            updatedAt: now
-          }
-        })
-      )
-    )
-    if (items.length < 100) break
-  }
-
-  // 删掉该空间下位置
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const locRes = await db
-      .collection('locations')
-      .where({ spaceId })
-      .limit(100)
-      .get()
-    const locs = locRes.data || []
-    if (!locs.length) break
-    await Promise.all(locs.map((l) => db.collection('locations').doc(l._id).remove()))
-    if (locs.length < 100) break
-  }
-
-  await db.collection('spaces').doc(spaceId).remove()
-  return ok({
-    removed: true,
-    spaceId,
-    migratedTo: target._id,
-    migratedToName: target.name
-  })
+async function removeManySpaces(openid, event) {
+  return spaceWriter.removeMany(openid, event)
 }
 
 async function getSpaceInFamily(spaceId, familyId) {
@@ -310,44 +239,11 @@ async function updateLocation(openid, event) {
 }
 
 async function removeLocation(openid, event) {
-  const ctx = await resolveFamilyContext(openid)
-  if (ctx.error) return ctx.error
+  return locationWriter.removeLocation(openid, event)
+}
 
-  const locationId = event.locationId
-  if (!locationId) return fail('INVALID_ID', '缺少 locationId')
-
-  const snap = await db.collection('locations').doc(locationId).get().catch(() => null)
-  if (!snap || !snap.data) return fail('NOT_FOUND', '位置不存在')
-  if (snap.data.familyId !== ctx.familyId) {
-    return fail('FORBIDDEN', '无权操作该位置')
-  }
-
-  // Clear locationId on items that point here (keep spaceId)
-  const now = Date.now()
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const items = await db
-      .collection('items')
-      .where({ familyId: ctx.familyId, locationId })
-      .limit(100)
-      .get()
-    const list = items.data || []
-    if (!list.length) break
-    await Promise.all(
-      list.map((item) =>
-        db.collection('items').doc(item._id).update({
-          data: {
-            locationId: null,
-            updatedAt: now
-          }
-        })
-      )
-    )
-    if (list.length < 100) break
-  }
-
-  await db.collection('locations').doc(locationId).remove()
-  return ok({ removed: true, locationId })
+async function removeLocationMany(openid, event) {
+  return locationWriter.removeLocationMany(openid, event)
 }
 
 async function listItemsBySpace(openid, event) {
@@ -492,6 +388,9 @@ exports.main = async (event) => {
       case 'remove':
         result = await removeSpace(OPENID, event)
         break
+      case 'removeMany':
+        result = await removeManySpaces(OPENID, event)
+        break
       case 'listLocations':
         result = await listLocations(OPENID, event)
         break
@@ -506,6 +405,9 @@ exports.main = async (event) => {
         break
       case 'removeLocation':
         result = await removeLocation(OPENID, event)
+        break
+      case 'removeLocationMany':
+        result = await removeLocationMany(OPENID, event)
         break
       case 'listItemsBySpace':
         result = await listItemsBySpace(OPENID, event)
@@ -524,10 +426,12 @@ exports.main = async (event) => {
         action === 'createMany' ||
         action === 'update' ||
         action === 'remove' ||
+        action === 'removeMany' ||
         action === 'createLocation' ||
         action === 'createLocationMany' ||
         action === 'updateLocation' ||
-        action === 'removeLocation')
+        action === 'removeLocation' ||
+        action === 'removeLocationMany')
     ) {
       const ctx = await resolveFamilyContext(OPENID)
       if (!ctx.error) await touchFamilyTree(db, ctx.familyId)

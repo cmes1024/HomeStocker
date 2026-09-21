@@ -48,7 +48,28 @@ const copy = {
     badgeExpired: '已过期',
     badgeExpiring: '临期',
     filterTags: '标签',
-    filterAllTags: '全部标签'
+    filterAllTags: '全部标签',
+    manageEnter: '整理',
+    manageDone: '完成',
+    selectedCount(n) {
+      return `已选 ${n || 0}`
+    },
+    batchRemove: '删掉',
+    batchRemoveN(n) {
+      return `删掉 ${n} 件`
+    },
+    batchRemoveTitle(n, spaceName) {
+      const count = n || 0
+      if (spaceName) return `从「${spaceName}」删掉这 ${count} 件？`
+      return `删掉这 ${count} 件？`
+    },
+    batchRemoveContent: '删掉后家人那边也会看不到。',
+    batchRemoveConfirm: '删掉吧',
+    batchRemovedToast(n) {
+      return `已删掉 ${n} 件`
+    },
+    batchRemoveEmpty: '先选几件再说',
+    batchRemoving: '正在删…'
   },
 
   detail: {
@@ -89,7 +110,8 @@ const copy = {
     actionCreate: '加入了',
     actionCreateBatch: (names, count) => `加入了${names}${count}件物品`,
     actionUpdate: '修改了',
-    actionRemove: '删除了'
+    actionRemove: '删除了',
+    actionRemoveBatch: (names, count) => `删除了${names}${count}件物品`
   },
 
   messages: {
@@ -104,6 +126,7 @@ const copy = {
     actionCreateBatch: (names, count) => `加入了${names}${count}件物品`,
     actionUpdate: '修改了',
     actionRemove: '删除了',
+    actionRemoveBatch: (names, count) => `删除了${names}${count}件物品`,
     justNow: '刚刚',
     minutesAgo: (n) => `${n}分钟前`,
     hoursAgo: (n) => `${n}小时前`,

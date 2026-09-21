@@ -37,6 +37,14 @@ Component({
     place: {
       type: String,
       value: ''
+    },
+    selectable: {
+      type: Boolean,
+      value: false
+    },
+    selected: {
+      type: Boolean,
+      value: false
     }
   },
 

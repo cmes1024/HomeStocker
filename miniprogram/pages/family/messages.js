@@ -146,7 +146,7 @@ Page({
   onOpenItem(e) {
     const itemId = e.currentTarget.dataset.id
     const action = e.currentTarget.dataset.action
-    if (!itemId || action === 'remove' || action === 'create_batch') return
+    if (!itemId || action === 'remove' || action === 'create_batch' || action === 'remove_batch') return
     navigateToItemDetail(itemId)
   }
 })

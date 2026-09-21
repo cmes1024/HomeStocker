@@ -1,5 +1,5 @@
 const { listItems, listSpaces, loadHomeBoard: fetchHomeBoard, countItems, listExpiringItems } = require('../../utils/db')
-const { callSpace } = require('../../utils/cloud')
+const { callSpace, callItem } = require('../../utils/cloud')
 const { routeByMembership } = require('../../utils/route')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
@@ -38,6 +38,24 @@ function filterLabel(spaces, filterSpaceId) {
   if (!filterSpaceId) return copy.items.filterAll
   const space = (spaces || []).find((s) => s && s._id === filterSpaceId)
   return (space && space.name) || copy.items.defaultSpaceName
+}
+
+function selectionLabels(selectedCount) {
+  const n = selectedCount || 0
+  return {
+    selectedCount: n,
+    selectedCountLabel: copy.items.selectedCount(n),
+    batchRemoveLabel: n > 0 ? copy.items.batchRemoveN(n) : copy.items.batchRemove
+  }
+}
+
+function emptySelectionState() {
+  return {
+    managing: false,
+    selectedMap: {},
+    batchRemoving: false,
+    ...selectionLabels(0)
+  }
 }
 
 /** 清单筛选 / 分块：非默认在前，isDefault 兜底空间沉底（不看名称） */
@@ -167,7 +185,13 @@ Page({
     spaceLoading: false,
     pageColHeight: 0,
     animateTiles: true,
-    loadingColors: ['#C4A484', '#8B6914']
+    loadingColors: ['#C4A484', '#8B6914'],
+    managing: false,
+    selectedMap: {},
+    selectedCount: 0,
+    selectedCountLabel: copy.items.selectedCount(0),
+    batchRemoveLabel: copy.items.batchRemove,
+    batchRemoving: false
   },
 
   onLoad() {
@@ -275,6 +299,10 @@ Page({
     }
   },
 
+  onHide() {
+    if (this.data.managing) this.exitManage()
+  },
+
   onRetryBoot() {
     this.onShow()
   },
@@ -294,13 +322,15 @@ Page({
       }
       const filterSpaceName = filterLabel(spaces, filterSpaceId)
       const listPatch = this.applyListView(this.data.items, spaces, filterSpaceId)
+      const managePatch = filterSpaceId ? {} : emptySelectionState()
       this.setData(this.syncStats({
         spaces,
         spaceCount: spaces.length,
         spacesReady: true,
         filterSpaceId,
         filterSpaceName,
-        ...listPatch
+        ...listPatch,
+        ...managePatch
       }))
       return filterSpaceId
     } catch (e) {
@@ -456,7 +486,8 @@ Page({
       filterSpaceName: isAll
         ? copy.items.filterAll
         : space.name || copy.items.defaultSpaceName,
-      spaceLoading: true
+      spaceLoading: true,
+      ...emptySelectionState()
     })
     const started = Date.now()
     try {
@@ -467,6 +498,94 @@ Page({
         await new Promise((resolve) => setTimeout(resolve, wait))
       }
       this.setData({ spaceLoading: false })
+    }
+  },
+
+  exitManage() {
+    this.setData(emptySelectionState())
+  },
+
+  onToggleManage() {
+    if (!this.data.filterSpaceId) return
+    if (this.data.managing) {
+      this.exitManage()
+      return
+    }
+    this.setData({
+      managing: true,
+      selectedMap: {},
+      batchRemoving: false,
+      ...selectionLabels(0)
+    })
+  },
+
+  onTileTap(e) {
+    const id = (e.detail && e.detail.id) || e.currentTarget.dataset.id
+    if (!id) return
+    if (this.data.managing) {
+      this.toggleSelect(id)
+      return
+    }
+    this.goDetail(e)
+  },
+
+  toggleSelect(id) {
+    if (!id || this.data.batchRemoving) return
+    const selectedMap = { ...(this.data.selectedMap || {}) }
+    if (selectedMap[id]) delete selectedMap[id]
+    else selectedMap[id] = true
+    this.setData({
+      selectedMap,
+      ...selectionLabels(Object.keys(selectedMap).length)
+    })
+  },
+
+  async onBatchRemove() {
+    if (!this.data.managing || this.data.batchRemoving) return
+    const ids = Object.keys(this.data.selectedMap || {})
+    if (!ids.length) {
+      wx.showToast({ title: copy.items.batchRemoveEmpty, icon: 'none' })
+      return
+    }
+
+    const spaceName = this.data.filterSpaceName || ''
+    const confirm = await new Promise((resolve) => {
+      wx.showModal({
+        title: copy.items.batchRemoveTitle(ids.length, spaceName),
+        content: copy.items.batchRemoveContent,
+        confirmText: copy.items.batchRemoveConfirm,
+        confirmColor: '#FA5151',
+        success: (res) => resolve(!!res.confirm)
+      })
+    })
+    if (!confirm) return
+
+    this.setData({ batchRemoving: true })
+    wx.showLoading({ title: copy.items.batchRemoving, mask: true })
+
+    const CHUNK = 20
+    let removed = 0
+    try {
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const chunk = ids.slice(i, i + CHUNK)
+        const res = await callItem('removeMany', { itemIds: chunk })
+        removed += (res && res.count) || chunk.length
+      }
+      wx.hideLoading()
+      this.setData(emptySelectionState())
+      wx.showToast({
+        title: copy.items.batchRemovedToast(removed),
+        icon: 'success'
+      })
+      await this.loadHomeBoard({ silent: true })
+    } catch (err) {
+      wx.hideLoading()
+      this.setData({ batchRemoving: false })
+      wx.showToast({
+        title: (err && err.message) || copy.common.opFailed,
+        icon: 'none'
+      })
+      await this.loadHomeBoard({ silent: true })
     }
   },
 

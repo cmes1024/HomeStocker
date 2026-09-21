@@ -1038,6 +1038,116 @@ async function removeItem(openid, event, options = {}) {
   return ok({ removed: true, itemId })
 }
 
+const REMOVE_MANY_LIMIT = 20
+
+/**
+ * 批量删除：先全部校验归属，任一非法则零删除；通过后并行 remove。
+ * activities：n≥2 合成一条 remove_batch；n=1 仍写单条 remove。
+ */
+async function removeMany(openid, event, options = {}) {
+  const ctx = await resolveFamilyContext(openid, options.familyCtx)
+  if (ctx.error) return ctx.error
+
+  const rawIds = Array.isArray(event.itemIds) ? event.itemIds : []
+  const ids = []
+  const seen = {}
+  rawIds.forEach((id) => {
+    const s = String(id || '').trim()
+    if (!s || seen[s]) return
+    seen[s] = true
+    ids.push(s)
+  })
+  if (!ids.length) return fail('INVALID_IDS', '没有要删除的物资')
+  if (ids.length > REMOVE_MANY_LIMIT) {
+    return fail('INVALID_IDS', `一次最多删 ${REMOVE_MANY_LIMIT} 件`)
+  }
+
+  const snaps = await Promise.all(
+    ids.map((id) => db.collection('items').doc(id).get().catch(() => null))
+  )
+  const items = []
+  for (let i = 0; i < snaps.length; i++) {
+    const snap = snaps[i]
+    if (!snap || !snap.data) return fail('NOT_FOUND', '物资不存在')
+    if (snap.data.familyId !== ctx.familyId) {
+      return fail('FORBIDDEN', '无权操作该物资')
+    }
+    items.push({ _id: ids[i], ...snap.data })
+  }
+
+  const defaultSource = event.source === 'agent' ? 'agent' : 'ui'
+  const now = Date.now()
+  const names = items.map((it) => it.name || '')
+
+  let placeForSingle = null
+  if (items.length === 1) {
+    const it = items[0]
+    placeForSingle = await snapshotPlace(
+      ctx.familyId,
+      it.spaceId,
+      it.locationId,
+      null
+    )
+  }
+
+  try {
+    await Promise.all(items.map((it) => db.collection('items').doc(it._id).remove()))
+  } catch (e) {
+    console.error('removeMany items.remove failed', e)
+    return fail('INTERNAL', e.message || '批量删除失败')
+  }
+
+  await bumpItemCount(ctx.familyId, -items.length)
+
+  await Promise.all(
+    items.map((it) =>
+      removeExpireSubsForItem(it._id).catch((err) => {
+        console.warn('removeExpireSubsForItem failed', it._id, err)
+      })
+    )
+  )
+
+  try {
+    if (items.length >= 2) {
+      await db.collection('activities').add({
+        data: {
+          familyId: ctx.familyId,
+          itemId: '',
+          action: 'remove_batch',
+          actorOpenid: openid,
+          itemName: batchItemNameSnapshot(names),
+          batchCount: items.length,
+          source: defaultSource,
+          createdAt: now
+        }
+      })
+      await trimActivities(ctx.familyId)
+    } else {
+      const it = items[0]
+      const source =
+        defaultSource === 'agent' || it.source === 'agent' ? 'agent' : 'ui'
+      await appendActivity({
+        familyId: ctx.familyId,
+        itemId: it._id,
+        action: 'remove',
+        actorOpenid: openid,
+        itemName: it.name || '',
+        source,
+        createdAt: now,
+        ...(placeForSingle || {})
+      })
+    }
+  } catch (e) {
+    console.error('removeMany activities failed', e)
+  }
+
+  return ok({
+    removed: true,
+    itemIds: items.map((it) => it._id),
+    count: items.length
+  })
+}
+
 /**
  * 把多条物资合成一条：保留第一条，数量相加，删除其余。
  * 须同空间；单位冲突则拒绝。可选 name 作为合并后名称。
@@ -1481,6 +1591,7 @@ async function home(openid, event) {
     createMany,
     updateItem,
     removeItem,
+    removeMany,
     mergeItems,
     getItem,
     listItems,

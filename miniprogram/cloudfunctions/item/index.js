@@ -31,6 +31,8 @@ exports.main = async (event) => {
         return await service.updateItem(OPENID, event)
       case 'remove':
         return await service.removeItem(OPENID, event)
+      case 'removeMany':
+        return await service.removeMany(OPENID, event)
       case 'merge':
         return await service.mergeItems(OPENID, event)
       case 'get':

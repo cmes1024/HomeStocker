@@ -1,7 +1,10 @@
 /**
- * 在已有空间下新建位置。space 云函数与 ai.act 共用。
+ * 在已有空间下新建/删除位置。space 云函数与 ai.act 共用。
  */
 module.exports = function createLocationWriter(db) {
+  const CREATE_MANY_LIMIT = 20
+  const REMOVE_MANY_LIMIT = 20
+
   function ok(data) {
     return { ok: true, data }
   }
@@ -12,6 +15,27 @@ module.exports = function createLocationWriter(db) {
 
   function membershipId(openid, familyId) {
     return `${openid}_${familyId}`
+  }
+
+  function extractBatchAddIds(addRes) {
+    if (!addRes) return []
+    if (Array.isArray(addRes._ids)) return addRes._ids
+    if (Array.isArray(addRes.ids)) return addRes.ids
+    if (Array.isArray(addRes.id_list)) return addRes.id_list
+    if (addRes._id) return [addRes._id]
+    return []
+  }
+
+  function dedupeIds(raw) {
+    const ids = []
+    const seen = {}
+    ;(Array.isArray(raw) ? raw : []).forEach((id) => {
+      const s = String(id || '').trim()
+      if (!s || seen[s]) return
+      seen[s] = true
+      ids.push(s)
+    })
+    return ids
   }
 
   async function resolveFamilyContext(openid, reuse) {
@@ -44,6 +68,30 @@ module.exports = function createLocationWriter(db) {
     return { _id: spaceId, ...snap.data }
   }
 
+  async function clearItemsLocation(familyId, locationId, now) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const items = await db
+        .collection('items')
+        .where({ familyId, locationId })
+        .limit(100)
+        .get()
+      const list = items.data || []
+      if (!list.length) break
+      await Promise.all(
+        list.map((item) =>
+          db.collection('items').doc(item._id).update({
+            data: {
+              locationId: null,
+              updatedAt: now
+            }
+          })
+        )
+      )
+      if (list.length < 100) break
+    }
+  }
+
   async function createLocation(openid, event, options = {}) {
     const ctx = await resolveFamilyContext(openid, options.familyCtx)
     if (ctx.error) return ctx.error
@@ -74,17 +122,6 @@ module.exports = function createLocationWriter(db) {
     }
     const addRes = await db.collection('locations').add({ data: doc })
     return ok({ _id: addRes._id, ...doc })
-  }
-
-  const CREATE_MANY_LIMIT = 20
-
-  function extractBatchAddIds(addRes) {
-    if (!addRes) return []
-    if (Array.isArray(addRes._ids)) return addRes._ids
-    if (Array.isArray(addRes.ids)) return addRes.ids
-    if (Array.isArray(addRes.id_list)) return addRes.id_list
-    if (addRes._id) return [addRes._id]
-    return []
   }
 
   /**
@@ -156,5 +193,71 @@ module.exports = function createLocationWriter(db) {
     return ok({ list, count: list.length })
   }
 
-  return { createLocation, createLocationMany }
+  async function removeLocation(openid, event, options = {}) {
+    const ctx = await resolveFamilyContext(openid, options.familyCtx)
+    if (ctx.error) return ctx.error
+
+    const locationId = String((event && event.locationId) || '').trim()
+    if (!locationId) return fail('INVALID_ID', '缺少 locationId')
+
+    const snap = await db.collection('locations').doc(locationId).get().catch(() => null)
+    if (!snap || !snap.data) return fail('NOT_FOUND', '位置不存在')
+    if (snap.data.familyId !== ctx.familyId) {
+      return fail('FORBIDDEN', '无权操作该位置')
+    }
+
+    const now = Date.now()
+    await clearItemsLocation(ctx.familyId, locationId, now)
+    await db.collection('locations').doc(locationId).remove()
+    return ok({
+      removed: true,
+      locationId,
+      name: snap.data.name || '',
+      spaceId: snap.data.spaceId || ''
+    })
+  }
+
+  async function removeLocationMany(openid, event, options = {}) {
+    const ctx = await resolveFamilyContext(openid, options.familyCtx)
+    if (ctx.error) return ctx.error
+
+    const ids = dedupeIds(event && event.locationIds)
+    if (!ids.length) return fail('INVALID_IDS', '没有要删除的位置')
+    if (ids.length > REMOVE_MANY_LIMIT) {
+      return fail('INVALID_IDS', `一次最多删 ${REMOVE_MANY_LIMIT} 个位置`)
+    }
+
+    const snaps = await Promise.all(
+      ids.map((id) => db.collection('locations').doc(id).get().catch(() => null))
+    )
+    const locs = []
+    for (let i = 0; i < snaps.length; i++) {
+      const snap = snaps[i]
+      if (!snap || !snap.data) return fail('NOT_FOUND', '位置不存在')
+      if (snap.data.familyId !== ctx.familyId) {
+        return fail('FORBIDDEN', '无权操作该位置')
+      }
+      locs.push({ _id: ids[i], ...snap.data })
+    }
+
+    const now = Date.now()
+    for (let i = 0; i < locs.length; i++) {
+      await clearItemsLocation(ctx.familyId, locs[i]._id, now)
+      await db.collection('locations').doc(locs[i]._id).remove()
+    }
+
+    return ok({
+      removed: true,
+      locationIds: locs.map((l) => l._id),
+      names: locs.map((l) => l.name || ''),
+      count: locs.length
+    })
+  }
+
+  return {
+    createLocation,
+    createLocationMany,
+    removeLocation,
+    removeLocationMany
+  }
 }

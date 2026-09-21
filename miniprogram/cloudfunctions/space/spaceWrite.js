@@ -4,6 +4,7 @@
 module.exports = function createSpaceWriter(db) {
   const DEFAULT_COVER_KEY = 'default-indoor'
   const CREATE_MANY_LIMIT = 20
+  const REMOVE_MANY_LIMIT = 20
 
   function ok(data) {
     return { ok: true, data }
@@ -24,6 +25,18 @@ module.exports = function createSpaceWriter(db) {
     if (Array.isArray(addRes.id_list)) return addRes.id_list
     if (addRes._id) return [addRes._id]
     return []
+  }
+
+  function dedupeIds(raw) {
+    const ids = []
+    const seen = {}
+    ;(Array.isArray(raw) ? raw : []).forEach((id) => {
+      const s = String(id || '').trim()
+      if (!s || seen[s]) return
+      seen[s] = true
+      ids.push(s)
+    })
+    return ids
   }
 
   async function resolveFamilyContext(openid, reuse) {
@@ -62,6 +75,42 @@ module.exports = function createSpaceWriter(db) {
       return (a.createdAt || 0) - (b.createdAt || 0)
     })
     return list
+  }
+
+  async function migrateItemsFromSpace(familyId, spaceId, targetId, now) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const itemRes = await db
+        .collection('items')
+        .where({ familyId, spaceId })
+        .limit(100)
+        .get()
+      const items = itemRes.data || []
+      if (!items.length) break
+      await Promise.all(
+        items.map((item) =>
+          db.collection('items').doc(item._id).update({
+            data: {
+              spaceId: targetId,
+              locationId: null,
+              updatedAt: now
+            }
+          })
+        )
+      )
+      if (items.length < 100) break
+    }
+  }
+
+  async function deleteLocationsForSpace(spaceId) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const locRes = await db.collection('locations').where({ spaceId }).limit(100).get()
+      const locs = locRes.data || []
+      if (!locs.length) break
+      await Promise.all(locs.map((l) => db.collection('locations').doc(l._id).remove()))
+      if (locs.length < 100) break
+    }
   }
 
   async function createSpace(openid, event, options = {}) {
@@ -138,8 +187,119 @@ module.exports = function createSpaceWriter(db) {
     return ok({ list, count: list.length })
   }
 
+  async function removeSpace(openid, event, options = {}) {
+    const ctx = await resolveFamilyContext(openid, options.familyCtx)
+    if (ctx.error) return ctx.error
+
+    const spaceId = String((event && event.spaceId) || '').trim()
+    if (!spaceId) return fail('INVALID_ID', '缺少 spaceId')
+
+    const snap = await db.collection('spaces').doc(spaceId).get().catch(() => null)
+    if (!snap || !snap.data) return fail('NOT_FOUND', '空间不存在')
+    if (snap.data.familyId !== ctx.familyId) {
+      return fail('FORBIDDEN', '无权操作该空间')
+    }
+    if (snap.data.isDefault) {
+      return fail('DEFAULT_SPACE', '默认仓库只能改名，不能删除')
+    }
+
+    const all = await listSpacesForFamily(ctx.familyId)
+    if (all.length <= 1) {
+      return fail('LAST_SPACE', '至少保留一个空间')
+    }
+
+    const target =
+      all.find((s) => s._id !== spaceId && s.isDefault) ||
+      all.find((s) => s._id !== spaceId)
+    if (!target) {
+      return fail('LAST_SPACE', '至少保留一个空间')
+    }
+
+    const now = Date.now()
+    await migrateItemsFromSpace(ctx.familyId, spaceId, target._id, now)
+    await deleteLocationsForSpace(spaceId)
+    await db.collection('spaces').doc(spaceId).remove()
+
+    return ok({
+      removed: true,
+      spaceId,
+      name: snap.data.name || '',
+      migratedTo: target._id,
+      migratedToName: target.name
+    })
+  }
+
+  /**
+   * 批量删空间：先全量校验，再逐个迁移物资/清位置/删空间。
+   * 物资统一迁到「不在删除集合内」的默认仓（或其它保留空间）。
+   */
+  async function removeMany(openid, event, options = {}) {
+    const ctx = await resolveFamilyContext(openid, options.familyCtx)
+    if (ctx.error) return ctx.error
+
+    const ids = dedupeIds(event && event.spaceIds)
+    if (!ids.length) return fail('INVALID_IDS', '没有要删除的空间')
+    if (ids.length > REMOVE_MANY_LIMIT) {
+      return fail('INVALID_IDS', `一次最多删 ${REMOVE_MANY_LIMIT} 个空间`)
+    }
+
+    const all = await listSpacesForFamily(ctx.familyId)
+    const byId = {}
+    all.forEach((s) => {
+      if (s && s._id) byId[s._id] = s
+    })
+
+    const doomed = []
+    for (let i = 0; i < ids.length; i++) {
+      const space = byId[ids[i]]
+      if (!space) return fail('NOT_FOUND', '空间不存在')
+      if (space.isDefault) {
+        return fail('DEFAULT_SPACE', '默认仓库只能改名，不能删除')
+      }
+      doomed.push(space)
+    }
+
+    const doomedSet = {}
+    doomed.forEach((s) => {
+      doomedSet[s._id] = true
+    })
+    if (all.length - doomed.length < 1) {
+      return fail('LAST_SPACE', '至少保留一个空间')
+    }
+
+    const target =
+      all.find((s) => s && !doomedSet[s._id] && s.isDefault) ||
+      all.find((s) => s && !doomedSet[s._id])
+    if (!target) {
+      return fail('LAST_SPACE', '至少保留一个空间')
+    }
+
+    const now = Date.now()
+    const removedIds = []
+    const names = []
+    for (let i = 0; i < doomed.length; i++) {
+      const space = doomed[i]
+      await migrateItemsFromSpace(ctx.familyId, space._id, target._id, now)
+      await deleteLocationsForSpace(space._id)
+      await db.collection('spaces').doc(space._id).remove()
+      removedIds.push(space._id)
+      names.push(space.name || '')
+    }
+
+    return ok({
+      removed: true,
+      spaceIds: removedIds,
+      names,
+      count: removedIds.length,
+      migratedTo: target._id,
+      migratedToName: target.name
+    })
+  }
+
   return {
     createSpace,
-    createMany
+    createMany,
+    removeSpace,
+    removeMany
   }
 }
