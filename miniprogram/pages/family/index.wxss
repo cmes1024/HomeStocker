@@ -127,20 +127,6 @@
   z-index: 1;
 }
 
-.profile-card {
-  display: flex;
-  align-items: center;
-  gap: 24rpx;
-  padding: 28rpx 32rpx;
-}
-
-.profile-row-avatar-wrap {
-  flex-shrink: 0;
-  width: 88rpx;
-  height: 88rpx;
-}
-
-.profile-row-avatar,
 .member-list-avatar,
 .profile-avatar {
   width: 88rpx;
@@ -150,7 +136,6 @@
   background: #f0ece6;
 }
 
-.profile-row-avatar.placeholder,
 .member-list-avatar.placeholder,
 .profile-avatar.placeholder {
   display: flex;
@@ -167,35 +152,6 @@
 
 .member-initial.sm {
   font-size: 28rpx;
-}
-
-.profile-row-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.profile-row-name {
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #1a1a1a;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.profile-row-hint {
-  margin-top: 6rpx;
-  font-size: 22rpx;
-  color: rgba(26, 26, 26, 0.4);
-  line-height: 1.4;
-}
-
-.profile-row-chevron {
-  flex-shrink: 0;
-  font-size: 36rpx;
-  color: rgba(26, 26, 26, 0.28);
-  line-height: 1;
 }
 
 .members-sheet-body {
@@ -328,11 +284,25 @@
   margin-bottom: 8rpx;
 }
 
+.homes-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 16rpx;
+  flex: 1;
+  min-width: 0;
+}
+
 .homes-title {
   font-size: 32rpx;
   font-weight: 600;
-  flex: 1;
-  min-width: 0;
+  flex-shrink: 0;
+}
+
+.homes-profile-link {
+  font-size: 24rpx;
+  font-weight: 500;
+  line-height: 1.35;
+  flex-shrink: 0;
 }
 
 .homes-help {

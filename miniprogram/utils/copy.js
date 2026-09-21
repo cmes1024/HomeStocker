@@ -263,7 +263,7 @@ const copy = {
     aiQuota: 'AI配置',
     capacityTitle: '家庭加强版',
     capacityInactive: '未开通 · 内测兑换',
-    capacityActive: (ymd) => `有效至 ${ymd}`,
+    capacityActive: (ymd) => `Vip有效至 ${ymd}`,
     capacityProgress: (itemCount, itemLimit, memberCount, memberLimit) => {
       const items =
         itemLimit == null
@@ -312,6 +312,7 @@ const copy = {
     membersEmpty: '暂时只有你',
     membersSub: (n) => `${n || 0}人`,
     profileTitle: '我的资料',
+    profileEntry: '我的信息',
     profileHint: '家人能在消息里认出你',
     profileUnset: '设置称呼与头像',
     profileEdit: '编辑',

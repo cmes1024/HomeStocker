@@ -66,33 +66,6 @@
       <view class="key-hint">{{copy.keyHint}}</view>
     </view>
 
-    <view
-      class="card profile-card"
-      hover-class="home-hover"
-      bind:tap="openProfileSheet"
-    >
-      <view class="profile-row-avatar-wrap">
-        <image
-          wx:if="{{profile.avatarUrl}}"
-          class="profile-row-avatar"
-          src="{{profile.avatarUrl}}"
-          mode="aspectFill"
-        />
-        <view
-          wx:else
-          class="profile-row-avatar placeholder"
-          style="background: {{theme.secondary}};"
-        >
-          <text class="member-initial">{{profileInitial}}</text>
-        </view>
-      </view>
-      <view class="profile-row-body">
-        <view class="profile-row-name">{{profileDisplayName}}</view>
-        <view class="profile-row-hint">{{copy.profileHint}}</view>
-      </view>
-      <text class="profile-row-chevron">›</text>
-    </view>
-
     <view class="tool-grid">
       <view class="tool" hover-class="tool-hover" bind:tap="goSpaces">
         <image class="tool-icon" src="/assets/space.png" mode="aspectFit" />
@@ -114,7 +87,16 @@
 
     <view class="card homes-card">
       <view class="homes-hd">
-        <view class="card-title homes-title">{{copy.myHomes}}</view>
+        <view class="homes-title-row">
+          <view class="card-title homes-title">{{copy.myHomes}}</view>
+          <view
+            class="homes-profile-link theme-text"
+            hover-class="press"
+            catch:tap="openProfileSheet"
+            aria-role="button"
+            aria-label="{{copy.profileEntry}}"
+          >{{copy.profileEntry}}</view>
+        </view>
         <view
           class="homes-help"
           hover-class="press"
@@ -330,7 +312,7 @@
   bind:clickoverlay="closeSheet"
   bind:beforeleave="closeSheet"
 >
-  <view class="sheet" wx:if="{{sheetKind === 'mood'}}">
+  <view class="sheet" wx:if="{{sheetKind === 'mood'}}" style="{{theme.cssVarStyle}}">
     <view class="sheet-hd">
       <view class="sheet-title">{{copy.wallTitle}}</view>
       <view class="sheet-close" bind:tap="closeSheet">×</view>
@@ -365,7 +347,7 @@
     </scroll-view>
   </view>
 
-  <view class="sheet" wx:elif="{{sheetKind === 'members'}}">
+  <view class="sheet" wx:elif="{{sheetKind === 'members'}}" style="{{theme.cssVarStyle}}">
     <view class="sheet-hd">
       <view class="sheet-title">{{copy.membersTitle}}</view>
       <view class="sheet-close" bind:tap="closeSheet">×</view>
@@ -405,7 +387,7 @@
     </scroll-view>
   </view>
 
-  <view class="sheet" wx:elif="{{sheetKind === 'profile'}}">
+  <view class="sheet" wx:elif="{{sheetKind === 'profile'}}" style="{{theme.cssVarStyle}}">
     <view class="sheet-hd">
       <view class="sheet-title">{{copy.profileSheetTitle}}</view>
       <view class="sheet-close" bind:tap="closeSheet">×</view>
