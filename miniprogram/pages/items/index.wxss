@@ -442,7 +442,68 @@
 }
 
 .sheet-body {
-  height: calc(56vh - 160rpx);
+  height: calc(70vh - 160rpx);
+}
+
+.expire-sheet-body {
+  padding-bottom: calc(24rpx + env(safe-area-inset-bottom));
+  box-sizing: border-box;
+}
+
+.expire-sheet-state {
+  padding: 48rpx 8rpx;
+  text-align: center;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.expire-sheet-state.soft {
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.expire-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20rpx;
+  padding: 28rpx 8rpx;
+  border-bottom: 1rpx solid rgba(26, 16, 8, 0.06);
+  box-sizing: border-box;
+}
+
+.expire-row-hover {
+  opacity: 0.72;
+}
+
+.expire-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.expire-row-name {
+  font-size: 30rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expire-row-place {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.expire-row-due {
+  flex-shrink: 0;
+  font-size: 24rpx;
+  font-weight: 500;
 }
 
 .space-chips {

@@ -139,11 +139,36 @@ function daysUntilExpire(expireDate, now = Date.now()) {
   return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86400000)
 }
 
-function buildExpireBanner(item, spaceName, locationName) {
+function dueLabel(expireDate) {
+  const days = daysUntilExpire(expireDate)
+  if (days == null) return '即将到期'
+  if (days < 0) return '已过期'
+  if (days === 0) return '今天到期'
+  return `${days}天后到期`
+}
+
+function buildExpireBanner(item, spaceName, locationName, count = 1) {
   if (!item) return null
+  const total = Math.max(1, Number(count) || 1)
+  const days = daysUntilExpire(item.expireDate)
+  const itemId = item._id || ''
+
+  if (total > 1) {
+    let message
+    if (days == null) {
+      message = `有${total}件物品即将到期`
+    } else if (days < 0) {
+      message = `有${total}件物品已过期或即将到期`
+    } else if (days === 0) {
+      message = `有${total}件物品即将到期，最早今天到期`
+    } else {
+      message = `有${total}件物品即将到期，最早${days}天后到期`
+    }
+    return { place: '', message, itemId, count: total }
+  }
+
   const place = [spaceName, locationName].filter(Boolean).join('-')
   const name = String(item.name || '').trim() || '物品'
-  const days = daysUntilExpire(item.expireDate)
   let message
   if (days == null) {
     message = place ? `里的${name}即将到期` : `${name}即将到期`
@@ -156,7 +181,7 @@ function buildExpireBanner(item, spaceName, locationName) {
       ? `里的${name}将于${days}天后到期`
       : `${name}将于${days}天后到期`
   }
-  return { place, message }
+  return { place, message, itemId, count: 1 }
 }
 
 Page({
@@ -181,7 +206,11 @@ Page({
     spaces: [],
     filterSpaceId: '',
     filterSpaceName: copy.items.filterAll,
-    spaceSheetOpen: false,
+    sheetOpen: false,
+    sheetKind: '',
+    expireSheetLoading: false,
+    expireSheetError: '',
+    expireList: [],
     spaceLoading: false,
     pageColHeight: 0,
     animateTiles: true,
@@ -344,7 +373,7 @@ Page({
     }
   },
 
-  applyExpireBanner(item) {
+  applyExpireBanner(item, count) {
     if (!item) {
       this.setData({ expireBanner: null })
       return
@@ -353,7 +382,15 @@ Page({
     const space = spaceList.find((s) => s && s._id === item.spaceId)
     const spaceName = item.spaceName || (space && space.name) || ''
     const locationName = item.locationName || ''
-    this.setData({ expireBanner: buildExpireBanner(item, spaceName, locationName) })
+    const total = Number(count)
+    this.setData({
+      expireBanner: buildExpireBanner(
+        item,
+        spaceName,
+        locationName,
+        Number.isFinite(total) && total > 0 ? total : 1
+      )
+    })
   },
 
   /**
@@ -388,7 +425,19 @@ Page({
           itemsReady: true
         })
       )
-      this.applyExpireBanner(board.expiringTop)
+      const top = board.expiringTop
+      let count = Number(board.expiringCount) || 0
+      if (top && count < 1) {
+        try {
+          const { list } = await listExpiringItems({ limit: 50 })
+          const rows = list || []
+          this.applyExpireBanner(rows[0] || top, rows.length || 1)
+          return
+        } catch (e) {
+          count = 1
+        }
+      }
+      this.applyExpireBanner(top, count || (top ? 1 : 0))
     } catch (e) {
       if (e && e.code === 'UNKNOWN_ACTION') {
         await this.loadHomeBoardLegacy(options)
@@ -411,8 +460,9 @@ Page({
       this.setData(this.syncStats({ itemsReady: true }))
     }
     try {
-      const { list } = await listExpiringItems({ limit: 1 })
-      this.applyExpireBanner((list || [])[0])
+      const { list } = await listExpiringItems({ limit: 50 })
+      const rows = list || []
+      this.applyExpireBanner(rows[0], rows.length)
     } catch (e) {
       this.setData({ expireBanner: null })
     }
@@ -454,11 +504,15 @@ Page({
   },
 
   openSpaceSheet() {
-    this.setData({ spaceSheetOpen: true })
+    this.setData({
+      sheetOpen: true,
+      sheetKind: 'space'
+    })
   },
 
-  closeSpaceSheet() {
-    this.setData({ spaceSheetOpen: false })
+  closeSheet() {
+    if (!this.data.sheetOpen) return
+    this.setData({ sheetOpen: false, sheetKind: '' })
   },
 
   async onPickSpace(e) {
@@ -471,17 +525,18 @@ Page({
       ? null
       : (this.data.spaces || []).find((s) => s && s._id === id)
     if (!isAll && !space) {
-      this.setData({ spaceSheetOpen: false })
+      this.closeSheet()
       return
     }
     if (id === (this.data.filterSpaceId || '')) {
-      this.setData({ spaceSheetOpen: false })
+      this.closeSheet()
       return
     }
 
     writeSavedFilterSpaceId(id)
     this.setData({
-      spaceSheetOpen: false,
+      sheetOpen: false,
+      sheetKind: '',
       filterSpaceId: id,
       filterSpaceName: isAll
         ? copy.items.filterAll
@@ -625,7 +680,81 @@ Page({
     })
   },
 
-  goMessages() {
-    wx.navigateTo({ url: '/pages/family/messages' })
+  goExpireBanner() {
+    const banner = this.data.expireBanner
+    if (!banner) return
+    if ((banner.count || 1) > 1) {
+      this.openExpireSheet()
+      return
+    }
+    const id = banner.itemId
+    if (!id) return
+    const item = (this.data.items || []).find((it) => it && it._id === id)
+    if (!item) {
+      navigateToItemDetail(id)
+      return
+    }
+    const space = (this.data.spaces || []).find((s) => s && s._id === item.spaceId)
+    navigateToItemDetail({
+      ...item,
+      spaceName: item.spaceName || (space && space.name) || ''
+    })
+  },
+
+  openExpireSheet() {
+    this.setData({
+      sheetOpen: true,
+      sheetKind: 'expire',
+      expireSheetLoading: true,
+      expireSheetError: '',
+      expireList: []
+    })
+    this.loadExpireSheetList()
+  },
+
+  async loadExpireSheetList() {
+    try {
+      const { list } = await listExpiringItems({ limit: 50 })
+      const rows = (list || []).map((item) => {
+        const place = [item.spaceName, item.locationName].filter(Boolean).join('-')
+        return {
+          _id: item._id,
+          name: String(item.name || '').trim() || '物品',
+          place,
+          dueLabel: dueLabel(item.expireDate),
+          expireDate: item.expireDate || '',
+          spaceId: item.spaceId || '',
+          spaceName: item.spaceName || '',
+          locationName: item.locationName || '',
+          quantity: item.quantity,
+          unit: item.unit || ''
+        }
+      })
+      this.setData({
+        expireList: rows,
+        expireSheetLoading: false,
+        expireSheetError: rows.length ? '' : copy.items.expiringSheetEmpty
+      })
+      const top = (list || [])[0]
+      if (top) this.applyExpireBanner(top, rows.length)
+      else this.setData({ expireBanner: null })
+    } catch (e) {
+      this.setData({
+        expireSheetLoading: false,
+        expireSheetError: (e && e.message) || copy.items.expiringSheetFail
+      })
+    }
+  },
+
+  onExpireRowTap(e) {
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const row = (this.data.expireList || []).find((it) => it && it._id === id)
+    this.closeSheet()
+    if (row) {
+      navigateToItemDetail(row)
+      return
+    }
+    navigateToItemDetail(id)
   }
 })

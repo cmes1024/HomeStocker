@@ -52,6 +52,7 @@ async function loadHomeBoard(options = {}) {
     list: (data && data.list) || [],
     total: Number(data && data.total) || 0,
     expiringTop: (data && data.expiringTop) || null,
+    expiringCount: Number(data && data.expiringCount) || 0,
     today: data && data.today,
     windowEnd: data && data.windowEnd
   }

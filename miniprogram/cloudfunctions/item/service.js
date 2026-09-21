@@ -1508,7 +1508,7 @@ async function attachPlaceNames(familyId, list) {
 }
 
 /**
- * 清单首页一次取齐：当前空间列表 + 全家件数 + 临期横幅一条。
+ * 清单首页一次取齐：当前空间列表 + 全家件数 + 临期横幅（最急一条 + 件数）。
  * 少几次客户端 callFunction（仍多笔 DB，但调用次数合计更低）。
  */
 async function home(openid, event) {
@@ -1519,11 +1519,15 @@ async function home(openid, event) {
   const spaceId = event.spaceId ? String(event.spaceId) : ''
   const today = shanghaiTodayYmd()
   const end = addDaysYmd(today, 3)
+  const expiringWhere = {
+    familyId: ctx.familyId,
+    expireDate: _.lte(end)
+  }
 
   const listWhere = { familyId: ctx.familyId }
   if (spaceId) listWhere.spaceId = spaceId
 
-  const [listRes, counted, subscribed, expiringRes] = await Promise.all([
+  const [listRes, counted, subscribed, expiringRes, expiringCounted] = await Promise.all([
     db
       .collection('items')
       .where(listWhere)
@@ -1538,10 +1542,7 @@ async function home(openid, event) {
     subscribedItemSet(ctx.familyId, openid),
     db
       .collection('items')
-      .where({
-        familyId: ctx.familyId,
-        expireDate: _.lte(end)
-      })
+      .where(expiringWhere)
       .orderBy('expireDate', 'asc')
       .limit(1)
       .get()
@@ -1559,7 +1560,12 @@ async function home(openid, event) {
           .sort((a, b) => String(a.expireDate).localeCompare(String(b.expireDate)))
           .slice(0, 1)
         return { data: filtered }
-      })
+      }),
+    db
+      .collection('items')
+      .where(expiringWhere)
+      .count()
+      .catch(() => null)
   ])
 
   let total = Number(counted && counted.total) || 0
@@ -1577,10 +1583,18 @@ async function home(openid, event) {
     expiringTop = withPlace[0] || null
   }
 
+  let expiringCount = Number(expiringCounted && expiringCounted.total) || 0
+  if (!expiringCounted) {
+    expiringCount = expiringTop ? 1 : 0
+  } else if (expiringTop && expiringCount < 1) {
+    expiringCount = 1
+  }
+
   return ok({
     list,
     total,
     expiringTop,
+    expiringCount,
     today,
     windowEnd: end
   })
