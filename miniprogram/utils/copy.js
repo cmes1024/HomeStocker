@@ -230,7 +230,44 @@ const copy = {
     alreadyIn: '已加入该家庭',
     invalidCode: '邀请码无效',
     themePick: '选择主题',
-    aiQuota: 'AI配置'
+    aiQuota: 'AI配置',
+    capacityTitle: '家庭加强版',
+    capacityInactive: '未开通 · 内测兑换',
+    capacityActive: (ymd) => `有效至 ${ymd}`,
+    capacityProgress: (itemCount, itemLimit, memberCount, memberLimit) => {
+      const items =
+        itemLimit == null
+          ? `${itemCount == null ? '—' : itemCount} 件 · 不限`
+          : `${itemCount == null ? '—' : itemCount} / ${itemLimit} 件`
+      const members =
+        memberLimit == null
+          ? `${memberCount == null ? '—' : memberCount} 人 · 不限`
+          : `${memberCount == null ? '—' : memberCount} / ${memberLimit} 人`
+      return `${items} · ${members}`
+    },
+    capacityRedeemTitle: '内测兑换',
+    capacityRedeemPlaceholder: '输入兑换码',
+    capacityRedeemSubmit: '兑换',
+    capacityRedeemOk: '已开通加强版',
+    capacityCodeRequired: '请输入兑换码',
+    capacityLimitHint: '已达免费物资上限，可到家庭页兑换内测加强版',
+    familyLimitHint: '已达免费家庭上限，可到家庭页兑换内测加强版',
+    memberLimitHint: '已达免费成员上限，可到家庭页兑换内测加强版',
+    capacityFreeSummary: '免费档：1 家 · 2 人 · 50 件',
+    capacityHelpAria: '容量规则说明',
+    capacityHelpTitle: '容量说明',
+    capacityHelpBody:
+      '免费档上限：1 个家庭、每家 2 人、50 件物资。\n\n点家庭旁的 VIP 可兑换内测加强版；开通后家庭数、人数、物资均不限。\n\n到期后回落免费档，已有数据不会删除，只是不能再继续增加。',
+    capacityHelpConfirm: '知道了',
+    issueTitle: '发放内测码',
+    issueSub: '仅管理员 · 90 天加强版',
+    issueModalTitle: '发放几张',
+    issuePlaceholder: '1–50',
+    issueSubmit: '生成',
+    issueCountInvalid: '请输入 1 到 50 的数量',
+    issueResultTitle: '请立刻复制保存，关掉后明文不再显示',
+    issueCopyAll: '复制全部',
+    issueCopied: '已复制'
   },
 
   assist: {

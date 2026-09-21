@@ -115,11 +115,36 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 
 ## 约束
 
-- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` 被安全规则拒绝
+- [ ] 客户端直写 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `aiPrompts` / `itemMedia` / `familyTrees` / `aiCapabilities` / `redeemCodes` / `familySubscriptions` 被安全规则拒绝
 - [ ] 已有家庭仍可再创建；join 已加入的同一家庭返回 `ALREADY_IN_FAMILY`
 - [ ] 家庭页可切换当前家庭；离开/解散后若还有其他家庭则切过去，否则回 onboarding
 - [ ] 家庭背景：渐变 / 纯色 / 图片可设；标题为「家庭 {名称}」
 - [ ] `memberships` / `items` / `spaces` / `tags` / `activities` 列表查询走索引（无「缺少索引」报错）
+
+## 容量会员（内测兑换）
+
+对照 `docs/plans/2026-09-21-capacity-membership-redeem/` 与 `openspec/changes/capacity-membership-redeem/`。
+
+### 部署前
+
+- [ ] 集合 `redeemCodes`、`familySubscriptions` 已建；规则按 `database-rules.json` 粘贴
+- [ ] 云函数 `family` 配置环境变量 `ADMIN_OPENID`；上传 `family` / `item`（助手建物资则同步 `ai`）
+- [ ] `families` 新文档含 `itemCount: 0`（老家庭首次创建物资时会懒校准）
+
+### 手测
+
+- [ ] 新用户可建 1 家；再建第二家返回 `FAMILY_LIMIT_REACHED`（无站外购买引导）
+- [ ] 免费家最多 2 人；第三人 join 返回 `MEMBER_LIMIT_REACHED`
+- [ ] 免费家庭可创建至 50 件；第 51 件返回 `ITEM_LIMIT_REACHED` 且文案引导家庭页内测兑换
+- [ ] admin 调 `family.issueCodes` 成功；非 admin 被 `FORBIDDEN`
+- [ ] 家庭页「加强版」展示未开通 / 件数（及可选人数）进度；兑码成功后显示到期日
+- [ ] 兑码后：可再加家、加人、加物资（不限）
+- [ ] 未过期再兑：到期日按剩余叠加
+- [ ] 过期后回落免费上限；已有超额家/人/物不踢不删，但不可再增
+- [ ] 解散家庭后该家 `familySubscriptions` 被删
+- [ ] 清单 / 搜索 / 首页加载不额外风暴式调用 `getEntitlement`
+- [ ] `createMany` 一批超过剩余名额整批失败
+- [ ] AI `extract` / `act` 不因「无容量会员」被拦（仍可因撞物资上限失败）
 
 ## 导航
 

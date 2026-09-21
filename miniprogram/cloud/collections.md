@@ -26,6 +26,8 @@
 | `background` | object | `{ type: 'theme', value: themeId }`。合法 `themeId`：`orange`（默认）/`red`/`blue`/`matcha`/`milk`/`taro`/`sakura`/`coral`/`mint`/`warm-gray`/`indigo`/`amber`/`forest`/`berry`/`clay`/`lavender`/`olive`。客户端按 id 解析三色；非法或缺失回落 `orange`。完整色值见 `docs/plans/2026-09-15-family-theme-system.md` |
 | `expireReminderEnabled` | boolean | 家庭过期提醒总开关，默认 `true`；缺省按 true 处理 |
 | `tagsSeededAt` | number \| null | 默认标签种子写入时间；有值后不再自动补种已删默认标签 |
+| `itemCount` | number | 该家物资件数；`item.create` / `createMany` / `remove` / 合并吸收删除时由云函数维护；缺失时写路径懒 `count()` 校准。新建家庭为 `0` |
+| `entitlement` | object \| null | 可选展示快照 `{ planId, expiresAt, itemLimit, memberLimit, familyLimit }`；兑换/续期时刷新。容量真相仍以 `familySubscriptions` + 配置表为准 |
 | `createdAt` | number | |
 
 不存 `memberOpenids[]`，不嵌空间树或标签目录。
@@ -210,6 +212,44 @@
 
 V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `update` / `remove`（confirm）/ `space.create` / `space.createMany` / `space.createLocation` / `space.createLocationMany` / `item.merge`（confirm）/ `item.expireSubscribePanel`。房间改名/删除、标签/家庭/密钥/抽取为 disabled。代码硬底线仍拒绝 `family.*`、密钥、extract、transcribe。成员不能从客户端改此表。`createMany` 系列：同类 ≥2 优先批量；顺序空间 → 位置 → 物资。
 
+### `redeemCodes`
+
+内测容量兑换码。库内只存哈希，明文仅 `family.issueCodes` 返回一次。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | `codeHash`：规范化明文（去空白与连字符、大写）的 SHA-256 hex |
+| `product` | string | 如 `capacity_90d` / `capacity_365d` |
+| `days` | number | 发码时快照 |
+| `planId` | string | 发码时快照，如 `capacity_std` |
+| `status` | string | `unused` \| `used` \| `revoked` |
+| `usedByFamilyId` | string \| null | 核销家庭 |
+| `usedByOpenid` | string \| null | 核销人 |
+| `usedAt` | number \| null | |
+| `createdAt` | number | |
+| `note` | string | 可选运营备注 |
+
+客户端写 deny。换环境无需为 `_id` 另建索引。
+
+### `familySubscriptions`
+
+一家一条容量订阅。`_id` = `familyId`。
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `_id` | string | 同 `familyId` |
+| `familyId` | string | |
+| `planId` | string | 当前产品对应 plan（过期后仍保留文档，限额按 free 计算） |
+| `product` | string | 最近一次产品 id |
+| `source` | string | `redeem` \| `manual` \| `wechat_pay`（预留） |
+| `expiresAt` | number | ms；`> now` 为有效 |
+| `limitsOverride` | object \| null | 可选；覆盖 plan 表单项如 `{ itemLimit: 100, memberLimit: 5, familyLimit: 3 }` |
+| `lastRedeemCodeId` | string \| null | 最近核销码 `_id` |
+| `createdAt` | number | |
+| `updatedAt` | number | |
+
+客户端写 deny。主键即家庭 id，不必另建索引。解散家庭时删除该文档。
+
 ### `floors`（模型预留，本版不建集合/UI）
 
 大宅分组用；可用空间命名暂代（如「2F 主卧」）。
@@ -250,7 +290,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 
 每个集合点「添加集合」，名称必须完全一致：
 
-`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `itemMedia` · `familyTrees` · `aiCapabilities`
+`users` · `families` · `memberships` · `items` · `spaces` · `locations` · `tags` · `activities` · `itemExpireSubs` · `familyAiKeys` · `aiPrompts` · `itemMedia` · `familyTrees` · `aiCapabilities` · `redeemCodes` · `familySubscriptions`
 
 权限先随意；建完后把同目录 `database-rules.json` 里对应集合的规则贴进去（客户端写一律 deny）。
 
@@ -310,8 +350,19 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），`themeId` 须在云函数 `THEME_IDS` 白名单内（与 `theme.js` 的 `THEME_PRESETS` 同步）。写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
 - `updateName` 更新家庭名称（`{ name, familyId? }`）；须是该家庭成员；省略 `familyId` 时改当前家庭；名称 trim 后 1–20 字
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
-- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树
+- 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `familySubscriptions` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树与订阅
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图/助手 act/结构树写一律云函数
+
+## 容量会员（内测兑换）
+
+权威方案：`docs/plans/2026-09-21-capacity-membership-redeem/`。
+
+1. 集合 `redeemCodes`、`familySubscriptions` 已创建；安全规则客户端写 deny（见 `database-rules.json`）。
+2. 上传云函数 `family`（含 `getEntitlement` / `redeem` / `issueCodes`）、`item`（容量门控 + `itemCount`）；若用助手建物资，同步上传 `ai`（内含同款 `itemService` + `entitlements`）。
+3. 云函数 `family` 环境变量配置 **`ADMIN_OPENID`**（仅该 openid 可 `issueCodes`）。不要把兑换码明文或 admin 身份写进仓库。
+4. 免费档默认 `familyLimit=1` / `memberLimit=2` / `itemLimit=50`（`entitlements.js`）；加强版三项 `null`；读路径（list/search）不查订阅。
+5. 写路径门控：`item.create(Many)`、`family.create` / `join`（家数 + 人数）；过限不踢人、不删物资。
+6. 手测清单见 `acceptance-checklist.md`「容量会员」。
 
 ## 订阅消息（B 波）
 

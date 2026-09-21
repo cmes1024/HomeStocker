@@ -85,13 +85,17 @@
       </view>
     </view>
 
-    <view class="ai-row" hover-class="tool-hover" bind:tap="goAiKeys">
-      <text class="ai-row-name">{{copy.aiQuota}}</text>
-      <text class="ai-row-chevron">›</text>
-    </view>
-
     <view class="card homes-card">
-      <view class="card-title homes-title">{{copy.myHomes}}</view>
+      <view class="homes-hd">
+        <view class="card-title homes-title">{{copy.myHomes}}</view>
+        <view
+          class="homes-help"
+          hover-class="press"
+          catch:tap="onCapacityHelp"
+          aria-role="button"
+          aria-label="{{copy.capacityHelpAria}}"
+        >?</view>
+      </view>
 
       <view class="home-list">
         <view
@@ -116,6 +120,26 @@
           >
             <image class="home-rename-ico" src="{{editIcon}}" mode="aspectFit" />
           </view>
+          <view
+            wx:if="{{item.isCurrent}}"
+            class="home-ico-btn"
+            hover-class="press"
+            catch:tap="goAiKeys"
+            aria-role="button"
+            aria-label="{{copy.aiQuota}}"
+          >
+            <image class="home-rename-ico" src="{{aiIcon}}" mode="aspectFit" />
+          </view>
+          <view
+            wx:if="{{item.isCurrent}}"
+            class="home-ico-btn"
+            hover-class="press"
+            catch:tap="openCapacityRedeem"
+            aria-role="button"
+            aria-label="{{copy.capacityTitle}}"
+          >
+            <image class="home-rename-ico" src="{{vipIcon}}" mode="aspectFit" />
+          </view>
         </view>
       </view>
 
@@ -135,6 +159,19 @@
       </view>
     </view>
 
+    <view
+      wx:if="{{family.isAdmin}}"
+      class="ai-row capacity-row"
+      hover-class="tool-hover"
+      bind:tap="openIssueCodes"
+    >
+      <view class="capacity-main">
+        <text class="ai-row-name">{{copy.issueTitle}}</text>
+        <text class="capacity-sub">{{copy.issueSub}}</text>
+      </view>
+      <text class="ai-row-chevron">›</text>
+    </view>
+
     <view class="actions-spacer"></view>
     <view class="actions">
       <view
@@ -145,6 +182,14 @@
     </view>
   </block>
 </AppShell>
+
+<view class="issue-mask" wx:if="{{issuedCodes.length}}" bind:tap="closeIssued">
+  <view class="issue-card" catch:tap="noop">
+    <view class="issue-title">{{copy.issueResultTitle}}</view>
+    <view class="issue-code" wx:for="{{issuedCodes}}" wx:key="*this">{{item}}</view>
+    <view class="issue-copy theme-btn" bind:tap="copyIssued">{{copy.issueCopyAll}}</view>
+  </view>
+</view>
 
 <PromptDialog
   show="{{showModal}}"

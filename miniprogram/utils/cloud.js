@@ -124,6 +124,10 @@ function invalidateItemDomain() {
   clearCursor()
 }
 
+function invalidateFamilyReads() {
+  cache.dropByName('family')
+}
+
 function applyWriteInvalidation(name, action) {
   if (name === 'item' && (action === 'create' || action === 'createMany' || action === 'update' || action === 'remove')) {
     invalidateItemDomain()
@@ -139,7 +143,12 @@ function applyWriteInvalidation(name, action) {
   }
   if (name === 'family') {
     if (action === 'recordSubscribeExpire') return
-    if (action === 'updateBackground' || action === 'updateExpireReminder') {
+    if (
+      action === 'updateBackground' ||
+      action === 'updateExpireReminder' ||
+      action === 'redeem' ||
+      action === 'updateName'
+    ) {
       cache.dropByName('family')
       return
     }
@@ -302,5 +311,6 @@ module.exports = {
   friendlyCloudError,
   markAppHidden,
   markAppShown,
-  invalidateItemDomain
+  invalidateItemDomain,
+  invalidateFamilyReads
 }

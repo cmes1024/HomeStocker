@@ -21,7 +21,7 @@
 |----|------|
 | 核心 | 创建/加入家庭 + 共享物资台账 |
 | 权限 | 邀请码直加，全员同权 |
-| 家庭数 | **多家庭**：可继续创建/加入；`memberships` 多对多 + `currentFamilyId` 切换 |
+| 家庭数 | **多家庭**（`memberships` + `currentFamilyId`）；**免费档 1 家 / 2 人 / 50 件**，兑换加强版后三项不限；见 `docs/plans/2026-09-21-capacity-membership-redeem/` |
 | 物资字段 | `name` / `quantity` / `unit?` / `note` + `spaceId`（必填）/ `locationId`（可选）+ `tagIds[]` / `productionDate?` / `expireDate?`；过期订阅见 `itemExpireSubs`（按人×物资，非物品共用开关） |
 | 空间 | 用户自建；无空间时懒创建默认「仓库」；空间浏览为辅，全家清单为主 |
 | 标签（B） | 家庭级 `tags` 集合；默认种子 + 自建；物资可多选；列表 API 可按标签筛，首页尚未做入口 |
@@ -58,7 +58,7 @@ familyAiKeys / aiPrompts / itemMedia（AI 录入；客户端写 deny）
 
 - **禁止**把成员、物资或空间树嵌进 `families` 大数组
 - 索引：`families.inviteCode`；`memberships.openid` / `familyId` / 复合唯一；`items.familyId+updatedAt` / `familyId+spaceId` / `familyId+expireDate`；`spaces.familyId`；`locations.spaceId`；`tags.familyId`；`activities.familyId+createdAt` / `itemId+createdAt`；`itemExpireSubs.familyId+openid` / `itemId`
-- 可多 membership；create 不限；join 同家重复拒绝；切换改 `currentFamilyId`
+- 可多 membership（受容量档 `familyLimit` 约束；免费默认 1）；create/join 撞限拒绝；同家重复 join 拒绝；切换改 `currentFamilyId`
 - 字段与索引细节、换环境控制台步骤见 `miniprogram/cloud/collections.md`
 
 ## 云函数与写路径

@@ -1,3 +1,6 @@
+> **SUPERSEDED（2026-09-21）**  
+> 本 change **不要再按「只闸 AI」实施**。现行 MVP：`openspec/changes/capacity-membership-redeem/` 与 `docs/plans/2026-09-21-capacity-membership-redeem/`（物资容量 + 内测兑换）。
+
 ## Why
 
 个人主体小程序无法开通微信支付与虚拟商品售卖，无法用官方支付摊平 AI 云函数与研发成本。需要一条站外售码、站内兑换的家庭级 AI 会员路径：闲鱼卖季卡兑换码，核销后绑定当前家庭，全员同权使用 AI V1 录入与 V2 管家。模型仍走家庭 BYOK，会员先卖「使用权」。权威叙述见 `docs/plans/2026-09-19-ai-membership-redeem/`。

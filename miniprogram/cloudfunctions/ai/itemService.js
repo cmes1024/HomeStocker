@@ -4,6 +4,7 @@
  */
 module.exports = function createItemService(db) {
   const _ = db.command
+  const entitlements = require('./entitlements')
 
 const DEFAULT_SPACE_NAME = '仓库'
 const DEFAULT_COVER_KEY = 'default-indoor'
@@ -194,6 +195,78 @@ async function resolveFamilyContext(openid, reuse) {
     return { error: fail('NO_FAMILY', '尚未加入家庭') }
   }
   return { familyId, openid }
+}
+
+async function readFamilyItemCount(familyId) {
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) {
+    return { error: fail('NO_FAMILY', '家庭不存在') }
+  }
+  let itemCount = fam.data.itemCount
+  if (itemCount == null || !Number.isFinite(Number(itemCount)) || Number(itemCount) < 0) {
+    let total = 0
+    try {
+      const counted = await db.collection('items').where({ familyId }).count()
+      total = Number(counted && counted.total) || 0
+    } catch (e) {
+      console.warn('readFamilyItemCount count() failed', familyId, e && e.message)
+      total = 0
+    }
+    try {
+      await db.collection('families').doc(familyId).update({
+        data: { itemCount: total }
+      })
+    } catch (e) {
+      console.warn('readFamilyItemCount writeback failed', familyId, e && e.message)
+    }
+    itemCount = total
+  } else {
+    itemCount = Number(itemCount)
+  }
+  return { itemCount, family: fam.data }
+}
+
+async function assertItemCapacity(familyId, addN) {
+  const n = Math.max(0, Number(addN) || 0)
+  const counted = await readFamilyItemCount(familyId)
+  if (counted.error) return counted.error
+
+  let sub = null
+  try {
+    const snap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (snap && snap.data) sub = snap.data
+  } catch (e) {
+    sub = null
+  }
+  const ent = entitlements.resolveEffectiveFromSub(sub)
+  if (ent.itemLimit != null && counted.itemCount + n > ent.itemLimit) {
+    return fail(
+      'ITEM_LIMIT_REACHED',
+      `已达免费物资上限（${ent.itemLimit} 件），可到家庭页兑换内测加强版`
+    )
+  }
+  return { itemCount: counted.itemCount, entitlement: ent }
+}
+
+async function bumpItemCount(familyId, delta) {
+  const d = Number(delta) || 0
+  if (!d) return
+  try {
+    if (d < 0) {
+      const counted = await readFamilyItemCount(familyId)
+      if (counted.error) return
+      const next = Math.max(0, counted.itemCount + d)
+      await db.collection('families').doc(familyId).update({
+        data: { itemCount: next }
+      })
+      return
+    }
+    await db.collection('families').doc(familyId).update({
+      data: { itemCount: _.inc(d) }
+    })
+  } catch (e) {
+    console.warn('bumpItemCount failed', familyId, d, e && e.message)
+  }
 }
 
 function normalizeQuantity(value, fallback = 1) {
@@ -439,6 +512,9 @@ async function createItem(openid, event, options = {}) {
     expireDate = d
   }
 
+  const cap = await assertItemCapacity(ctx.familyId, 1)
+  if (cap.code) return cap
+
   const doc = {
     familyId: ctx.familyId,
     name,
@@ -458,6 +534,7 @@ async function createItem(openid, event, options = {}) {
   }
 
   const addRes = await db.collection('items').add({ data: doc })
+  await bumpItemCount(ctx.familyId, 1)
   let mine = false
   try {
     mine = await syncExpireSub(
@@ -506,6 +583,9 @@ async function createMany(openid, event, options = {}) {
   if (rawItems.length > CREATE_MANY_LIMIT) {
     return fail('INVALID_ITEMS', `一次最多记 ${CREATE_MANY_LIMIT} 件`)
   }
+
+  const cap = await assertItemCapacity(ctx.familyId, rawItems.length)
+  if (cap.code) return cap
 
   const defaultSource = event && event.source === 'agent' ? 'agent' : 'ui'
   const now = Date.now()
@@ -643,6 +723,8 @@ async function createMany(openid, event, options = {}) {
     console.error('createMany id count mismatch', ids.length, docs.length, addRes)
     return fail('INTERNAL', '批量写入结果异常，请核对物资列表')
   }
+
+  await bumpItemCount(ctx.familyId, ids.length)
 
   for (let i = 0; i < prepared.length; i++) {
     const p = prepared[i]
@@ -855,6 +937,7 @@ async function removeItem(openid, event, options = {}) {
     null
   )
   await db.collection('items').doc(itemId).remove()
+  await bumpItemCount(ctx.familyId, -1)
   await removeExpireSubsForItem(itemId).catch((e) => {
     console.warn('removeExpireSubsForItem failed', itemId, e)
   })
@@ -1006,6 +1089,10 @@ async function mergeItems(openid, event, options = {}) {
       createdAt: now,
       ...place
     })
+  }
+
+  if (absorbed.length) {
+    await bumpItemCount(ctx.familyId, -absorbed.length)
   }
 
   try {

@@ -4,8 +4,9 @@
 > 日期：2026-09-19  
 > 来源：Trae 辅助分析草稿，作**愿景与灵感**；勿当 OpenSpec / 实施范围  
 > 状态：**愿景草案**（完整套餐 / 微信支付尚未实施）  
-> **权威可落地 MVP：** [`../2026-09-19-ai-membership-redeem/`](../2026-09-19-ai-membership-redeem/) + [`openspec/changes/ai-membership-redeem/`](../../../openspec/changes/ai-membership-redeem/)（闲鱼兑换码 + 家庭绑定）  
-> 目标：以 AI 能力为核心增值点，建立家庭会员机制，摊平研发成本与云套餐 / 模型 API 开销。
+> **权威可落地 MVP：** [`../2026-09-21-capacity-membership-redeem/`](../2026-09-21-capacity-membership-redeem/)（内测兑换码 + **容量档：免费 1 家 / 2 人 / 50 件**，摊云开发套餐）  
+> 旧 AI 兑换草案已 superseded：[`../2026-09-19-ai-membership-redeem/`](../2026-09-19-ai-membership-redeem/)  
+> 目标（愿景）：会员机制摊平云套餐等固定成本；AI 以 BYOK 为主，不作为本阶段成本回收主卖点。
 
 ## 怎么读
 

@@ -1,4 +1,4 @@
-const { callFamily } = require('../../utils/cloud')
+const { callFamily, invalidateFamilyReads } = require('../../utils/cloud')
 const {
   THEME_PRESETS,
   setAppFamily,
@@ -9,32 +9,73 @@ const { getStorage, setStorage } = require('../../utils/storage')
 const copy = require('../../utils/copy')
 
 const KEY_SVG_PATH = '/assets/key.svg'
+const EDIT_SVG_PATH = '/assets/edit.svg'
+const AI_SVG_PATH = '/assets/ai.svg'
+const VIP_SVG_PATH = '/assets/vip.svg'
 const CODE_VISIBLE_KEY = 'familyInviteCodeVisible'
-let keySvgText = ''
 
-const EDIT_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
+const svgCache = {
+  key: '',
+  edit: '',
+  ai: '',
+  vip: ''
+}
+
 const EYE_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>'
 const EYE_OFF_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-6.5 0-10-8-10-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c6.5 0 10 8 10 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
 
-function tintSvg(svg, color) {
-  const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(color || ''))
+function themeColor(themeOrColor) {
+  if (typeof themeOrColor === 'string') {
+    return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(themeOrColor)
+      ? themeOrColor
+      : '#FF5D00'
+  }
+  const color =
+    (themeOrColor && (themeOrColor.themeColor || themeOrColor.primary)) || '#FF5D00'
+  return /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(String(color))
     ? color
     : '#FF5D00'
+}
+
+function tintSvg(svg, color) {
+  const fill = themeColor(color)
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
     svg.split('#000').join(fill)
   )}`
 }
 
-function editIconSrc(theme) {
-  const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
-  return tintSvg(EDIT_SVG, color)
+function readAssetSvg(path, cacheKey) {
+  if (svgCache[cacheKey]) return svgCache[cacheKey]
+  try {
+    svgCache[cacheKey] = wx.getFileSystemManager().readFileSync(path, 'utf8')
+    return svgCache[cacheKey]
+  } catch (e) {
+    return ''
+  }
+}
+
+/** assets 里的功能图标：替换 fill 色以跟随主题 */
+function themedAssetIcon(path, cacheKey, themeOrColor) {
+  const raw = readAssetSvg(path, cacheKey)
+  if (!raw) return path
+  const fill = themeColor(themeOrColor)
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    raw.replace(/fill="#[0-9A-Fa-f]+"/g, `fill="${fill}"`)
+  )}`
+}
+
+function actionIcons(theme) {
+  return {
+    editIcon: themedAssetIcon(EDIT_SVG_PATH, 'edit', theme),
+    aiIcon: themedAssetIcon(AI_SVG_PATH, 'ai', theme),
+    vipIcon: themedAssetIcon(VIP_SVG_PATH, 'vip', theme)
+  }
 }
 
 function eyeIcons(theme) {
-  const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
+  const color = themeColor(theme)
   return {
     eyeOpenIcon: tintSvg(EYE_SVG, color),
     eyeOffIcon: tintSvg(EYE_OFF_SVG, color)
@@ -46,19 +87,7 @@ function readCodeVisible() {
 }
 
 function keyIconSrc(color) {
-  if (!keySvgText) {
-    try {
-      keySvgText = wx.getFileSystemManager().readFileSync(KEY_SVG_PATH, 'utf8')
-    } catch (e) {
-      return KEY_SVG_PATH
-    }
-  }
-  const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(String(color || ''))
-    ? color
-    : '#FF5D00'
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
-    keySvgText.replace(/fill="#[0-9A-Fa-f]+"/g, `fill="${fill}"`)
-  )}`
+  return themedAssetIcon(KEY_SVG_PATH, 'key', color)
 }
 
 Page({
@@ -88,10 +117,15 @@ Page({
     reminderEnabled: true,
     keyIcon: '',
     editIcon: '',
+    aiIcon: '',
+    vipIcon: '',
     eyeOpenIcon: '',
     eyeOffIcon: '',
     codeVisible: false,
-    codeDisplay: ''
+    codeDisplay: '',
+    capacityStatusText: '',
+    capacityProgressText: '',
+    issuedCodes: []
   },
 
   onShow() {
@@ -103,7 +137,7 @@ Page({
     bindThemeToPage(this, {
       ...(name ? { headerTitle: name } : {}),
       keyIcon: keyIconSrc(theme.primary),
-      editIcon: editIconSrc(theme),
+      ...actionIcons(theme),
       ...eyeIcons(theme),
       codeVisible,
       codeDisplay: this.formatInviteCode(
@@ -111,8 +145,11 @@ Page({
         codeVisible
       )
     })
-    // 从空间/标签/消息返回时页面实例还在，家庭列表没变，不再打 getMyFamily / listMyFamilies
-    if (!this.data.family) this.load()
+    // 旧缓存没有 isAdmin 时重新拉一次，否则管理员看不到发码入口
+    if (!this.data.family || typeof this.data.family.isAdmin !== 'boolean') {
+      invalidateFamilyReads()
+      this.load()
+    }
   },
 
   formatInviteCode(code, visible) {
@@ -127,6 +164,40 @@ Page({
     return {
       codeVisible: visible,
       codeDisplay: this.formatInviteCode(code, visible)
+    }
+  },
+
+  formatExpireYmd(ms) {
+    const n = Number(ms)
+    if (!Number.isFinite(n) || n <= 0) return ''
+    const d = new Date(n)
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, '0')
+    const day = String(d.getDate()).padStart(2, '0')
+    return `${y}-${m}-${day}`
+  },
+
+  buildCapacityTexts(family) {
+    const ent = (family && family.entitlement) || {}
+    const itemCount = family && family.itemCount
+    const memberCount = family && family.memberCount
+    let capacityStatusText = copy.family.capacityInactive
+    if (ent.active && ent.expiresAt) {
+      const ymd = this.formatExpireYmd(ent.expiresAt)
+      capacityStatusText = ymd
+        ? copy.family.capacityActive(ymd)
+        : copy.family.capacityInactive
+    } else if (!ent.active) {
+      capacityStatusText = `${copy.family.capacityInactive} · ${copy.family.capacityFreeSummary}`
+    }
+    return {
+      capacityStatusText,
+      capacityProgressText: copy.family.capacityProgress(
+        itemCount,
+        ent.itemLimit,
+        memberCount,
+        ent.memberLimit
+      )
     }
   },
 
@@ -150,10 +221,8 @@ Page({
   async load() {
     this.setData(this.data.family ? { error: '' } : { loading: true, error: '' })
     try {
-      const [family, listed] = await Promise.all([
-        callFamily('getMyFamily'),
-        callFamily('listMyFamilies')
-      ])
+      const listed = await callFamily('listMyFamilies')
+      const family = await this.currentFamilyFromList(listed)
       const theme = setAppFamily(family)
       const codeVisible = readCodeVisible()
       this.setData({
@@ -162,9 +231,10 @@ Page({
         loading: false,
         theme,
         keyIcon: keyIconSrc(theme.primary),
-        editIcon: editIconSrc(theme),
+        ...actionIcons(theme),
         ...eyeIcons(theme),
         ...this.syncCodeDisplay(family, codeVisible),
+        ...this.buildCapacityTexts(family),
         headerTitle: family.name || '家庭',
         reminderEnabled: family.expireReminderEnabled !== false
       })
@@ -179,6 +249,19 @@ Page({
         error: e.message || copy.common.loadFailed
       })
     }
+  },
+
+  /**
+   * 新云函数在 list 里带当前家庭（含容量）。未部署前没有 family 字段，退回 getMyFamily。
+   */
+  async currentFamilyFromList(listed) {
+    if (listed && Object.prototype.hasOwnProperty.call(listed, 'family')) {
+      if (listed.family && listed.family._id) return listed.family
+      const err = new Error('尚未加入家庭')
+      err.code = 'NO_FAMILY'
+      throw err
+    }
+    return callFamily('getMyFamily')
   },
 
   onRetry() {
@@ -199,9 +282,10 @@ Page({
       }),
       theme,
       keyIcon: keyIconSrc(theme.primary),
-      editIcon: editIconSrc(theme),
+      ...actionIcons(theme),
       ...eyeIcons(theme),
       ...this.syncCodeDisplay(family),
+      ...this.buildCapacityTexts(family),
       headerTitle: family.name || '家庭',
       loading: false,
       reminderEnabled: family.expireReminderEnabled !== false
@@ -322,6 +406,91 @@ Page({
     })
   },
 
+  openIssueCodes() {
+    if (this.data.acting) return
+    if (!this.data.family || !this.data.family.isAdmin) return
+    this.setData({
+      showModal: true,
+      modalMode: 'issueCodes',
+      modalTitle: copy.family.issueModalTitle,
+      modalPlaceholder: copy.family.issuePlaceholder,
+      modalValue: '1',
+      modalMaxlength: 2,
+      modalConfirm: copy.family.issueSubmit,
+      editingFamilyId: '',
+      modalError: ''
+    })
+  },
+
+  closeIssued() {
+    this.setData({ issuedCodes: [] })
+  },
+
+  noop() {},
+
+  copyIssued() {
+    const text = (this.data.issuedCodes || []).join('\n')
+    if (!text) return
+    wx.setClipboardData({
+      data: text,
+      success: () => {
+        wx.showToast({ title: copy.family.issueCopied, icon: 'success' })
+      }
+    })
+  },
+
+  async onIssueCodes() {
+    if (this.data.acting) return
+    const count = Number(String(this.data.modalValue || '').trim())
+    if (!Number.isFinite(count) || count < 1 || count > 50) {
+      this.setData({ modalError: copy.family.issueCountInvalid })
+      return
+    }
+    this.setData({ acting: true, modalError: '' })
+    try {
+      const result = await callFamily('issueCodes', {
+        product: 'capacity_90d',
+        count: Math.floor(count)
+      })
+      const codes = (result && result.codes) || []
+      this.setData({
+        acting: false,
+        showModal: false,
+        modalValue: '',
+        issuedCodes: codes
+      })
+    } catch (e) {
+      this.setData({
+        acting: false,
+        modalError: e.message || copy.common.opFailed
+      })
+    }
+  },
+
+  openCapacityRedeem() {
+    if (this.data.acting) return
+    this.setData({
+      showModal: true,
+      modalMode: 'capacityRedeem',
+      modalTitle: copy.family.capacityRedeemTitle,
+      modalPlaceholder: copy.family.capacityRedeemPlaceholder,
+      modalValue: '',
+      modalMaxlength: 20,
+      modalConfirm: copy.family.capacityRedeemSubmit,
+      editingFamilyId: '',
+      modalError: ''
+    })
+  },
+
+  onCapacityHelp() {
+    wx.showModal({
+      title: copy.family.capacityHelpTitle,
+      content: copy.family.capacityHelpBody,
+      showCancel: false,
+      confirmText: copy.family.capacityHelpConfirm
+    })
+  },
+
   closeModal() {
     if (this.data.acting) return
     this.setData({
@@ -334,14 +503,43 @@ Page({
 
   onModalInput(e) {
     let value = e.detail.value || ''
-    if (this.data.modalMode === 'join') value = value.toUpperCase()
+    if (this.data.modalMode === 'join' || this.data.modalMode === 'capacityRedeem') {
+      value = value.toUpperCase()
+    }
     this.setData({ modalValue: value, modalError: '' })
   },
 
   async onSaveModal() {
     if (this.data.modalMode === 'join') return this.onJoin()
     if (this.data.modalMode === 'rename') return this.onRename()
+    if (this.data.modalMode === 'capacityRedeem') return this.onCapacityRedeem()
+    if (this.data.modalMode === 'issueCodes') return this.onIssueCodes()
     return this.onCreate()
+  },
+
+  async onCapacityRedeem() {
+    if (this.data.acting) return
+    const code = (this.data.modalValue || '').trim()
+    if (!code) {
+      this.setData({ modalError: copy.family.capacityCodeRequired })
+      return
+    }
+    this.setData({ acting: true, modalError: '' })
+    try {
+      const result = await callFamily('redeem', { code })
+      const family = (result && result.family) || result
+      if (family && family._id) {
+        this.applyCurrentFamily(family)
+      }
+      this.setData({ showModal: false, modalValue: '', acting: false })
+      wx.showToast({ title: copy.family.capacityRedeemOk, icon: 'success' })
+      await this.load()
+    } catch (e) {
+      this.setData({
+        acting: false,
+        modalError: e.message || copy.common.opFailed
+      })
+    }
   },
 
   async onCreate() {
@@ -449,7 +647,7 @@ Page({
         family,
         theme,
         keyIcon: keyIconSrc(theme.primary),
-        editIcon: editIconSrc(theme),
+        ...actionIcons(theme),
         ...eyeIcons(theme),
         ...this.syncCodeDisplay(family),
         headerTitle: family.name || '家庭'

@@ -5,6 +5,7 @@ cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
 const db = cloud.database()
 const _ = db.command
 const { rebuildFamilyTree, deleteFamilyTree } = require('./familyTree')
+const entitlements = require('./entitlements')
 
 const INVITE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 const INVITE_LEN = 6
@@ -67,6 +68,11 @@ function normalizeBackground(raw) {
   return { ...DEFAULT_BACKGROUND }
 }
 
+function isCapacityAdmin(openid) {
+  const admin = String(process.env.ADMIN_OPENID || '').trim()
+  return !!admin && openid === admin
+}
+
 function familySummary(familyId, family, openid) {
   return {
     _id: familyId,
@@ -80,8 +86,157 @@ function familySummary(familyId, family, openid) {
       family.expireReminderEnabled === undefined
         ? true
         : family.expireReminderEnabled !== false,
-    isOwner: family.ownerOpenid === openid
+    isOwner: family.ownerOpenid === openid,
+    isAdmin: isCapacityAdmin(openid),
+    itemCount:
+      family.itemCount == null || !Number.isFinite(Number(family.itemCount))
+        ? null
+        : Number(family.itemCount)
   }
+}
+
+async function loadCapacityFields(familyId, family) {
+  const now = Date.now()
+  let sub = null
+  try {
+    const snap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (snap && snap.data) sub = snap.data
+  } catch (e) {
+    sub = null
+  }
+  const effective = entitlements.resolveEffectiveFromSub(sub, now)
+  let itemCount =
+    family && family.itemCount != null && Number.isFinite(Number(family.itemCount))
+      ? Number(family.itemCount)
+      : null
+  if (itemCount != null && itemCount < 0) itemCount = 0
+  return {
+    itemCount,
+    entitlement: {
+      planId: effective.planId,
+      active: effective.active,
+      expiresAt: effective.expiresAt,
+      itemLimit: effective.itemLimit,
+      memberLimit: effective.memberLimit,
+      familyLimit: effective.familyLimit,
+      product: effective.product
+    }
+  }
+}
+
+async function withCapacity(familyId, family, openid) {
+  const base = familySummary(familyId, family, openid)
+  const cap = await loadCapacityFields(familyId, family)
+  return { ...base, ...cap }
+}
+
+let capacityCollectionsReady = false
+async function ensureCapacityCollections() {
+  if (capacityCollectionsReady) return
+  const names = ['redeemCodes', 'familySubscriptions']
+  await Promise.all(
+    names.map(async (name) => {
+      try {
+        await db.createCollection(name)
+      } catch (e) {
+        // 已存在
+      }
+    })
+  )
+  capacityCollectionsReady = true
+}
+
+function generatePlainCode() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  let s = ''
+  for (let i = 0; i < 12; i++) {
+    s += alphabet[Math.floor(Math.random() * alphabet.length)]
+  }
+  return `${s.slice(0, 4)}-${s.slice(4, 8)}-${s.slice(8, 12)}`
+}
+
+async function writeFamilyEntitlementSnapshot(familyId, effective) {
+  try {
+    await db.collection('families').doc(familyId).update({
+      data: {
+        entitlement: {
+          planId: effective.planId,
+          expiresAt: effective.expiresAt,
+          itemLimit: effective.itemLimit,
+          memberLimit: effective.memberLimit,
+          familyLimit: effective.familyLimit
+        }
+      }
+    })
+  } catch (e) {
+    console.warn('writeFamilyEntitlementSnapshot failed', familyId, e && e.message)
+  }
+}
+
+async function listMembershipFamilyIds(openid) {
+  const res = await db.collection('memberships').where({ openid }).limit(100).get()
+  const rows = (res && res.data) || []
+  const ids = []
+  for (let i = 0; i < rows.length; i++) {
+    const fid = rows[i] && rows[i].familyId
+    if (fid) ids.push(fid)
+  }
+  return ids
+}
+
+/** 用户是否已有任一家有效加强版（familyLimit 不限） */
+async function userHasUnlimitedFamilySlot(openid, now = Date.now()) {
+  const familyIds = await listMembershipFamilyIds(openid)
+  for (let i = 0; i < familyIds.length; i++) {
+    try {
+      const snap = await db.collection('familySubscriptions').doc(familyIds[i]).get()
+      if (!snap || !snap.data) continue
+      const effective = entitlements.resolveEffectiveFromSub(snap.data, now)
+      if (effective.active && effective.familyLimit == null) return true
+    } catch (e) {
+      // 无订阅文档
+    }
+  }
+  return false
+}
+
+/**
+ * 用户可加入的家庭数：无加强版解锁时按 free.familyLimit。
+ * 已超额不踢，只拦新增 create/join。
+ */
+async function assertUserFamilyCapacity(openid) {
+  const freeLimit = entitlements.PLANS.free.familyLimit
+  if (freeLimit == null) return null
+  const familyIds = await listMembershipFamilyIds(openid)
+  if (familyIds.length < freeLimit) return null
+  if (await userHasUnlimitedFamilySlot(openid)) return null
+  return fail(
+    'FAMILY_LIMIT_REACHED',
+    `已达免费家庭上限（${freeLimit} 家），可到家庭页兑换内测加强版`
+  )
+}
+
+/** 目标家庭人数：按该家订阅的 memberLimit；已超员不踢，只拦 join */
+async function assertMemberCapacity(familyId, family) {
+  const now = Date.now()
+  let sub = null
+  try {
+    const snap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (snap && snap.data) sub = snap.data
+  } catch (e) {
+    sub = null
+  }
+  const effective = entitlements.resolveEffectiveFromSub(sub, now)
+  if (effective.memberLimit == null) return null
+  const count =
+    family && family.memberCount != null && Number.isFinite(Number(family.memberCount))
+      ? Number(family.memberCount)
+      : 0
+  if (count + 1 <= effective.memberLimit) return null
+  return fail(
+    'MEMBER_LIMIT_REACHED',
+    `已达免费成员上限（${effective.memberLimit} 人），可到家庭页兑换内测加强版`
+  )
 }
 
 async function ensureUser(openid) {
@@ -185,6 +340,10 @@ async function createFamily(openid, event) {
   if (!name) return fail('INVALID_NAME', '请输入家庭名称')
 
   await ensureUser(openid)
+  await ensureCapacityCollections()
+
+  const familyCapErr = await assertUserFamilyCapacity(openid)
+  if (familyCapErr) return familyCapErr
 
   const now = Date.now()
   let inviteCode
@@ -207,6 +366,8 @@ async function createFamily(openid, event) {
       background,
       expireReminderEnabled: true,
       tagsSeededAt: null,
+      itemCount: 0,
+      entitlement: null,
       createdAt: now
     }
   })
@@ -225,17 +386,23 @@ async function createFamily(openid, event) {
 
   await seedStructureTree(familyId)
 
-  return ok({
-    _id: familyId,
-    name,
-    inviteCode,
-    ownerOpenid: openid,
-    memberCount: 1,
-    background,
-    expireReminderEnabled: true,
-    createdAt: now,
-    isOwner: true
-  })
+  return ok(
+    await withCapacity(
+      familyId,
+      {
+        name,
+        inviteCode,
+        ownerOpenid: openid,
+        memberCount: 1,
+        background,
+        expireReminderEnabled: true,
+        itemCount: 0,
+        entitlement: null,
+        createdAt: now
+      },
+      openid
+    )
+  )
 }
 
 async function joinFamily(openid, event) {
@@ -247,6 +414,7 @@ async function joinFamily(openid, event) {
   }
 
   await ensureUser(openid)
+  await ensureCapacityCollections()
 
   const found = await db.collection('families').where({ inviteCode }).limit(1).get()
   if (!found.data || !found.data.length) {
@@ -262,6 +430,12 @@ async function joinFamily(openid, event) {
   if (existing && existing.data) {
     return fail('ALREADY_IN_FAMILY', '已加入该家庭')
   }
+
+  const familyCapErr = await assertUserFamilyCapacity(openid)
+  if (familyCapErr) return familyCapErr
+
+  const memberCapErr = await assertMemberCapacity(familyId, family)
+  if (memberCapErr) return memberCapErr
 
   try {
     await db.collection('memberships').doc(mid).set({
@@ -283,10 +457,16 @@ async function joinFamily(openid, event) {
 
   await setCurrentFamily(openid, familyId)
 
-  return ok(familySummary(familyId, {
-    ...family,
-    memberCount: (family.memberCount || 0) + 1
-  }, openid))
+  return ok(
+    await withCapacity(
+      familyId,
+      {
+        ...family,
+        memberCount: (family.memberCount || 0) + 1
+      },
+      openid
+    )
+  )
 }
 
 async function getMyFamily(openid) {
@@ -307,15 +487,16 @@ async function getMyFamily(openid) {
     return fail('NO_FAMILY', '家庭不存在')
   }
 
-  return ok(familySummary(familyId, fam.data, openid))
+  return ok(await withCapacity(familyId, fam.data, openid))
 }
 
 async function listMyFamilies(openid) {
   const user = await ensureUser(openid)
   const memRes = await db.collection('memberships').where({ openid }).limit(20).get()
   const memberships = memRes.data || []
+  const currentFamilyId = user.currentFamilyId || null
   if (!memberships.length) {
-    return ok({ currentFamilyId: null, list: [] })
+    return ok({ currentFamilyId: null, family: null, list: [] })
   }
 
   const ids = memberships.map((m) => m.familyId)
@@ -336,14 +517,21 @@ async function listMyFamilies(openid) {
       return {
         ...familySummary(m.familyId, f, openid),
         joinedAt: m.joinedAt,
-        isCurrent: m.familyId === user.currentFamilyId
+        isCurrent: m.familyId === currentFamilyId
       }
     })
     .filter(Boolean)
     .sort((a, b) => (b.joinedAt || 0) - (a.joinedAt || 0))
 
+  // 当前家庭附带容量字段，家庭页不必再单独打 getMyFamily
+  let family = null
+  if (currentFamilyId && byId[currentFamilyId]) {
+    family = await withCapacity(currentFamilyId, byId[currentFamilyId], openid)
+  }
+
   return ok({
-    currentFamilyId: user.currentFamilyId || null,
+    currentFamilyId,
+    family,
     list
   })
 }
@@ -365,7 +553,7 @@ async function switchFamily(openid, event) {
   }
 
   await setCurrentFamily(openid, familyId)
-  return ok(familySummary(familyId, fam.data, openid))
+  return ok(await withCapacity(familyId, fam.data, openid))
 }
 
 async function updateBackground(openid, event) {
@@ -520,6 +708,11 @@ async function leaveFamily(openid) {
       }
     )
     await cleanupFamilyAiArtifacts(familyId)
+    try {
+      await db.collection('familySubscriptions').doc(familyId).remove()
+    } catch (e) {
+      console.warn('familySubscriptions dissolve cleanup failed', familyId, e && e.message)
+    }
     await deleteFamilyTree(db, familyId)
     await removeInBatches(db.collection('memberships'), { familyId })
     await reassignUsersCurrentFamily(familyId)
@@ -591,6 +784,225 @@ async function recordSubscribeExpire(openid) {
   return ok({ granted: true })
 }
 
+async function getEntitlement(openid) {
+  await ensureCapacityCollections()
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) return fail('NO_FAMILY', '家庭不存在')
+
+  const cap = await loadCapacityFields(familyId, fam.data)
+  const itemCount = cap.itemCount
+  const itemLimit = cap.entitlement.itemLimit
+  const memberCount =
+    fam.data.memberCount == null || !Number.isFinite(Number(fam.data.memberCount))
+      ? null
+      : Number(fam.data.memberCount)
+  const memberLimit = cap.entitlement.memberLimit
+  return ok({
+    planId: cap.entitlement.planId,
+    active: cap.entitlement.active,
+    expiresAt: cap.entitlement.expiresAt,
+    itemLimit,
+    memberLimit,
+    familyLimit: cap.entitlement.familyLimit,
+    itemCount,
+    memberCount,
+    remaining:
+      itemLimit == null || itemCount == null
+        ? null
+        : Math.max(0, itemLimit - itemCount),
+    memberRemaining:
+      memberLimit == null || memberCount == null
+        ? null
+        : Math.max(0, memberLimit - memberCount),
+    product: cap.entitlement.product
+  })
+}
+
+async function redeem(openid, event) {
+  await ensureCapacityCollections()
+  const plain = entitlements.normalizeCode(event && event.code)
+  if (!plain || plain.length < 8) {
+    return fail('INVALID_CODE', '兑换码无效')
+  }
+
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) return fail('NO_FAMILY', '家庭不存在')
+
+  const codeHash = entitlements.hashCode(plain)
+  const codeSnap = await db.collection('redeemCodes').doc(codeHash).get().catch(() => null)
+  if (!codeSnap || !codeSnap.data) {
+    return fail('INVALID_CODE', '兑换码无效')
+  }
+  const codeDoc = codeSnap.data
+  if (codeDoc.status === 'revoked') {
+    return fail('CODE_REVOKED', '兑换码已失效')
+  }
+  if (codeDoc.status === 'used') {
+    return fail('CODE_USED', '兑换码已使用')
+  }
+  if (codeDoc.status !== 'unused') {
+    return fail('INVALID_CODE', '兑换码无效')
+  }
+
+  const product = entitlements.getProduct(codeDoc.product)
+  const days = Number(codeDoc.days) || (product && product.days) || 0
+  const planId = codeDoc.planId || (product && product.planId) || 'capacity_std'
+  if (!days || days < 1) {
+    return fail('INVALID_CODE', '兑换码产品无效')
+  }
+
+  const now = Date.now()
+  const claim = await db
+    .collection('redeemCodes')
+    .where({ _id: codeHash, status: 'unused' })
+    .update({
+      data: {
+        status: 'used',
+        usedByFamilyId: familyId,
+        usedByOpenid: openid,
+        usedAt: now
+      }
+    })
+  if (!claim || !claim.stats || claim.stats.updated === 0) {
+    return fail('CODE_USED', '兑换码已使用')
+  }
+
+  let existing = null
+  try {
+    const subSnap = await db.collection('familySubscriptions').doc(familyId).get()
+    if (subSnap && subSnap.data) existing = subSnap.data
+  } catch (e) {
+    existing = null
+  }
+
+  const base = Math.max(
+    existing && existing.expiresAt ? Number(existing.expiresAt) : 0,
+    now
+  )
+  const expiresAt = base + days * 86400000
+  const subDoc = {
+    familyId,
+    planId,
+    product: codeDoc.product || (product && product.id) || '',
+    source: 'redeem',
+    expiresAt,
+    limitsOverride: (existing && existing.limitsOverride) || null,
+    lastRedeemCodeId: codeHash,
+    updatedAt: now,
+    createdAt: (existing && existing.createdAt) || now
+  }
+
+  await db.collection('familySubscriptions').doc(familyId).set({
+    data: subDoc
+  })
+
+  const effective = entitlements.resolveEffectiveFromSub(subDoc, now)
+  await writeFamilyEntitlementSnapshot(familyId, effective)
+
+  const summary = await withCapacity(
+    familyId,
+    {
+      ...fam.data,
+      entitlement: {
+        planId: effective.planId,
+        expiresAt: effective.expiresAt,
+        itemLimit: effective.itemLimit,
+        memberLimit: effective.memberLimit,
+        familyLimit: effective.familyLimit
+      }
+    },
+    openid
+  )
+
+  return ok({
+    family: summary,
+    entitlement: summary.entitlement,
+    expiresAt,
+    planId,
+    days
+  })
+}
+
+async function issueCodes(openid, event) {
+  await ensureCapacityCollections()
+  const admin = String(process.env.ADMIN_OPENID || '').trim()
+  if (!admin || openid !== admin) {
+    return fail('FORBIDDEN', '无权发码')
+  }
+
+  const productId = String((event && event.product) || 'capacity_90d').trim()
+  const product = entitlements.getProduct(productId)
+  if (!product) {
+    return fail('INVALID_PRODUCT', '未知产品')
+  }
+
+  let count = Number(event && event.count)
+  if (!Number.isFinite(count) || count < 1) count = 1
+  count = Math.min(50, Math.floor(count))
+  const note = event && event.note != null ? String(event.note).slice(0, 200) : ''
+  const now = Date.now()
+  const codes = []
+
+  for (let i = 0; i < count; i++) {
+    let plain = ''
+    let hash = ''
+    let placed = false
+    for (let attempt = 0; attempt < 8; attempt++) {
+      plain = generatePlainCode()
+      hash = entitlements.hashCode(plain)
+      try {
+        const existing = await db.collection('redeemCodes').doc(hash).get().catch(() => null)
+        if (existing && existing.data) continue
+        await db.collection('redeemCodes').doc(hash).set({
+          data: {
+            product: product.id,
+            days: product.days,
+            planId: product.planId,
+            status: 'unused',
+            usedByFamilyId: null,
+            usedByOpenid: null,
+            usedAt: null,
+            createdAt: now,
+            note
+          }
+        })
+        placed = true
+        break
+      } catch (e) {
+        // retry
+      }
+    }
+    if (!placed) {
+      return fail('INTERNAL', '发码失败，请重试')
+    }
+    codes.push(plain)
+  }
+
+  return ok({
+    product: product.id,
+    days: product.days,
+    planId: product.planId,
+    count: codes.length,
+    codes
+  })
+}
+
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext()
   if (!OPENID) {
@@ -618,6 +1030,12 @@ exports.main = async (event) => {
         return await updateExpireReminder(OPENID, event)
       case 'recordSubscribeExpire':
         return await recordSubscribeExpire(OPENID)
+      case 'getEntitlement':
+        return await getEntitlement(OPENID)
+      case 'redeem':
+        return await redeem(OPENID, event)
+      case 'issueCodes':
+        return await issueCodes(OPENID, event)
       case 'leave':
         return await leaveFamily(OPENID)
       default:
