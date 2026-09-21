@@ -56,7 +56,8 @@ async function buildActContext(env, openid, event, familyCtx) {
     focus: renderFocusList([focus].concat(recentRows)),
     probe: '无',
     exec: '无',
-    knowledgeIndex: renderIndex()
+    knowledgeIndex: renderIndex(),
+    knowledge: '无'
   }
   const system = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, vars)
   const text = String((event && event.text) || '').trim()

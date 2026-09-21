@@ -25,11 +25,23 @@ The catalog MUST carry a numeric version. When the deployed seed version is grea
 - **THEN** the next assistant run uses the seeded catalog contents and version
 
 ### Requirement: V2 enabled actions
-The initial enabled catalog MUST include item search, list expiring, create, update, and remove, plus creating a location under an existing space. Item remove MUST require explicit member confirmation before execution.
+The enabled catalog MUST include item search, list expiring, create, createMany, update, remove, creating a location under an existing space, **creating a space**, **space createMany**, and **space createLocationMany**. Item remove MUST require confirmation. Disabled entries MUST NOT appear in the model-facing list.
 
 #### Scenario: Remove requires confirmation
 - **WHEN** a plan includes item remove and the member has not confirmed that remove
 - **THEN** the system does not delete the item
+
+#### Scenario: createMany is listed when enabled
+- **WHEN** the catalog marks item createMany as enabled
+- **THEN** the model-facing capability list includes item createMany with an items-array argument hint
+
+#### Scenario: space.create is listed when enabled
+- **WHEN** the catalog marks space.create as enabled
+- **THEN** the model-facing capability list includes space.create
+
+#### Scenario: batch structure ids are listed
+- **WHEN** space.createMany and space.createLocationMany are enabled
+- **THEN** both appear in the model-facing capability list with array argument hints
 
 ### Requirement: Hard deny of household and secret actions
 The executor MUST refuse family create, join, leave, switch, dissolve, theme changes, and AI key mutations even if a stored catalog marks them enabled. The executor MUST refuse to run capture extract or speech transcribe as assistant plan steps in this version.

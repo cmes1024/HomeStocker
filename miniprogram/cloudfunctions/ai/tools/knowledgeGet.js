@@ -61,6 +61,12 @@ async function loadCapacityLiveFacts(ctx) {
       ? `${memberCount} 人 · 不限`
       : `${memberCount} / ${effective.memberLimit} 人`
   facts.push(`用量：${itemBit}；${memberBit}`)
+  if (effective.itemLimit == null) {
+    facts.push('本家物资件数不限。')
+  } else {
+    const left = Math.max(0, Number(effective.itemLimit) - itemCount)
+    facts.push(`本家还能再添加约 ${left} 件物资。`)
+  }
   return facts
 }
 
@@ -98,13 +104,22 @@ async function run(ctx, call, step) {
     return { ok: false, summary: `第 ${step} 步：知识加载失败` }
   }
 
+  // summary 只给执行回执 / UI 兜底：标题 + 本家用量短句，禁止塞 FAQ 全文
+  const shortBits = [doc.title]
+  ;(liveFacts || []).slice(0, 3).forEach((line) => {
+    const s = String(line || '').trim()
+    if (s) shortBits.push(s)
+  })
+  if (shortBits.length < 2) shortBits.push('已取回产品说明，请用短句回答家人。')
+
   return {
     ok: true,
-    summary: doc.text,
+    summary: shortBits.join('\n'),
     knowledge: {
       topicId: doc.topicId,
       title: doc.title,
-      version: doc.version
+      version: doc.version,
+      body: doc.body
     }
   }
 }

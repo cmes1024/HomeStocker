@@ -120,15 +120,22 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
       ;(inv.blocks || []).forEach((b) => blocks.push(b))
       return
     }
-    if (row && row.use === 'knowledge.get' && row.summary) {
-      const parts = String(row.summary)
+    if (row && row.use === 'knowledge.get') {
+      // 知识全文只给下一轮模型；气泡最多标题 + 用量短句，禁止 FAQ 墙
+      const title =
+        (row.knowledge && row.knowledge.title) ||
+        String(row.summary || '')
+          .split('\n')
+          .map((s) => s.trim())
+          .filter(Boolean)[0] ||
+        '产品说明'
+      const facts = String(row.summary || '')
         .split('\n')
         .map((s) => s.trim())
-        .filter(Boolean)
-      const title = parts[0] || '产品说明'
-      if (!inventoryLead) inventoryLead = title
-      parts.forEach((l) => inventoryLines.push(l))
-      const facts = parts.slice(1, 13)
+        .filter((s) => s && s !== title)
+        .slice(0, 3)
+      if (!inventoryLead) inventoryLead = facts[0] || title
+      facts.forEach((l) => inventoryLines.push(l))
       const card = { title }
       if (facts.length) card.facts = facts
       blocks.push({ cards: [card] })

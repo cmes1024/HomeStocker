@@ -33,7 +33,7 @@ function getPack(topicId) {
 }
 
 /**
- * 取单个 topic 正文（可附 liveFacts 行）。
+ * 取单个 topic 正文（可附 liveFacts 行；用量放正文前，便于短答优先看到）。
  * @returns {{ topicId, title, version, body, text } | null}
  */
 function loadTopic(topicId, liveFacts) {
@@ -44,12 +44,13 @@ function loadTopic(topicId, liveFacts) {
     : liveFacts
       ? [String(liveFacts)]
       : []
-  const parts = [pack.body]
+  const parts = []
   if (facts.length) {
-    parts.push('')
     parts.push('【当前家庭】')
     facts.forEach((l) => parts.push(String(l)))
+    parts.push('')
   }
+  parts.push(pack.body)
   const body = parts.join('\n')
   return {
     topicId: pack.topicId,

@@ -135,6 +135,7 @@ async function runAll(ctx, calls) {
       if (Array.isArray(result.inventory)) {
         executedRow.inventory = result.inventory
       }
+      if (result.knowledge) executedRow.knowledge = result.knowledge
       if (result.ui) executedRow.ui = result.ui
       if (result.subscribeItems) {
         executedRow.subscribeItems = result.subscribeItems
@@ -221,7 +222,8 @@ async function runAll(ctx, calls) {
       summary: row.summary,
       ui: row.ui,
       subscribeItems: row.subscribeItems,
-      inventory: row.inventory
+      inventory: row.inventory,
+      knowledge: row.knowledge
     })),
     failed,
     pending,

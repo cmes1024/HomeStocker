@@ -207,6 +207,38 @@ function mergeCreateReports(first, second) {
   }
 }
 
+function collectKnowledgeBodies(report) {
+  const bodies = []
+  ;((report && report.executed) || []).forEach((row) => {
+    if (!(row && row.use === 'knowledge.get' && row.knowledge && row.knowledge.body)) return
+    const title = String(row.knowledge.title || '').trim()
+    const body = String(row.knowledge.body || '').trim()
+    if (!body) return
+    bodies.push(title ? `${title}\n${body}` : body)
+  })
+  return bodies
+}
+
+function knowledgeFallbackText(report) {
+  const row = ((report && report.executed) || []).find(
+    (r) => r && r.use === 'knowledge.get' && r.summary
+  )
+  return row ? String(row.summary || '').trim() : ''
+}
+
+/** 本轮实质只有知识阅读（无写库 / 无库存列表 / 无订阅面板）→ 二次短答 */
+function isKnowledgeOnlyReport(report) {
+  if (!report) return false
+  if (report.wrote || report.subscribeUi) return false
+  const exec = report.executed || []
+  if (!exec.some((r) => r && r.use === 'knowledge.get' && r.knowledge && r.knowledge.body)) {
+    return false
+  }
+  if (exec.some((r) => r && Array.isArray(r.inventory))) return false
+  if (exec.some((r) => r && r.ui === 'subscribePanel')) return false
+  return true
+}
+
 function buildDonePayload(planCalls, report, focus, sessionRecent) {
   return {
     status: 'done',
@@ -614,6 +646,64 @@ async function act(env, openid, event) {
     } catch (e) {
       // 重规划失败：仍返回首轮执行结果
       console.warn('act replan failed', e && e.message)
+    }
+  }
+
+  // 知识库：回灌正文再短答（对齐 probe 二次模型）；聊天不展示 FAQ 全文
+  if (isKnowledgeOnlyReport(finalReport)) {
+    const knowledgeBodies = collectKnowledgeBodies(finalReport)
+    const knowledgeText = knowledgeBodies.join('\n\n')
+    const knowVars = {
+      ...vars,
+      knowledge: knowledgeText || '无',
+      probe: vars.probe || '无',
+      exec: '无'
+    }
+    const knowSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, knowVars)
+    const knowUser = `${userText}\n（系统已取回知识正文，请只用 reply 两三句回答当前问题重点；禁止再 knowledge.get / probe / 写台账；禁止粘贴【】全文或合规长段。）\n知识正文：\n${knowledgeText}`
+    let replyText = ''
+    try {
+      const second = await askModel(modelOpts, knowSystem, knowUser)
+      replyText = String((second.plan && second.plan.reply) || '').trim()
+      if (!replyText && second.plan && second.plan.ask && second.plan.ask.length) {
+        const q = second.plan.ask[0] && second.plan.ask[0].question
+        replyText = String(q || '').trim()
+      }
+    } catch (e) {
+      console.warn('act knowledge reply failed', e && e.message)
+    }
+    if (!replyText) replyText = knowledgeFallbackText(finalReport)
+    if (replyText) {
+      const slimReport = {
+        executed: (finalReport.executed || []).map((row) => ({
+          step: row.step,
+          use: row.use,
+          summary: row.summary
+        })),
+        failed: finalReport.failed || [],
+        possibleDuplicates: [],
+        lines: [replyText],
+        recentItems: [],
+        removedItemIds: [],
+        wrote: false
+      }
+      return ok(
+        attachPresentation(
+          {
+            status: 'done',
+            ask: [],
+            confirm: [],
+            calls: finalCalls,
+            report: slimReport,
+            draft: draftFromCalls(finalCalls),
+            focus: focusPublic(focus),
+            recentItems: publicRecentItems(sessionRecent),
+            removedItemIds: [],
+            wrote: false
+          },
+          textOnlyPresentation(replyText)
+        )
+      )
     }
   }
 

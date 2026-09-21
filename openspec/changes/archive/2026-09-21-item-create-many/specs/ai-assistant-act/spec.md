@@ -18,6 +18,10 @@ The executor MUST resolve space, location, and tag names against the current str
 ### Requirement: Default create not merge
 When the utterance does not explicitly ask to merge, a create or createMany step MUST insert new item rows even if same-named items already exist at that place. After successful single creates, the operation report MAY list possible duplicates at the same space and location. createMany MAY omit per-row database duplicate scans. The system MUST NOT merge items unless the member explicitly confirms a merge capability.
 
+#### Scenario: Second milk is a new row
+- **WHEN** 厨房 / 冰箱 already has 牛奶 and the member says to put two bottles of milk in the fridge without asking to merge
+- **THEN** the system creates another item rather than increasing the existing quantity
+
 #### Scenario: Same name creates another row
 - **WHEN** 牛奶 already exists in 厨房 / 冰箱 and the plan creates 牛奶 there again without asking to merge
 - **THEN** the system creates another item rather than increasing the existing quantity

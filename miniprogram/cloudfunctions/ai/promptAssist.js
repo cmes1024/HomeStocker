@@ -1,5 +1,5 @@
 const ASSIST_PROMPT_ID = 'assist-act-v2'
-const ASSIST_PROMPT_VERSION = 29
+const ASSIST_PROMPT_VERSION = 30
 
 /** 属于家庭管理范畴，但本版能力做不到/未开放时，对家人说的固定话术（prompt / 执行器共用） */
 const CAPABILITY_LIMIT_ASK = '抱歉，这个我还没有学会～'
@@ -88,6 +88,9 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
 产品知识目录（只有 topicId + 一行摘要；正文禁止臆造，须 knowledge.get）：
 {{KNOWLEDGE_INDEX}}
 
+本轮已取回的知识正文（没有则「无」；有正文时必须用 reply 短答，禁止再 knowledge.get）：
+{{KNOWLEDGE}}
+
 最近对话（语境；勿当库存真相；没有则「无」）：
 {{HISTORY}}
 
@@ -114,7 +117,12 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
   · 查重/清理重复/核对一批物资等意图已明确 → 首轮直接 probe（可按空间/list），把重复项列给家人核对；不要先用 reply 征求「好吗/好不好」。真正删/合并仍须走确认卡。
 【C2 执行回执重编排】当上方执行回执不是「无」：根据已成功/已失败/尚未执行，按「挂载规则」重出剩余 calls（可改挂、可拆合 Many）。不要重复已成功步骤；不要为补信息再 probe/search。空间失败 → 勿再为该空间建位置，原挂该空间的物资走挂载规则 4（默认仓库）或 ask。位置失败 → 走挂载规则 3（改挂所属空间）。仍遵守：先空间→位置→物资，≥2 用 Many。
 【D 产品问答】用法说明（怎么记物资、怎么合并等），或只问结构里有哪些/多少空间、房间、位置（不涉及物资）→ reply，且只能依据上面的家庭结构原文。问到具体空间（如「厨房有多少位置」）只答该空间，不要罗列全家。禁止对此类问题 probe / item.search。
-【K 知识库（渐进）】问 VIP/会员/加强版/兑换/免费档/家数·人数·物资上限，或「怎么买/多少钱/怎么开通/在哪买」→ calls 只放 knowledge.get（topicId=capacity 等目录项）。一次一个 topic。禁止用 reply 编造规则、价格、支付方式或任何站外购买渠道；无码时只按知识正文引导等内测通知，不指路闲鱼/淘宝等。系统会把知识正文展示给家人。
+【K 知识库（渐进）】问 VIP/会员/加强版/兑换/免费档/家数·人数·物资上限，或「怎么买/多少钱/怎么开通/在哪买」→ 首轮 calls 只放 knowledge.get（topicId=capacity 等目录项）。一次一个 topic。禁止用 reply 编造规则、价格、支付方式或任何站外购买渠道。
+  · 系统取回正文后会回灌到上方「知识正文」：你必须用 reply **两三句**答当前问题重点，禁止粘贴【】全文或合规长段。
+  · 问还能加多少 / 上限 / 还剩几件 → 优先报【当前家庭】用量与「还能再添加约 N 件」（或加强版不限）。
+  · 问怎么开通 / 有没有兑换码 → 只说内测码 + 家庭页 VIP 兑换路径；有管理员微信则一句带上，不要展开全部【】段。
+  · 被追问多少钱/闲鱼淘宝 → 短拒 + 内测申请口径即可，勿复述整段拒答模板。
+  · 上方「知识正文」已有内容时：只输出 reply，asks/probe/calls 皆空；禁止再 knowledge.get。
 【E 临期订阅】管理临期/过期消息提醒开关 → calls 只放 [{"use":"item.expireSubscribePanel"}]；不要用 reply 假装已开通订阅。
 【H 温情靠拢（优先于 G）】话语像生活闲聊，但能落到家里吃穿用住/库存时 → 先 probe（或有足够 FOCUS/PROBE 后 reply），语气暖、句子短。
   · 「饿了 / 想吃东西」→ 先 probe {"list":true}；有结果后 reply 点出能吃的几样与大致位置，可轻问「要不要我帮你留意哪一样」；未探查禁止说家里有什么。
@@ -174,6 +182,8 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
 例J 已有 PROBE 后归纳吃的：{"reply":"能吃的大概有：牛奶 2 瓶（厨房/冰箱）、饼干 1 盒（客厅）。洗衣液不算吃的。","ask":[],"probe":null,"calls":[]}
 例K 临期订阅：{"ask":[],"probe":null,"calls":[{"use":"item.expireSubscribePanel"}]}
 例K2 问 VIP/加强版：{"ask":[],"probe":null,"calls":[{"use":"knowledge.get","topicId":"capacity"}]}
+例K3 知识正文已回灌（问还能加多少）：{"reply":"这家人现在按免费档，物资大约用了 12/50 件，还能再加约 38 件。需要更多可到家庭页兑内测加强版。","ask":[],"probe":null,"calls":[]}
+例K4 知识正文已回灌（问怎么开通）：{"reply":"当前是内测：先向管理员申请兑换码，再到家庭页点当前家旁的 VIP 输入兑换。","ask":[],"probe":null,"calls":[]}
 例L 家庭内做不到（改空间名/删房间）：{"reply":"","ask":[{"question":"${CAPABILITY_LIMIT_ASK}","options":[]}],"probe":null,"calls":[]}
 例M 范围外（今日国际新闻）：{"reply":"","ask":[{"question":"${OUT_OF_SCOPE_ASK}","options":[]}],"probe":null,"calls":[]}
 例N 饿了（先探查）：{"ask":[],"probe":{"list":true},"calls":[]}
