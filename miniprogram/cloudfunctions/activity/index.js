@@ -96,29 +96,45 @@ async function listActivities(openid, event) {
     where.itemId = itemId
   }
 
-  let limit
+  const skip = Math.max(Number(event.skip) || 0, 0)
+  const requested = Number(event.limit)
+
   let feedEnt = null
+  let limit
   if (itemId) {
     // 物资详情最近操作：小窗口，不按档位拉满
-    limit = Math.min(Math.max(Number(event.limit) || 10, 1), 10)
+    limit = Math.min(Math.max(requested || 10, 1), 10)
   } else {
-    feedEnt = await resolveActivityEntitlement(ctx.familyId)
-    const activityLimit = feedEnt.activityLimit
-    const requested = Number(event.limit)
-    const fallback = activityLimit
+    // 先按加强档上限拉，再按实际档位截断，好与 entitlement 并行
+    feedEnt = null
     limit = Math.min(
-      Math.max(Number.isFinite(requested) && requested > 0 ? requested : fallback, 1),
-      activityLimit
+      Math.max(Number.isFinite(requested) && requested > 0 ? requested : 200, 1),
+      200
     )
   }
-
-  const skip = Math.max(Number(event.skip) || 0, 0)
 
   let query = db.collection('activities').where(where).orderBy('createdAt', 'desc')
   if (skip > 0) {
     query = query.skip(skip)
   }
-  const res = await query.limit(limit).get()
+
+  let res
+  if (itemId) {
+    res = await query.limit(limit).get()
+  } else {
+    const [ent, listed] = await Promise.all([
+      resolveActivityEntitlement(ctx.familyId),
+      query.limit(limit).get()
+    ])
+    feedEnt = ent
+    const activityLimit = feedEnt.activityLimit
+    const capped = Math.min(
+      Math.max(Number.isFinite(requested) && requested > 0 ? requested : activityLimit, 1),
+      activityLimit
+    )
+    res = { data: (listed.data || []).slice(0, capped) }
+  }
+
   const list = res.data || []
 
   const profiles = await loadActorProfiles(list.map((row) => row.actorOpenid))

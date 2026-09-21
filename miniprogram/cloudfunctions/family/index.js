@@ -506,17 +506,40 @@ async function getMyFamily(openid) {
   }
 
   const mid = membershipId(openid, familyId)
-  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  const [mem, fam, subSnap] = await Promise.all([
+    db.collection('memberships').doc(mid).get().catch(() => null),
+    db.collection('families').doc(familyId).get().catch(() => null),
+    db.collection('familySubscriptions').doc(familyId).get().catch(() => null)
+  ])
   if (!mem || !mem.data) {
     return fail('NO_FAMILY', '尚未加入家庭')
   }
-
-  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
   if (!fam || !fam.data) {
     return fail('NO_FAMILY', '家庭不存在')
   }
 
-  const family = await withCapacity(familyId, fam.data, openid)
+  const sub = subSnap && subSnap.data ? subSnap.data : null
+  const now = Date.now()
+  const effective = entitlements.resolveEffectiveFromSub(sub, now)
+  let itemCount =
+    fam.data.itemCount == null || !Number.isFinite(Number(fam.data.itemCount))
+      ? null
+      : Number(fam.data.itemCount)
+  if (itemCount != null && itemCount < 0) itemCount = 0
+  const family = {
+    ...familySummary(familyId, fam.data, openid),
+    itemCount,
+    entitlement: {
+      planId: effective.planId,
+      active: effective.active,
+      expiresAt: effective.expiresAt,
+      itemLimit: effective.itemLimit,
+      memberLimit: effective.memberLimit,
+      familyLimit: effective.familyLimit,
+      activityLimit: effective.activityLimit,
+      product: effective.product
+    }
+  }
   return ok({ ...family, profile: userProfile(user) })
 }
 

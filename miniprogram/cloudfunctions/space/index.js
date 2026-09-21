@@ -97,14 +97,15 @@ async function backfillItemsWithoutSpace(familyId, spaceId) {
 }
 
 /**
- * Ensure family has a default warehouse. Returns the default (or first) space.
+ * Ensure family has a default warehouse.
+ * 已有空间时不再扫库 backfill（迁移期开销），也不必重建家庭树。
+ * @returns {{ space: object, created: boolean }}
  */
 async function ensureDefaultSpace(familyId) {
   const existing = await listSpacesForFamily(familyId)
   if (existing.length) {
     const preferred = existing.find((s) => s.isDefault) || existing[0]
-    await backfillItemsWithoutSpace(familyId, preferred._id)
-    return preferred
+    return { space: preferred, created: false }
   }
 
   const now = Date.now()
@@ -120,14 +121,14 @@ async function ensureDefaultSpace(familyId) {
   const addRes = await db.collection('spaces').add({ data: doc })
   const space = { _id: addRes._id, ...doc }
   await backfillItemsWithoutSpace(familyId, space._id)
-  return space
+  return { space, created: true }
 }
 
 async function ensureDefault(openid) {
   const ctx = await resolveFamilyContext(openid)
   if (ctx.error) return ctx.error
-  const space = await ensureDefaultSpace(ctx.familyId)
-  return ok(space)
+  const { space, created } = await ensureDefaultSpace(ctx.familyId)
+  return ok({ ...space, created })
 }
 
 async function listSpaces(openid) {
@@ -298,9 +299,11 @@ async function listPockets(openid, event) {
   const limit = Math.min(Math.max(Number(event.limit) || 100, 1), 100)
   let spaces = await listSpacesForFamily(ctx.familyId)
   if (!spaces.length) {
-    const space = await ensureDefaultSpace(ctx.familyId)
-    await touchFamilyTree(db, ctx.familyId).catch(() => null)
-    spaces = space ? [space] : []
+    const ensured = await ensureDefaultSpace(ctx.familyId)
+    if (ensured.created) {
+      await touchFamilyTree(db, ctx.familyId).catch(() => null)
+    }
+    spaces = ensured.space ? [ensured.space] : []
   }
 
   const packs = await Promise.all(
@@ -418,11 +421,11 @@ exports.main = async (event) => {
       default:
         return fail('UNKNOWN_ACTION', `未知 action: ${action}`)
     }
+    // ensureDefault 已有默认空间时只是读，勿整树重建；仅真正新建默认仓才 touch
     if (
       result &&
       result.ok &&
-      (action === 'ensureDefault' ||
-        action === 'create' ||
+      (action === 'create' ||
         action === 'createMany' ||
         action === 'update' ||
         action === 'remove' ||
@@ -431,7 +434,8 @@ exports.main = async (event) => {
         action === 'createLocationMany' ||
         action === 'updateLocation' ||
         action === 'removeLocation' ||
-        action === 'removeLocationMany')
+        action === 'removeLocationMany' ||
+        (action === 'ensureDefault' && result.data && result.data.created))
     ) {
       const ctx = await resolveFamilyContext(OPENID)
       if (!ctx.error) await touchFamilyTree(db, ctx.familyId)

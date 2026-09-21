@@ -3,12 +3,16 @@
  * space / tag / family 云函数各有一份同名模块，保持无交叉依赖。
  */
 
+let treeCollectionReady = false
+
 async function ensureTreeCollection(db) {
+  if (treeCollectionReady) return
   try {
     await db.createCollection('familyTrees')
   } catch (e) {
     // 已存在
   }
+  treeCollectionReady = true
 }
 
 function sortSpaces(list) {
