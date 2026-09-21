@@ -5,7 +5,7 @@ const { autoUpdate } = require("./utils/update.js");
 const { setStorage } = require("./utils/storage")
 const { getParamsFormWxacode } = require("./utils/util")
 const { envId: cloudEnvId } = require("./utils/cloudbase-env")
-const { getThemeColors } = require("./utils/theme")
+const { getThemeColors, hydrateThemeFromCache } = require("./utils/theme")
 const { markAppHidden, markAppShown } = require("./utils/cloud")
 const { ensureSession } = require("./utils/session")
 
@@ -40,6 +40,8 @@ try {
 
 App({
   onLaunch(options) {
+    // 同步回填上次家庭主题，避免冷启动先闪默认橙黄
+    hydrateThemeFromCache()
     if (wx.cloud) {
       const initOpts = { traceUser: true }
       if (cloudEnvId) {

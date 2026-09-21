@@ -169,6 +169,9 @@ function buildThemeFromPreset(preset, background) {
 
 const DEFAULT_THEME = buildThemeFromPreset(DEFAULT_PRESET)
 
+/** 冷启动首屏：上次家庭主题 id，避免先闪默认橙黄再跳变 */
+const THEME_CACHE_KEY = 'lastFamilyTheme'
+
 /**
  * 从家庭 background 解析主题。未知/非法数据回落默认主题，不抛错。
  * @param {{ type?: string, value?: string }|null|undefined} background
@@ -210,6 +213,49 @@ function getAppSafe() {
   }
 }
 
+function persistThemeCache(familyId, background) {
+  try {
+    const { setStorage } = require('./storage')
+    setStorage(THEME_CACHE_KEY, {
+      familyId: familyId || null,
+      background: background || null
+    })
+  } catch (e) {
+    // ignore
+  }
+}
+
+function clearThemeCache() {
+  try {
+    wx.removeStorageSync(THEME_CACHE_KEY)
+  } catch (e) {
+    // ignore
+  }
+}
+
+/**
+ * 从本地缓存回填 globalData.theme（不伪造 family，避免误判已入家）。
+ * 供 onLaunch 同步调用，赶在首屏 bindTheme / AppShell 之前。
+ */
+function hydrateThemeFromCache() {
+  const app = getAppSafe()
+  if (app && app.globalData && app.globalData.theme) {
+    return app.globalData.theme
+  }
+  try {
+    const { getStorage } = require('./storage')
+    const cached = getStorage(THEME_CACHE_KEY)
+    if (!cached || !cached.background) return null
+    const theme = resolveTheme(cached.background)
+    if (app && app.globalData) {
+      app.globalData.theme = theme
+    }
+    return theme
+  } catch (e) {
+    return null
+  }
+}
+
 /**
  * 写入当前家庭主题到 globalData，供全页共用。
  * @param {object|null} family
@@ -230,6 +276,11 @@ function setAppFamily(family) {
     } catch (e) {
       // ignore
     }
+  }
+  if (family && family._id) {
+    persistThemeCache(family._id, family.background)
+  } else {
+    clearThemeCache()
   }
   try {
     const session = require('./session')
@@ -259,6 +310,8 @@ function getAppTheme() {
   if (app && app.globalData && app.globalData.theme) {
     return app.globalData.theme
   }
+  const hydrated = hydrateThemeFromCache()
+  if (hydrated) return hydrated
   return { ...DEFAULT_THEME }
 }
 
@@ -320,6 +373,7 @@ module.exports = {
   getAppTheme,
   getThemeColors,
   bindThemeToPage,
+  hydrateThemeFromCache,
   ctaGradient,
   applyNavBarColor
 }
