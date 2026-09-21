@@ -87,6 +87,42 @@
 
 .recent-row {
   margin-top: 14rpx;
+  display: flex;
+  align-items: flex-start;
+  gap: 16rpx;
+}
+
+.recent-avatar-wrap {
+  flex-shrink: 0;
+  width: 48rpx;
+  height: 48rpx;
+  margin-top: 2rpx;
+}
+
+.recent-avatar {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #f0ece6;
+}
+
+.recent-avatar.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recent-initial {
+  font-size: 20rpx;
+  font-weight: 600;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1;
+}
+
+.recent-body {
+  flex: 1;
+  min-width: 0;
 }
 
 .recent-line {

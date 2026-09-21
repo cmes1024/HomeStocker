@@ -267,7 +267,23 @@ const copy = {
     issueCountInvalid: '请输入 1 到 50 的数量',
     issueResultTitle: '请立刻复制保存，关掉后明文不再显示',
     issueCopyAll: '复制全部',
-    issueCopied: '已复制'
+    issueCopied: '已复制',
+    membersTitle: '家里的人',
+    membersEmpty: '暂时只有你',
+    membersSub: (n) => `${n || 0}人`,
+    profileTitle: '我的资料',
+    profileHint: '家人能在消息里认出你',
+    profileUnset: '设置称呼与头像',
+    profileEdit: '编辑',
+    profileSheetTitle: '称呼与头像',
+    profileNickLabel: '怎么称呼你',
+    profileNickPlaceholder: '例如：爸爸、小林',
+    profileAvatarHint: '点头像可从微信选一张',
+    profileSave: '保存',
+    profileSaved: '已保存',
+    profileNickRequired: '请填写称呼',
+    ownerBadge: '创建者',
+    meBadge: '我'
   },
 
   assist: {
@@ -277,7 +293,7 @@ const copy = {
     hello: '查库存、记一件、改一改都可以直接说。发完接着聊下一句就行。',
     placeholder: '例如：厨房冰箱再放两瓶牛奶',
     send: '发送',
-    sending: '正在想办法…',
+    sending: '稍等，管家正在操作…',
     sendingShort: '…',
     emptyText: '先写一句话',
     noKey: '还没有配置家庭 AI 密钥',

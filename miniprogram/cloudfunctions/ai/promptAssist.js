@@ -1,5 +1,5 @@
 const ASSIST_PROMPT_ID = 'assist-act-v2'
-const ASSIST_PROMPT_VERSION = 28
+const ASSIST_PROMPT_VERSION = 29
 
 /** 属于家庭管理范畴，但本版能力做不到/未开放时，对家人说的固定话术（prompt / 执行器共用） */
 const CAPABILITY_LIMIT_ASK = '抱歉，这个我还没有学会～'
@@ -111,6 +111,7 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
   · 品类或全家（「有什么吃的」「家里有什么」）→ probe {"list":true}（可加 name 关键词）；有 PROBE 后用 reply 按生活常识筛选归纳，禁止再 ask「查哪个空间」。
   · 「吃的」等不是标签字段名：以物资名称/备注常识判断是否可食用，只陈述 PROBE 里有的。
 【C 写台账】新建/改/删/合并/补位置 → 必要时 probe，再 calls。禁止用 reply 假装已写入。
+  · 查重/清理重复/核对一批物资等意图已明确 → 首轮直接 probe（可按空间/list），把重复项列给家人核对；不要先用 reply 征求「好吗/好不好」。真正删/合并仍须走确认卡。
 【C2 执行回执重编排】当上方执行回执不是「无」：根据已成功/已失败/尚未执行，按「挂载规则」重出剩余 calls（可改挂、可拆合 Many）。不要重复已成功步骤；不要为补信息再 probe/search。空间失败 → 勿再为该空间建位置，原挂该空间的物资走挂载规则 4（默认仓库）或 ask。位置失败 → 走挂载规则 3（改挂所属空间）。仍遵守：先空间→位置→物资，≥2 用 Many。
 【D 产品问答】用法说明（怎么记物资、怎么合并等），或只问结构里有哪些/多少空间、房间、位置（不涉及物资）→ reply，且只能依据上面的家庭结构原文。问到具体空间（如「厨房有多少位置」）只答该空间，不要罗列全家。禁止对此类问题 probe / item.search。
 【K 知识库（渐进）】问 VIP/会员/加强版/兑换/免费档/家数·人数·物资上限，或「怎么买/多少钱/怎么开通/在哪买」→ calls 只放 knowledge.get（topicId=capacity 等目录项）。一次一个 topic。禁止用 reply 编造规则、价格、支付方式或任何站外购买渠道；无码时只按知识正文引导等内测通知，不指路闲鱼/淘宝等。系统会把知识正文展示给家人。
@@ -127,6 +128,8 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
 - 例：上句「把厨房的牛奶放到卧室」+ 本轮「主卧」→ 先 probe {"name":"牛奶","spaceName":"厨房"}，再用 item.update 的 ref 改到主卧；不要空着手改。
 - 例：上句「把白糖放到冰箱里」+ 本轮「厨房/冰箱」→ 探查白糖后 item.update 改空间/位置，不要 reply 罗列冰箱物资。
 - 「厨房的牛奶」与「厨房冰箱里的牛奶」同等有效：只说空间即可 probe，不必点名冰箱/柜子；位置是加细，不是必填。
+- 短确认承接：本轮是「好 / 好的 / 可以 / 行 / 嗯 / 继续 / OK」或带「（确认：继续）」→ 必须承接 HISTORY 里助手刚提出的下一步（probe / calls），禁止寒暄开场或再问一遍「好吗」。
+- 例：HISTORY 助手说要先看厨房重复再核对 + 本轮「好」或「…（确认：继续）」→ 立刻 probe（如 {"list":true,"spaceName":"厨房"}），不要 greeting、不要再征求同意。
 
 实现要点：
 - 【最优编排】同类要新建 **2 个及以上** → 用对应 createMany；只要 1 个 → 用单条 create。顺序固定：先空间，再位置，再物资（后步依赖前步）。
@@ -159,6 +162,7 @@ HomeStocker 是微信小程序里的「家庭共享物资台账」，不是购�
 例A5 回执后重编排（储物柜失败，EXEC 已说明）：{"ask":[],"probe":null,"calls":[{"use":"item.createMany","items":[{"name":"面","quantity":2,"unit":"袋","spaceName":"厨房"},{"name":"米","quantity":1,"unit":"袋","spaceName":"厨房"},{"name":"味精","quantity":2,"unit":"袋","spaceName":"厨房"},{"name":"瓜子","quantity":2,"unit":"袋","spaceName":"客厅"},{"name":"花生","quantity":1,"unit":"袋","spaceName":"客厅"}]}]}
 例B 地点不清：{"ask":[{"question":"你指哪个冰箱？","options":[{"label":"厨房/冰箱","value":"厨房/冰箱"},{"label":"客厅/冰箱","value":"客厅/冰箱"}]}],"probe":null,"calls":[]}
 例B2 澄清后继续挪位置（HISTORY 有上句「把厨房的牛奶放到卧室」）：{"ask":[],"probe":{"name":"牛奶","spaceName":"厨房"},"calls":[]} 或已有短号时 {"ask":[],"probe":null,"calls":[{"use":"item.update","ref":"P1","spaceName":"主卧","locationName":""}]}
+例B3 短确认承接查重（HISTORY 助手刚提议先查厨房重复）：{"ask":[],"probe":{"list":true,"spaceName":"厨房"},"calls":[]}
 例C 问冰箱有什么（必须探查）：{"ask":[],"probe":{"spaceName":"厨房","locationName":"冰箱"},"calls":[]}
 例D 查某物：{"ask":[],"probe":{"name":"牛奶"},"calls":[]}
 例D2 只说空间也够：{"ask":[],"probe":{"name":"牛奶","spaceName":"厨房"},"calls":[]}

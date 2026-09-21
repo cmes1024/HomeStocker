@@ -31,7 +31,7 @@
 | 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除；首页可按空间筛 |
 | AI 录入 V1 | `packageAi` 拍照分行 + 语音/手改 → 抽取 → 确认后走 `item.create`（`source: agent`）；家庭 BYOK；清单本版不出图 |
 | AI 助手 V2 | 方案：`docs/plans/2026-09-17-ai-assistant-v2/`；change：`openspec/changes/ai-assistant-v2/`。NL 文本 + 家庭树 + 能力表；**未实施** |
-| 第一阶段还剩 | 用户体系（昵称/头像/成员可辨认）；搜索（首页搜索栏目前只是装饰）；AI V1 真机验收；V2 按 `openspec/changes/ai-assistant-v2/` 实施 |
+| 第一阶段还剩 | 用户体系（昵称/头像已落地待验收）；搜索（首页搜索栏目前只是装饰）；AI V1 真机验收；V2 按 `openspec/changes/ai-assistant-v2/` 实施 |
 | 不做（本阶段） | 角色权限、软删除物资本体、评论/@/聊天、非物资写事件进消息、活动推送、楼层 UI、实景上传 / 3D / 看房编辑器、ES 搜索 |
 | 后置 | 对话半屏 / LangGraph 接真库；体验向新交互（原 D 波） |
 
@@ -44,7 +44,7 @@
 ## 数据模型（文档库）
 
 ```
-users (_openid, currentFamilyId, nickname?)
+users (_openid, currentFamilyId, nickname?, avatarUrl?)
 memberships (openid + familyId，关系真相；subscribeExpireGrantedAt?)
 families (_id, inviteCode, ownerOpenid, memberCount, background, expireReminderEnabled, tagsSeededAt?)
 spaces (familyId, name, isDefault, coverKey?)

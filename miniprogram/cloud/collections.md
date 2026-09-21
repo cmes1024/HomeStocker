@@ -11,7 +11,8 @@
 | `_id` | string | 使用 `openid`，便于安全规则 `get` |
 | `_openid` | string | 与 `_id` 一致（云函数写入时显式带上） |
 | `currentFamilyId` | string \| null | 当前工作家庭 |
-| `nickname` | string | 可选 |
+| `nickname` | string | 可选；展示用称呼，空则消息里显示「家人」 |
+| `avatarUrl` | string | 可选；云存储 `cloud://` fileID；空则用首字占位 |
 | `updatedAt` | number | |
 
 ### `families`
@@ -349,6 +350,8 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - `users.currentFamilyId` 表示当前工作家庭；`listMyFamilies` / `switchFamily` 切换
 - `updateBackground` 更新当前家庭命名主题（`{ type: 'theme', value: themeId }`），`themeId` 须在云函数 `THEME_IDS` 白名单内（与 `theme.js` 的 `THEME_PRESETS` 同步）。写入 `globalData.theme`，**全站页面**共用同一套主色/副色/阴影色。不再支持渐变字符串、纯色或自定义氛围图。
 - `updateName` 更新家庭名称（`{ name, familyId? }`）；须是该家庭成员；省略 `familyId` 时改当前家庭；名称 trim 后 1–20 字
+- `updateProfile` 更新本人称呼/头像（`{ nickname?, avatarFileID? }`）；写 `users`；头像为云存储 fileID；换头像时 best-effort 删旧文件
+- `listMembers` 返回当前家庭成员（openid / nickname / avatarUrl / isOwner / isMe）；上限 50
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
 - 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `itemMedia` / `familyTrees` / `familySubscriptions` / `memberships`（旁路图云存储文件 best-effort 删除）；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树与订阅
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/抽取/挂图/助手 act/结构树写一律云函数

@@ -79,8 +79,21 @@
         <view class="recent" wx:if="{{recentOps.length}}">
           <view class="recent-title">{{copy.recentTitle}}</view>
           <view class="recent-row" wx:for="{{recentOps}}" wx:key="_id">
-            <view class="recent-line">{{item.line}}</view>
-            <view class="recent-time">{{item.timeLabel}}</view>
+            <view class="recent-avatar-wrap">
+              <image
+                wx:if="{{item.avatarUrl}}"
+                class="recent-avatar"
+                src="{{item.avatarUrl}}"
+                mode="aspectFill"
+              />
+              <view wx:else class="recent-avatar placeholder">
+                <text class="recent-initial">{{item.initial}}</text>
+              </view>
+            </view>
+            <view class="recent-body">
+              <view class="recent-line">{{item.line}}</view>
+              <view class="recent-time">{{item.timeLabel}}</view>
+            </view>
           </view>
         </view>
       </view>

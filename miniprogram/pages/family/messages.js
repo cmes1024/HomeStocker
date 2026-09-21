@@ -24,12 +24,17 @@ function formatRelativeTime(ts) {
 
 function mapRows(list) {
   return (list || []).map((row) => {
+    const nickname =
+      (row && row.actorNickname && String(row.actorNickname).trim()) || ''
+    const initial = nickname ? nickname.slice(0, 1) : '家'
     return {
       _id: row._id,
       line: formatActivityLine(row, copy.messages),
       timeLabel: formatRelativeTime(row.createdAt),
       itemId: row.itemId,
-      action: row.action
+      action: row.action,
+      avatarUrl: (row && row.actorAvatarUrl) || '',
+      initial
     }
   })
 }

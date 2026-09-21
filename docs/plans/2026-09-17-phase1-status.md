@@ -68,9 +68,9 @@
 
 ### 4.1 用户体系
 
-- 身份只有云开发 `OPENID`。`users` 建档时 `nickname: ''`，没有授权头像、改名、成员列表。
-- 家庭消息 / 详情最近操作读 `users.nickname`，空则显示「家人」。
-- 家庭页能看到成员**人数**，看不到是谁。
+- 身份仍是云开发 `OPENID`。`users` 有 `nickname` / `avatarUrl`（云存储 fileID）；云函数 `family.updateProfile` / `listMembers`。
+- 家庭页「家里的人」展示成员；半屏用 `chooseAvatar` + `input type="nickname"` 编辑资料。
+- 家庭消息 / 详情最近操作 join 昵称与头像，空昵称仍显示「家人」。
 - 旧 PRD 的角色权限（创建者/管理员/只读）**仍不在本阶段**。本项是「人能被认出来」，不是权限模型。
 
 ### 4.2 搜索

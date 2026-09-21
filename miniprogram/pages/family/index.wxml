@@ -66,6 +66,33 @@
       <view class="key-hint">{{copy.keyHint}}</view>
     </view>
 
+    <view
+      class="card profile-card"
+      hover-class="home-hover"
+      bind:tap="openProfileSheet"
+    >
+      <view class="profile-row-avatar-wrap">
+        <image
+          wx:if="{{profile.avatarUrl}}"
+          class="profile-row-avatar"
+          src="{{profile.avatarUrl}}"
+          mode="aspectFill"
+        />
+        <view
+          wx:else
+          class="profile-row-avatar placeholder"
+          style="background: {{theme.secondary}};"
+        >
+          <text class="member-initial">{{profileInitial}}</text>
+        </view>
+      </view>
+      <view class="profile-row-body">
+        <view class="profile-row-name">{{profileDisplayName}}</view>
+        <view class="profile-row-hint">{{copy.profileHint}}</view>
+      </view>
+      <text class="profile-row-chevron">›</text>
+    </view>
+
     <view class="tool-grid">
       <view class="tool" hover-class="tool-hover" bind:tap="goSpaces">
         <image class="tool-icon" src="/assets/space.png" mode="aspectFit" />
@@ -108,8 +135,26 @@
         >
           <view class="home-mark {{item.isCurrent ? 'on' : ''}}"></view>
           <view class="home-body">
-            <view class="home-name">{{item.name}}</view>
-            <view class="home-sub">{{item.isCurrent ? copy.chipHere + " / " : ''}}{{item.memberCount || 0}}人</view>
+            <view class="home-name-row">
+              <text class="home-name">{{item.name}}</text>
+              <text
+                wx:if="{{item.isCurrent && capacityStatusText}}"
+                class="home-capacity {{capacityActive ? 'on' : ''}}"
+              >{{capacityStatusText}}</text>
+            </view>
+            <view class="home-sub">
+              <block wx:if="{{item.isCurrent}}">
+                <text>{{copy.chipHere}} / </text>
+                <view
+                  class="home-members-link theme-text"
+                  hover-class="press"
+                  catch:tap="openMembersSheet"
+                  aria-role="button"
+                  aria-label="{{copy.membersTitle}}"
+                >{{item.memberCount || 0}}人</view>
+              </block>
+              <text wx:else>{{item.memberCount || 0}}人</text>
+            </view>
           </view>
           <view
             class="home-rename"
@@ -207,20 +252,20 @@
 />
 
 <page-container
-  show="{{moodSheet}}"
+  show="{{sheetShow}}"
   position="bottom"
   round="{{true}}"
   overlay="{{true}}"
   z-index="100"
   overlay-style="background: rgba(20, 16, 12, 0.28);"
-  custom-style="height: 56vh; background: #ffffff;"
-  bind:clickoverlay="closeMoodSheet"
-  bind:beforeleave="closeMoodSheet"
+  custom-style="height: {{sheetHeight}}; background: #ffffff;"
+  bind:clickoverlay="closeSheet"
+  bind:beforeleave="closeSheet"
 >
-  <view class="sheet">
+  <view class="sheet" wx:if="{{sheetKind === 'mood'}}">
     <view class="sheet-hd">
       <view class="sheet-title">{{copy.wallTitle}}</view>
-      <view class="sheet-close" bind:tap="closeMoodSheet">×</view>
+      <view class="sheet-close" bind:tap="closeSheet">×</view>
     </view>
     <scroll-view class="sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
       <view class="label">{{copy.themePick}}</view>
@@ -250,5 +295,89 @@
       </view>
       <view class="sheet-pad"></view>
     </scroll-view>
+  </view>
+
+  <view class="sheet" wx:elif="{{sheetKind === 'members'}}">
+    <view class="sheet-hd">
+      <view class="sheet-title">{{copy.membersTitle}}</view>
+      <view class="sheet-close" bind:tap="closeSheet">×</view>
+    </view>
+    <scroll-view class="sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="members-empty" wx:if="{{!members.length}}">{{copy.membersEmpty}}</view>
+      <view
+        class="member-list-row {{item.isMe ? 'me' : ''}}"
+        wx:for="{{members}}"
+        wx:key="openid"
+      >
+        <view class="member-list-avatar-wrap">
+          <image
+            wx:if="{{item.avatarUrl}}"
+            class="member-list-avatar"
+            src="{{item.avatarUrl}}"
+            mode="aspectFill"
+          />
+          <view
+            wx:else
+            class="member-list-avatar placeholder"
+            style="background: {{theme.secondary}};"
+          >
+            <text class="member-initial sm">{{item.initial}}</text>
+          </view>
+        </view>
+        <view class="member-list-body">
+          <view class="member-list-name">{{item.displayName}}</view>
+          <view class="member-list-meta" wx:if="{{item.isOwner || item.isMe}}">
+            <text wx:if="{{item.isOwner}}">{{copy.ownerBadge}}</text>
+            <text wx:if="{{item.isOwner && item.isMe}}"> · </text>
+            <text wx:if="{{item.isMe}}">{{copy.meBadge}}</text>
+          </view>
+        </view>
+      </view>
+      <view class="sheet-pad"></view>
+    </scroll-view>
+  </view>
+
+  <view class="sheet" wx:elif="{{sheetKind === 'profile'}}">
+    <view class="sheet-hd">
+      <view class="sheet-title">{{copy.profileSheetTitle}}</view>
+      <view class="sheet-close" bind:tap="closeSheet">×</view>
+    </view>
+    <view class="profile-body">
+      <button
+        class="avatar-btn"
+        open-type="chooseAvatar"
+        bind:chooseavatar="onChooseAvatar"
+      >
+        <image
+          wx:if="{{profileDraftAvatar}}"
+          class="profile-avatar"
+          src="{{profileDraftAvatar}}"
+          mode="aspectFill"
+        />
+        <view
+          wx:else
+          class="profile-avatar placeholder"
+          style="background: {{theme.secondary}};"
+        >
+          <text class="member-initial">{{profileDraftInitial}}</text>
+        </view>
+      </button>
+      <view class="profile-avatar-hint">{{copy.profileAvatarHint}}</view>
+      <view class="profile-label">{{copy.profileNickLabel}}</view>
+      <input
+        class="profile-input"
+        type="nickname"
+        maxlength="20"
+        value="{{profileDraftNickname}}"
+        placeholder="{{copy.profileNickPlaceholder}}"
+        bindinput="onProfileNickInput"
+        bindblur="onProfileNickBlur"
+      />
+      <view
+        class="profile-save theme-btn"
+        hover-class="press"
+        bind:tap="onSaveProfile"
+      >{{copy.profileSave}}</view>
+    </view>
   </view>
 </page-container>

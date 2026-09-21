@@ -90,6 +90,40 @@ function keyIconSrc(color) {
   return themedAssetIcon(KEY_SVG_PATH, 'key', color)
 }
 
+function displayName(member, fallback) {
+  const nick = member && member.nickname ? String(member.nickname).trim() : ''
+  if (nick) return nick
+  if (member && member.isMe) return copy.family.meBadge
+  return fallback || copy.messages.actorFallback
+}
+
+function initialOf(name) {
+  const s = String(name || '').trim()
+  if (!s) return '家'
+  return s.slice(0, 1)
+}
+
+function mapMembers(list) {
+  return (list || []).map((m) => {
+    const name = displayName(m, copy.messages.actorFallback)
+    return {
+      ...m,
+      displayName: name,
+      initial: initialOf(m.nickname || (m.isMe ? '我' : '家'))
+    }
+  })
+}
+
+function profileView(profile) {
+  const nickname = (profile && profile.nickname && String(profile.nickname).trim()) || ''
+  const avatarUrl = (profile && profile.avatarUrl && String(profile.avatarUrl).trim()) || ''
+  return {
+    profile: { nickname, avatarUrl },
+    profileDisplayName: nickname || copy.family.profileUnset,
+    profileInitial: initialOf(nickname || '我')
+  }
+}
+
 Page({
   data: {
     copy: copy.family,
@@ -100,6 +134,10 @@ Page({
     error: '',
     family: null,
     families: [],
+    members: [],
+    profile: { nickname: '', avatarUrl: '' },
+    profileDisplayName: copy.family.profileUnset,
+    profileInitial: '我',
     acting: false,
     showModal: false,
     modalMode: 'create',
@@ -113,7 +151,13 @@ Page({
     themes: THEME_PRESETS,
     theme: null,
     headerTitle: '',
-    moodSheet: false,
+    sheetKind: '',
+    sheetShow: false,
+    sheetHeight: '56vh',
+    profileDraftNickname: '',
+    profileDraftAvatar: '',
+    profileDraftInitial: '家',
+    profilePendingPath: '',
     reminderEnabled: true,
     keyIcon: '',
     editIcon: '',
@@ -125,6 +169,7 @@ Page({
     codeDisplay: '',
     capacityStatusText: '',
     capacityProgressText: '',
+    capacityActive: false,
     issuedCodes: []
   },
 
@@ -181,16 +226,16 @@ Page({
     const ent = (family && family.entitlement) || {}
     const itemCount = family && family.itemCount
     const memberCount = family && family.memberCount
+    const active = !!(ent.active && ent.expiresAt)
     let capacityStatusText = copy.family.capacityInactive
-    if (ent.active && ent.expiresAt) {
+    if (active) {
       const ymd = this.formatExpireYmd(ent.expiresAt)
       capacityStatusText = ymd
         ? copy.family.capacityActive(ymd)
         : copy.family.capacityInactive
-    } else if (!ent.active) {
-      capacityStatusText = `${copy.family.capacityInactive} · ${copy.family.capacityFreeSummary}`
     }
     return {
+      capacityActive: active && capacityStatusText !== copy.family.capacityInactive,
       capacityStatusText,
       capacityProgressText: copy.family.capacityProgress(
         itemCount,
@@ -221,13 +266,22 @@ Page({
   async load() {
     this.setData(this.data.family ? { error: '' } : { loading: true, error: '' })
     try {
-      const listed = await callFamily('listMyFamilies')
+      const [listed, membersRes] = await Promise.all([
+        callFamily('listMyFamilies'),
+        callFamily('listMembers').catch(() => ({ list: [], profile: null }))
+      ])
       const family = await this.currentFamilyFromList(listed)
       const theme = setAppFamily(family)
       const codeVisible = readCodeVisible()
+      const profile =
+        (membersRes && membersRes.profile) ||
+        (listed && listed.profile) ||
+        { nickname: '', avatarUrl: '' }
       this.setData({
         family,
         families: listed.list || [],
+        members: mapMembers((membersRes && membersRes.list) || []),
+        ...profileView(profile),
         loading: false,
         theme,
         keyIcon: keyIconSrc(theme.primary),
@@ -319,6 +373,110 @@ Page({
     wx.navigateTo({ url: '/pages/family/messages' })
   },
 
+  openMembersSheet() {
+    this.openSheet('members')
+  },
+
+  openProfileSheet() {
+    const profile = this.data.profile || { nickname: '', avatarUrl: '' }
+    const nick = profile.nickname || ''
+    this.setData({
+      profileDraftNickname: nick,
+      profileDraftAvatar: profile.avatarUrl || '',
+      profileDraftInitial: initialOf(nick || '我'),
+      profilePendingPath: '',
+      sheetKind: 'profile',
+      sheetShow: true,
+      sheetHeight: '48vh'
+    })
+  },
+
+  closeSheet() {
+    if (!this.data.sheetShow) return
+    if (this.data.acting && this.data.sheetKind === 'profile') return
+    this.setData({ sheetShow: false, sheetKind: '', profilePendingPath: '' })
+  },
+
+  openSheet(kind) {
+    const heights = {
+      mood: '56vh',
+      members: '52vh',
+      profile: '48vh'
+    }
+    this.setData({
+      sheetKind: kind,
+      sheetShow: true,
+      sheetHeight: heights[kind] || '52vh'
+    })
+  },
+
+  onChooseAvatar(e) {
+    const path = e && e.detail && e.detail.avatarUrl
+    if (!path) return
+    this.setData({
+      profileDraftAvatar: path,
+      profilePendingPath: path
+    })
+  },
+
+  onProfileNickInput(e) {
+    const nickname = (e.detail && e.detail.value) || ''
+    this.setData({
+      profileDraftNickname: nickname,
+      profileDraftInitial: initialOf(nickname || '我')
+    })
+  },
+
+  onProfileNickBlur(e) {
+    const nickname = String((e.detail && e.detail.value) || '').trim()
+    this.setData({
+      profileDraftNickname: nickname,
+      profileDraftInitial: initialOf(nickname || '我')
+    })
+  },
+
+  async onSaveProfile() {
+    if (this.data.acting) return
+    const nickname = String(this.data.profileDraftNickname || '').trim()
+    if (!nickname) {
+      wx.showToast({ title: copy.family.profileNickRequired, icon: 'none' })
+      return
+    }
+    this.setData({ acting: true })
+    try {
+      let avatarFileID
+      const pending = this.data.profilePendingPath
+      if (pending) {
+        const extMatch = /\.(\w+)(\?|$)/.exec(pending)
+        const ext = (extMatch && extMatch[1]) || 'jpg'
+        const cloudPath = `user-avatars/${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 8)}.${ext}`
+        const up = await wx.cloud.uploadFile({
+          cloudPath,
+          filePath: pending
+        })
+        avatarFileID = up.fileID
+      }
+      const payload = { nickname }
+      if (avatarFileID) payload.avatarFileID = avatarFileID
+      const profile = await callFamily('updateProfile', payload)
+      const membersRes = await callFamily('listMembers')
+      this.setData({
+        acting: false,
+        sheetShow: false,
+        sheetKind: '',
+        profilePendingPath: '',
+        ...profileView(profile || { nickname, avatarUrl: avatarFileID || '' }),
+        members: mapMembers((membersRes && membersRes.list) || [])
+      })
+      wx.showToast({ title: copy.family.profileSaved, icon: 'success' })
+    } catch (e) {
+      this.setData({ acting: false })
+      wx.showToast({ title: e.message || copy.common.loadFailed, icon: 'none' })
+    }
+  },
+
   goAiKeys() {
     wx.navigateTo({
       url: '/packageAi/keys/index',
@@ -327,12 +485,7 @@ Page({
   },
 
   openMoodSheet() {
-    this.setData({ moodSheet: true })
-  },
-
-  closeMoodSheet() {
-    if (!this.data.moodSheet) return
-    this.setData({ moodSheet: false })
+    this.openSheet('mood')
   },
 
   onTogglePush(e) {
@@ -630,6 +783,13 @@ Page({
     try {
       const family = await callFamily('switchFamily', { familyId })
       this.applyCurrentFamily(family)
+      const membersRes = await callFamily('listMembers').catch(() => null)
+      if (membersRes) {
+        this.setData({
+          members: mapMembers(membersRes.list || []),
+          ...profileView(membersRes.profile || this.data.profile)
+        })
+      }
       this.setData({ acting: false, switching: false })
       wx.showToast({ title: '已切换', icon: 'success' })
     } catch (err) {

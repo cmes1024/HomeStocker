@@ -36,7 +36,7 @@ async function resolveFamilyContext(openid) {
   return { familyId, openid }
 }
 
-async function loadNicknames(openids) {
+async function loadActorProfiles(openids) {
   const map = {}
   const unique = []
   const seen = {}
@@ -53,7 +53,11 @@ async function loadNicknames(openids) {
         snap && snap.data && snap.data.nickname
           ? String(snap.data.nickname).trim()
           : ''
-      map[id] = nickname
+      const avatarUrl =
+        snap && snap.data && snap.data.avatarUrl
+          ? String(snap.data.avatarUrl).trim()
+          : ''
+      map[id] = { nickname, avatarUrl }
     })
   )
   return map
@@ -77,11 +81,15 @@ async function listActivities(openid, event) {
   const res = await query.limit(limit).get()
   const list = res.data || []
 
-  const nicknames = await loadNicknames(list.map((row) => row.actorOpenid))
-  const enriched = list.map((row) => ({
-    ...row,
-    actorNickname: nicknames[row.actorOpenid] || ''
-  }))
+  const profiles = await loadActorProfiles(list.map((row) => row.actorOpenid))
+  const enriched = list.map((row) => {
+    const profile = profiles[row.actorOpenid] || { nickname: '', avatarUrl: '' }
+    return {
+      ...row,
+      actorNickname: profile.nickname || '',
+      actorAvatarUrl: profile.avatarUrl || ''
+    }
+  })
 
   return ok({ list: enriched })
 }

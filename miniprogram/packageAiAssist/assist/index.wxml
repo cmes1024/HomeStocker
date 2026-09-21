@@ -170,18 +170,23 @@
     </scroll-view>
 
     <view class="composer">
-      <input
+      <textarea
         wx:if="{{composerOn}}"
         class="input"
+        style="height: {{inputHeight}}px;"
         value="{{text}}"
         placeholder="{{copy.placeholder}}"
+        placeholder-class="input-placeholder"
         maxlength="500"
         confirm-type="send"
+        show-confirm-bar="{{false}}"
         hold-keyboard="{{true}}"
         adjust-position="{{false}}"
         cursor-spacing="24"
+        disable-default-padding="{{true}}"
         disabled="{{loading}}"
         bindinput="onTextInput"
+        bindlinechange="onInputLineChange"
         bindconfirm="onSend"
         bindblur="onComposerBlur"
         bindkeyboardheightchange="onKeyboardHeightChange"

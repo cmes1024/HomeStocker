@@ -239,6 +239,32 @@ async function assertMemberCapacity(familyId, family) {
   )
 }
 
+function userProfile(user) {
+  return {
+    nickname: String((user && user.nickname) || '').trim(),
+    avatarUrl: String((user && user.avatarUrl) || '').trim()
+  }
+}
+
+async function loadUserProfiles(openids) {
+  const map = {}
+  const unique = []
+  const seen = {}
+  for (let i = 0; i < openids.length; i++) {
+    const id = openids[i]
+    if (!id || seen[id]) continue
+    seen[id] = true
+    unique.push(id)
+  }
+  await Promise.all(
+    unique.map(async (id) => {
+      const snap = await db.collection('users').doc(id).get().catch(() => null)
+      map[id] = userProfile(snap && snap.data)
+    })
+  )
+  return map
+}
+
 async function ensureUser(openid) {
   const ref = db.collection('users').doc(openid)
   try {
@@ -254,6 +280,7 @@ async function ensureUser(openid) {
     _openid: openid,
     currentFamilyId: null,
     nickname: '',
+    avatarUrl: '',
     updatedAt: now
   }
   await ref.set({ data: doc })
@@ -487,7 +514,94 @@ async function getMyFamily(openid) {
     return fail('NO_FAMILY', '家庭不存在')
   }
 
-  return ok(await withCapacity(familyId, fam.data, openid))
+  const family = await withCapacity(familyId, fam.data, openid)
+  return ok({ ...family, profile: userProfile(user) })
+}
+
+async function listMembers(openid) {
+  const user = await ensureUser(openid)
+  const familyId = user.currentFamilyId
+  if (!familyId) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const mid = membershipId(openid, familyId)
+  const mem = await db.collection('memberships').doc(mid).get().catch(() => null)
+  if (!mem || !mem.data) return fail('NO_FAMILY', '尚未加入家庭')
+
+  const fam = await db.collection('families').doc(familyId).get().catch(() => null)
+  if (!fam || !fam.data) return fail('NO_FAMILY', '家庭不存在')
+
+  const memRes = await db
+    .collection('memberships')
+    .where({ familyId })
+    .limit(50)
+    .get()
+  const memberships = memRes.data || []
+  const profiles = await loadUserProfiles(memberships.map((m) => m.openid))
+  const ownerOpenid = fam.data.ownerOpenid
+  const list = memberships
+    .map((m) => {
+      const profile = profiles[m.openid] || { nickname: '', avatarUrl: '' }
+      return {
+        openid: m.openid,
+        nickname: profile.nickname,
+        avatarUrl: profile.avatarUrl,
+        isOwner: m.openid === ownerOpenid,
+        isMe: m.openid === openid,
+        joinedAt: m.joinedAt || 0
+      }
+    })
+    .sort((a, b) => {
+      if (a.isOwner !== b.isOwner) return a.isOwner ? -1 : 1
+      if (a.isMe !== b.isMe) return a.isMe ? -1 : 1
+      return (a.joinedAt || 0) - (b.joinedAt || 0)
+    })
+
+  return ok({ list, profile: userProfile(user) })
+}
+
+async function updateProfile(openid, event) {
+  await ensureUser(openid)
+  const hasNickname = event && Object.prototype.hasOwnProperty.call(event, 'nickname')
+  const hasAvatar = event && Object.prototype.hasOwnProperty.call(event, 'avatarFileID')
+  if (!hasNickname && !hasAvatar) {
+    return fail('INVALID_PROFILE', '没有可更新的资料')
+  }
+
+  const patch = { updatedAt: Date.now() }
+  if (hasNickname) {
+    const nickname = String(event.nickname || '').trim()
+    if (nickname.length > 20) {
+      return fail('INVALID_NICKNAME', '称呼最多 20 字')
+    }
+    patch.nickname = nickname
+  }
+
+  let oldAvatarUrl = ''
+  if (hasAvatar) {
+    const avatarFileID = String(event.avatarFileID || '').trim()
+    if (avatarFileID && !avatarFileID.startsWith('cloud://')) {
+      return fail('INVALID_AVATAR', '头像无效')
+    }
+    const prev = await db.collection('users').doc(openid).get().catch(() => null)
+    oldAvatarUrl =
+      prev && prev.data && prev.data.avatarUrl
+        ? String(prev.data.avatarUrl).trim()
+        : ''
+    patch.avatarUrl = avatarFileID
+  }
+
+  await db.collection('users').doc(openid).update({ data: patch })
+
+  if (oldAvatarUrl && oldAvatarUrl !== patch.avatarUrl) {
+    try {
+      await cloud.deleteFile({ fileList: [oldAvatarUrl] })
+    } catch (e) {
+      console.warn('avatar old file delete failed')
+    }
+  }
+
+  const user = await ensureUser(openid)
+  return ok(userProfile(user))
 }
 
 async function listMyFamilies(openid) {
@@ -532,7 +646,8 @@ async function listMyFamilies(openid) {
   return ok({
     currentFamilyId,
     family,
-    list
+    list,
+    profile: userProfile(user)
   })
 }
 
@@ -1020,6 +1135,10 @@ exports.main = async (event) => {
         return await getMyFamily(OPENID)
       case 'listMyFamilies':
         return await listMyFamilies(OPENID)
+      case 'listMembers':
+        return await listMembers(OPENID)
+      case 'updateProfile':
+        return await updateProfile(OPENID, event || {})
       case 'switchFamily':
         return await switchFamily(OPENID, event)
       case 'updateBackground':

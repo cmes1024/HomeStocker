@@ -24,7 +24,7 @@ function unwrap(res) {
 
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
-  family: { getMyFamily: true, listMyFamilies: true },
+  family: { getMyFamily: true, listMyFamilies: true, listMembers: true },
   item: { get: true, search: true, list: true, count: true, listExpiring: true, home: true },
   space: { list: true, listLocations: true, listItemsBySpace: true, listPockets: true },
   tag: { list: true, ensureDefaults: true },
@@ -147,9 +147,11 @@ function applyWriteInvalidation(name, action) {
       action === 'updateBackground' ||
       action === 'updateExpireReminder' ||
       action === 'redeem' ||
-      action === 'updateName'
+      action === 'updateName' ||
+      action === 'updateProfile'
     ) {
       cache.dropByName('family')
+      if (action === 'updateProfile') cache.dropByName('activity')
       return
     }
     if (

@@ -39,8 +39,21 @@
           data-action="{{item.action}}"
           bind:tap="onOpenItem"
         >
-          <view class="row-line">{{item.line}}</view>
-          <view class="row-time">{{item.timeLabel}}</view>
+          <view class="row-avatar-wrap">
+            <image
+              wx:if="{{item.avatarUrl}}"
+              class="row-avatar"
+              src="{{item.avatarUrl}}"
+              mode="aspectFill"
+            />
+            <view wx:else class="row-avatar placeholder">
+              <text class="row-initial">{{item.initial}}</text>
+            </view>
+          </view>
+          <view class="row-main">
+            <view class="row-line">{{item.line}}</view>
+            <view class="row-time">{{item.timeLabel}}</view>
+          </view>
         </view>
         <view class="list-pad"></view>
       </scroll-view>

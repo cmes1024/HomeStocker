@@ -42,10 +42,14 @@ function formatRelativeTime(ts) {
 
 function mapActivityRows(list) {
   return (list || []).map((row) => {
+    const nickname =
+      (row && row.actorNickname && String(row.actorNickname).trim()) || ''
     return {
       _id: row._id,
       line: formatActivityLine(row, copy.detail),
-      timeLabel: formatRelativeTime(row.createdAt)
+      timeLabel: formatRelativeTime(row.createdAt),
+      avatarUrl: (row && row.actorAvatarUrl) || '',
+      initial: nickname ? nickname.slice(0, 1) : '家'
     }
   })
 }

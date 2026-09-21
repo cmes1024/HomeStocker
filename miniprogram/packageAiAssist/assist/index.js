@@ -126,6 +126,39 @@ function helloMessage() {
   }
 }
 
+/** 口头短确认（好/可以/行…），用于软邀请后回灌原意图 */
+const SHORT_AFFIRM_RE =
+  /^(好|好的|可以|行|嗯|嗯嗯|继续|开始吧|没问题|ok|OK)[呀啊哦呗了啦。.!！～~]*$/
+
+const SOFT_INVITE_RE =
+  /好吗|好不好|可以吗|要不要|跟您核对|跟你核对|先帮|行吗|怎么样/
+
+function isShortAffirm(text) {
+  return SHORT_AFFIRM_RE.test(String(text || '').trim())
+}
+
+/**
+ * 是否应把短确认回灌为「原句（确认：继续）」——对齐芯片澄清。
+ * 仅在助手刚软邀请/澄清时触发，避免操作完成后道谢式的「好」误重放。
+ */
+function shouldRehydrateSoftConfirm(messages, typed, originalText) {
+  const text = String(typed || '').trim()
+  const original = String(originalText || '').trim()
+  if (!isShortAffirm(text)) return false
+  if (!original || original === text || original.length <= text.length) return false
+
+  const last = [...(messages || [])]
+    .reverse()
+    .find((row) => row && row.role === 'assistant' && row.kind !== 'pending')
+  if (!last || last.kind === 'hello') return false
+  if (last.confirmList && last.confirmList.length) return false
+  if (last.subscribeItems && last.subscribeItems.length) return false
+  if (last.blocks && last.blocks.length) return false
+  if (last.retry || last.goKeys) return false
+  if (last.askList && last.askList.length) return true
+  return SOFT_INVITE_RE.test(String(last.text || ''))
+}
+
 Page({
   data: {
     copy: copy.assist,
@@ -136,6 +169,7 @@ Page({
     booting: true,
     fatalError: '',
     text: '',
+    inputHeight: 36,
     originalText: '',
     askRound: 0,
     noKey: false,
@@ -161,6 +195,7 @@ Page({
     this._pendingId = ''
     this._submitting = false
     this._familyId = ''
+    this.initComposerMetrics()
     this._onKeyboardHeight = (res) => {
       this.applyKeyboardHeight(Math.max(0, Number((res && res.height) || 0)))
     }
@@ -170,7 +205,8 @@ Page({
     bindThemeToPage(this, {
       headerTitle: copy.assist.pageTitle,
       focusItemId,
-      messages
+      messages,
+      inputHeight: this._composerMinH
     })
   },
 
@@ -289,6 +325,7 @@ Page({
       draft: null,
       originalText: '',
       text: '',
+      inputHeight: this._composerMinH || this.data.inputHeight,
       recentItemIds: [],
       scrollIntoView: ''
     })
@@ -300,6 +337,21 @@ Page({
     const prev = this.data.loadingColors
     if (prev && prev[0] === color && prev[1] === color) return
     this.setData({ loadingColors: [color, color] })
+  },
+
+  /** 聊天输入框：1 行起、最多约 5 行后内部滚动（对齐微信会话） */
+  initComposerMetrics() {
+    const win =
+      typeof wx.getWindowInfo === 'function'
+        ? wx.getWindowInfo()
+        : wx.getSystemInfoSync()
+    const rpx = (Number(win.windowWidth) || 375) / 750
+    this._composerPadPx = Math.round(32 * rpx)
+    this._composerLinePx = Math.round(40 * rpx)
+    this._composerMaxLines = 5
+    this._composerMinH = this._composerPadPx + this._composerLinePx
+    this._composerMaxH =
+      this._composerPadPx + this._composerLinePx * this._composerMaxLines
   },
 
   nextId() {
@@ -352,7 +404,24 @@ Page({
   },
 
   onTextInput(e) {
-    this.setData({ text: e.detail.value || '' })
+    const text = (e.detail && e.detail.value) || ''
+    const patch = { text }
+    if (!String(text).trim()) {
+      const minH = this._composerMinH
+      if (minH && this.data.inputHeight !== minH) patch.inputHeight = minH
+    }
+    this.setData(patch)
+  },
+
+  onInputLineChange(e) {
+    const lineCount = Math.max(1, Number((e && e.detail && e.detail.lineCount) || 1))
+    const maxLines = this._composerMaxLines || 5
+    const pad = this._composerPadPx || 0
+    const line = this._composerLinePx || 20
+    const lines = Math.min(lineCount, maxLines)
+    const next = pad + line * lines
+    if (next === this.data.inputHeight) return
+    this.setData({ inputHeight: next })
   },
 
   onRetry() {
@@ -369,6 +438,17 @@ Page({
 
   onSend(e) {
     const typed = e && e.detail && typeof e.detail.value === 'string' ? e.detail.value : undefined
+    const text = String(typed != null ? typed : this.data.text || '').trim()
+    const messages = this._messages || this.data.messages || []
+    const original = String(this.data.originalText || '').trim()
+    if (shouldRehydrateSoftConfirm(messages, text, original)) {
+      this.submit({
+        resetRound: false,
+        text,
+        actText: `${original}（确认：继续）`
+      })
+      return
+    }
     this.submit({ resetRound: true, text: typed })
   },
 
@@ -546,6 +626,7 @@ Page({
       fatalError: '',
       noKey: false,
       text: '',
+      inputHeight: this._composerMinH || this.data.inputHeight,
       composerOn: false,
       originalText: resetRound ? actText : this.data.originalText || actText,
       messages
