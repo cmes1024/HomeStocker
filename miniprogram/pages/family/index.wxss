@@ -459,6 +459,98 @@
   line-height: 1.4;
 }
 
+.issue-field {
+  margin-bottom: 24rpx;
+}
+
+.issue-label {
+  display: block;
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin-bottom: 12rpx;
+}
+
+.issue-input {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 24rpx;
+  box-sizing: border-box;
+  border-radius: 16rpx;
+  background: rgba(0, 0, 0, 0.04);
+  font-size: 30rpx;
+}
+
+.issue-input-sm {
+  width: 160rpx;
+  flex-shrink: 0;
+}
+
+.issue-duration-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.issue-unit-row {
+  display: flex;
+  flex: 1;
+  gap: 8rpx;
+  min-width: 0;
+}
+
+.issue-unit {
+  flex: 1;
+  text-align: center;
+  padding: 18rpx 0;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.55);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.issue-unit.on {
+  color: #1a1a1a;
+  font-weight: 600;
+  background: var(--theme-primary-30, rgba(196, 164, 132, 0.28));
+}
+
+.issue-error {
+  font-size: 24rpx;
+  color: #c45c4a;
+  margin-bottom: 16rpx;
+  line-height: 1.4;
+}
+
+.issue-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.issue-btn {
+  flex: 1;
+  text-align: center;
+  padding: 22rpx 0;
+  border-radius: 20rpx;
+  font-size: 28rpx;
+}
+
+.issue-btn-ghost {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(26, 26, 26, 0.65);
+}
+
+.issue-btn.busy {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.issue-days {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.5);
+  margin: -8rpx 0 16rpx;
+}
+
 .issue-code {
   font-size: 32rpx;
   font-weight: 600;

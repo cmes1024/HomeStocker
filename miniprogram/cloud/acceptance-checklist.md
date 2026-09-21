@@ -147,7 +147,7 @@ AI 另需：`collections.md`「AI 分包（控制台检查项）」——函数�
 - [ ] 新用户可建 1 家；再建第二家返回 `FAMILY_LIMIT_REACHED`（无站外购买引导）
 - [ ] 免费家最多 2 人；第三人 join 返回 `MEMBER_LIMIT_REACHED`
 - [ ] 免费家庭可创建至 50 件；第 51 件返回 `ITEM_LIMIT_REACHED` 且文案引导家庭页内测兑换
-- [ ] admin 调 `family.issueCodes` 成功；非 admin 被 `FORBIDDEN`
+- [ ] admin 调 `family.issueCodes` 成功（可传 `durationAmount`+`durationUnit`）；非 admin 被 `FORBIDDEN`
 - [ ] 家庭页「加强版」展示未开通 / 件数（及可选人数）进度；兑码成功后显示到期日
 - [ ] 兑码后：可再加家、加人、加物资（不限）
 - [ ] 未过期再兑：到期日按剩余叠加

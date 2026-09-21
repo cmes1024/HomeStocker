@@ -228,9 +228,77 @@
   </block>
 </AppShell>
 
-<view class="issue-mask" wx:if="{{issuedCodes.length}}" bind:tap="closeIssued">
+<view
+  class="issue-mask"
+  wx:if="{{showIssueForm}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closeIssueForm"
+>
+  <view class="issue-card" catch:tap="noop">
+    <view class="issue-title">{{copy.issueModalTitle}}</view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.issueCountLabel}}</text>
+      <input
+        class="issue-input"
+        type="number"
+        value="{{issueCount}}"
+        maxlength="2"
+        placeholder="{{copy.issuePlaceholder}}"
+        bindinput="onIssueCountInput"
+      />
+    </view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.issueDurationLabel}}</text>
+      <view class="issue-duration-row">
+        <input
+          class="issue-input issue-input-sm"
+          type="number"
+          value="{{issueDurationAmount}}"
+          maxlength="4"
+          placeholder="{{copy.issueDurationPlaceholder}}"
+          bindinput="onIssueDurationInput"
+        />
+        <view class="issue-unit-row">
+          <view
+            class="issue-unit {{issueDurationUnit === 'day' ? 'on' : ''}}"
+            data-unit="day"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitDay}}</view>
+          <view
+            class="issue-unit {{issueDurationUnit === 'week' ? 'on' : ''}}"
+            data-unit="week"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitWeek}}</view>
+          <view
+            class="issue-unit {{issueDurationUnit === 'month' ? 'on' : ''}}"
+            data-unit="month"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitMonth}}</view>
+          <view
+            class="issue-unit {{issueDurationUnit === 'year' ? 'on' : ''}}"
+            data-unit="year"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitYear}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="issue-error" wx:if="{{issueFormError}}">{{issueFormError}}</view>
+    <view class="issue-actions">
+      <view class="issue-btn issue-btn-ghost" bind:tap="closeIssueForm">{{copy.issueCancel}}</view>
+      <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onIssueCodes">{{copy.issueSubmit}}</view>
+    </view>
+  </view>
+</view>
+
+<view
+  class="issue-mask"
+  wx:if="{{issuedCodes.length}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closeIssued"
+>
   <view class="issue-card" catch:tap="noop">
     <view class="issue-title">{{copy.issueResultTitle}}</view>
+    <view class="issue-days" wx:if="{{issuedDaysText}}">{{issuedDaysText}}</view>
     <view class="issue-code" wx:for="{{issuedCodes}}" wx:key="*this">{{item}}</view>
     <view class="issue-copy theme-btn" bind:tap="copyIssued">{{copy.issueCopyAll}}</view>
   </view>

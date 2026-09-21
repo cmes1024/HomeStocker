@@ -170,7 +170,14 @@ Page({
     capacityStatusText: '',
     capacityProgressText: '',
     capacityActive: false,
-    issuedCodes: []
+    showIssueForm: false,
+    issueCount: '1',
+    issueDurationAmount: '3',
+    issueDurationUnit: 'month',
+    issueFormError: '',
+    issuedCodes: [],
+    issuedDays: 0,
+    issuedDaysText: ''
   },
 
   onShow() {
@@ -563,20 +570,43 @@ Page({
     if (this.data.acting) return
     if (!this.data.family || !this.data.family.isAdmin) return
     this.setData({
-      showModal: true,
-      modalMode: 'issueCodes',
-      modalTitle: copy.family.issueModalTitle,
-      modalPlaceholder: copy.family.issuePlaceholder,
-      modalValue: '1',
-      modalMaxlength: 2,
-      modalConfirm: copy.family.issueSubmit,
-      editingFamilyId: '',
-      modalError: ''
+      showIssueForm: true,
+      issueCount: '1',
+      issueDurationAmount: '3',
+      issueDurationUnit: 'month',
+      issueFormError: ''
     })
   },
 
+  closeIssueForm() {
+    if (this.data.acting) return
+    this.setData({ showIssueForm: false, issueFormError: '' })
+  },
+
+  onIssueCountInput(e) {
+    this.setData({
+      issueCount: (e.detail && e.detail.value) || '',
+      issueFormError: ''
+    })
+  },
+
+  onIssueDurationInput(e) {
+    this.setData({
+      issueDurationAmount: (e.detail && e.detail.value) || '',
+      issueFormError: ''
+    })
+  },
+
+  onIssueUnitPick(e) {
+    const unit = e && e.currentTarget && e.currentTarget.dataset
+      ? e.currentTarget.dataset.unit
+      : ''
+    if (!unit) return
+    this.setData({ issueDurationUnit: unit, issueFormError: '' })
+  },
+
   closeIssued() {
-    this.setData({ issuedCodes: [] })
+    this.setData({ issuedCodes: [], issuedDays: 0, issuedDaysText: '' })
   },
 
   noop() {},
@@ -594,28 +624,42 @@ Page({
 
   async onIssueCodes() {
     if (this.data.acting) return
-    const count = Number(String(this.data.modalValue || '').trim())
+    const count = Number(String(this.data.issueCount || '').trim())
     if (!Number.isFinite(count) || count < 1 || count > 50) {
-      this.setData({ modalError: copy.family.issueCountInvalid })
+      this.setData({ issueFormError: copy.family.issueCountInvalid })
       return
     }
-    this.setData({ acting: true, modalError: '' })
+    const durationAmount = Number(String(this.data.issueDurationAmount || '').trim())
+    const durationUnit = this.data.issueDurationUnit || 'month'
+    if (
+      !Number.isFinite(durationAmount) ||
+      durationAmount < 1 ||
+      Math.floor(durationAmount) !== durationAmount
+    ) {
+      this.setData({ issueFormError: copy.family.issueDurationInvalid })
+      return
+    }
+    this.setData({ acting: true, issueFormError: '' })
     try {
       const result = await callFamily('issueCodes', {
         product: 'capacity_90d',
-        count: Math.floor(count)
+        count: Math.floor(count),
+        durationAmount: Math.floor(durationAmount),
+        durationUnit
       })
       const codes = (result && result.codes) || []
+      const days = (result && result.days) || 0
       this.setData({
         acting: false,
-        showModal: false,
-        modalValue: '',
-        issuedCodes: codes
+        showIssueForm: false,
+        issuedCodes: codes,
+        issuedDays: days,
+        issuedDaysText: days ? copy.family.issueResultDays(days) : ''
       })
     } catch (e) {
       this.setData({
         acting: false,
-        modalError: e.message || copy.common.opFailed
+        issueFormError: e.message || copy.common.opFailed
       })
     }
   },
@@ -666,7 +710,6 @@ Page({
     if (this.data.modalMode === 'join') return this.onJoin()
     if (this.data.modalMode === 'rename') return this.onRename()
     if (this.data.modalMode === 'capacityRedeem') return this.onCapacityRedeem()
-    if (this.data.modalMode === 'issueCodes') return this.onIssueCodes()
     return this.onCreate()
   },
 

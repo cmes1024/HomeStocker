@@ -221,7 +221,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 |------|------|------|
 | `_id` | string | `codeHash`：规范化明文（去空白与连字符、大写）的 SHA-256 hex |
 | `product` | string | 如 `capacity_90d` / `capacity_365d` |
-| `days` | number | 发码时快照 |
+| `days` | number | 发码时快照；可由 `durationAmount`+`durationUnit` 覆盖（天=1 / 周=7 / **月=30** / **年=365**，范围 1–3650） |
 | `planId` | string | 发码时快照，如 `capacity_std` |
 | `status` | string | `unused` \| `used` \| `revoked` |
 | `usedByFamilyId` | string \| null | 核销家庭 |

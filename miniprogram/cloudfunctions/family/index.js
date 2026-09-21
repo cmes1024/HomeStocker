@@ -1054,6 +1054,41 @@ async function redeem(openid, event) {
   })
 }
 
+const DURATION_UNIT_DAYS = {
+  day: 1,
+  week: 7,
+  month: 30,
+  year: 365
+}
+
+function resolveIssueDays(event, productDays) {
+  const rawAmount = event && event.durationAmount
+  const rawUnit = event && event.durationUnit
+  const hasAmount = rawAmount != null && String(rawAmount).trim() !== ''
+  const hasUnit = rawUnit != null && String(rawUnit).trim() !== ''
+  if (!hasAmount && !hasUnit) {
+    const fallback = Number(productDays)
+    if (!Number.isFinite(fallback) || fallback < 1) {
+      return { error: fail('INVALID_DURATION', '无效时长') }
+    }
+    return { days: Math.floor(fallback) }
+  }
+  if (!hasAmount || !hasUnit) {
+    return { error: fail('INVALID_DURATION', '请同时指定时长数量与单位') }
+  }
+  const amount = Number(rawAmount)
+  const unit = String(rawUnit).trim()
+  const factor = DURATION_UNIT_DAYS[unit]
+  if (!factor || !Number.isFinite(amount) || amount < 1 || Math.floor(amount) !== amount) {
+    return { error: fail('INVALID_DURATION', '时长无效') }
+  }
+  const days = Math.floor(amount) * factor
+  if (days < 1 || days > 3650) {
+    return { error: fail('INVALID_DURATION', '时长须在 1–3650 天') }
+  }
+  return { days }
+}
+
 async function issueCodes(openid, event) {
   await ensureCapacityCollections()
   const admin = String(process.env.ADMIN_OPENID || '').trim()
@@ -1066,6 +1101,10 @@ async function issueCodes(openid, event) {
   if (!product) {
     return fail('INVALID_PRODUCT', '未知产品')
   }
+
+  const resolved = resolveIssueDays(event, product.days)
+  if (resolved.error) return resolved.error
+  const days = resolved.days
 
   let count = Number(event && event.count)
   if (!Number.isFinite(count) || count < 1) count = 1
@@ -1087,7 +1126,7 @@ async function issueCodes(openid, event) {
         await db.collection('redeemCodes').doc(hash).set({
           data: {
             product: product.id,
-            days: product.days,
+            days,
             planId: product.planId,
             status: 'unused',
             usedByFamilyId: null,
@@ -1111,7 +1150,7 @@ async function issueCodes(openid, event) {
 
   return ok({
     product: product.id,
-    days: product.days,
+    days,
     planId: product.planId,
     count: codes.length,
     codes
