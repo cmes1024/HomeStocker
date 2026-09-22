@@ -1,9 +1,56 @@
-const { matchSpace, resolveTagIds } = require('../agent/treeMatch')
+const { matchSpace, resolveTagIds, placeLabel } = require('../agent/treeMatch')
 const { lookupRef } = require('../agent/refs')
 const { markTreeDirty } = require('../familyTree')
 const { ensureLocation } = require('./helpers')
 
 const id = 'item.update'
+
+function fmtQty(q, unit) {
+  if (q == null || q === '') return ''
+  return `${q}${unit || ''}`
+}
+
+function buildUpdateSummary(row, call) {
+  const name = String((row && row.name) || '物资').trim() || '物资'
+  const place = placeLabel(row.spaceName, row.locationName)
+  const beforeQ = row.quantity
+  const afterQ = call.quantity !== undefined ? call.quantity : row.quantity
+  const beforeU = row.unit || ''
+  const afterU = call.unit !== undefined ? call.unit || '' : beforeU
+  const parts = []
+
+  if (call.quantity !== undefined) {
+    const before = fmtQty(beforeQ, beforeU)
+    const after = fmtQty(afterQ, afterU)
+    if (before && after && String(beforeQ) !== String(afterQ)) {
+      parts.push(`${before}→${after}`)
+    } else if (after) {
+      parts.push(`数量 ${after}`)
+    }
+  }
+  if (call.name !== undefined && String(call.name).trim() !== name) {
+    parts.push(`改名「${String(call.name).trim()}」`)
+  }
+  if (call.spaceName || call.locationName) {
+    const to = placeLabel(
+      call.spaceName || row.spaceName,
+      call.locationName !== undefined ? call.locationName : row.locationName
+    )
+    if (to) parts.push(`挪到 ${to}`)
+  }
+  if (call.expireDate !== undefined) {
+    parts.push(call.expireDate ? `过期 ${call.expireDate}` : '清除过期日')
+  }
+  if (call.note !== undefined && String(call.note) !== String(row.note || '')) {
+    parts.push('备注已更新')
+  }
+  if (Array.isArray(call.tagNames)) {
+    parts.push('标签已更新')
+  }
+
+  const detail = parts.length ? parts.join('，') : '已更新'
+  return `已改 ${name}${place ? `（${place}）` : ''}：${detail}`
+}
 
 async function run(ctx, call, step) {
   const { writers, openid, tree, refs, catalogMap, familyCtx } = ctx
@@ -67,7 +114,7 @@ async function run(ctx, call, step) {
   }
   return {
     ok: true,
-    summary: `已修改 ${row.name}`,
+    summary: buildUpdateSummary(row, call),
     wrote: true,
     remember: {
       itemId: row.itemId,
@@ -79,4 +126,4 @@ async function run(ctx, call, step) {
   }
 }
 
-module.exports = { id, run }
+module.exports = { id, run, buildUpdateSummary }

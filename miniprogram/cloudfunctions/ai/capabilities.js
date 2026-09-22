@@ -1,5 +1,5 @@
-const CAPABILITY_ID = 'assist-act-v2'
-const CAPABILITY_VERSION = 16
+const CAPABILITY_ID = 'assist-act-v3'
+const CAPABILITY_VERSION = 18
 
 const HARD_DENY = {
   'family.create': true,
@@ -44,7 +44,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '写成一条新物资。单件用这个。'
+      hint: '新开一条台账。仅当家里还没有这件、要新记时用；不要用来给已有库存「加数量」。'
     },
     {
       id: 'item.createMany',
@@ -53,7 +53,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'items[{ name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note? }]',
-      hint: '一次记下多条新物资（2～20 件）。同一次要记两件及以上时优先用这个。'
+      hint: '一次新开多条台账（2～20）。同一次要新记两件及以上时优先用。不要用来给已有行「各加 N」。'
     },
     {
       id: 'item.update',
@@ -62,7 +62,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'ref, name?, quantity?, unit?, spaceName?, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '改已有物资的名称、数量、位置或日期。quantity 为改成后的绝对值。用本轮 FOCUS/PROBE 的 ref（单数，如 P1）；spaceName/locationName 是改到哪，不是用来找物品。'
+      hint: '改已有物资的名称、数量、位置或日期。quantity 为改成后的绝对值（加/减须先有本轮 FOCUS/PROBE 当前量再算）。用本轮 F*/P* 短号；spaceName/locationName 是改到哪，不是用来找物品。'
     },
     {
       id: 'item.remove',

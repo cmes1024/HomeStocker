@@ -93,6 +93,21 @@ function buildDuplicateCards(possibleDuplicates) {
   })
 }
 
+/** 把「已改 大米（厨房）：4→5」拆成标题+副标题，卡片更好扫 */
+function actionCardFromSummary(summary, tone) {
+  const text = String(summary || '').trim()
+  if (!text) return null
+  const m = /^(已改|已记下|已删掉|已修改)\s+(.+?)：(.+)$/.exec(text)
+  if (m) {
+    return {
+      title: `${m[1]} ${m[2]}`.trim(),
+      subtitle: m[3].trim(),
+      tone: tone || 'ok'
+    }
+  }
+  return { title: text, tone: tone || 'ok' }
+}
+
 /**
  * 执行结果 → lead + blocks。
  * executed 项可带 inventory[]（查库）；否则用 summary 做动作卡。
@@ -142,13 +157,15 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
       return
     }
     if (row && row.summary) {
-      actionCards.push({ title: String(row.summary), tone: 'ok' })
+      const card = actionCardFromSummary(row.summary, 'ok')
+      if (card) actionCards.push(card)
     }
   })
 
   fail.forEach((row) => {
     if (row && row.summary) {
-      actionCards.push({ title: String(row.summary), tone: 'error' })
+      const card = actionCardFromSummary(row.summary, 'error')
+      if (card) actionCards.push(card)
     }
   })
 
@@ -173,7 +190,10 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
   if (inventoryLines.length) {
     inventoryLines.forEach((l) => lines.push(l))
   }
-  actionCards.forEach((c) => lines.push(c.title))
+  actionCards.forEach((c) => {
+    const line = c.subtitle ? `${c.title}：${c.subtitle}` : c.title
+    if (line) lines.push(line)
+  })
   if (dups.length) {
     lines.push(
       '可能重复（未合并）：' +
@@ -217,6 +237,7 @@ module.exports = {
   buildInventoryPresentation,
   formatSearchReport,
   buildDuplicateCards,
+  actionCardFromSummary,
   buildExecutionPresentation,
   attachPresentation,
   textOnlyPresentation

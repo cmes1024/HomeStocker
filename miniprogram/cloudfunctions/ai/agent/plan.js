@@ -79,7 +79,7 @@ function parsePlan(text) {
   const ask = normalizeAsk(parsed.ask)
   const probe = normalizeProbe(parsed.probe)
   const calls = Array.isArray(parsed.calls)
-    ? parsed.calls.filter((c) => c && typeof c === 'object')
+    ? parsed.calls.filter((c) => c && typeof c === 'object').slice(0, 20)
     : []
   let reply = normalizeReply(parsed.reply || parsed.answer || parsed.message)
   // ask / calls 优先：有澄清或要执行时丢掉 reply，避免双通道
@@ -116,6 +116,62 @@ function draftFromCalls(calls) {
   }
 }
 
+/** 探查行 → 人话芯片（下一轮不依赖已失效的 P*） */
+function probeOptionLabel(row) {
+  if (!row) return ''
+  const qty = `${row.quantity == null ? '' : row.quantity}${row.unit || ''}`
+  const place = [row.spaceName, row.locationName].filter(Boolean).join('/')
+  return [row.name, qty, place].filter(Boolean).join(' · ')
+}
+
+function optionsFromProbeRows(rows) {
+  const opts = []
+  const seen = {}
+  ;(rows || []).forEach((row) => {
+    const label = probeOptionLabel(row)
+    if (!label || seen[label]) return
+    seen[label] = true
+    const choice = optionChoice(label, label)
+    if (choice) opts.push(choice)
+  })
+  if (opts.length >= 2) {
+    const all = optionChoice('相关记录都改', '相关记录都改')
+    if (all) opts.push(all)
+  }
+  return opts
+}
+
+function askOptionsNeedEnrichment(options) {
+  const opts = options || []
+  if (opts.length < 2) return true
+  if (opts.length === 1) {
+    const t = String((opts[0] && opts[0].label) || '')
+    if (/P\d+/i.test(t) && /和|;|；/.test(t)) return true
+  }
+  if (
+    opts.every((o) => /^[FPR]\d+$/i.test(String((o && o.label) || '').trim()))
+  ) {
+    return true
+  }
+  return false
+}
+
+/**
+ * 探查后 ask：若模型没给可用芯片（或整段候选塞进一个 option），用本轮探查行生成可读选项。
+ * 硬 enrichment，不是 NL→接口路由。
+ */
+function enrichAskOptionsFromProbe(ask, probedRows) {
+  const rows = probedRows || []
+  if (!ask || !ask.length || rows.length < 2) return ask
+  const chips = optionsFromProbeRows(rows)
+  if (chips.length < 2) return ask
+  return ask.map((item, idx) => {
+    if (!item || idx > 0) return item
+    if (!askOptionsNeedEnrichment(item.options)) return item
+    return { ...item, options: chips }
+  })
+}
+
 module.exports = {
   optionChoice,
   normalizeAsk,
@@ -123,5 +179,9 @@ module.exports = {
   normalizeReply,
   coerceBoundaryReplyToAsk,
   parsePlan,
-  draftFromCalls
+  draftFromCalls,
+  probeOptionLabel,
+  optionsFromProbeRows,
+  askOptionsNeedEnrichment,
+  enrichAskOptionsFromProbe
 }

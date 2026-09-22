@@ -1,3 +1,7 @@
+/**
+ * ai.act 主循环（V3）：有限拍数模型↔tool，无 NL 关键词意图路由，无跨轮 recent 袋。
+ * 问题不清 → ask；数据不清 → probe/search；写仅白名单 + 确认闸门。
+ */
 const createItemService = require('../itemService')
 const createLocationWriter = require('../locationWrite')
 const createSpaceWriter = require('../spaceWrite')
@@ -15,7 +19,15 @@ const {
 const { askModel, fillAssistPrompt, renderProbe, renderExecReceipt, ASSIST_PROMPT_V2 } = require('./model')
 const { loadRecentItems, runProbe } = require('./itemsQuery')
 const { publicRecentItems, mergeRecentTouchedFirst, bindCallIds, lookupRef, compactItem } = require('./refs')
-const { draftFromCalls } = require('./plan')
+const { draftFromCalls, enrichAskOptionsFromProbe } = require('./plan')
+const {
+  parseLatestQtyChangeReceipts,
+  formatRollbackHint,
+  rollbackAskFromReceipts,
+  probeFromReceipts,
+  completePartialReceiptRollbacks,
+  callCoversReceipt
+} = require('./receipts')
 const { attachPresentation, textOnlyPresentation, buildExecutionPresentation } = require('./presentation')
 const { runAll } = require('../tools/registry')
 const { renderTreeNames } = require('../familyTree')
@@ -77,93 +89,7 @@ function ingestInventoryToProbeRefs(executed, tree, refs) {
   return rows
 }
 
-/** 模型用 ask 软确认删除时，从问句 + 本轮 R* 直接升成硬确认，避免二轮误绑同名旧条 */
-function isSoftDeleteAsk(plan) {
-  if (!plan || !Array.isArray(plan.ask) || !plan.ask.length) return false
-  if (plan.calls && plan.calls.length) return false
-  const q = plan.ask.map((a) => String((a && a.question) || '')).join(' ')
-  if (!/删/.test(q)) return false
-  const opts = []
-  plan.ask.forEach((a) => {
-    ;(a.options || []).forEach((o) => {
-      opts.push(String((o && (o.label || o.value)) || ''))
-    })
-  })
-  if (opts.some((o) => /确认|删掉|删除|好的|可以/.test(o))) return true
-  return /确认.*删|要删掉|删掉吗/.test(q)
-}
-
-function pickItemsForDeleteAsk(question, sessionRecent) {
-  const recent = (sessionRecent || []).filter((r) => r && r.itemId)
-  if (recent.length < 2) return []
-  const q = String(question || '')
-  const ordered = recent.slice().sort((a, b) => {
-    const ra = /^R(\d+)$/i.exec(String(a.ref || ''))
-    const rb = /^R(\d+)$/i.exec(String(b.ref || ''))
-    if (ra && rb) return Number(ra[1]) - Number(rb[1])
-    if (ra) return -1
-    if (rb) return 1
-    return 0
-  })
-
-  // 问句里出现的品名：每个名字只取一条，优先本轮新开(create)，其次 R*
-  const nameCandidates = []
-  ordered.forEach((r) => {
-    const name = String(r.name || '').trim()
-    if (name && nameCandidates.indexOf(name) < 0) nameCandidates.push(name)
-  })
-  nameCandidates.sort((a, b) => b.length - a.length)
-  const namesInQ = []
-  nameCandidates.forEach((name) => {
-    if (q.indexOf(name) < 0) return
-    if (namesInQ.indexOf(name) >= 0) return
-    namesInQ.push(name)
-  })
-  namesInQ.sort((a, b) => q.indexOf(a) - q.indexOf(b))
-
-  const picks = []
-  const used = {}
-  namesInQ.forEach((name) => {
-    const hits = ordered.filter(
-      (r) => r.name === name && r.itemId && !used[r.itemId]
-    )
-    if (!hits.length) return
-    const created = hits.filter((r) => String(r.op || '') === 'create')
-    const recentHits = hits.filter((r) => /^R\d+$/i.test(String(r.ref || '')))
-    const pick = created[0] || recentHits[0] || hits[0]
-    picks.push(pick)
-    used[pick.itemId] = true
-  })
-  if (picks.length >= 2) return picks
-
-  const createdOnly = ordered.filter((r) => String(r.op || '') === 'create')
-  if (createdOnly.length >= 2 && /刚加|刚才|刚记|刚写|两[个条]|都删/.test(q)) {
-    return createdOnly.slice(0, 2)
-  }
-
-  if (/刚加|刚才|刚记|刚写|两[个条]|都删/.test(q)) {
-    return ordered.slice(0, 2)
-  }
-  return []
-}
-
-function promoteSoftDeleteAsk(plan, sessionRecent) {
-  if (!isSoftDeleteAsk(plan)) return null
-  const question = plan.ask.map((a) => String((a && a.question) || '')).join(' ')
-  const picks = pickItemsForDeleteAsk(question, sessionRecent)
-  if (picks.length < 2) return null
-  return [
-    {
-      use: 'item.removeMany',
-      refs: picks.map((p) => p.ref).filter(Boolean),
-      itemIds: picks.map((p) => p.itemId),
-      names: picks.map((p) => p.name || ''),
-      name: picks[0].name || ''
-    }
-  ]
-}
-
-/** 改/删缺短号时，若 call 已带 name 则先探查（不按话术正则猜意图） */
+/** 改/删缺短号时先探查（有 name 按名；仅失效短号则扫库重绑——不按话术正则猜意图） */
 function ensureProbeForUnresolvedWrites(plan, refs) {
   if (!plan || plan.probe || (plan.ask && plan.ask.length)) return plan
   const calls = plan.calls || []
@@ -185,6 +111,9 @@ function ensureProbeForUnresolvedWrites(plan, refs) {
         }
         return plan
       }
+      // 澄清轮常带回上轮 P*，本轮 refs 已空 → 扫库后交给模型重绑
+      plan.probe = { listAll: true }
+      return plan
     }
     if (use === 'item.merge' || use === 'item.removeMany') {
       const refList = Array.isArray(call.refs) ? call.refs : call.ref ? [call.ref] : []
@@ -198,13 +127,51 @@ function ensureProbeForUnresolvedWrites(plan, refs) {
           plan.probe = { name }
           return plan
         }
+        plan.probe = { listAll: true }
+        return plan
       }
     }
   }
   return plan
 }
 
-/** 探查后模型仍漏短号时，唯一命中则自动绑上 */
+/** 执行前：改/删是否仍对不准本轮短号 */
+function hasUnresolvedItemWrites(plan, refs) {
+  const calls = (plan && plan.calls) || []
+  for (let i = 0; i < calls.length; i++) {
+    const call = calls[i] || {}
+    const use = String(call.use || '').trim()
+    if (use === 'item.update' || use === 'item.remove') {
+      if (!lookupRef(call, refs)) return true
+      continue
+    }
+    if (use === 'item.merge' || use === 'item.removeMany') {
+      const bound = bindCallIds([call], refs)[0] || call
+      const ids = Array.isArray(bound.itemIds)
+        ? bound.itemIds.filter(Boolean)
+        : []
+      const need = use === 'item.merge' ? 2 : 1
+      if (ids.length < need) return true
+    }
+  }
+  return false
+}
+
+function buildAskResponse(ask, focus, sessionRecent, probedRows) {
+  return ok({
+    status: 'ask',
+    ask: enrichAskOptionsFromProbe(ask, probedRows || []),
+    probe: null,
+    calls: [],
+    draft: draftFromCalls([]),
+    focus: focusPublic(focus),
+    recentItems: publicRecentItems(sessionRecent),
+    removedItemIds: [],
+    wrote: false
+  })
+}
+
+/** 探查后模型仍漏短号时，唯一命中则自动绑上；同名多条时优先数量对得上的 */
 function bindUnresolvedWritesToProbe(plan, refs, probedRows) {
   const rows = probedRows || []
   if (!plan || !rows.length) return plan
@@ -217,7 +184,21 @@ function bindUnresolvedWritesToProbe(plan, refs, probedRows) {
     let hit = null
     if (name) {
       const matches = rows.filter((row) => row && row.name === name)
-      if (matches.length === 1) hit = matches[0]
+      if (matches.length === 1) {
+        hit = matches[0]
+      } else if (matches.length > 1 && call.quantity !== undefined) {
+        // 回滚常见：目标数量是箭头前；当前库存常等于箭头后——用当前量贴近 after 的由 complete 补；
+        // 这里若模型带了 name+quantity 仍无 ref，优先唯一空间，否则不瞎绑
+        const spaces = []
+        matches.forEach((row) => {
+          const s = row.spaceName || ''
+          if (spaces.indexOf(s) < 0) spaces.push(s)
+        })
+        if (spaces.length === 1) {
+          const same = matches.filter((row) => row.spaceName === spaces[0])
+          if (same.length === 1) hit = same[0]
+        }
+      }
     } else if (rows.length === 1) {
       hit = rows[0]
     }
@@ -623,22 +604,7 @@ async function act(env, openid, event) {
   }
 
   if (plan.ask.length) {
-    const promoted = promoteSoftDeleteAsk(plan, sessionRecent)
-    if (promoted) {
-      plan = { ask: [], probe: null, calls: promoted, reply: '' }
-    } else {
-      return ok({
-        status: 'ask',
-        ask: plan.ask,
-        probe: null,
-        calls: [],
-        draft: draftFromCalls(plan.calls),
-        focus: focusPublic(focus),
-        recentItems: publicRecentItems(sessionRecent),
-        removedItemIds: [],
-        wrote: false
-      })
-    }
+    return buildAskResponse(plan.ask, focus, sessionRecent, [])
   }
 
   ensureProbeForUnresolvedWrites(plan, refs)
@@ -665,43 +631,60 @@ async function act(env, openid, event) {
     bindUnresolvedWritesToProbe(plan, refs, probedRows)
 
     if (plan.ask.length) {
-      const promoted2 = promoteSoftDeleteAsk(plan, sessionRecent)
-      if (promoted2) {
-        plan = { ask: [], probe: null, calls: promoted2, reply: '' }
-      } else {
-        return ok({
-          status: 'ask',
-          ask: plan.ask,
-          probe: null,
-          calls: [],
-          draft: draftFromCalls(plan.calls),
-          focus: focusPublic(focus),
-          recentItems: publicRecentItems(sessionRecent),
-          removedItemIds: [],
-          wrote: false
-        })
+      return buildAskResponse(plan.ask, focus, sessionRecent, probedRows)
+    }
+  }
+
+  // 模型偶发空计划：若最近助手回执含「已改 A→B」，用机器摘要再探查+编排一轮（不按用户词路由）
+  if (isIdlePlan(plan)) {
+    const receipts = parseLatestQtyChangeReceipts(actCtx.history)
+    if (receipts.length) {
+      const hint = formatRollbackHint(receipts)
+      const recoverProbe = probeFromReceipts(receipts)
+      probedRows = await runProbe(db, actCtx.familyId, tree, recoverProbe, refs)
+      sessionRecent = sessionRecent.concat(probedRows)
+      const recoverVars = { ...vars, probe: renderProbe(probedRows) }
+      const recoverSystem = fillAssistPrompt(
+        promptDoc.system || ASSIST_PROMPT_V2,
+        recoverVars
+      )
+      const probeNote = probedRows.length
+        ? `探查结果：\n${renderProbe(probedRows)}`
+        : '探查结果：无匹配物资'
+      const recoverUser = `${userText}\n（系统：最近助手回报含可回写数量，禁止空计划。必须对下列每一项各写一条 item.update（少一条都不行），用本轮 PROBE 短号，数量写成箭头前：\n${hint}\n）\n${probeNote}`
+      try {
+        const recovered = await askModel(modelOpts, recoverSystem, recoverUser)
+        plan = recovered.plan
+      } catch (e) {
+        return fail(e.code || 'ACT_FAILED', e.message || '助手暂时不可用，请稍后重试')
+      }
+      plan.probe = null
+      bindUnresolvedWritesToProbe(plan, refs, probedRows)
+      completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userText)
+      if (plan.ask.length) {
+        return buildAskResponse(plan.ask, focus, sessionRecent, probedRows)
       }
     }
   }
 
-  // 模型偶发空计划：勿用「没有需要执行的操作」糊弄家人
   if (isIdlePlan(plan)) {
-    return ok({
-      status: 'ask',
-      ask: [
+    const receipts = parseLatestQtyChangeReceipts(actCtx.history)
+    const rollbackAsk = rollbackAskFromReceipts(receipts)
+    if (rollbackAsk) {
+      return buildAskResponse([rollbackAsk], focus, sessionRecent, probedRows)
+    }
+    return buildAskResponse(
+      [
         {
-          question: '这句我还没编排成具体操作。是要新记几件，还是改已有数量？说下名字和数量就行～',
+          question:
+            '这句我还没编排成具体操作。是要新记几件，还是改已有数量？说下名字和数量就行～',
           options: []
         }
       ],
-      probe: null,
-      calls: [],
-      draft: draftFromCalls([]),
-      focus: focusPublic(focus),
-      recentItems: publicRecentItems(sessionRecent),
-      removedItemIds: [],
-      wrote: false
-    })
+      focus,
+      sessionRecent,
+      probedRows
+    )
   }
 
   // Direct reply without tools
@@ -790,22 +773,7 @@ async function act(env, openid, event) {
     plan.probe = null
 
     if (plan.ask && plan.ask.length) {
-      const promotedInv = promoteSoftDeleteAsk(plan, sessionRecent)
-      if (promotedInv) {
-        plan = { ask: [], probe: null, calls: promotedInv, reply: '' }
-      } else {
-        return ok({
-          status: 'ask',
-          ask: plan.ask,
-          probe: null,
-          calls: [],
-          draft: draftFromCalls(plan.calls),
-          focus: focusPublic(focus),
-          recentItems: publicRecentItems(sessionRecent),
-          removedItemIds: [],
-          wrote: false
-        })
-      }
+      return buildAskResponse(plan.ask, focus, sessionRecent, invRows)
     }
 
     // 二轮仍只读/空：把首轮查询结果原样返回（真是查库存）
@@ -860,6 +828,25 @@ async function act(env, openid, event) {
     }
   }
 
+  // 同一条回执改了多件、计划只回滚一部分 → 探查后补全（用户只点名一件时不补）
+  {
+    const receipts = parseLatestQtyChangeReceipts(actCtx.history)
+    if (receipts.length >= 2 && plan && plan.calls && plan.calls.length) {
+      const needProbe =
+        !probedRows.length &&
+        receipts.some((r) =>
+          (plan.calls || []).some((c) => callCoversReceipt(c, r, refs))
+        )
+      if (needProbe) {
+        const recoverProbe = probeFromReceipts(receipts)
+        probedRows = await runProbe(db, actCtx.familyId, tree, recoverProbe, refs)
+        sessionRecent = sessionRecent.concat(probedRows)
+      }
+      completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userText)
+      bindUnresolvedWritesToProbe(plan, refs, probedRows)
+    }
+  }
+
   const confirmCalls = needsConfirm(plan.calls, catalogMap)
   if (confirmCalls.length && !confirmed) {
     const boundPreview = bindCallIds(plan.calls, refs)
@@ -871,24 +858,35 @@ async function act(env, openid, event) {
       return ids.length < 2
     })
     if (unresolvedMulti) {
-      return ok({
-        status: 'ask',
-        ask: [
+      return buildAskResponse(
+        [
           {
-            question: '还没法对准要处理的那几条，请再说一下具体是哪几件（或先让我查一下）',
+            question:
+              '还没法对准要处理的那几条，请再说一下具体是哪几件（或先让我查一下）',
             options: []
           }
         ],
-        probe: null,
-        calls: [],
-        draft: draftFromCalls([]),
-        focus: focusPublic(focus),
-        recentItems: publicRecentItems(sessionRecent),
-        removedItemIds: [],
-        wrote: false
-      })
+        focus,
+        sessionRecent,
+        probedRows
+      )
     }
     return ok(buildConfirmPayload(plan.calls, confirmCalls, refs, focus, sessionRecent))
+  }
+
+  // 仍对不准本轮短号：勿执行后甩「没法确定」，再问一次并带上探查芯片
+  if (hasUnresolvedItemWrites(plan, refs)) {
+    return buildAskResponse(
+      [
+        {
+          question: '还没法对准要改的那几条，请点一条或说下名称和现在数量～',
+          options: []
+        }
+      ],
+      focus,
+      sessionRecent,
+      probedRows.length ? probedRows : sessionRecent
+    )
   }
 
   const report = await executePlanCalls(

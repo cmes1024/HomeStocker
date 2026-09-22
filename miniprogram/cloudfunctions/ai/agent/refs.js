@@ -27,7 +27,16 @@ function renderFocus(row) {
   const place = [row.spaceName, row.locationName].filter(Boolean).join(' / ')
   const qty = `${row.quantity == null ? '' : row.quantity}${row.unit || ''}`
   const expire = row.expireDate ? ` · 过期 ${row.expireDate}` : ''
-  return `[${row.ref}] ${row.name} ${qty}${place ? ` · ${place}` : ''}${expire}`
+  let touch = ''
+  const op = String(row.op || '').trim()
+  if (op === 'update' && row.quantityBefore != null && row.quantityAfter != null) {
+    touch = ` · 本轮 ${row.quantityBefore}→${row.quantityAfter}`
+  } else if (op === 'create') {
+    touch = ' · 本轮新开'
+  } else if (op === 'update') {
+    touch = ' · 本轮改过'
+  }
+  return `[${row.ref}] ${row.name} ${qty}${place ? ` · ${place}` : ''}${expire}${touch}`
 }
 
 function renderFocusList(rows) {

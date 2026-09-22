@@ -1,7 +1,7 @@
 # HomeStocker — Agent 指南
 
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
-**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、搜索；AI 助手 V2（`packageAiAssist` + `ai.act`）已落地，密钥 BYOK 在 `packageAi/keys`。
+**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、搜索；家庭管家（`packageAiAssist` + `ai.act`）已落地，密钥 BYOK 在 `packageAi/keys`。**进行中：** AI 助手 V3 控制面重塑 — `openspec/changes/ai-assistant-v3/`，说明见 `docs/plans/2026-09-22-ai-assistant-v3/`。
 
 ## 权威范围
 
@@ -9,10 +9,11 @@
 - **MVP 基线决策：** `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`（范围已被后续波次超过，勿当待做清单）
 - **空间版（已落地）：** `docs/plans/2026-09-10-next-spaces-locations.md`；归档 `openspec/changes/archive/2026-09-17-family-spaces-locations/`
 - **A→B→C 路线图（已做完）：** `docs/plans/2026-09-10-next-abcd-roadmap.md`；归档 A `2026-09-17-item-detail-atmosphere-perf`、B `2026-09-11-item-tags-expiry-reminders`、C `2026-09-11-family-activity-messages`
-- **近两日已合：** 命名主题、读缓存、AI 助手 V2（归档 `2026-09-19-ai-assistant-v2` 等）、日志带地点（归档 `2026-09-17-activity-place-log-copy`）；口袋页/清单改版见 `docs/plans/2026-09-17-as-built-surfaces.md`。旧拍照录入 V1 已退役（历史见归档 `2026-09-17-package-ai-item-capture`）
+- **近两日已合：** 命名主题、读缓存、AI 助手（归档 `2026-09-19-ai-assistant-v2` 等）、日志带地点（归档 `2026-09-17-activity-place-log-copy`）；口袋页/清单改版见 `docs/plans/2026-09-17-as-built-surfaces.md`。旧拍照录入 V1 已退役（历史见归档 `2026-09-17-package-ai-item-capture`）
 - 完整 PRD / 功能清单 / 旧架构（`docs/PRD-*.md` 等）是愿景，**不是**本阶段范围；入口见 `docs/README.md`
 - 对话 Agent 设计（09-07 半屏 LangGraph，后置）：`docs/plans/2026-09-07-ai-assistant-design.md`
-- **AI 助手 V2：** `docs/plans/2026-09-17-ai-assistant-v2/`；已实施（`packageAiAssist` + `ai.act`），与 09-07 半屏对话不是同一条
+- **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
+- **AI 助手 V3（进行中）：** `docs/plans/2026-09-22-ai-assistant-v3/` + OpenSpec `openspec/changes/ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 
 ## 产品范围（已锁定）
@@ -29,7 +30,7 @@
 | 家庭消息（C） | 物资增删改写 `activities`；家庭消息流 + 详情最近操作；日志带空间/位置快照；仍硬删物资（删除留名称快照） |
 | 家庭外观 | 命名主题（主色 / 副色 / 阴影色）；全站由 AppShell 注入 CSS 变量 |
 | 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除；首页可按空间筛 |
-| AI 助手 V2 | `packageAiAssist` + `ai.act`：NL 文本 + 家庭树 + 能力表；家庭 BYOK（`packageAi/keys`）；写仍走 `item`/`space`/`tag`（`source: agent`） |
+| AI 助手 | `packageAiAssist` + `ai.act`：NL + 家庭树 + 能力表；BYOK；写走 `item`/`space`/`tag`（`source: agent`）。**V3 进行中：** history+查库、无会话操作袋，见 `docs/plans/2026-09-22-ai-assistant-v3/` |
 | 第一阶段还剩 | 用户体系（昵称/头像已落地待验收）；搜索（首页搜索栏目前只是装饰） |
 | 不做（本阶段） | 角色权限、软删除物资本体、评论/@/聊天、非物资写事件进消息、活动推送、楼层 UI、实景上传 / 3D / 看房编辑器、ES 搜索；已退役的拍照录入 V1 |
 | 后置 | 对话半屏 / LangGraph 接真库；体验向新交互（原 D 波） |
@@ -81,6 +82,7 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 - 后接 09-07 式独立 Agent：`chatProxy`（注入 OPENID）→ Agent 服务 → tool 映射云函数 action（与 V2 不是同一刀）
 - 仓库内已有 `agent/`（LangGraph 雏形 + MockBackend）；接真库时应对齐上述云函数，不要平行造第二套领域模型
 - 对话查询优先 `item.search` 结构化检索，不默认上 RAG
+- **严禁自然语言意图关键词路由（硬禁）：** 禁止用正则 / 固定话术表，把用户句子或芯片文案映射成「必须走某条接口 / 旁路拼 calls / 改写计划」。意图、该增该减该删、确认后怎么执行，一律由模型根据上下文（FOCUS/R*/PROBE、history、`quantityBefore` 等机器事实）编排。允许：短号解析、白名单校验、确认闸门、空计划兜底、执行回执——**不是**「匹配到『各减一个』就自动 update」。客户端芯片点选只把原文/澄清句交给 `ai.act`，禁止 `if (/撤销|各减/.test(text))` 一类旁路。违规示例：`isUndoQtyAffirmChip`、`isDeleteAffirmChip`、按「刚加|刚才」升硬确认等。
 
 ## 目录速览
 
@@ -99,3 +101,4 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 3. 人↔家用 `memberships`；物资独立 `items`；空间/位置独立集合 + `familyId`；活动独立 `activities`
 4. 领域写操作做成可被 tool 调用的云函数 action，保持单一写模型
 5. 用户未要求时不要擅自 commit / push
+6. **助手相关改动禁止再加 NL 关键词路由**（见上文「严禁自然语言意图关键词路由」）；修好上下文 / 短号 / prompt，不要用正则顶意图

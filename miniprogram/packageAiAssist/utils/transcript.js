@@ -1,7 +1,8 @@
 const { getStorage, setStorage } = require('../../utils/storage')
 
 const HISTORY_LIMIT = 20
-const TEXT_MAX = 500
+/** 单轮送模型 / 落盘文本上限；须与云函数 HISTORY_TEXT_MAX 同步 */
+const TEXT_MAX = 800
 const BLOCKS_MAX = 6
 const CARDS_PER_BLOCK_MAX = 12
 const KEY_PREFIX = 'assist_transcript_'
@@ -125,11 +126,11 @@ function turnsToMessages(turns, nextId) {
   })
 }
 
-/** 只送模型短文本，不带 blocks */
+/** 只送模型短文本，不带 blocks；长度与 TEXT_MAX / 服务端 sanitize 对齐 */
 function historyFromMessages(messages) {
   return extractTurns(messages).map((row) => ({
     role: row.role,
-    text: String(row.text || '').slice(0, 200)
+    text: String(row.text || '').slice(0, TEXT_MAX)
   }))
 }
 

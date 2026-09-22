@@ -17,8 +17,9 @@
 
 ## 正在设计 / 待实施
 
-（无进行中的 AI 大刀；助手 V2 已落地。）
-
+| 项 | 读这个 |
+|----|--------|
+| AI 助手 V3（控制面：history+查库、无会话袋、禁关键词路由） | [`plans/2026-09-22-ai-assistant-v3/`](./plans/2026-09-22-ai-assistant-v3/) · OpenSpec [`../openspec/changes/ai-assistant-v3/`](../openspec/changes/ai-assistant-v3/) |
 ## 已落地方案（历史决策，不是待做清单）
 
 按时间：

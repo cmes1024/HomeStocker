@@ -23,59 +23,6 @@ function decodeOpt(value) {
   }
 }
 
-function mergeRecentIds(prev, incoming, removed) {
-  const drop = {}
-  ;(removed || []).forEach((id) => {
-    if (id) drop[id] = true
-  })
-  const out = []
-  const seen = {}
-  ;(incoming || [])
-    .concat(prev || [])
-    .forEach((id) => {
-      if (!id || seen[id] || drop[id]) return
-      seen[id] = true
-      out.push(id)
-    })
-  return out.slice(0, 6)
-}
-
-/** 保留 id+name+op，供「刚加的」删除确认区分新开 vs 改数量 */
-function mergeRecentItems(prev, incoming, removed) {
-  const drop = {}
-  ;(removed || []).forEach((id) => {
-    if (id) drop[id] = true
-  })
-  const out = []
-  const seen = {}
-  function push(row) {
-    const id = row && (row.itemId || row._id)
-    if (!id || seen[id] || drop[id]) return
-    seen[id] = true
-    const entry = {
-      itemId: id,
-      name: String((row && row.name) || '').trim()
-    }
-    const op = String((row && row.op) || '').trim()
-    if (op === 'create' || op === 'update') entry.op = op
-    if (row && row.quantityBefore != null && row.quantityBefore !== '') {
-      entry.quantityBefore = row.quantityBefore
-    }
-    if (row && row.quantityAfter != null && row.quantityAfter !== '') {
-      entry.quantityAfter = row.quantityAfter
-    }
-    out.push(entry)
-  }
-  ;(incoming || []).forEach(push)
-  ;(prev || []).forEach(push)
-  return out.slice(0, 6)
-}
-
-function isDeleteAffirmChip(text) {
-  const t = String(text || '').trim()
-  return /^(确认删除|确认删掉|删掉吧|删了吧|都删掉|全部删掉|好的?删除)$/.test(t)
-}
-
 /** 确认卡展示名与稳定 key；WXML 不能安全调用 Array.join，合并项也没有 ref */
 function normalizeConfirmList(raw) {
   return (raw || []).map((row, index) => {
@@ -115,13 +62,15 @@ function cleanDraft(draft) {
   }
 }
 
-/** 气泡文案：lead + 卡片标题，保证不依赖 blocks 渲染也能看见结果 */
+/** 气泡文案：lead + 卡片标题/副标题，保证 history 能看见数量前后 */
 function buildResultText(lead, blocks, lines, wrote) {
   const cardLines = []
   asArray(blocks).forEach((block) => {
     asArray(block && block.cards).forEach((card) => {
       const title = String((card && card.title) || '').trim()
-      if (title) cardLines.push(title)
+      const subtitle = String((card && card.subtitle) || '').trim()
+      const line = subtitle ? `${title}：${subtitle}` : title
+      if (line) cardLines.push(line)
     })
   })
   const parts = []
@@ -216,39 +165,6 @@ function helloMessage() {
   }
 }
 
-/** 口头短确认（好/可以/行…），用于软邀请后回灌原意图 */
-const SHORT_AFFIRM_RE =
-  /^(好|好的|可以|行|嗯|嗯嗯|继续|开始吧|没问题|ok|OK)[呀啊哦呗了啦。.!！～~]*$/
-
-const SOFT_INVITE_RE =
-  /好吗|好不好|可以吗|要不要|跟您核对|跟你核对|先帮|行吗|怎么样/
-
-function isShortAffirm(text) {
-  return SHORT_AFFIRM_RE.test(String(text || '').trim())
-}
-
-/**
- * 是否应把短确认回灌为「原句（确认：继续）」——对齐芯片澄清。
- * 仅在助手刚软邀请/澄清时触发，避免操作完成后道谢式的「好」误重放。
- */
-function shouldRehydrateSoftConfirm(messages, typed, originalText) {
-  const text = String(typed || '').trim()
-  const original = String(originalText || '').trim()
-  if (!isShortAffirm(text)) return false
-  if (!original || original === text || original.length <= text.length) return false
-
-  const last = [...(messages || [])]
-    .reverse()
-    .find((row) => row && row.role === 'assistant' && row.kind !== 'pending')
-  if (!last || last.kind === 'hello') return false
-  if (last.confirmList && last.confirmList.length) return false
-  if (last.subscribeItems && last.subscribeItems.length) return false
-  if (last.blocks && last.blocks.length) return false
-  if (last.retry || last.goKeys) return false
-  if (last.askList && last.askList.length) return true
-  return SOFT_INVITE_RE.test(String(last.text || ''))
-}
-
 Page({
   data: {
     copy: copy.assist,
@@ -267,8 +183,6 @@ Page({
     focusLabel: '',
     draft: null,
     messages: [],
-    recentItemIds: [],
-    recentItems: [],
     pendingCalls: [],
     scrollIntoView: '',
     composerOn: true,
@@ -422,8 +336,6 @@ Page({
       originalText: '',
       text: '',
       inputHeight: this._composerMinH || this.data.inputHeight,
-      recentItemIds: [],
-      recentItems: [],
       scrollIntoView: ''
     })
     wx.showToast({ title: copy.assist.clearedToast, icon: 'none' })
@@ -492,13 +404,7 @@ Page({
       const item = await callItem('get', { itemId })
       if (!item || !item._id) return
       this.setData({
-        focusLabel: item.name || copy.assist.focusLabel,
-        recentItemIds: mergeRecentIds(this.data.recentItemIds, [item._id], []),
-        recentItems: mergeRecentItems(
-          this.data.recentItems,
-          [{ itemId: item._id, name: item.name || '' }],
-          []
-        )
+        focusLabel: item.name || copy.assist.focusLabel
       })
     } catch (e) {
       this.setData({ focusItemId: '', focusLabel: '' })
@@ -540,17 +446,6 @@ Page({
 
   onSend(e) {
     const typed = e && e.detail && typeof e.detail.value === 'string' ? e.detail.value : undefined
-    const text = String(typed != null ? typed : this.data.text || '').trim()
-    const messages = this._messages || this.data.messages || []
-    const original = String(this.data.originalText || '').trim()
-    if (shouldRehydrateSoftConfirm(messages, text, original)) {
-      this.submit({
-        resetRound: false,
-        text,
-        actText: `${original}（确认：继续）`
-      })
-      return
-    }
     this.submit({ resetRound: true, text: typed })
   },
 
@@ -559,83 +454,8 @@ Page({
     const text = String(ds.label || ds.value || '').trim()
     if (!text || this.data.loading) return
 
-    // 删除软确认芯片：直接用本轮刚加物资出硬确认，避免二轮模型绑成两个同名旧条
-    if (isDeleteAffirmChip(text)) {
-      const askText = (() => {
-        const last = [...(this._messages || this.data.messages || [])]
-          .reverse()
-          .find((row) => row && row.role === 'assistant' && row.askList && row.askList.length)
-        if (!last) return ''
-        return (last.askList || []).map((a) => a.question || '').join(' ')
-      })()
-      const recent = this.data.recentItems || []
-      let picks = []
-      if (askText && recent.length) {
-        const nameCandidates = []
-        recent.forEach((r) => {
-          const name = String((r && r.name) || '').trim()
-          if (name && nameCandidates.indexOf(name) < 0) nameCandidates.push(name)
-        })
-        nameCandidates.sort((a, b) => b.length - a.length)
-        const namesInQ = []
-        nameCandidates.forEach((name) => {
-          if (askText.indexOf(name) < 0) return
-          if (namesInQ.indexOf(name) >= 0) return
-          namesInQ.push(name)
-        })
-        namesInQ.sort((a, b) => askText.indexOf(a) - askText.indexOf(b))
-        const used = {}
-        namesInQ.forEach((name) => {
-          const hit = recent.find(
-            (r) => r && r.name === name && r.itemId && !used[r.itemId]
-          )
-          if (!hit) return
-          picks.push(hit)
-          used[hit.itemId] = true
-        })
-      }
-      if (picks.length < 2 && recent.length >= 2) {
-        picks = recent.slice(0, 2)
-      }
-      if (picks.length >= 2) {
-        const names = picks.map((r) => r.name || '物资')
-        const itemIds = picks.map((r) => r.itemId)
-        const allUpdates = picks.every((r) => String((r && r.op) || '') === 'update')
-        const calls = [
-          {
-            use: 'item.removeMany',
-            itemIds,
-            names,
-            name: names[0]
-          }
-        ]
-        const userBubble = {
-          id: this.nextId(),
-          role: 'user',
-          kind: 'user',
-          text
-        }
-        const confirmMsg = {
-          id: this.nextId(),
-          role: 'assistant',
-          kind: 'result',
-          text: allUpdates ? copy.assist.confirmTitleUpdated : copy.assist.confirmTitle,
-          confirmHint: allUpdates ? copy.assist.confirmHintUpdated : '',
-          askList: [],
-          confirmList: normalizeConfirmList([
-            { use: 'item.removeMany', names, itemIds, name: names[0] }
-          ]),
-          confirmKind: allUpdates ? 'removeUpdated' : 'remove'
-        }
-        const messages = clearConfirmCards(this._messages || this.data.messages || [])
-          .concat([userBubble, confirmMsg])
-        this.commitMessages(messages, { pendingCalls: calls })
-        this.scrollToBottom()
-        return
-      }
-    }
-
     // 气泡只显示点选文案；act 必须带上澄清前的原句，否则只剩「厨房/冰箱」会被当成查库存
+    // 禁止按芯片文案正则猜意图 / 旁路拼 calls——意图一律交模型（见 AGENTS.md）
     const original = String(this.data.originalText || '').trim()
     const actText =
       original && original !== text ? `${original}（澄清：${text}）` : text
@@ -821,8 +641,6 @@ Page({
         focusItemId: this.data.focusItemId || '',
         confirmed: !!options.confirmed,
         history,
-        recentItemIds: this.data.recentItemIds || [],
-        recentItems: this.data.recentItems || [],
         calls: options.calls || undefined
       })
       if (data && data.wrote) {
@@ -907,16 +725,6 @@ Page({
   applyResult(data, askRound) {
     const status = data && data.status
     const draft = cleanDraft((data && data.draft) || this.data.draft)
-    const recentItemIds = mergeRecentIds(
-      this.data.recentItemIds,
-      asArray(data && data.recentItems).map((row) => row && row.itemId),
-      asArray(data && data.removedItemIds)
-    )
-    const recentItems = mergeRecentItems(
-      this.data.recentItems,
-      asArray(data && data.recentItems),
-      asArray(data && data.removedItemIds)
-    )
 
     if (status === 'ask') {
       const nextRound = askRound + 1
@@ -937,8 +745,6 @@ Page({
         {
           askRound: nextRound,
           draft,
-          recentItemIds,
-          recentItems
         }
       )
       return
@@ -972,8 +778,6 @@ Page({
         },
         {
           draft,
-          recentItemIds,
-          recentItems,
           pendingCalls: asArray(data && data.calls)
         }
       )
@@ -994,8 +798,6 @@ Page({
         {
           askRound: 0,
           draft,
-          recentItemIds,
-          recentItems,
           pendingCalls: []
         }
       )
@@ -1032,8 +834,6 @@ Page({
       {
         askRound: 0,
         draft,
-        recentItemIds,
-        recentItems,
         pendingCalls: []
       }
     )

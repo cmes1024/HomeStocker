@@ -18,6 +18,8 @@ async function ensureAssistPrompt(db) {
 }
 
 const HISTORY_LIMIT = 20
+/** 与客户端 transcript TEXT_MAX 对齐，避免服务端二次砍短导致语义断裂 */
+const HISTORY_TEXT_MAX = 800
 
 function sanitizeHistory(raw) {
   if (!Array.isArray(raw)) return []
@@ -27,10 +29,11 @@ function sanitizeHistory(raw) {
     if (!row || typeof row !== 'object') continue
     const role = row.role === 'assistant' ? 'assistant' : row.role === 'user' ? 'user' : ''
     if (!role) continue
-    const text = String(row.text || row.content || '').trim().slice(0, 200)
+    const text = String(row.text || row.content || '').trim().slice(0, HISTORY_TEXT_MAX)
     if (!text) continue
     out.push({ role, text })
   }
+  // 保留最近完整往来（优先整段尾部）
   return out.slice(-HISTORY_LIMIT)
 }
 

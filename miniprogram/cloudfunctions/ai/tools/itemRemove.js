@@ -1,3 +1,4 @@
+const { placeLabel } = require('../agent/treeMatch')
 const { lookupRef } = require('../agent/refs')
 
 const id = 'item.remove'
@@ -22,9 +23,14 @@ async function run(ctx, call, step) {
   if (!res.ok) {
     return { ok: false, summary: `第 ${step} 步失败：${row.name} — ${res.message}` }
   }
+  const qty = `${row.quantity == null ? '' : row.quantity}${row.unit || ''}`
+  const place = placeLabel(row.spaceName, row.locationName)
+  let summary = `已删掉 ${row.name || '物资'}`
+  if (qty) summary += ` ${qty}`
+  if (place) summary += `（${place}）`
   return {
     ok: true,
-    summary: `已删掉 ${row.name}`,
+    summary,
     wrote: true,
     removedItemIds: row.itemId ? [row.itemId] : []
   }
