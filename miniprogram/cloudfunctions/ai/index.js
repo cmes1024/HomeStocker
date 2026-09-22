@@ -1,5 +1,5 @@
 const cloud = require('wx-server-sdk')
-const axios = require('axios')
+const https = require('https')
 const { act } = require('./act')
 
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV })
@@ -209,10 +209,12 @@ function shanghaiToday() {
 
 function isRetryable(err) {
   if (!err) return false
-  if (err.code === 'ECONNABORTED') return true
+  if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET') {
+    return true
+  }
   const msg = String(err.message || '')
   if (/timeout/i.test(msg)) return true
-  const status = err.response && err.response.status
+  const status = err.status || (err.response && err.response.status)
   if (!status) return true
   if (status === 401 || status === 402 || status === 429) return true
   if (status >= 500) return true
@@ -223,6 +225,51 @@ function orderKeys(list) {
   const def = list.filter((k) => k.isDefault)
   const rest = list.filter((k) => !k.isDefault)
   return def.concat(rest)
+}
+
+function postJson(url, headers, bodyObj, timeoutMs) {
+  const body = JSON.stringify(bodyObj)
+  const u = new URL(url)
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      {
+        protocol: u.protocol,
+        hostname: u.hostname,
+        port: u.port || 443,
+        path: u.pathname + u.search,
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body)
+        },
+        timeout: timeoutMs
+      },
+      (res) => {
+        const chunks = []
+        res.on('data', (c) => chunks.push(c))
+        res.on('end', () => {
+          const raw = Buffer.concat(chunks).toString('utf8')
+          let data = null
+          try {
+            data = raw ? JSON.parse(raw) : null
+          } catch (e) {
+            data = raw
+          }
+          resolve({ status: res.statusCode || 0, data })
+        })
+      }
+    )
+    req.on('timeout', () => {
+      req.destroy()
+      const err = new Error('timeout')
+      err.code = 'ECONNABORTED'
+      reject(err)
+    })
+    req.on('error', reject)
+    req.write(body)
+    req.end()
+  })
 }
 
 async function callDeepSeek(apiKey, system, userText, options = {}) {
@@ -240,20 +287,22 @@ async function callDeepSeek(apiKey, system, userText, options = {}) {
   }
   if (Number(options.maxTokens) > 0) body.max_tokens = Number(options.maxTokens)
   try {
-    const res = await axios.post(
+    const res = await postJson(
       `${DEEPSEEK_BASE_URL}/chat/completions`,
+      { Authorization: `Bearer ${apiKey}` },
       body,
-      {
-        timeout,
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        }
-      }
+      timeout
     )
     const ms = Date.now() - started
     const status = (res && res.status) || 200
     console.info('deepseek try', { hint: maskKey(apiKey), status, ms })
+    if (status < 200 || status >= 300) {
+      const err = new Error(`DeepSeek HTTP ${status}`)
+      err.status = status
+      err.response = { status, data: res && res.data }
+      err.retryable = isRetryable(err)
+      throw err
+    }
     const content =
       res &&
       res.data &&
@@ -264,7 +313,7 @@ async function callDeepSeek(apiKey, system, userText, options = {}) {
     return { content, status, ms }
   } catch (err) {
     const ms = Date.now() - started
-    const status = (err.response && err.response.status) || 0
+    const status = err.status || (err.response && err.response.status) || 0
     console.info('deepseek try', { hint: maskKey(apiKey), status, ms, retryable: isRetryable(err) })
     err.retryable = isRetryable(err)
     throw err

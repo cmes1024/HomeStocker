@@ -1,6 +1,5 @@
 const { isHardDenied } = require('../capabilities')
 const { buildExecutionPresentation } = require('../agent/presentation')
-const { publicRecentItems } = require('../agent/refs')
 const { flushFamilyTreeIfDirty } = require('../familyTree')
 const { findDuplicates } = require('./helpers')
 
@@ -86,6 +85,27 @@ function compactCall(call) {
   return row
 }
 
+function compactTouched(rows) {
+  const out = []
+  const seen = {}
+  ;(rows || []).forEach((row) => {
+    const itemId = row && (row.itemId || row._id)
+    if (!itemId || seen[itemId]) return
+    seen[itemId] = true
+    const entry = { itemId, name: row.name || '' }
+    const op = String((row && row.op) || '').trim()
+    if (op) entry.op = op
+    if (row.quantityBefore != null && row.quantityBefore !== '') {
+      entry.quantityBefore = row.quantityBefore
+    }
+    if (row.quantityAfter != null && row.quantityAfter !== '') {
+      entry.quantityAfter = row.quantityAfter
+    }
+    out.push(entry)
+  })
+  return out.slice(0, 12)
+}
+
 /**
  * Run plan calls sequentially through enabled ∩ ¬hardDeny handlers.
  * Stop on first failure; keep earlier successes.
@@ -97,8 +117,7 @@ async function runAll(ctx, calls) {
   const executed = []
   const failed = []
   const pending = []
-  const recentItems = []
-  const removedItemIds = []
+  const touched = []
   const createdPlaces = []
   let wrote = false
   let subscribeItems = null
@@ -125,7 +144,7 @@ async function runAll(ctx, calls) {
     if (row.quantityAfter != null && row.quantityAfter !== '') {
       entry.quantityAfter = row.quantityAfter
     }
-    recentItems.push(entry)
+    touched.push(entry)
   }
 
   for (let i = 0; i < (calls || []).length; i++) {
@@ -177,11 +196,6 @@ async function runAll(ctx, calls) {
 
       if (result.wrote) wrote = true
       if (result.remember) remember(result.remember)
-      if (Array.isArray(result.removedItemIds)) {
-        result.removedItemIds.forEach((id) => {
-          if (id) removedItemIds.push(id)
-        })
-      }
       if (result.duplicateCheck) {
         createdPlaces.push(result.duplicateCheck)
       }
@@ -205,7 +219,6 @@ async function runAll(ctx, calls) {
     }
   }
 
-  // 结构写过：收尾从 DB 重建一次，供同轮 replan / 下一轮上下文（中途只用内存 patch）
   await flushFamilyTreeIfDirty(ctx)
 
   const possibleDuplicates = []
@@ -263,8 +276,8 @@ async function runAll(ctx, calls) {
     lines,
     lead: presentation.lead,
     blocks: presentation.blocks,
-    recentItems: publicRecentItems(recentItems),
-    removedItemIds,
+    /** 本轮刚写入摘要（仅同轮确认文案用，不回传客户端） */
+    touched: compactTouched(touched),
     wrote:
       wrote ||
       executed.some((row) =>

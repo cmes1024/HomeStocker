@@ -42,7 +42,6 @@ async function run(ctx, call, step) {
   const keptName = (res.data && res.data.name) || call.name || '物资'
   const qty = res.data && res.data.quantity
   const unit = (res.data && res.data.unit) || ''
-  const absorbed = (res.data && res.data.absorbedIds ? res.data.absorbedIds : []).filter(Boolean)
   return {
     ok: true,
     summary: `已合并为 ${keptName}${qty != null ? ` ${qty}${unit}` : ''}（${itemIds.length} 条）`,
@@ -50,8 +49,7 @@ async function run(ctx, call, step) {
     remember: {
       itemId: res.data && res.data._id,
       name: keptName
-    },
-    removedItemIds: absorbed
+    }
   }
 }
 

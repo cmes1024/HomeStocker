@@ -1,10 +1,13 @@
 {
   "name": "ai",
   "version": "1.0.0",
-  "description": "家庭 AI：DeepSeek 密钥、物资抽取、旁路挂图",
+  "description": "家庭 AI：DeepSeek 密钥 + ai.act 管家",
   "main": "index.js",
   "dependencies": {
-    "wx-server-sdk": "~2.6.3",
-    "axios": "^1.6.0"
+    "wx-server-sdk": "~2.6.3"
+  },
+  "overrides": {
+    "ts-node": "npm:empty-npm-package@1.0.0",
+    "typescript": "npm:empty-npm-package@1.0.0"
   }
 }

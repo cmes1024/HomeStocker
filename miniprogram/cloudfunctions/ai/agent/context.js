@@ -15,10 +15,10 @@ function enabledMap(catalog) {
 
 /**
  * Build product context for one act turn (after family auth).
- * V3: no client recentItems bag — FOCUS is focus only; probe fills P* later.
+ * V3: FOCUS only from focusItemId；本轮 P* 由 probe/search 灌入；无跨轮操作袋。
  */
 async function buildActContext(env, openid, event, familyCtx) {
-  const { db, cloud, shanghaiToday } = env
+  const { db, shanghaiToday } = env
   const familyId = familyCtx.familyId
 
   const [catalog, promptDoc, treeDoc, famSnap] = await Promise.all([
@@ -34,12 +34,8 @@ async function buildActContext(env, openid, event, familyCtx) {
   const catalogMap = enabledMap(catalog)
   const refs = {}
 
-  // Legacy recentItems / recentItemIds ignored as truth (V3)
-  void (event && event.recentItems)
-  void (event && event.recentItemIds)
-
   const history = sanitizeHistory(event && event.history)
-  const focus = await loadFocus(cloud, db, familyId, tree, event && event.focusItemId)
+  const focus = await loadFocus(db, familyId, tree, event && event.focusItemId)
   if (focus) refs[focus.ref] = focus
 
   const vars = {
@@ -74,8 +70,7 @@ async function buildActContext(env, openid, event, familyCtx) {
     refs,
     history,
     focus,
-    recentRows: [],
-    sessionRecent: [],
+    turnRows: [],
     vars,
     system,
     text,

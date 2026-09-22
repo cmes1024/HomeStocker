@@ -41,12 +41,12 @@ function outOfScopeAsk() {
  *
  * Returns { allow: true } or { allow: false, ask } when we should clarify
  * instead of treating a stock-claiming reply as authoritative with zero rows.
- * Spec: must not present inventory facts not from tool/focus/probe/recent.
+ * Spec: must not present inventory facts not from tool/focus/probe.
  * With zero context rows we still allow structure/chat replies (model owns wording).
  */
 function inventoryAuthorityForReply(opts) {
   // Always allow the model reply path; inventory facts are expected to come from
-  // FOCUS/PROBE/recent when the model summarizes stock. No keyword router.
+  // FOCUS/PROBE when the model summarizes stock. No keyword router.
   // When rows exist, reply may summarize them; when none, structure/chat is fine.
   void opts
   return { allow: true }

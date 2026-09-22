@@ -50,7 +50,7 @@ async function listItemsCompact(db, familyId, opts = {}) {
   return list
 }
 
-async function loadFocus(cloud, db, familyId, tree, itemId) {
+async function loadFocus(db, familyId, tree, itemId) {
   const id = String(itemId || '').trim()
   if (!id) return null
   const snap = await db.collection('items').doc(id).get().catch(() => null)
@@ -58,7 +58,8 @@ async function loadFocus(cloud, db, familyId, tree, itemId) {
   return compactItem({ _id: id, ...snap.data }, 'F1', tree)
 }
 
-async function loadRecentItems(db, familyId, tree, ids, refs, skipItemId) {
+/** 确认重放：按 itemId 灌 refs（不发短号；lookup 走 itemId） */
+async function loadItemsByIds(db, familyId, tree, ids, refs, skipItemId) {
   const unique = (ids || []).filter((id) => id && id !== skipItemId)
   if (!unique.length) return []
   const _ = db.command
@@ -71,7 +72,6 @@ async function loadRecentItems(db, familyId, tree, ids, refs, skipItemId) {
       .get()
     list = res.data || []
   } catch (e) {
-    // 降级：逐条 get（兼容极端权限/索引差异）
     const snaps = await Promise.all(
       unique.map((id) => db.collection('items').doc(id).get().catch(() => null))
     )
@@ -88,8 +88,8 @@ async function loadRecentItems(db, familyId, tree, ids, refs, skipItemId) {
   unique.forEach((id) => {
     const doc = byId[id]
     if (!doc || doc.familyId !== familyId) return
-    const row = compactItem(doc, `R${rows.length + 1}`, tree)
-    refs[row.ref] = row
+    const row = compactItem(doc, '', tree)
+    refs[`ID:${id}`] = row
     rows.push(row)
   })
   return rows
@@ -136,6 +136,6 @@ module.exports = {
   addDaysYmd,
   listItemsCompact,
   loadFocus,
-  loadRecentItems,
+  loadItemsByIds,
   runProbe
 }

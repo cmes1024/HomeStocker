@@ -31,8 +31,7 @@ async function run(ctx, call, step) {
   return {
     ok: true,
     summary,
-    wrote: true,
-    removedItemIds: row.itemId ? [row.itemId] : []
+    wrote: true
   }
 }
 

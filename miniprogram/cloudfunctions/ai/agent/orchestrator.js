@@ -17,8 +17,8 @@ const {
   inventoryAuthorityForReply
 } = require('./guardrails')
 const { askModel, fillAssistPrompt, renderProbe, renderExecReceipt, ASSIST_PROMPT_V2 } = require('./model')
-const { loadRecentItems, runProbe } = require('./itemsQuery')
-const { publicRecentItems, mergeRecentTouchedFirst, bindCallIds, lookupRef, compactItem } = require('./refs')
+const { loadItemsByIds, runProbe } = require('./itemsQuery')
+const { bindCallIds, lookupRef, compactItem } = require('./refs')
 const { draftFromCalls, enrichAskOptionsFromProbe } = require('./plan')
 const {
   parseLatestQtyChangeReceipts,
@@ -157,7 +157,7 @@ function hasUnresolvedItemWrites(plan, refs) {
   return false
 }
 
-function buildAskResponse(ask, focus, sessionRecent, probedRows) {
+function buildAskResponse(ask, focus, probedRows) {
   return ok({
     status: 'ask',
     ask: enrichAskOptionsFromProbe(ask, probedRows || []),
@@ -165,8 +165,6 @@ function buildAskResponse(ask, focus, sessionRecent, probedRows) {
     calls: [],
     draft: draftFromCalls([]),
     focus: focusPublic(focus),
-    recentItems: publicRecentItems(sessionRecent),
-    removedItemIds: [],
     wrote: false
   })
 }
@@ -258,12 +256,9 @@ function mergeCreateReports(first, second) {
     possibleDuplicates,
     (second && second.tree) || (first && first.tree)
   )
-  const recentItems = []
-    .concat((first && first.recentItems) || [])
-    .concat((second && second.recentItems) || [])
-  const removedItemIds = []
-    .concat((first && first.removedItemIds) || [])
-    .concat((second && second.removedItemIds) || [])
+  const touched = []
+    .concat((first && first.touched) || [])
+    .concat((second && second.touched) || [])
   return {
     executed,
     failed,
@@ -273,8 +268,7 @@ function mergeCreateReports(first, second) {
     lines: presentation.lines && presentation.lines.length ? presentation.lines : ['没有需要执行的操作'],
     lead: presentation.lead || (first && first.lead) || '',
     blocks: presentation.blocks || [],
-    recentItems,
-    removedItemIds,
+    touched,
     wrote: !!(first && first.wrote) || !!(second && second.wrote),
     subscribeUi: !!(second && second.subscribeUi) || !!(first && first.subscribeUi),
     subscribeItems:
@@ -316,7 +310,7 @@ function isKnowledgeOnlyReport(report) {
   return true
 }
 
-function buildDonePayload(planCalls, report, focus, sessionRecent) {
+function buildDonePayload(planCalls, report, focus) {
   return {
     status: 'done',
     ask: [],
@@ -333,8 +327,6 @@ function buildDonePayload(planCalls, report, focus, sessionRecent) {
       lines: report.lines,
       lead: report.lead,
       blocks: report.blocks,
-      recentItems: report.recentItems,
-      removedItemIds: report.removedItemIds,
       wrote: report.wrote,
       replanned: !!report.replanned
     },
@@ -342,16 +334,14 @@ function buildDonePayload(planCalls, report, focus, sessionRecent) {
     blocks: report.blocks || [],
     draft: draftFromCalls(planCalls),
     focus: focusPublic(focus),
-    recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
-    removedItemIds: report.removedItemIds || [],
     wrote: !!report.wrote
   }
 }
 
 /** 删除目标若本轮只是「改过数量」的原有物资，确认文案必须说清楚会整条删掉 */
-function removeConfirmWarnForUpdates(boundCalls, sessionRecent) {
+function removeConfirmWarnForUpdates(boundCalls, turnTouched) {
   const recentById = {}
-  ;(sessionRecent || []).forEach((row) => {
+  ;(turnTouched || []).forEach((row) => {
     if (row && row.itemId) recentById[row.itemId] = row
   })
   const ids = []
@@ -377,9 +367,9 @@ function removeConfirmWarnForUpdates(boundCalls, sessionRecent) {
   }
 }
 
-function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent) {
+function buildConfirmPayload(planCalls, confirmCalls, refs, focus, turnTouched) {
   const boundCalls = bindCallIds(planCalls, refs)
-  const removeWarn = removeConfirmWarnForUpdates(boundCalls, sessionRecent)
+  const removeWarn = removeConfirmWarnForUpdates(boundCalls, turnTouched)
   return {
     status: 'confirm',
     ask: [],
@@ -469,8 +459,6 @@ function buildConfirmPayload(planCalls, confirmCalls, refs, focus, sessionRecent
     calls: boundCalls,
     draft: draftFromCalls(boundCalls),
     focus: focusPublic(focus),
-    recentItems: publicRecentItems(sessionRecent),
-    removedItemIds: [],
     wrote: false
   }
 }
@@ -526,7 +514,7 @@ async function act(env, openid, event) {
         ids.push(s)
       })
     })
-    await loadRecentItems(db, familyResult.familyId, tree, ids, refs, null)
+    await loadItemsByIds(db, familyResult.familyId, tree, ids, refs, null)
     const report = await executePlanCalls(
       env,
       openid,
@@ -537,34 +525,7 @@ async function act(env, openid, event) {
       catalogMap,
       today.ymd
     )
-    return ok({
-      status: 'done',
-      ask: [],
-      confirm: [],
-      calls: replayCalls,
-      report: {
-        executed: (report.executed || []).map((row) => ({
-          step: row.step,
-          use: row.use,
-          summary: row.summary
-        })),
-        failed: report.failed,
-        possibleDuplicates: report.possibleDuplicates,
-        lines: report.lines,
-        lead: report.lead,
-        blocks: report.blocks,
-        recentItems: report.recentItems,
-        removedItemIds: report.removedItemIds,
-        wrote: report.wrote
-      },
-      lead: report.lead || '',
-      blocks: report.blocks || [],
-      draft: draftFromCalls(replayCalls),
-      focus: null,
-      recentItems: publicRecentItems(report.recentItems || []),
-      removedItemIds: report.removedItemIds || [],
-      wrote: !!report.wrote
-    })
+    return ok(buildDonePayload(replayCalls, report, null))
   }
 
   if (!text) return fail('INVALID_TEXT', '请输入一句话')
@@ -586,7 +547,7 @@ async function act(env, openid, event) {
     system,
     userText
   } = actCtx
-  let sessionRecent = actCtx.sessionRecent
+  let turnRows = actCtx.turnRows || []
 
   const modelOpts = {
     callDeepSeek,
@@ -604,7 +565,7 @@ async function act(env, openid, event) {
   }
 
   if (plan.ask.length) {
-    return buildAskResponse(plan.ask, focus, sessionRecent, [])
+    return buildAskResponse(plan.ask, focus, [])
   }
 
   ensureProbeForUnresolvedWrites(plan, refs)
@@ -612,7 +573,7 @@ async function act(env, openid, event) {
   let probedRows = []
   if (plan.probe) {
     probedRows = await runProbe(db, actCtx.familyId, tree, plan.probe, refs)
-    sessionRecent = sessionRecent.concat(probedRows)
+    turnRows = turnRows.concat(probedRows)
 
     const secondVars = { ...vars, probe: renderProbe(probedRows) }
     const secondSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, secondVars)
@@ -631,7 +592,7 @@ async function act(env, openid, event) {
     bindUnresolvedWritesToProbe(plan, refs, probedRows)
 
     if (plan.ask.length) {
-      return buildAskResponse(plan.ask, focus, sessionRecent, probedRows)
+      return buildAskResponse(plan.ask, focus, probedRows)
     }
   }
 
@@ -642,7 +603,7 @@ async function act(env, openid, event) {
       const hint = formatRollbackHint(receipts)
       const recoverProbe = probeFromReceipts(receipts)
       probedRows = await runProbe(db, actCtx.familyId, tree, recoverProbe, refs)
-      sessionRecent = sessionRecent.concat(probedRows)
+      turnRows = turnRows.concat(probedRows)
       const recoverVars = { ...vars, probe: renderProbe(probedRows) }
       const recoverSystem = fillAssistPrompt(
         promptDoc.system || ASSIST_PROMPT_V2,
@@ -662,7 +623,7 @@ async function act(env, openid, event) {
       bindUnresolvedWritesToProbe(plan, refs, probedRows)
       completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userText)
       if (plan.ask.length) {
-        return buildAskResponse(plan.ask, focus, sessionRecent, probedRows)
+        return buildAskResponse(plan.ask, focus, probedRows)
       }
     }
   }
@@ -671,7 +632,7 @@ async function act(env, openid, event) {
     const receipts = parseLatestQtyChangeReceipts(actCtx.history)
     const rollbackAsk = rollbackAskFromReceipts(receipts)
     if (rollbackAsk) {
-      return buildAskResponse([rollbackAsk], focus, sessionRecent, probedRows)
+      return buildAskResponse([rollbackAsk], focus, probedRows)
     }
     return buildAskResponse(
       [
@@ -682,8 +643,7 @@ async function act(env, openid, event) {
         }
       ],
       focus,
-      sessionRecent,
-      probedRows
+      probedRows.length ? probedRows : turnRows
     )
   }
 
@@ -691,7 +651,6 @@ async function act(env, openid, event) {
   if (plan.reply && !(plan.calls && plan.calls.length)) {
     inventoryAuthorityForReply({
       focus,
-      recentRows: actCtx.recentRows,
       probedRows,
       reply: plan.reply
     })
@@ -708,14 +667,10 @@ async function act(env, openid, event) {
             failed: [],
             possibleDuplicates: [],
             lines: [replyText],
-            recentItems: [],
-            removedItemIds: [],
             wrote: false
           },
           draft: draftFromCalls([]),
           focus: focusPublic(focus),
-          recentItems: publicRecentItems(sessionRecent),
-          removedItemIds: [],
           wrote: false
         },
         textOnlyPresentation(replyText)
@@ -731,8 +686,6 @@ async function act(env, openid, event) {
       calls: [],
       draft: draftFromCalls([]),
       focus: focusPublic(focus),
-      recentItems: publicRecentItems(sessionRecent),
-      removedItemIds: [],
       wrote: false
     })
   }
@@ -756,7 +709,7 @@ async function act(env, openid, event) {
       inventoryReadReport.tree || tree,
       refs
     )
-    sessionRecent = sessionRecent.concat(invRows)
+    turnRows = turnRows.concat(invRows)
 
     const invVars = { ...vars, probe: renderProbe(invRows) }
     const invSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, invVars)
@@ -773,12 +726,12 @@ async function act(env, openid, event) {
     plan.probe = null
 
     if (plan.ask && plan.ask.length) {
-      return buildAskResponse(plan.ask, focus, sessionRecent, invRows)
+      return buildAskResponse(plan.ask, focus, invRows)
     }
 
     // 二轮仍只读/空：把首轮查询结果原样返回（真是查库存）
     if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls)) {
-      return ok(buildDonePayload(readCalls, inventoryReadReport, focus, sessionRecent))
+      return ok(buildDonePayload(readCalls, inventoryReadReport, focus))
     }
 
     if (plan.reply && !(plan.calls && plan.calls.length)) {
@@ -798,14 +751,10 @@ async function act(env, openid, event) {
               failed: inventoryReadReport.failed || [],
               possibleDuplicates: [],
               lines: [plan.reply],
-              recentItems: inventoryReadReport.recentItems || [],
-              removedItemIds: [],
               wrote: false
             },
             draft: draftFromCalls([]),
             focus: focusPublic(focus),
-            recentItems: publicRecentItems(sessionRecent),
-            removedItemIds: [],
             wrote: false
           },
           textOnlyPresentation(plan.reply)
@@ -821,8 +770,6 @@ async function act(env, openid, event) {
         calls: [],
         draft: draftFromCalls([]),
         focus: focusPublic(focus),
-        recentItems: publicRecentItems(sessionRecent),
-        removedItemIds: [],
         wrote: false
       })
     }
@@ -840,7 +787,7 @@ async function act(env, openid, event) {
       if (needProbe) {
         const recoverProbe = probeFromReceipts(receipts)
         probedRows = await runProbe(db, actCtx.familyId, tree, recoverProbe, refs)
-        sessionRecent = sessionRecent.concat(probedRows)
+        turnRows = turnRows.concat(probedRows)
       }
       completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userText)
       bindUnresolvedWritesToProbe(plan, refs, probedRows)
@@ -867,11 +814,10 @@ async function act(env, openid, event) {
           }
         ],
         focus,
-        sessionRecent,
-        probedRows
+        probedRows.length ? probedRows : turnRows
       )
     }
-    return ok(buildConfirmPayload(plan.calls, confirmCalls, refs, focus, sessionRecent))
+    return ok(buildConfirmPayload(plan.calls, confirmCalls, refs, focus, turnRows))
   }
 
   // 仍对不准本轮短号：勿执行后甩「没法确定」，再问一次并带上探查芯片
@@ -884,8 +830,7 @@ async function act(env, openid, event) {
         }
       ],
       focus,
-      sessionRecent,
-      probedRows.length ? probedRows : sessionRecent
+      probedRows.length ? probedRows : turnRows
     )
   }
 
@@ -927,8 +872,6 @@ async function act(env, openid, event) {
           calls: [],
           draft: draftFromCalls(nextPlan.calls),
           focus: focusPublic(focus),
-          recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
-          removedItemIds: report.removedItemIds || [],
           wrote: !!report.wrote,
           report: {
             executed: (report.executed || []).map((row) => ({
@@ -952,8 +895,6 @@ async function act(env, openid, event) {
             calls: [],
             draft: draftFromCalls([]),
             focus: focusPublic(focus),
-            recentItems: mergeRecentTouchedFirst(report.recentItems, sessionRecent),
-            removedItemIds: report.removedItemIds || [],
             wrote: !!report.wrote
           })
         }
@@ -965,7 +906,7 @@ async function act(env, openid, event) {
               confirm2,
               refs,
               focus,
-              mergeRecentTouchedFirst(report.recentItems, sessionRecent)
+              (report.touched || []).concat(turnRows)
             )
           )
         }
@@ -1022,8 +963,6 @@ async function act(env, openid, event) {
         failed: finalReport.failed || [],
         possibleDuplicates: [],
         lines: [replyText],
-        recentItems: [],
-        removedItemIds: [],
         wrote: false
       }
       return ok(
@@ -1036,8 +975,6 @@ async function act(env, openid, event) {
             report: slimReport,
             draft: draftFromCalls(finalCalls),
             focus: focusPublic(focus),
-            recentItems: publicRecentItems(sessionRecent),
-            removedItemIds: [],
             wrote: false
           },
           textOnlyPresentation(replyText)
@@ -1070,14 +1007,10 @@ async function act(env, openid, event) {
             failed: finalReport.failed || [],
             possibleDuplicates: finalReport.possibleDuplicates || [],
             lines: textLead ? [textLead] : finalReport.lines || [],
-            recentItems: [],
-            removedItemIds: [],
             wrote: false
           },
           draft: draftFromCalls(finalCalls),
           focus: focusPublic(focus),
-          recentItems: publicRecentItems(sessionRecent),
-          removedItemIds: [],
           wrote: false
         },
         textOnlyPresentation(textLead)
@@ -1085,7 +1018,7 @@ async function act(env, openid, event) {
     )
   }
 
-  return ok(buildDonePayload(finalCalls, finalReport, focus, sessionRecent))
+  return ok(buildDonePayload(finalCalls, finalReport, focus))
 }
 
 module.exports = {

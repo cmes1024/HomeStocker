@@ -1,4 +1,4 @@
-const { lookupRef, matchNamePreferRecent } = require('../agent/refs')
+const { lookupRef, matchNamePreferTurn } = require('../agent/refs')
 
 const id = 'item.removeMany'
 const MAX_ITEMS = 20
@@ -29,7 +29,7 @@ async function run(ctx, call, step) {
       }
     }
   }
-  // 同名冲突：若模型带了更多样的 names，按名重绑（优先 R*）
+  // 同名冲突：若模型带了更多样的 names，按名重绑（优先本轮 P* / F*）
   const hintNames = Array.isArray(call.names)
     ? call.names.map((n) => String(n || '').trim()).filter(Boolean)
     : []
@@ -50,7 +50,7 @@ async function run(ctx, call, step) {
     itemIds = []
     names.length = 0
     for (let i = 0; i < hintNames.length; i++) {
-      const row = matchNamePreferRecent(hintNames[i], refs, itemIds)
+      const row = matchNamePreferTurn(hintNames[i], refs, itemIds)
       if (!row || !row.itemId) {
         return {
           ok: false,
@@ -95,8 +95,7 @@ async function run(ctx, call, step) {
   return {
     ok: true,
     summary: `已删掉 ${label}（${count} 件）`,
-    wrote: true,
-    removedItemIds: itemIds
+    wrote: true
   }
 }
 

@@ -1,5 +1,7 @@
+/** 本轮短号仅 F*（关注）/ P*（探查·查询）；无跨轮 R* 袋。 */
+
 function isShortRef(value) {
-  return /^[FPR]\d+$/i.test(String(value || '').trim())
+  return /^[FP]\d+$/i.test(String(value || '').trim())
 }
 
 function compactItem(item, ref, tree) {
@@ -43,35 +45,6 @@ function renderFocusList(rows) {
   const list = (rows || []).filter(Boolean)
   if (!list.length) return '无'
   return list.map((row) => renderFocus(row)).join('\n')
-}
-
-function publicRecentItems(rows) {
-  const out = []
-  const seen = {}
-  ;(rows || []).forEach((row) => {
-    const itemId = row && (row.itemId || row._id)
-    if (!itemId || seen[itemId]) return
-    seen[itemId] = true
-    const entry = { itemId, name: row.name || '' }
-    const op = String((row && row.op) || '').trim()
-    if (op) entry.op = op
-    if (row.quantityBefore != null && row.quantityBefore !== '') {
-      entry.quantityBefore = row.quantityBefore
-    }
-    if (row.quantityAfter != null && row.quantityAfter !== '') {
-      entry.quantityAfter = row.quantityAfter
-    }
-    out.push(entry)
-  })
-  return out.slice(0, 6)
-}
-
-/**
- * 本轮刚写入/改过的排前面 → 下一轮 R1/R2 对齐「刚加的/刚改的」。
- * 旧 session 在后；同 id 只保留先出现的。
- */
-function mergeRecentTouchedFirst(touched, session) {
-  return publicRecentItems([].concat(touched || []).concat(session || []))
 }
 
 /** 取短号：优先 ref / itemRef；模型常误写 refs:["P1"]，兼容取首项 */
@@ -126,34 +99,38 @@ function lookupRef(call, refs) {
   )
 }
 
-/** 同名多条时优先刚操作过的 R*（R1 最新） */
-function preferRecentRow(hits) {
+/** 同名多条时优先本轮 P*（探查/查询），再 F* */
+function preferTurnRow(hits) {
   const list = (hits || []).filter((r) => r && r.itemId)
   if (!list.length) return null
   if (list.length === 1) return list[0]
-  const recent = list.filter((r) => /^R\d+$/i.test(String(r.ref || '')))
-  if (!recent.length) return null
-  recent.sort((a, b) => {
-    const na = Number(String(a.ref || '').replace(/\D/g, '')) || 99
-    const nb = Number(String(b.ref || '').replace(/\D/g, '')) || 99
-    return na - nb
-  })
-  return recent[0]
+  const probe = list.filter((r) => /^P\d+$/i.test(String(r.ref || '')))
+  if (probe.length) {
+    probe.sort((a, b) => {
+      const na = Number(String(a.ref || '').replace(/\D/g, '')) || 99
+      const nb = Number(String(b.ref || '').replace(/\D/g, '')) || 99
+      return na - nb
+    })
+    return probe[0]
+  }
+  const focus = list.filter((r) => /^F\d+$/i.test(String(r.ref || '')))
+  if (focus.length) return focus[0]
+  return null
 }
 
-function matchNamePreferRecent(name, refs, usedIds) {
+function matchNamePreferTurn(name, refs, usedIds) {
   const n = String(name || '').trim()
   if (!n) return null
   const used = usedIds || []
   const hits = Object.keys(refs || {})
     .map((k) => refs[k])
     .filter((row) => row && row.name === n && row.itemId && used.indexOf(row.itemId) < 0)
-  return preferRecentRow(hits) || (hits.length === 1 ? hits[0] : null)
+  return preferTurnRow(hits) || (hits.length === 1 ? hits[0] : null)
 }
 
 /**
  * merge / removeMany：短号优先；确认展示名一律来自解析结果，不信模型 names。
- * 若模型 names 更多样，或短号绑的不是 R* 而同名存在刚操作的 R*，按名重绑并优先 R*。
+ * 若模型 names 更多样，按名重绑并优先本轮 P* / F*。
  */
 function bindMultiItemCall(call, refs) {
   const refList = Array.isArray(call.refs)
@@ -174,9 +151,9 @@ function bindMultiItemCall(call, refs) {
     names.push(row.name || '')
   }
 
-  function isRecentId(id) {
+  function isTurnId(id) {
     const row = lookupRef({ itemId: id }, refs)
-    return !!(row && /^R\d+$/i.test(String(row.ref || '')))
+    return !!(row && /^[FP]\d+$/i.test(String(row.ref || '')))
   }
 
   refList.forEach((raw) => {
@@ -205,7 +182,7 @@ function bindMultiItemCall(call, refs) {
     const altNames = []
     let complete = true
     for (let i = 0; i < hintNames.length; i++) {
-      const row = matchNamePreferRecent(hintNames[i], refs, altIds)
+      const row = matchNamePreferTurn(hintNames[i], refs, altIds)
       if (!row || !row.itemId) {
         complete = false
         break
@@ -215,9 +192,9 @@ function bindMultiItemCall(call, refs) {
     }
     if (complete && altIds.length >= 2) {
       const boundSparse = uniqueBound.length < uniqueHints.length || itemIds.length < altIds.length
-      const altMoreRecent =
-        altIds.every(isRecentId) && itemIds.length > 0 && !itemIds.every(isRecentId)
-      if (boundSparse || altMoreRecent || itemIds.length < 2) {
+      const altMoreTurn =
+        altIds.every(isTurnId) && itemIds.length > 0 && !itemIds.every(isTurnId)
+      if (boundSparse || altMoreTurn || itemIds.length < 2) {
         itemIds.length = 0
         names.length = 0
         altIds.forEach((id, idx) => {
@@ -261,9 +238,7 @@ module.exports = {
   compactItem,
   renderFocus,
   renderFocusList,
-  publicRecentItems,
-  mergeRecentTouchedFirst,
   lookupRef,
-  matchNamePreferRecent,
+  matchNamePreferTurn,
   bindCallIds
 }
