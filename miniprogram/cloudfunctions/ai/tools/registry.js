@@ -25,7 +25,8 @@ const HANDLERS = [
   require('./tagRemove'),
   require('./tagRemoveMany'),
   require('./itemExpireSubscribePanel'),
-  require('./knowledgeGet')
+  require('./knowledgeGet'),
+  require('./pageGet')
 ]
 
 const HANDLER_MAP = {}
@@ -45,9 +46,24 @@ function compactCall(call) {
   const use = String(call.use || '').trim()
   if (!use) return null
   const row = { use }
-  ;['name', 'spaceName', 'locationName', 'quantity', 'unit', 'ref', 'note', 'topicId'].forEach((k) => {
+  ;[
+    'name',
+    'spaceName',
+    'locationName',
+    'quantity',
+    'unit',
+    'ref',
+    'note',
+    'topicId',
+    'pageId',
+    'label',
+    'open'
+  ].forEach((k) => {
     if (call[k] != null && call[k] !== '') row[k] = call[k]
   })
+  if (call.query && typeof call.query === 'object' && !Array.isArray(call.query)) {
+    row.query = call.query
+  }
   if (Array.isArray(call.items) && call.items.length) {
     row.items = call.items.slice(0, 20).map((it) => {
       if (!it || typeof it !== 'object') return it
@@ -122,6 +138,7 @@ async function runAll(ctx, calls) {
   let wrote = false
   let subscribeItems = null
   let subscribeUi = false
+  const navLinks = []
   let stoppedAt = -1
 
   function remember(row) {
@@ -186,11 +203,20 @@ async function runAll(ctx, calls) {
         executedRow.inventory = result.inventory
       }
       if (result.knowledge) executedRow.knowledge = result.knowledge
+      if (result.pageDoc) executedRow.pageDoc = result.pageDoc
+      if (result.pages) executedRow.pages = result.pages
+      if (result.page) executedRow.page = result.page
       if (result.ui) executedRow.ui = result.ui
       if (result.subscribeItems) {
         executedRow.subscribeItems = result.subscribeItems
         subscribeItems = result.subscribeItems
         if (result.ui === 'subscribePanel') subscribeUi = true
+      }
+      if (result.ui === 'navLinks' && Array.isArray(result.navLinks)) {
+        executedRow.navLinks = result.navLinks
+        result.navLinks.forEach((link) => {
+          if (link && link.url) navLinks.push(link)
+        })
       }
       executed.push(executedRow)
 
@@ -259,6 +285,13 @@ async function runAll(ctx, calls) {
     }
   }
 
+  if (navLinks.length && !presentation.lead) {
+    presentation.lead =
+      navLinks.length === 1
+        ? navLinks[0].label || '可以点下面直达'
+        : '可以点下面直达相关页面'
+  }
+
   return {
     executed: executed.map((row) => ({
       step: row.step,
@@ -266,8 +299,12 @@ async function runAll(ctx, calls) {
       summary: row.summary,
       ui: row.ui,
       subscribeItems: row.subscribeItems,
+      navLinks: row.navLinks,
       inventory: row.inventory,
-      knowledge: row.knowledge
+      knowledge: row.knowledge,
+      pageDoc: row.pageDoc,
+      pages: row.pages,
+      page: row.page
     })),
     failed,
     pending,
@@ -287,6 +324,7 @@ async function runAll(ctx, calls) {
       ),
     subscribeUi,
     subscribeItems: subscribeItems || [],
+    navLinks,
     tree: ctx.tree
   }
 }

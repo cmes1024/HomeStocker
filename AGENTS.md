@@ -14,6 +14,7 @@
 - 对话 Agent 设计（09-07 半屏 LangGraph，后置）：`docs/plans/2026-09-07-ai-assistant-design.md`
 - **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
 - **AI 助手 V3（进行中）：** `docs/plans/2026-09-22-ai-assistant-v3/` + OpenSpec `openspec/changes/ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
+- **页面直达（`page.get`）：** 云函数 `ai/pages` 注册表 + 能力 `page.get`（按需拉目录/契约；`open:true` 下发 `navLinks`）；见 `openspec/changes/ai-page-nav/`
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 
 ## 产品范围（已锁定）

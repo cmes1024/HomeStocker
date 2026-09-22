@@ -363,6 +363,7 @@ const copy = {
     needEdit: '还是缺关键信息，去手填表吧',
     goEdit: '去编辑页',
     goSpaces: '去空间页',
+    navOpenFail: '打不开这个页面',
     duplicatesTitle: '可能重复（未合并）',
     focusLabel: '当前关注',
     openFail: '家庭管家暂时打不开',

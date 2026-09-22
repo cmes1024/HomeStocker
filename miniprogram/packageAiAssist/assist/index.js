@@ -62,29 +62,39 @@ function cleanDraft(draft) {
   }
 }
 
-/** 气泡文案：lead + 卡片标题/副标题，保证 history 能看见数量前后 */
+/**
+ * 气泡文案 = 下一轮 history 原文。
+ * 须带上 UI 里有语义的块标题（如「可能重复（未合并）」），不能只留卡片名；
+ * presentation.lines 一并并入，避免汇总句只进报告、不进模型。
+ */
 function buildResultText(lead, blocks, lines, wrote) {
-  const cardLines = []
+  const parts = []
+  const seen = {}
+  function push(s) {
+    const t = String(s || '').trim()
+    if (!t || seen[t]) return
+    seen[t] = true
+    parts.push(t)
+  }
+
+  push(lead)
+
   asArray(blocks).forEach((block) => {
+    const blockTitle = String((block && block.title) || '').trim()
     asArray(block && block.cards).forEach((card) => {
       const title = String((card && card.title) || '').trim()
       const subtitle = String((card && card.subtitle) || '').trim()
       const line = subtitle ? `${title}：${subtitle}` : title
-      if (line) cardLines.push(line)
+      if (!line) return
+      push(blockTitle ? `${blockTitle}：${line}` : line)
     })
   })
-  const parts = []
-  const head = String(lead || '').trim()
-  if (head) parts.push(head)
-  cardLines.forEach((line) => {
-    if (parts.indexOf(line) < 0) parts.push(line)
-  })
-  if (!parts.length) {
-    asArray(lines)
-      .map((l) => String(l || '').trim())
-      .filter(Boolean)
-      .forEach((line) => parts.push(line))
-  }
+
+  asArray(lines)
+    .map((l) => String(l || '').trim())
+    .filter(Boolean)
+    .forEach(push)
+
   if (!parts.length && wrote) return '已处理完成'
   if (!parts.length) return copy.assist.doneEmpty
   return parts.join('\n')
@@ -143,6 +153,26 @@ function pickPresentation(data) {
     (data && data.blocks) || report.blocks || []
   )
   return { lead, blocks, report }
+}
+
+/** 仅信任服务端下发的白名单 URL */
+function normalizeNavLinks(raw) {
+  const out = []
+  const seen = {}
+  ;(raw || []).forEach((link, i) => {
+    if (!link || typeof link !== 'object') return
+    const url = String(link.url || '').trim()
+    if (!url || url.indexOf('/') !== 0) return
+    if (seen[url]) return
+    seen[url] = true
+    out.push({
+      key: `nav${i}`,
+      label: String(link.label || '打开页面').trim().slice(0, 40) || '打开页面',
+      url: url.slice(0, 500),
+      pageId: String(link.pageId || '').trim().slice(0, 64)
+    })
+  })
+  return out.slice(0, 5)
 }
 
 function clearConfirmCards(messages) {
@@ -574,6 +604,19 @@ Page({
     wx.navigateTo({ url: `/pages/items/edit${qs}` })
   },
 
+  onTapNavLink(e) {
+    const ds = (e && e.currentTarget && e.currentTarget.dataset) || {}
+    const url = String(ds.url || '').trim()
+    if (!url || url.indexOf('/') !== 0) {
+      wx.showToast({ title: copy.assist.navOpenFail, icon: 'none' })
+      return
+    }
+    wx.navigateTo({
+      url,
+      fail: () => wx.showToast({ title: copy.assist.navOpenFail, icon: 'none' })
+    })
+  },
+
   async submit(options = {}) {
     if (this.data.loading || this._submitting) return
     const text = String(options.text != null ? options.text : this.data.text || '').trim()
@@ -707,6 +750,7 @@ Page({
       hasChips: false,
       blocks: [],
       subscribeItems: [],
+      navLinks: [],
       ...patch
     }
     if (!String(next.text || '').trim()) {
@@ -793,7 +837,8 @@ Page({
           blocks,
           askList: [],
           confirmList: [],
-          subscribeItems: asArray(data && data.subscribeItems)
+          subscribeItems: asArray(data && data.subscribeItems),
+          navLinks: normalizeNavLinks(data && data.navLinks)
         },
         {
           askRound: 0,
@@ -829,7 +874,8 @@ Page({
         blocks,
         askList: [],
         confirmList: [],
-        subscribeItems: []
+        subscribeItems: [],
+        navLinks: normalizeNavLinks(data && data.navLinks)
       },
       {
         askRound: 0,

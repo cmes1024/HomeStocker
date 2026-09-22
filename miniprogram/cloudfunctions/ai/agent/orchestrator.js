@@ -273,6 +273,9 @@ function mergeCreateReports(first, second) {
     subscribeUi: !!(second && second.subscribeUi) || !!(first && first.subscribeUi),
     subscribeItems:
       (second && second.subscribeItems) || (first && first.subscribeItems) || [],
+    navLinks: []
+      .concat((first && first.navLinks) || [])
+      .concat((second && second.navLinks) || []),
     tree: (second && second.tree) || (first && first.tree),
     replanned: true
   }
@@ -290,6 +293,19 @@ function collectKnowledgeBodies(report) {
   return bodies
 }
 
+function collectPageBodies(report) {
+  const bodies = []
+  ;((report && report.executed) || []).forEach((row) => {
+    if (!(row && row.use === 'page.get' && row.pageDoc && row.pageDoc.body)) return
+    if (row.ui === 'navLinks') return
+    const body = String(row.pageDoc.body || '').trim()
+    if (!body) return
+    const kind = row.pageDoc.kind === 'index' ? '页面目录' : '页面说明'
+    bodies.push(`${kind}\n${body}`)
+  })
+  return bodies
+}
+
 function knowledgeFallbackText(report) {
   const row = ((report && report.executed) || []).find(
     (r) => r && r.use === 'knowledge.get' && r.summary
@@ -297,12 +313,59 @@ function knowledgeFallbackText(report) {
   return row ? String(row.summary || '').trim() : ''
 }
 
-/** 本轮实质只有知识阅读（无写库 / 无库存列表 / 无订阅面板）→ 二次短答 */
+function pageFallbackText(report) {
+  const row = ((report && report.executed) || []).find(
+    (r) => r && r.use === 'page.get' && r.pageDoc && r.summary
+  )
+  return row ? String(row.summary || '').trim() : ''
+}
+
+function collectNavLinks(report) {
+  const out = []
+  const seen = {}
+  function push(link) {
+    if (!link || !link.url) return
+    const url = String(link.url)
+    if (seen[url]) return
+    seen[url] = true
+    out.push({
+      label: String(link.label || '打开页面').slice(0, 40),
+      url: url.slice(0, 500),
+      pageId: String(link.pageId || '').slice(0, 64)
+    })
+  }
+  ;((report && report.navLinks) || []).forEach(push)
+  ;((report && report.executed) || []).forEach((row) => {
+    if (row && Array.isArray(row.navLinks)) row.navLinks.forEach(push)
+  })
+  return out.slice(0, 5)
+}
+
+/** 本轮实质只有知识阅读（无写库 / 无库存列表 / 无订阅面板 / 无跳转）→ 二次短答 */
 function isKnowledgeOnlyReport(report) {
   if (!report) return false
   if (report.wrote || report.subscribeUi) return false
+  if (collectNavLinks(report).length) return false
   const exec = report.executed || []
   if (!exec.some((r) => r && r.use === 'knowledge.get' && r.knowledge && r.knowledge.body)) {
+    return false
+  }
+  if (exec.some((r) => r && Array.isArray(r.inventory))) return false
+  if (exec.some((r) => r && r.ui === 'subscribePanel')) return false
+  if (exec.some((r) => r && r.use === 'page.get' && r.pageDoc)) return false
+  return true
+}
+
+/** 本轮实质只有页面目录/契约拉取 → 二次编排（可 reply 或再 page.get open） */
+function isPageDocOnlyReport(report) {
+  if (!report) return false
+  if (report.wrote || report.subscribeUi) return false
+  if (collectNavLinks(report).length) return false
+  const exec = report.executed || []
+  if (!exec.some((r) => r && r.use === 'page.get' && r.pageDoc && r.pageDoc.body)) {
+    return false
+  }
+  if (exec.some((r) => r && r.use === 'knowledge.get' && r.knowledge && r.knowledge.body)) {
     return false
   }
   if (exec.some((r) => r && Array.isArray(r.inventory))) return false
@@ -311,7 +374,8 @@ function isKnowledgeOnlyReport(report) {
 }
 
 function buildDonePayload(planCalls, report, focus) {
-  return {
+  const navLinks = collectNavLinks(report)
+  const payload = {
     status: 'done',
     ask: [],
     confirm: [],
@@ -336,6 +400,8 @@ function buildDonePayload(planCalls, report, focus) {
     focus: focusPublic(focus),
     wrote: !!report.wrote
   }
+  if (navLinks.length) payload.navLinks = navLinks
+  return payload
 }
 
 /** 删除目标若本轮只是「改过数量」的原有物资，确认文案必须说清楚会整条删掉 */
@@ -980,6 +1046,77 @@ async function act(env, openid, event) {
           textOnlyPresentation(replyText)
         )
       )
+    }
+  }
+
+  // 页面目录/契约：回灌后再编排一轮（可 reply，或 page.get open 出跳转按钮）
+  if (isPageDocOnlyReport(finalReport)) {
+    const pageBodies = collectPageBodies(finalReport)
+    const pageText = pageBodies.join('\n\n')
+    const pageVars = {
+      ...vars,
+      probe: vars.probe || '无',
+      exec: '无'
+    }
+    const pageSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, pageVars)
+    const pageUser = `${userText}\n（系统已取回产品页说明。家人若要打开/去某页或问设置入口：必须再调 page.get，带 pageId 与 open:true（可加短 label）；不要只用 reply 口头指路。物资页可用本轮 ref。禁止臆造 path；禁止写台账/probe/knowledge.get。）\n页面说明：\n${pageText}`
+    try {
+      const second = await askModel(modelOpts, pageSystem, pageUser)
+      const nextPlan = second.plan || {}
+      nextPlan.probe = null
+      if (nextPlan.ask && nextPlan.ask.length) {
+        return buildAskResponse(nextPlan.ask, focus, probedRows)
+      }
+      const nextCalls = (nextPlan.calls || []).filter((c) => {
+        const use = String((c && c.use) || '').trim()
+        return use === 'page.get'
+      })
+      if (nextCalls.length) {
+        const secondReport = await executePlanCalls(
+          env,
+          openid,
+          actCtx.familyId,
+          finalReport.tree || tree,
+          nextCalls,
+          refs,
+          catalogMap,
+          today.ymd
+        )
+        finalReport = mergeCreateReports(finalReport, secondReport)
+        finalCalls = (finalCalls || []).concat(nextCalls)
+      } else {
+        const replyText =
+          String((nextPlan.reply || '').trim()) || pageFallbackText(finalReport)
+        if (replyText) {
+          return ok(
+            attachPresentation(
+              {
+                status: 'done',
+                ask: [],
+                confirm: [],
+                calls: finalCalls,
+                report: {
+                  executed: (finalReport.executed || []).map((row) => ({
+                    step: row.step,
+                    use: row.use,
+                    summary: row.summary
+                  })),
+                  failed: finalReport.failed || [],
+                  possibleDuplicates: [],
+                  lines: [replyText],
+                  wrote: false
+                },
+                draft: draftFromCalls(finalCalls),
+                focus: focusPublic(focus),
+                wrote: false
+              },
+              textOnlyPresentation(replyText)
+            )
+          )
+        }
+      }
+    } catch (e) {
+      console.warn('act page reply failed', e && e.message)
     }
   }
 

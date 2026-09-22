@@ -107,7 +107,7 @@ function clearTurns(familyId) {
   }
 }
 
-/** 冷启动恢复文字 + blocks；不恢复 confirm / chips */
+/** 冷启动恢复文字 + blocks；不恢复 confirm / chips / navLinks */
 function turnsToMessages(turns, nextId) {
   const idFn = typeof nextId === 'function' ? nextId : () => `r${Math.random()}`
   return (turns || []).map((turn) => {
@@ -121,16 +121,47 @@ function turnsToMessages(turns, nextId) {
       askList: [],
       confirmList: [],
       hasChips: false,
-      subscribeItems: []
+      subscribeItems: [],
+      navLinks: []
     }
   })
 }
 
-/** 只送模型短文本，不带 blocks；长度与 TEXT_MAX / 服务端 sanitize 对齐 */
+/**
+ * 从 blocks 补全可能偏瘦的 assistant text（旧落盘缺块标题时也能进 history）。
+ */
+function textWithBlockSignals(turn) {
+  const base = String((turn && turn.text) || '').trim()
+  const blocks = (turn && turn.blocks) || []
+  if (!blocks.length) return base
+  const extras = []
+  blocks.forEach((block) => {
+    const blockTitle = String((block && block.title) || '').trim()
+    if (!blockTitle) return
+    const cardBits = (block.cards || [])
+      .map((card) => {
+        const title = String((card && card.title) || '').trim()
+        const subtitle = String((card && card.subtitle) || '').trim()
+        if (!title) return ''
+        return subtitle ? `${title}：${subtitle}` : title
+      })
+      .filter(Boolean)
+    const line = cardBits.length ? `${blockTitle}：${cardBits.join('；')}` : blockTitle
+    if (line && base.indexOf(blockTitle) < 0) extras.push(line)
+  })
+  if (!extras.length) return base
+  return [base, ...extras].filter(Boolean).join('\n').slice(0, TEXT_MAX)
+}
+
+/**
+ * 只送模型短文本，不带 blocks 结构；语义须已摊进 text（含块标题如「可能重复」）。
+ * 对仍带 blocks 的旧落盘，用块标题回填，避免 history 丢 UI 信号。
+ * 长度与 TEXT_MAX / 服务端 sanitize 对齐。
+ */
 function historyFromMessages(messages) {
   return extractTurns(messages).map((row) => ({
     role: row.role,
-    text: String(row.text || '').slice(0, TEXT_MAX)
+    text: textWithBlockSignals(row).slice(0, TEXT_MAX)
   }))
 }
 

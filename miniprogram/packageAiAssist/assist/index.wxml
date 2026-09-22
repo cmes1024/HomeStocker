@@ -122,6 +122,17 @@
 
         <view class="text-link theme-text retry" wx:if="{{item.goSpaces}}" bind:tap="goSpaces">{{copy.goSpaces}}</view>
 
+        <view class="nav-links" wx:if="{{item.navLinks && item.navLinks.length}}">
+          <view
+            class="text-link theme-text nav-link"
+            wx:for="{{item.navLinks}}"
+            wx:for-item="nav"
+            wx:key="key"
+            data-url="{{nav.url}}"
+            bind:tap="onTapNavLink"
+          >{{nav.label}}</view>
+        </view>
+
         <view class="confirm-block" wx:if="{{item.confirmList && item.confirmList.length}}">
           <view class="confirm-hint" wx:if="{{item.confirmHint}}">{{item.confirmHint}}</view>
           <view class="confirm-hint" wx:elif="{{item.confirmKind === 'merge'}}">{{copy.confirmMergeHint}}</view>

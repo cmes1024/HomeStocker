@@ -386,6 +386,18 @@
   margin-top: 12rpx;
 }
 
+.nav-links {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.nav-link {
+  padding: 4rpx 0;
+}
+
 .msg-tail {
   height: 8rpx;
 }

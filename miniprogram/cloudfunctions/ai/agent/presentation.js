@@ -156,6 +156,14 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
       blocks.push({ cards: [card] })
       return
     }
+    if (row && row.use === 'page.get') {
+      // 目录/契约正文回灌模型；打开页只留 lead，按钮由 navLinks 渲染
+      if (row.ui === 'navLinks') {
+        if (row.summary && !inventoryLead) inventoryLead = String(row.summary)
+        return
+      }
+      if (row.pageDoc) return
+    }
     if (row && row.summary) {
       const card = actionCardFromSummary(row.summary, 'ok')
       if (card) actionCards.push(card)

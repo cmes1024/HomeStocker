@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v3'
-const CAPABILITY_VERSION = 18
+const CAPABILITY_VERSION = 20
 
 const HARD_DENY = {
   'family.create': true,
@@ -216,6 +216,15 @@ const CAPABILITY_SEED = {
       confirm: false,
       args: 'topicId',
       hint: '按知识目录的 topicId 读取一条产品说明（如 capacity=加强版/免费档上限）。问 VIP/会员/兑换/家数人数物资上限时用。一次只取一个 topic；不要编造目录外内容。'
+    },
+    {
+      id: 'page.get',
+      fn: 'ai',
+      action: 'pageGet',
+      enabled: true,
+      confirm: false,
+      args: 'pageId?, query?, open?, label?, ref?',
+      hint: '按需拉可直达产品页并出跳转按钮。无 pageId=目录；有 pageId=契约；要按钮须 open:true（如 family.tags 标签管理、ai.keys 密钥、family.messages 消息、spaces.list 空间）。家人说打开某某页/怎么改标签或密钥时优先用，不要只口头指路，也不要因此说还没学会。物资详情可用 query.ref=本轮 F*/P*。禁止臆造 path。'
     },
     {
       id: 'space.update',
