@@ -1,8 +1,8 @@
 # AI 助手 V3：上下文 + 查库（无会话操作内存）
 
 > 日期：2026-09-22  
-> 状态：**实施中**  
-> 规格与任务：[`openspec/changes/ai-assistant-v3/`](../../../openspec/changes/ai-assistant-v3/)
+> 状态：**已落地**  
+> 规格与任务：[`openspec/changes/archive/2026-09-23-ai-assistant-v3/`](../../../openspec/changes/archive/2026-09-23-ai-assistant-v3/)
 
 相对已落地的管家（`packageAiAssist` + `ai.act`）做控制面重塑，**不是**另起写库模型。
 

@@ -17,23 +17,42 @@ Assistant act MUST resolve the caller via cloud identity and current family memb
 - **WHEN** a member submits act with blank text
 - **THEN** the system does not call the model
 
+### Requirement: Act does not use client recent bags as truth
+Act MUST accept optional sanitized conversation history and optional focus item id. Act MUST NOT treat client-supplied recentItems or recentItemIds as authoritative for addressing recently discussed goods. If those legacy fields are present, the system MUST ignore them as truth for short refs and planning.
+
+#### Scenario: Follow-up works with history only
+- **WHEN** a prior turn updated goods and the next act request includes history but omits recentItems
+- **THEN** the system still invokes the model with that history and available tools so the member can ask to revert or adjust quantities
+
 ### Requirement: Follow-up turns may carry sanitized context
-Act MAY accept a client-supplied conversation history. History MUST be treated as prompt context only and MUST NOT authorize writes. The server MUST sanitize history to at most **twenty** text turns (user/assistant with non-empty text, truncating each turn’s text to a bounded length). When trimming, the server MUST prefer retaining assistant turns that contain quantity-change receipt text (before→after) over older turns without such receipts. Recently written rows for follow-up addressing MUST come from current-turn focus or probe/search rows, exposed as opaque short refs for this turn only—not from a cross-turn operation memory bag. Database document ids MUST NOT appear in the model prompt except as those opaque short refs.
+Act MAY accept a client-supplied conversation history. History MUST be treated as prompt context only and MUST NOT authorize writes. The server MUST sanitize history to at most **twenty** text turns (user/assistant with non-empty text, truncating each turn’s text to a bounded length). Within that maximum window, truncation MUST preserve semantic continuity of the most recent exchanges and MUST prefer retaining assistant turns that contain quantity-change receipt text (before→after) over older turns without such receipts. Per-turn text length limits used when building model history MUST be aligned with what the assistant surface persists. Operable short refs for a turn MUST come only from current-turn focus or probe/search rows injected for that turn. Database document ids MUST NOT appear in the model prompt except as those opaque short refs.
 
 #### Scenario: Change the milk just recorded
 - **WHEN** a member first asks to record milk in the kitchen fridge and then says to change it to three bottles
-- **THEN** the follow-up act includes the prior turns as context and can address that item via this turn’s short ref derived from probe/focus
+- **THEN** the follow-up act includes the prior turns as context and the model may probe or use focus/probe short refs from the current turn to address that item
+
+#### Scenario: History at the cap keeps the newest exchanges
+- **WHEN** the client sends more turns than the configured history maximum
+- **THEN** the model prompt keeps the most recent sanitized turns up to that maximum, excess older turns do not authorize any write, and the retained window still includes the latest member request and the latest assistant outcome needed to understand follow-ups such as undo
 
 #### Scenario: History longer than twenty is truncated
-- **WHEN** the client sends more than twenty history turns
+- **WHEN** the client sends more than twenty history turns and the configured maximum is twenty
 - **THEN** the model prompt includes at most twenty sanitized turns (preferring the most recent, and preferring qty-receipt assistant turns within that budget), and excess turns do not authorize any write
 
 #### Scenario: History longer than twenty prefers receipts
 - **WHEN** the client sends more than twenty history turns including an assistant qty-change receipt
 - **THEN** the model prompt includes at most twenty sanitized turns and still retains that receipt-bearing turn when it fits the preferential budget
 
+#### Scenario: Per-turn cap does not strand undo
+- **WHEN** the previous assistant turn reported completing quantity updates on named goods and the member asks to undo within the history window
+- **THEN** those outcome lines remain available in model history at a length sufficient to understand what was done (not stripped by a tighter server-only truncation than the surface transcript)
+
 #### Scenario: Legacy recentItems does not authorize refs
 - **WHEN** the client sends recentItemIds that are not loaded as focus or probe
+- **THEN** those ids do not appear as operable short refs solely because the client echoed them
+
+#### Scenario: Legacy recentItems does not create refs
+- **WHEN** the client sends recentItemIds
 - **THEN** those ids do not appear as operable short refs solely because the client echoed them
 
 ### Requirement: Model emits a plan not writes
@@ -132,3 +151,17 @@ When a create-class tool step fails (item/space create or createMany, or createL
 #### Scenario: No third planning round
 - **WHEN** the replan turn’s calls also fail a create-class step
 - **THEN** the system does not start another replan in the same act
+
+### Requirement: page.get bodies inject like progressive knowledge
+When an act plan executes `page.get` and returns page index or page contract text for the model, the system MAY call the model once more in the same act with that text injected as context so the assistant can reply or emit a follow-up `page.get` open step. Injected page text MUST NOT authorize domain writes by itself. The system MUST NOT invent page paths outside the registry when building that injection.
+
+#### Scenario: Fetch then answer with page facts
+- **WHEN** the first plan calls page.get for the item-edit contract and the body is returned
+- **THEN** a follow-up model turn in the same act may see that contract text and MUST still use only catalog tools for any further side effects
+
+### Requirement: Open page.get returns navLinks without writing ledger
+A successful `page.get` open that validates against the registry MUST surface `navLinks` (or equivalent UI directive) on the act response alongside the code-built report. That step MUST NOT create, update, or remove ledger documents.
+
+#### Scenario: Open does not write items
+- **WHEN** a plan only opens a registered page with valid query
+- **THEN** the response includes navLinks and no item create/update/remove occurs from that step

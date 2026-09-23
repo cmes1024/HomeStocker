@@ -14,7 +14,7 @@
 | 文档 | 关系 |
 |------|------|
 | [`../2026-09-21-capacity-membership-redeem/`](../2026-09-21-capacity-membership-redeem/) | **现行 MVP** |
-| `openspec/changes/ai-membership-redeem/` | 旧 change，勿再按「只闸 AI」实施 |
+| `openspec/changes/archive/2026-09-23-ai-membership-redeem/` | 旧 change，勿再按「只闸 AI」实施 |
 | [`方案.md`](./方案.md) | 仅作兑换/哈希/防双兑参考 |
 
 ## 从本目录仍可复用的决策

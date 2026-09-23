@@ -24,8 +24,15 @@ The catalog MUST carry a numeric version. When the deployed seed version is grea
 - **WHEN** the stored catalog version is lower than the seed shipped with the assistant
 - **THEN** the next assistant run uses the seeded catalog contents and version
 
+### Requirement: Catalog presentation stays discoverable with tools
+The capability catalog MUST remain the single enablement list shared by prompt text and the executor. Tool handlers and catalog entry ids MUST stay name-aligned so every enabled id has exactly one execution path. Scenario-oriented prompt sections MAY reference capability ids by the same ids shown in the catalog; they MUST NOT introduce shadow tool names that the executor does not implement.
+
+#### Scenario: Enabled id has one handler
+- **WHEN** the catalog lists an enabled capability id
+- **THEN** the assistant tool runtime exposes exactly one mapped handler for that id (or the id is hard-denied and never executed)
+
 ### Requirement: V2 enabled actions
-The enabled catalog MUST include item search, list expiring, create, createMany, update, remove, creating a location under an existing space, **creating a space**, **space createMany**, and **space createLocationMany**. Item remove MUST require confirmation. Disabled entries MUST NOT appear in the model-facing list.
+The enabled catalog MUST include item search, list expiring, create, createMany, update, remove, removeMany, merge when enabled, creating a location under an existing space, **creating a space**, **space createMany**, and **space createLocationMany**, plus other currently shipped enabled structure and tag actions already in production. Item remove and removeMany MUST require confirmation. Disabled entries MUST NOT appear in the model-facing list. V3 MUST NOT shrink the production-enabled set solely for cleanup; removals require an explicit catalog version decision.
 
 #### Scenario: Remove requires confirmation
 - **WHEN** a plan includes item remove and the member has not confirmed that remove
@@ -56,3 +63,10 @@ The enabled catalog entry for item search MUST hint that search uses the same ke
 #### Scenario: Search hint mentions keyword scope
 - **WHEN** item.search is enabled in the catalog
 - **THEN** its model-facing hint states keyword/name matching under optional space or location scope consistent with probe
+
+### Requirement: page.get is listed when enabled
+The enabled catalog MUST include `page.get` when the seed marks it enabled. The model-facing list MUST use the same id as the executor handler. The entry MUST hint that page docs are fetched on demand (not assumed known) and that opening a page requires registered query keys.
+
+#### Scenario: page.get appears in model list
+- **WHEN** the catalog marks page.get as enabled
+- **THEN** the model-facing capability list includes page.get with a pageId/query/open argument hint

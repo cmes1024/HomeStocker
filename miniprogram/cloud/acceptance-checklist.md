@@ -118,7 +118,7 @@ AI 另需：`collections.md`「AI 密钥与助手（控制台检查项）」—�
 
 ## 容量会员（内测兑换）
 
-对照 `docs/plans/2026-09-21-capacity-membership-redeem/` 与 `openspec/changes/capacity-membership-redeem/`。
+对照 `docs/plans/2026-09-21-capacity-membership-redeem/` 与归档 `openspec/changes/archive/2026-09-23-capacity-membership-redeem/`。
 
 ### 部署前
 

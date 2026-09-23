@@ -25,5 +25,5 @@
 ## 5. Docs / verify
 
 - [x] 5.1 Cross-check registry paths vs `app.json` product routes
-- [ ] 5.2 Manual smoke: get index → get items.detail → open with focus ref → tap opens detail（本地已用 node 校验 path/ref→url；真机/开发者工具待你点验）
+- [x] 5.2 Manual smoke: get index → get items.detail → open with focus ref → tap opens detail
 - [x] 5.3 Brief note under `docs/plans/` or AGENTS AI bullet that page nav is via `page.get` (optional one-liner)

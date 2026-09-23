@@ -24,8 +24,8 @@
 
 ## 5. Ops and verify
 
-- [ ] 5.1 控制台建集合与安全规则；配置 `ADMIN_OPENID`；部署相关云函数
-- [ ] 5.2 手测：50 件拦截 → 发码兑换放行 → 续兑延长 → 过期回落不删物资 → 解散清订阅 → 非 admin 不能发码 → 读路径无额外 entitlement 风暴
+- [x] 5.1 控制台建集合与安全规则；配置 `ADMIN_OPENID`；部署相关云函数
+- [x] 5.2 手测：50 件拦截 → 发码兑换放行 → 续兑延长 → 过期回落不删物资 → 解散清订阅 → 非 admin 不能发码 → 读路径无额外 entitlement 风暴
 
 ## 6. Free tier: 1 home / 2 seats / 50 items
 
@@ -33,4 +33,4 @@
 - [x] 6.2 `assertUserFamilyCapacity`：接入 `family.create` / `join`；无任一家有效加强版时拒第 2 家；错误码 `FAMILY_LIMIT_REACHED`
 - [x] 6.3 `assertMemberCapacity`：接入 `family.join`；免费第 3 人拒绝；错误码 `MEMBER_LIMIT_REACHED`；过限不踢人
 - [x] 6.4 `getEntitlement` / 家庭页文案：展示人数进度（可选）与三类撞限提示；更新 `collections.md` / acceptance-checklist
-- [ ] 6.5 手测补：1 家 / 2 人拦截 → 兑码后放行 → 过期回落不踢人
+- [x] 6.5 手测补：1 家 / 2 人拦截 → 兑码后放行 → 过期回落不踢人

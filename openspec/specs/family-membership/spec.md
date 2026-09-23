@@ -6,23 +6,35 @@ Enable household members to create or join a shared family via invite code, with
 
 ## Requirements
 
-### Requirement: Create family with invite code
-The system SHALL allow a user to create a family, receive a unique 6-character invite code (`A-Z0-9`), become a member, and have `currentFamilyId` set to that family. Creating MUST remain allowed when the user already belongs to other families.
+### Requirement: Create family
+Authenticated users MAY create a family when under their effective family-count limit. Creating a family MUST create the family document, a unique 6-character invite code (`A-Z0-9`), the creator’s membership, and set `currentFamilyId`. Free-plan users without any active strengthened home MUST be limited to one membership total.
 
-#### Scenario: Successful create
-- **WHEN** a user creates a family with a valid name
-- **THEN** the system creates a family document, a membership for the caller, sets the caller's `currentFamilyId`, and returns the family including `inviteCode`
+#### Scenario: First family allowed on free plan
+- **WHEN** a user with no memberships creates a family
+- **THEN** the system creates the family and membership, sets the caller's `currentFamilyId`, and returns the family including `inviteCode`
 
-#### Scenario: Create another family while already a member
-- **WHEN** a user who already has a membership creates another family
+#### Scenario: Second family rejected on free plan
+- **WHEN** a user who already has one membership and has no active capacity plan unlocking unlimited homes attempts to create another family
+- **THEN** the system denies the create with a family-limit error
+
+#### Scenario: Additional family allowed with active capacity plan
+- **WHEN** a user belongs to a family with an active unlimited familyLimit capacity plan and creates another family
 - **THEN** the system creates the new family and membership, switches `currentFamilyId` to it, and does not return `ALREADY_IN_FAMILY`
 
 ### Requirement: Join family by invite code
-The system SHALL allow a user to join an existing family by entering a valid invite code, creating a membership and setting `currentFamilyId`. Join MUST be rejected only when the caller is already a member of **that** family.
+Authenticated users MAY join a family via invite code when (1) they are under their effective family-count limit and (2) the target family is under its effective member limit. Duplicate join of the same family MUST be rejected. Join MUST increment `memberCount`.
 
-#### Scenario: Successful join
-- **WHEN** a user submits a valid invite code for a family they do not belong to
-- **THEN** the system creates a membership, increments `memberCount`, sets `currentFamilyId`, and returns the family summary
+#### Scenario: Join within free seat limit
+- **WHEN** a user with no memberships joins a free-plan family that currently has one member
+- **THEN** the system adds membership and `memberCount` becomes two
+
+#### Scenario: Reject join at free member limit
+- **WHEN** a user attempts to join a free-plan family that already has two members
+- **THEN** the system denies the join with a member-limit error and does not change memberships
+
+#### Scenario: Reject join at free family limit
+- **WHEN** a user who already has one membership and no unlimited-home unlock attempts to join another family
+- **THEN** the system denies the join with a family-limit error
 
 #### Scenario: Invalid invite code
 - **WHEN** a user submits an invite code that matches no family
@@ -55,7 +67,7 @@ The system SHALL provide an operation that returns the caller's current family s
 - **THEN** `currentFamilyId` becomes that family and subsequent reads/writes use it
 
 ### Requirement: Leave or dissolve family
-The system SHALL allow a member to leave the current family. When the owner leaves or dissolves, the system MUST clear related memberships and family-scoped data. Non-owner leave MUST decrement `memberCount`. If the leaving user still has other memberships, `currentFamilyId` MUST move to one of them; otherwise it MUST be cleared so they return to onboarding.
+The system SHALL allow a member to leave the current family. When the owner leaves or dissolves, the system MUST clear related memberships and family-scoped data, including any capacity membership subscription for that family. Non-owner leave MUST decrement `memberCount`. If the leaving user still has other memberships, `currentFamilyId` MUST move to one of them; otherwise it MUST be cleared so they return to onboarding.
 
 #### Scenario: Non-owner leaves
 - **WHEN** a non-owner member leaves the current family
@@ -63,7 +75,14 @@ The system SHALL allow a member to leave the current family. When the owner leav
 
 #### Scenario: Owner dissolves
 - **WHEN** the owner dissolves the family
-- **THEN** memberships for that family are removed, family-scoped collections are cleaned, affected users who have no other family have `currentFamilyId` cleared, and former members can create or join again
+- **THEN** memberships for that family are removed, family-scoped collections are cleaned (including capacity subscription records), affected users who have no other family have `currentFamilyId` cleared, and former members can create or join again subject to capacity limits
+
+### Requirement: Family summary includes capacity entitlement snapshot
+When a member fetches the current family summary, the system SHOULD include an entitlement snapshot, item count, and member count sufficient for the family page to render capacity status without a mandatory second round trip. Snapshot fields MUST NOT replace server-side enforcement on create/join/item create.
+
+#### Scenario: Member gets family summary with capacity fields
+- **WHEN** a member with a valid current family requests their family summary
+- **THEN** the response includes item count, member count, and capacity entitlement information for display (active or free fallback)
 
 ### Requirement: Identity from cloud context only
 Family relationship writes MUST authenticate using cloud function `OPENID` only. The system MUST NOT trust client-supplied `openid` or arbitrary `familyId` overrides for create, join, leave, switch, or get-my-family.

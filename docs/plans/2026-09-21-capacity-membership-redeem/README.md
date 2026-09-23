@@ -3,7 +3,7 @@
 > 目录：`docs/plans/2026-09-21-capacity-membership-redeem/`  
 > 日期：2026-09-21  
 > 分支：`vip`  
-> 状态：**家/人/物三项门控已合代码；待控制台部署与手测**（change：`openspec/changes/capacity-membership-redeem/`）  
+> 状态：**已落地**（归档 `openspec/changes/archive/2026-09-23-capacity-membership-redeem/`）  
 > 性质：个人主体、不接微信内购；用**兑换码**跑通「容量档」会员，摊平**云开发套餐**成本
 
 ## 怎么读
@@ -34,7 +34,7 @@
 |------|------|
 | [`../2026-09-19-ai-membership-redeem/`](../2026-09-19-ai-membership-redeem/) | **已 superseded**：兑换/绑家/发码骨架可复用，权益与闸门改容量 |
 | [`../VIP/`](../VIP/) | 愿景参考；支付闭环、多档套餐、usageLogs、空间/标签/主题闸本刀不做 |
-| `openspec/changes/ai-membership-redeem/` | 旧 change，勿再按「只闸 AI」实施；以新 change 为准 |
+| `openspec/changes/archive/2026-09-23-ai-membership-redeem/` | 旧 change，勿再按「只闸 AI」实施；以容量兑换为准 |
 | `miniprogram/cloud/collections.md` | 实施时合入集合与安全规则 |
 
 ## 核心原则

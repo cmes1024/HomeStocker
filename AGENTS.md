@@ -1,7 +1,7 @@
 # HomeStocker — Agent 指南
 
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
-**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、搜索；家庭管家（`packageAiAssist` + `ai.act`）已落地，密钥 BYOK 在 `packageAi/keys`。**进行中：** AI 助手 V3 控制面 — `openspec/changes/ai-assistant-v3/` + `docs/plans/2026-09-22-ai-assistant-v3/`；查库/history/prompt 优化已落地 — `docs/plans/2026-09-22-ai-assist-context-retrieval/`（归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/`）。
+**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。
 
 ## 权威范围
 
@@ -13,9 +13,9 @@
 - 完整 PRD / 功能清单 / 旧架构（`docs/PRD-*.md` 等）是愿景，**不是**本阶段范围；入口见 `docs/README.md`
 - 对话 Agent 设计（09-07 半屏 LangGraph，后置）：`docs/plans/2026-09-07-ai-assistant-design.md`
 - **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
-- **AI 助手 V3（进行中）：** `docs/plans/2026-09-22-ai-assistant-v3/` + OpenSpec `openspec/changes/ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
+- **AI 助手 V3（已落地）：** `docs/plans/2026-09-22-ai-assistant-v3/` + 归档 `openspec/changes/archive/2026-09-23-ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
 - **AI 助手上下文优化（已落地）：** `docs/plans/2026-09-22-ai-assist-context-retrieval/` + 归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/` — 查库召回 / history 保回执 / prompt 瘦身
-- **页面直达（`page.get`）：** 云函数 `ai/pages` 注册表 + 能力 `page.get`（按需拉目录/契约；`open:true` 下发 `navLinks`）；见 `openspec/changes/ai-page-nav/`
+- **页面直达（`page.get`，已落地）：** 云函数 `ai/pages` 注册表 + 能力 `page.get`；归档 `openspec/changes/archive/2026-09-23-ai-page-nav/`
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 
 ## 产品范围（已锁定）
@@ -32,7 +32,7 @@
 | 家庭消息（C） | 物资增删改写 `activities`；家庭消息流 + 详情最近操作；日志带空间/位置快照；仍硬删物资（删除留名称快照） |
 | 家庭外观 | 命名主题（主色 / 副色 / 阴影色）；全站由 AppShell 注入 CSS 变量 |
 | 清单交互（A） | 点击进详情；编辑/删除在详情；无长按删除；首页可按空间筛 |
-| AI 助手 | `packageAiAssist` + `ai.act`：NL + 家庭树 + 能力表；BYOK；写走 `item`/`space`/`tag`（`source: agent`）。**V3 进行中：** history+查库、无会话操作袋，见 `docs/plans/2026-09-22-ai-assistant-v3/` |
+| AI 助手 | `packageAiAssist` + `ai.act`：NL + 家庭树 + 能力表；BYOK；写走 `item`/`space`/`tag`（`source: agent`）。**V3 已落地：** history+查库、无会话操作袋，见 `docs/plans/2026-09-22-ai-assistant-v3/` |
 | 第一阶段还剩 | 用户体系（昵称/头像已落地待验收）；搜索（首页搜索栏目前只是装饰） |
 | 不做（本阶段） | 角色权限、软删除物资本体、评论/@/聊天、非物资写事件进消息、活动推送、楼层 UI、实景上传 / 3D / 看房编辑器、ES 搜索；已退役的拍照录入 V1 |
 | 后置 | 对话半屏 / LangGraph 接真库；体验向新交互（原 D 波） |

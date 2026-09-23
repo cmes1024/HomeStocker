@@ -17,9 +17,8 @@
 
 ## 正在设计 / 待实施
 
-| 项 | 读这个 |
-|----|--------|
-| AI 助手 V3（控制面：history+查库、无会话袋、禁关键词路由） | [`plans/2026-09-22-ai-assistant-v3/`](./plans/2026-09-22-ai-assistant-v3/) · OpenSpec [`../openspec/changes/ai-assistant-v3/`](../openspec/changes/ai-assistant-v3/) |
+（当前没有进行中的 OpenSpec change。）
+
 ## 已落地方案（历史决策，不是待做清单）
 
 按时间：
@@ -32,7 +31,8 @@
 6. [家庭页 / 货架清单 / 口袋 as-built](./plans/2026-09-17-as-built-surfaces.md)  
 7. [云函数读缓存](./plans/2026-09-16-cloud-call-cache/方案.md)  
 8. [AI 助手 V2](./plans/2026-09-17-ai-assistant-v2/README.md) — 已实施（`packageAiAssist` + `ai.act`）  
-9. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
+9. [AI 助手 V3](./plans/2026-09-22-ai-assistant-v3/README.md) — 已落地；归档 `2026-09-23-ai-assistant-v3`  
+10. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
 
 ## 愿景（不要当本阶段范围）
 

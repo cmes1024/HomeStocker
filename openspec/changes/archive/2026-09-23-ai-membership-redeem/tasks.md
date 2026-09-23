@@ -1,3 +1,5 @@
+> SUPERSEDED：不实施。以 `capacity-membership-redeem` 为准。归档时任务保持未勾。
+
 ## 1. Data and docs alignment
 
 - [ ] 1.1 在 `miniprogram/cloud/collections.md` 追加 `redeemCodes` / `familySubscriptions` 字段、索引、客户端 deny、换环境步骤

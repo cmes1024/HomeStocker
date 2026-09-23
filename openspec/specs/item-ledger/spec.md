@@ -14,11 +14,23 @@ Each item MUST belong to exactly one family via `familyId` and MUST include `nam
 - **THEN** the item is stored with `quantity` defaulting to 1, empty or absent note allowed, and `familyId` taken from the caller's current family
 
 ### Requirement: Members can create update and remove items
-Authenticated members of the current family SHALL create, update, and hard-delete items in that family through the item domain write API. Deletion is hard delete (no soft-delete of the item document). Activity history for deletes is a separate capability.
+Authenticated members of the current family SHALL create, update, and hard-delete items in that family through the item domain write API. Deletion is hard delete (no soft-delete of the item document). Activity history for deletes is a separate capability. Creating one or many items MUST enforce the current family’s effective item capacity limit (free plan default fifty, or active capacity subscription). The system MUST maintain a per-family item count used for that check and MUST NOT rely on listing all items on every create. Batch create MUST fail entirely when the batch would exceed remaining capacity.
 
 #### Scenario: Create item
-- **WHEN** a member of the current family creates an item with a valid name
-- **THEN** the system stores the item under that family, records `createdBy` as the caller's openid, and sets `source` to `ui` unless an Agent or AI-capture caller sets `agent`
+- **WHEN** a member of the current family creates an item with a valid name and the family is under its effective item limit
+- **THEN** the system stores the item under that family, records `createdBy` as the caller's openid, sets `source` to `ui` unless an Agent or AI-capture caller sets `agent`, and increments the family’s item count
+
+#### Scenario: Reject create at free capacity
+- **WHEN** a member without an active capacity subscription attempts to create an item that would exceed the free item limit of fifty
+- **THEN** the system denies the create with a capacity error and does not store the item
+
+#### Scenario: Create allowed with active capacity plan
+- **WHEN** a member of a family with an active capacity subscription creates an item within that plan’s limit (or unlimited)
+- **THEN** the system stores the item and increments the family’s item count
+
+#### Scenario: Batch create over remaining capacity fails entirely
+- **WHEN** a member submits a batch create whose size exceeds the family’s remaining item capacity
+- **THEN** the system rejects the whole batch and does not partially insert items
 
 #### Scenario: Update item in current family
 - **WHEN** a member updates name, quantity, and/or note of an item that belongs to their current family
@@ -30,7 +42,7 @@ Authenticated members of the current family SHALL create, update, and hard-delet
 
 #### Scenario: Hard delete
 - **WHEN** a member removes an item that belongs to their current family
-- **THEN** the item document is permanently deleted
+- **THEN** the item document is permanently deleted and the family’s item count decreases by one without going negative
 
 ### Requirement: List and get items for current family
 Members SHALL be able to list items for their current family ordered by recent update, and optionally get a single item by id when it belongs to that family. Unauthenticated or non-member users MUST NOT read that family's items.
