@@ -21,6 +21,34 @@ const HISTORY_LIMIT = 20
 /** 与客户端 transcript TEXT_MAX 对齐，避免服务端二次砍短导致语义断裂 */
 const HISTORY_TEXT_MAX = 800
 
+/** 数量回执轮（与 receipts.js / 客户端 transcript 同规则，须同步） */
+function isQtyReceiptText(text) {
+  const t = String(text || '')
+  return t.indexOf('已改') >= 0 && t.indexOf('→') >= 0
+}
+
+/**
+ * 在 limit 内优先保留含数量回执的助手轮，再按时间填满最近其它轮。
+ * 与 packageAiAssist/utils/transcript.js 保持一致。
+ */
+function truncatePreferReceipts(rows, limit) {
+  const list = rows || []
+  const max = Number(limit) > 0 ? Number(limit) : HISTORY_LIMIT
+  if (list.length <= max) return list
+  const keep = {}
+  for (let i = list.length - 1; i >= 0; i--) {
+    const row = list[i]
+    if (row && row.role === 'assistant' && isQtyReceiptText(row.text)) {
+      keep[i] = true
+      if (Object.keys(keep).length >= max) break
+    }
+  }
+  for (let i = list.length - 1; i >= 0 && Object.keys(keep).length < max; i--) {
+    keep[i] = true
+  }
+  return list.filter((_, i) => keep[i])
+}
+
 function sanitizeHistory(raw) {
   if (!Array.isArray(raw)) return []
   const out = []
@@ -33,8 +61,7 @@ function sanitizeHistory(raw) {
     if (!text) continue
     out.push({ role, text })
   }
-  // 保留最近完整往来（优先整段尾部）
-  return out.slice(-HISTORY_LIMIT)
+  return truncatePreferReceipts(out, HISTORY_LIMIT)
 }
 
 function renderHistory(rows) {
@@ -204,6 +231,8 @@ async function askModel(deps, system, userText) {
 module.exports = {
   ensureAssistPrompt,
   sanitizeHistory,
+  truncatePreferReceipts,
+  isQtyReceiptText,
   renderHistory,
   renderProbe,
   renderExecReceipt,

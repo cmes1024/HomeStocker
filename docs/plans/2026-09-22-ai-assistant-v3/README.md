@@ -23,6 +23,7 @@
 | OpenSpec `specs/*` | 行为合同 delta |
 | 画布（可选） | Cursor canvas：`ai-assistant-v3-flow` 流转图 |
 | [`../2026-09-17-ai-assistant-v2/`](../2026-09-17-ai-assistant-v2/) | 前代已落地基线；V3 在其上改控制面 |
+| [`../2026-09-22-ai-assist-context-retrieval/`](../2026-09-22-ai-assist-context-retrieval/) | **后续优化：** 查库召回 / history 保回执 / prompt 瘦身 |
 
 ## 部署
 

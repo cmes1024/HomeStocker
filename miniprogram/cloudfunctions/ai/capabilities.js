@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v3'
-const CAPABILITY_VERSION = 20
+const CAPABILITY_VERSION = 21
 
 const HARD_DENY = {
   'family.create': true,
@@ -26,7 +26,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name?, spaceName?, locationName?',
-      hint: '按名称和可选地点搜索当前家庭物资，只读。'
+      hint: '按名称关键词搜索当前家庭物资（与 probe 同一套匹配规则）；可选 spaceName/locationName 收窄范围；只读。'
     },
     {
       id: 'item.listExpiring',
@@ -62,7 +62,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'ref, name?, quantity?, unit?, spaceName?, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '改已有物资的名称、数量、位置或日期。quantity 为改成后的绝对值（加/减须先有本轮 FOCUS/PROBE 当前量再算）。用本轮 F*/P* 短号；spaceName/locationName 是改到哪，不是用来找物品。'
+      hint: '改已有物资；quantity 为改成后的绝对值。用本轮 F*/P*；spaceName/locationName 是改到哪。'
     },
     {
       id: 'item.remove',

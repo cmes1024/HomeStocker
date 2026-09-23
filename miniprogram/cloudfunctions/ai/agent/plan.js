@@ -44,10 +44,15 @@ function normalizeProbe(raw) {
   const spaceName = String(raw.spaceName || '').trim()
   const locationName = String(raw.locationName || '').trim()
   const name = String(raw.name || '').trim()
+  const names = Array.isArray(raw.names)
+    ? raw.names.map((n) => String(n || '').trim()).filter(Boolean)
+    : []
   // list:true / scope:family = 扫当前家庭物资（品类/全家问）；允许无地点
   const listAll = raw.list === true || String(raw.scope || '').trim() === 'family'
-  if (!spaceName && !locationName && !name && !listAll) return null
-  return { spaceName, locationName, name, listAll: !!listAll }
+  if (!spaceName && !locationName && !name && !names.length && !listAll) return null
+  const out = { spaceName, locationName, name, listAll: !!listAll }
+  if (names.length) out.names = names
+  return out
 }
 
 function normalizeReply(raw) {
@@ -162,9 +167,11 @@ function askOptionsNeedEnrichment(options) {
  */
 function enrichAskOptionsFromProbe(ask, probedRows) {
   const rows = probedRows || []
-  if (!ask || !ask.length || rows.length < 2) return ask
+  if (!ask || !ask.length || !rows.length) return ask
   const chips = optionsFromProbeRows(rows)
-  if (chips.length < 2) return ask
+  if (!chips.length) return ask
+  // 单条也值得给芯片；多条才带「相关记录都改」
+  if (rows.length < 2 && chips.length < 1) return ask
   return ask.map((item, idx) => {
     if (!item || idx > 0) return item
     if (!askOptionsNeedEnrichment(item.options)) return item

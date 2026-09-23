@@ -76,25 +76,39 @@ function rollbackAskFromReceipts(receipts) {
   }
 }
 
+/**
+ * 回执恢复探查：优先按物资名（+ 空间），避免无谓 listAll。
+ * 多件同名空间不同时用 names[]，由 runProbe 按关键词并集过滤。
+ */
 function probeFromReceipts(receipts) {
   const list = receipts || []
   if (!list.length) return { listAll: true }
+
+  const names = []
+  list.forEach((r) => {
+    const n = String(r.name || '').trim()
+    if (n && names.indexOf(n) < 0) names.push(n)
+  })
+  if (!names.length) return { listAll: true }
+
+  if (names.length === 1) {
+    const row = list[0] || {}
+    return {
+      name: names[0],
+      spaceName: String(row.spaceName || '').trim(),
+      locationName: String(row.locationName || '').trim()
+    }
+  }
+
   const spaces = []
   list.forEach((r) => {
     const s = String(r.spaceName || '').trim()
     if (s && spaces.indexOf(s) < 0) spaces.push(s)
   })
   if (spaces.length === 1) {
-    return { spaceName: spaces[0] }
+    return { names, spaceName: spaces[0] }
   }
-  if (list.length === 1 && list[0].name) {
-    return {
-      name: list[0].name,
-      spaceName: list[0].spaceName || '',
-      locationName: list[0].locationName || ''
-    }
-  }
-  return { listAll: true }
+  return { names }
 }
 
 function qtyEquals(a, b) {

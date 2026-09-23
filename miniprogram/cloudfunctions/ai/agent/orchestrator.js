@@ -19,7 +19,7 @@ const {
 const { askModel, fillAssistPrompt, renderProbe, renderExecReceipt, ASSIST_PROMPT_V2 } = require('./model')
 const { loadItemsByIds, runProbe } = require('./itemsQuery')
 const { bindCallIds, lookupRef, compactItem } = require('./refs')
-const { draftFromCalls, enrichAskOptionsFromProbe } = require('./plan')
+const { draftFromCalls, enrichAskOptionsFromProbe, probeOptionLabel, optionsFromProbeRows } = require('./plan')
 const {
   parseLatestQtyChangeReceipts,
   formatRollbackHint,
@@ -694,11 +694,79 @@ async function act(env, openid, event) {
     }
   }
 
+  // 仍空计划：再给模型一轮软约束（不解析用户词映射接口）
+  if (isIdlePlan(plan)) {
+    const idleVars = {
+      ...vars,
+      probe: renderProbe(probedRows.length ? probedRows : turnRows)
+    }
+    const idleSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, idleVars)
+    const probeNote =
+      probedRows.length || turnRows.length
+        ? `本轮已有探查/关注行：\n${renderProbe(probedRows.length ? probedRows : turnRows)}`
+        : '本轮尚无探查结果。'
+    const idleUser = `${userText}\n（系统：禁止交空计划。若话里点了物资名，先 probe：单名用 name，多件用 names 数组，可带 spaceName；加量/减量须有当前量再 item.update 写绝对值，可一次多条 update；不要用 create 冒充加量。若仍缺槽位则 ask。）\n${probeNote}`
+    try {
+      const recovered = await askModel(modelOpts, idleSystem, idleUser)
+      plan = recovered.plan
+    } catch (e) {
+      return fail(e.code || 'ACT_FAILED', e.message || '助手暂时不可用，请稍后重试')
+    }
+    if (plan.probe && !(probedRows && probedRows.length)) {
+      probedRows = await runProbe(db, actCtx.familyId, tree, plan.probe, refs)
+      turnRows = turnRows.concat(probedRows)
+      plan.probe = null
+      const afterProbeVars = { ...vars, probe: renderProbe(probedRows) }
+      const afterProbeSystem = fillAssistPrompt(
+        promptDoc.system || ASSIST_PROMPT_V2,
+        afterProbeVars
+      )
+      const afterNote = probedRows.length
+        ? `探查结果：\n${renderProbe(probedRows)}`
+        : '探查结果：无匹配物资'
+      try {
+        const third = await askModel(
+          modelOpts,
+          afterProbeSystem,
+          `${userText}\n${afterNote}\n（系统：用本轮 P* 编排；加量写绝对值；禁止空计划。）`
+        )
+        plan = third.plan
+      } catch (e) {
+        return fail(e.code || 'ACT_FAILED', e.message || '助手暂时不可用，请稍后重试')
+      }
+      plan.probe = null
+      bindUnresolvedWritesToProbe(plan, refs, probedRows)
+    } else {
+      plan.probe = null
+      bindUnresolvedWritesToProbe(plan, refs, probedRows)
+    }
+    if (plan.ask.length) {
+      return buildAskResponse(plan.ask, focus, probedRows)
+    }
+  }
+
   if (isIdlePlan(plan)) {
     const receipts = parseLatestQtyChangeReceipts(actCtx.history)
     const rollbackAsk = rollbackAskFromReceipts(receipts)
     if (rollbackAsk) {
       return buildAskResponse([rollbackAsk], focus, probedRows)
+    }
+    const rowsForAsk = probedRows.length ? probedRows : turnRows
+    if (rowsForAsk.length) {
+      const question =
+        rowsForAsk.length === 1
+          ? `要对「${probeOptionLabel(rowsForAsk[0])}」改数量吗？说下加多少/减多少，或点选确认。`
+          : '要对下面哪几条改数量？点选后说「各加一个」或具体数量；要新记请说「另开」。'
+      return buildAskResponse(
+        [
+          {
+            question,
+            options: optionsFromProbeRows(rowsForAsk)
+          }
+        ],
+        focus,
+        rowsForAsk
+      )
     }
     return buildAskResponse(
       [
@@ -709,7 +777,7 @@ async function act(env, openid, event) {
         }
       ],
       focus,
-      probedRows.length ? probedRows : turnRows
+      []
     )
   }
 

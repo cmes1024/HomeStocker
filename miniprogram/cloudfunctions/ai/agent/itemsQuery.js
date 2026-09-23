@@ -1,6 +1,14 @@
 const { matchSpace, matchLocation } = require('./treeMatch')
 const { compactItem } = require('./refs')
 
+/** 有关键词时多拉候选再过滤，降低「不在最近更新里」漏件 */
+const FETCH_NAMED = 100
+const FETCH_SCOPED = 80
+const FETCH_FAMILY = 80
+const CAP_NAMED = 24
+const CAP_SCOPED = 12
+const CAP_FAMILY = 40
+
 function addDaysYmd(ymd, days) {
   const [y, m, d] = String(ymd || '').split('-').map(Number)
   if (!y || !m || !d) return ymd
@@ -12,26 +20,63 @@ function addDaysYmd(ymd, days) {
   return `${yy}-${mm}-${dd}`
 }
 
+function normalizeKeywords(opts = {}) {
+  const out = []
+  const seen = {}
+  const push = (raw) => {
+    const k = String(raw || '')
+      .trim()
+      .toLowerCase()
+    if (!k || seen[k]) return
+    seen[k] = true
+    out.push(k)
+  }
+  push(opts.name || opts.keyword)
+  ;(Array.isArray(opts.names) ? opts.names : []).forEach(push)
+  ;(Array.isArray(opts.keywords) ? opts.keywords : []).forEach(push)
+  return out
+}
+
+function nameMatchesKeywords(itemName, keywords) {
+  if (!keywords || !keywords.length) return true
+  const n = String(itemName || '').toLowerCase()
+  if (!n) return false
+  return keywords.some((kw) => n.indexOf(kw) >= 0)
+}
+
+/**
+ * 共享物资检索（probe / item.search 同源）。
+ * 有关键词：提高拉取上限 → 内存子串过滤 → 调用方再 cap。
+ */
 async function listItemsCompact(db, familyId, opts = {}) {
+  const keywords = normalizeKeywords(opts)
   const where = { familyId }
   if (opts.spaceId) where.spaceId = opts.spaceId
   if (opts.locationId) where.locationId = opts.locationId
+
+  let fetchLimit = Number(opts.limit) > 0 ? Number(opts.limit) : FETCH_SCOPED
+  if (keywords.length) {
+    fetchLimit = Math.max(fetchLimit, FETCH_NAMED)
+  } else if (!opts.spaceId && !opts.locationId) {
+    fetchLimit = Math.max(fetchLimit, FETCH_FAMILY)
+  }
+  fetchLimit = Math.min(Math.max(fetchLimit, 1), 100)
+
   let list = []
   try {
     const res = await db
       .collection('items')
       .where(where)
       .orderBy('updatedAt', 'desc')
-      .limit(opts.limit || 40)
+      .limit(fetchLimit)
       .get()
     list = res.data || []
   } catch (e) {
-    // 缺复合索引时 orderBy 会失败；降级为不过排序 / 内存过滤
     try {
       const res = await db
         .collection('items')
         .where(where)
-        .limit(opts.limit || 40)
+        .limit(fetchLimit)
         .get()
       list = res.data || []
     } catch (e2) {
@@ -43,11 +88,19 @@ async function listItemsCompact(db, familyId, opts = {}) {
       })
     }
   }
-  const kw = String(opts.name || '').trim().toLowerCase()
-  if (kw) {
-    list = list.filter((item) => String(item.name || '').toLowerCase().includes(kw))
+
+  if (keywords.length) {
+    list = list.filter((item) => nameMatchesKeywords(item.name, keywords))
   }
   return list
+}
+
+/** probe / search 共用的结果上限 */
+function resultCapFor(opts = {}) {
+  const keywords = normalizeKeywords(opts)
+  if (keywords.length) return CAP_NAMED
+  if (opts.spaceId || opts.locationId) return CAP_SCOPED
+  return CAP_FAMILY
 }
 
 async function loadFocus(db, familyId, tree, itemId) {
@@ -99,7 +152,6 @@ async function runProbe(db, familyId, tree, probe, refs) {
   if (!probe) return []
   let space = matchSpace(tree, probe.spaceName)
   let loc = matchLocation(space, probe.locationName)
-  // 只有位置名、或空间没配上时：在树里解析唯一位置
   if (probe.locationName && !loc) {
     const hits = []
     ;((tree && tree.spaces) || []).forEach((s) => {
@@ -114,16 +166,33 @@ async function runProbe(db, familyId, tree, probe, refs) {
     }
   }
   if (probe.locationName && !loc) return []
+
+  const keywords = normalizeKeywords({
+    name: probe.name,
+    names: probe.names
+  })
   const familyWide =
-    !!probe.listAll || (!probe.spaceName && !probe.locationName && !space && !loc)
-  const list = await listItemsCompact(db, familyId, {
+    !!probe.listAll ||
+    (!probe.spaceName &&
+      !probe.locationName &&
+      !space &&
+      !loc &&
+      !keywords.length)
+
+  // 有关键词时绝不因 listAll 丢掉按名过滤
+  const queryOpts = {
     spaceId: space && space.id,
     locationId: loc && loc.id,
-    name: probe.name,
-    limit: familyWide ? 80 : 40
+    names: keywords,
+    limit: keywords.length ? FETCH_NAMED : familyWide ? FETCH_FAMILY : FETCH_SCOPED
+  }
+  const list = await listItemsCompact(db, familyId, queryOpts)
+  const cap = resultCapFor({
+    spaceId: queryOpts.spaceId,
+    locationId: queryOpts.locationId,
+    names: keywords
   })
   const rows = []
-  const cap = familyWide ? 40 : 12
   list.slice(0, cap).forEach((item, i) => {
     const row = compactItem(item, `P${i + 1}`, tree)
     refs[row.ref] = row
@@ -135,6 +204,8 @@ async function runProbe(db, familyId, tree, probe, refs) {
 module.exports = {
   addDaysYmd,
   listItemsCompact,
+  resultCapFor,
+  normalizeKeywords,
   loadFocus,
   loadItemsByIds,
   runProbe

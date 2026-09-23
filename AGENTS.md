@@ -1,7 +1,7 @@
 # HomeStocker — Agent 指南
 
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
-**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、搜索；家庭管家（`packageAiAssist` + `ai.act`）已落地，密钥 BYOK 在 `packageAi/keys`。**进行中：** AI 助手 V3 控制面重塑 — `openspec/changes/ai-assistant-v3/`，说明见 `docs/plans/2026-09-22-ai-assistant-v3/`。
+**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、搜索；家庭管家（`packageAiAssist` + `ai.act`）已落地，密钥 BYOK 在 `packageAi/keys`。**进行中：** AI 助手 V3 控制面 — `openspec/changes/ai-assistant-v3/` + `docs/plans/2026-09-22-ai-assistant-v3/`；查库/history/prompt 优化已落地 — `docs/plans/2026-09-22-ai-assist-context-retrieval/`（归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/`）。
 
 ## 权威范围
 
@@ -14,6 +14,7 @@
 - 对话 Agent 设计（09-07 半屏 LangGraph，后置）：`docs/plans/2026-09-07-ai-assistant-design.md`
 - **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
 - **AI 助手 V3（进行中）：** `docs/plans/2026-09-22-ai-assistant-v3/` + OpenSpec `openspec/changes/ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
+- **AI 助手上下文优化（已落地）：** `docs/plans/2026-09-22-ai-assist-context-retrieval/` + 归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/` — 查库召回 / history 保回执 / prompt 瘦身
 - **页面直达（`page.get`）：** 云函数 `ai/pages` 注册表 + 能力 `page.get`（按需拉目录/契约；`open:true` 下发 `navLinks`）；见 `openspec/changes/ai-page-nav/`
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 

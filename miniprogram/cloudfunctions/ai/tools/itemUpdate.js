@@ -11,6 +11,7 @@ function fmtQty(q, unit) {
 }
 
 function buildUpdateSummary(row, call) {
+  // 格式「已改 名（地）：A→B」供 receipts 解析撤销；改文案须同步 receipts.js
   const name = String((row && row.name) || '物资').trim() || '物资'
   const place = placeLabel(row.spaceName, row.locationName)
   const beforeQ = row.quantity

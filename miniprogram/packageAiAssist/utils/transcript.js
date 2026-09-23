@@ -7,6 +7,30 @@ const BLOCKS_MAX = 6
 const CARDS_PER_BLOCK_MAX = 12
 const KEY_PREFIX = 'assist_transcript_'
 
+/** 与云函数 model.js isQtyReceiptText / truncatePreferReceipts 同步 */
+function isQtyReceiptText(text) {
+  const t = String(text || '')
+  return t.indexOf('已改') >= 0 && t.indexOf('→') >= 0
+}
+
+function truncatePreferReceipts(rows, limit) {
+  const list = rows || []
+  const max = Number(limit) > 0 ? Number(limit) : HISTORY_LIMIT
+  if (list.length <= max) return list
+  const keep = {}
+  for (let i = list.length - 1; i >= 0; i--) {
+    const row = list[i]
+    if (row && row.role === 'assistant' && isQtyReceiptText(row.text)) {
+      keep[i] = true
+      if (Object.keys(keep).length >= max) break
+    }
+  }
+  for (let i = list.length - 1; i >= 0 && Object.keys(keep).length < max; i--) {
+    keep[i] = true
+  }
+  return list.filter((_, i) => keep[i])
+}
+
 function storageKey(familyId) {
   const id = String(familyId || '').trim()
   return id ? `${KEY_PREFIX}${id}` : ''
@@ -70,7 +94,7 @@ function extractTurns(messages) {
     const turn = normalizeTurn(row)
     if (turn) out.push(turn)
   })
-  return out.slice(-HISTORY_LIMIT)
+  return truncatePreferReceipts(out, HISTORY_LIMIT)
 }
 
 function loadTurns(familyId) {
@@ -172,5 +196,7 @@ module.exports = {
   saveTurns,
   clearTurns,
   turnsToMessages,
-  historyFromMessages
+  historyFromMessages,
+  truncatePreferReceipts,
+  isQtyReceiptText
 }

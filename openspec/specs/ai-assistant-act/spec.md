@@ -18,15 +18,23 @@ Assistant act MUST resolve the caller via cloud identity and current family memb
 - **THEN** the system does not call the model
 
 ### Requirement: Follow-up turns may carry sanitized context
-Act MAY accept a client-supplied conversation history and recent item ids. History MUST be treated as prompt context only and MUST NOT authorize writes. The server MUST sanitize history to at most **twenty** text turns (user/assistant with non-empty text, truncating each turn’s text to a bounded length). Recent item ids MUST be loaded from the current family and injected as opaque short refs for this turn. Database document ids MUST NOT appear in the model prompt.
+Act MAY accept a client-supplied conversation history. History MUST be treated as prompt context only and MUST NOT authorize writes. The server MUST sanitize history to at most **twenty** text turns (user/assistant with non-empty text, truncating each turn’s text to a bounded length). When trimming, the server MUST prefer retaining assistant turns that contain quantity-change receipt text (before→after) over older turns without such receipts. Recently written rows for follow-up addressing MUST come from current-turn focus or probe/search rows, exposed as opaque short refs for this turn only—not from a cross-turn operation memory bag. Database document ids MUST NOT appear in the model prompt except as those opaque short refs.
 
 #### Scenario: Change the milk just recorded
 - **WHEN** a member first asks to record milk in the kitchen fridge and then says to change it to three bottles
-- **THEN** the follow-up act includes the prior turns as context and can address that item via this turn’s short ref
+- **THEN** the follow-up act includes the prior turns as context and can address that item via this turn’s short ref derived from probe/focus
 
 #### Scenario: History longer than twenty is truncated
 - **WHEN** the client sends more than twenty history turns
-- **THEN** the model prompt includes at most twenty sanitized turns (preferring the most recent), and excess turns do not authorize any write
+- **THEN** the model prompt includes at most twenty sanitized turns (preferring the most recent, and preferring qty-receipt assistant turns within that budget), and excess turns do not authorize any write
+
+#### Scenario: History longer than twenty prefers receipts
+- **WHEN** the client sends more than twenty history turns including an assistant qty-change receipt
+- **THEN** the model prompt includes at most twenty sanitized turns and still retains that receipt-bearing turn when it fits the preferential budget
+
+#### Scenario: Legacy recentItems does not authorize refs
+- **WHEN** the client sends recentItemIds that are not loaded as focus or probe
+- **THEN** those ids do not appear as operable short refs solely because the client echoed them
 
 ### Requirement: Model emits a plan not writes
 The language model MUST return a structured plan with optional clarification questions, optional one-shot inventory probe, and an ordered list of capability ids with name-based arguments. The model MUST NOT receive database document ids in the prompt except opaque short refs created for this turn from focus or probe rows. The model MUST NOT write collections itself.
