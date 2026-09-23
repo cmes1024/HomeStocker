@@ -70,7 +70,7 @@ const PAGES = [
   {
     pageId: 'family.tags',
     path: '/pages/family/tags',
-    hint: '家庭标签管理（新建/整理标签名；问怎么改标签、打开标签管理时优先直达）',
+    hint: '家庭标签管理（新建/整理标签名）',
     required: [],
     optional: [],
     label: '打开标签管理'
@@ -101,17 +101,28 @@ const PAGES = [
   }
 ]
 
+/** 模型从 family.tags 类推出的 id → 注册表正式 id；不开放第二条 path */
+const PAGE_ALIASES = {
+  'family.keys': 'ai.keys'
+}
+
 const BY_ID = {}
 PAGES.forEach((p) => {
   if (p && p.pageId) BY_ID[p.pageId] = p
 })
+
+function resolvePageId(pageId) {
+  const id = String(pageId || '').trim()
+  if (!id) return ''
+  return PAGE_ALIASES[id] || id
+}
 
 function listEnabled() {
   return PAGES.filter((p) => p && p.pageId && p.enabled !== false)
 }
 
 function getPage(pageId) {
-  const id = String(pageId || '').trim()
+  const id = resolvePageId(pageId)
   if (!id) return null
   const page = BY_ID[id]
   if (!page || page.enabled === false) return null
@@ -236,9 +247,11 @@ function buildNavUrl(pageId, rawQuery, refs) {
 
 module.exports = {
   PAGES,
+  PAGE_ALIASES,
   MAX_GETS_PER_ACT,
   listEnabled,
   getPage,
+  resolvePageId,
   renderIndex,
   renderPageContract,
   resolveQuery,

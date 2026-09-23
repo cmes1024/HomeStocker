@@ -24,6 +24,7 @@
 | 画布（可选） | Cursor canvas：`ai-assistant-v3-flow` 流转图 |
 | [`../2026-09-17-ai-assistant-v2/`](../2026-09-17-ai-assistant-v2/) | 前代已落地基线；V3 在其上改控制面 |
 | [`../2026-09-22-ai-assist-context-retrieval/`](../2026-09-22-ai-assist-context-retrieval/) | **后续优化：** 查库召回 / history 保回执 / prompt 瘦身 |
+| [`../2026-09-23-ai-assist-curriculum/`](../2026-09-23-ai-assist-curriculum/) | **素养课表：** 场景考试；迭代/排查以 [`迭代指南.md`](../2026-09-23-ai-assist-curriculum/迭代指南.md) 为准 |
 
 ## 部署
 

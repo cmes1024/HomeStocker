@@ -1,8 +1,9 @@
 # 助手知识库（渐进读取）
 
-> 日期：2026-09-21  
-> 状态：实现中  
-> 范围：`ai.act` 产品/容量类问答；先代码包，schema 对齐未来 `aiKnowledge` 集合
+> 日期：2026-09-21（2026-09-23 补 product / role / ledger）  
+> 状态：已落地（代码包）  
+> 范围：`ai.act` 产品/职能/台账/容量问答；先代码包，schema 对齐未来 `aiKnowledge` 集合  
+> 课表：[`../2026-09-23-ai-assist-curriculum/`](../2026-09-23-ai-assist-curriculum/)
 
 ## 原则
 
@@ -22,6 +23,15 @@
 | `summary` | 一行，进目录 |
 | `triggers` | 可选；预留检索，本刀不靠关键词强灌正文 |
 | `body` | 完整说明（仅 get 时返回） |
+
+## 已启用 topic
+
+| topicId | 内容 |
+|---------|------|
+| `product` | HomeStocker 是什么、同一写入口 |
+| `role` | 管家职能与不能做的家事 |
+| `ledger` | 空间 / 位置 / 物资 / 标签 / 临期 |
+| `capacity` | 免费档 / 加强版；get 时附本家 liveFacts |
 
 ## 运行时
 

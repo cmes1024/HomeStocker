@@ -48,34 +48,6 @@ function parseLatestQtyChangeReceipts(history) {
   return []
 }
 
-function formatRollbackHint(receipts) {
-  return (receipts || [])
-    .map((r) => {
-      const place = r.place ? `（${r.place}）` : ''
-      return `- ${r.name}${place}：回报 ${r.before}→${r.after}，回滚目标数量 ${r.before}`
-    })
-    .join('\n')
-}
-
-function rollbackAskFromReceipts(receipts) {
-  const list = receipts || []
-  if (!list.length) return null
-  const options = []
-  if (list.length >= 2) {
-    const allLabel = '都改回去'
-    const allValue = list.map((r) => `${r.name}改回${r.before}`).join('、')
-    options.push({ label: allLabel, value: allValue })
-  }
-  list.forEach((r) => {
-    const label = `${r.name}改回${r.before}`
-    options.push({ label, value: label })
-  })
-  return {
-    question: '要把刚才改过的数量改回去吗？',
-    options
-  }
-}
-
 /**
  * 回执恢复探查：优先按物资名（+ 空间），避免无谓 listAll。
  * 多件同名空间不同时用 names[]，由 runProbe 按关键词并集过滤。
@@ -190,8 +162,6 @@ function completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userT
 module.exports = {
   parseQtyChangeReceiptsFromText,
   parseLatestQtyChangeReceipts,
-  formatRollbackHint,
-  rollbackAskFromReceipts,
   probeFromReceipts,
   qtyEquals,
   callCoversReceipt,

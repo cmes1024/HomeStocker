@@ -1,7 +1,7 @@
 # HomeStocker — Agent 指南
 
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
-**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。
+**第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。管家素养课表见 `docs/plans/2026-09-23-ai-assist-curriculum/`。**改管家出问题先读** `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md`（按模块排查，禁止「说 xxx 就做 xxx」）。
 
 ## 权威范围
 
@@ -103,4 +103,4 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 3. 人↔家用 `memberships`；物资独立 `items`；空间/位置独立集合 + `familyId`；活动独立 `activities`
 4. 领域写操作做成可被 tool 调用的云函数 action，保持单一写模型
 5. 用户未要求时不要擅自 commit / push
-6. **助手相关改动禁止再加 NL 关键词路由**（见上文「严禁自然语言意图关键词路由」）；修好上下文 / 短号 / prompt，不要用正则顶意图
+6. **助手相关改动禁止再加 NL 关键词路由**（见上文「严禁自然语言意图关键词路由」）。办砸了按 `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md` 先对三类：信息不够、私自决定并执行、拦截/忽略模型计划。不要在 prompt/hint 加「说 xxx 就做 xxx」

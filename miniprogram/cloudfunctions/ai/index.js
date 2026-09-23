@@ -272,15 +272,28 @@ function postJson(url, headers, bodyObj, timeoutMs) {
   })
 }
 
+function historyToChatMessages(history) {
+  const out = []
+  ;(history || []).forEach((row) => {
+    if (!row) return
+    const role = row.role === 'assistant' ? 'assistant' : row.role === 'user' ? 'user' : ''
+    if (!role) return
+    const content = String(row.text || row.content || '').trim()
+    if (!content) return
+    out.push({ role, content })
+  })
+  return out
+}
+
 async function callDeepSeek(apiKey, system, userText, options = {}) {
   const started = Date.now()
   const timeout = Number(options.timeout) > 0 ? Number(options.timeout) : HTTP_TIMEOUT_MS
+  const messages = [{ role: 'system', content: String(system || '') }]
+  historyToChatMessages(options.history).forEach((row) => messages.push(row))
+  messages.push({ role: 'user', content: String(userText || '') })
   const body = {
     model: DEEPSEEK_MODEL,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: userText }
-    ],
+    messages,
     response_format: { type: 'json_object' },
     stream: false,
     temperature: 0

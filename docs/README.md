@@ -17,7 +17,7 @@
 
 ## 正在设计 / 待实施
 
-（当前没有进行中的 OpenSpec change。）
+- [管家素养课表](./plans/2026-09-23-ai-assist-curriculum/README.md) — OpenSpec `ai-assist-curriculum`；出问题先读 [迭代指南](./plans/2026-09-23-ai-assist-curriculum/迭代指南.md)
 
 ## 已落地方案（历史决策，不是待做清单）
 
@@ -32,7 +32,9 @@
 7. [云函数读缓存](./plans/2026-09-16-cloud-call-cache/方案.md)  
 8. [AI 助手 V2](./plans/2026-09-17-ai-assistant-v2/README.md) — 已实施（`packageAiAssist` + `ai.act`）  
 9. [AI 助手 V3](./plans/2026-09-22-ai-assistant-v3/README.md) — 已落地；归档 `2026-09-23-ai-assistant-v3`  
-10. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
+10. [AI 上下文 / 查库 / prompt](./plans/2026-09-22-ai-assist-context-retrieval/README.md) — 已落地  
+11. [管家素养课表](./plans/2026-09-23-ai-assist-curriculum/README.md) — 实施中（`ai-assist-curriculum`）  
+12. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
 
 ## 愿景（不要当本阶段范围）
 

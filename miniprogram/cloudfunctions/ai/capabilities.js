@@ -1,5 +1,5 @@
 const CAPABILITY_ID = 'assist-act-v3'
-const CAPABILITY_VERSION = 21
+const CAPABILITY_VERSION = 27
 
 const HARD_DENY = {
   'family.create': true,
@@ -26,7 +26,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name?, spaceName?, locationName?',
-      hint: '按名称关键词搜索当前家庭物资（与 probe 同一套匹配规则）；可选 spaceName/locationName 收窄范围；只读。'
+      hint: '按名称搜索当前家庭物资，可带 spaceName/locationName。只读。'
     },
     {
       id: 'item.listExpiring',
@@ -35,7 +35,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: '',
-      hint: '列出即将过期和已过期的物资，只读。'
+      hint: '列出即将过期和已过期的物资。只读。'
     },
     {
       id: 'item.create',
@@ -44,7 +44,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '新开一条台账。仅当家里还没有这件、要新记时用；不要用来给已有库存「加数量」。'
+      hint: '新开一条台账，须 spaceName。quantity 为该行数量。本轮须已按名 probe。'
     },
     {
       id: 'item.createMany',
@@ -53,7 +53,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'items[{ name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note? }]',
-      hint: '一次新开多条台账（2～20）。同一次要新记两件及以上时优先用。不要用来给已有行「各加 N」。'
+      hint: '一次新开 2～20 条台账，每条须 spaceName。本轮须已按名 probe。'
     },
     {
       id: 'item.update',
@@ -62,7 +62,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'ref, name?, quantity?, unit?, spaceName?, locationName?, tagNames?, expireDate?, productionDate?, note?',
-      hint: '改已有物资；quantity 为改成后的绝对值。用本轮 F*/P*；spaceName/locationName 是改到哪。'
+      hint: '改已有物资。quantity 为改成后的绝对值，须大于 0。用本轮 F*/P*。'
     },
     {
       id: 'item.remove',
@@ -71,7 +71,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'ref',
-      hint: '删除一件物资。必须等家人确认后才执行。只删一件时用这个。'
+      hint: '删除一件物资。执行前须用户确认。'
     },
     {
       id: 'item.removeMany',
@@ -80,7 +80,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'refs[]',
-      hint: '一次删除多件已有物资（2～20）。refs 为本轮 FOCUS/PROBE 短号，至少两条。同一次要删两件及以上时优先用这个，不要拆成多次 item.remove。须确认后执行。'
+      hint: '一次删除 2～20 件，refs 为本轮短号。执行前须用户确认。'
     },
     {
       id: 'space.create',
@@ -89,7 +89,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name',
-      hint: '新建一个空间（房间/大区域）。只要建一个空间时用。'
+      hint: '新建一个空间。本版不能改已有空间名。'
     },
     {
       id: 'space.createMany',
@@ -98,7 +98,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'spaces[{ name }]',
-      hint: '一次新建多个空间（2～20）。同一次要建两个及以上空间时优先用这个。'
+      hint: '一次新建 2～20 个空间。本版不能改名。'
     },
     {
       id: 'space.createLocation',
@@ -107,7 +107,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'spaceName, locationName',
-      hint: '在已有空间下新建一个位置。只要建一个位置时用。'
+      hint: '在已有空间下新建一个位置，须 spaceName。'
     },
     {
       id: 'space.createLocationMany',
@@ -116,7 +116,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'locations[{ spaceName, locationName }]',
-      hint: '一次在已有空间下新建多个位置（2～20）。同一次要建两个及以上位置时优先用这个。'
+      hint: '一次在已有空间下新建 2～20 个位置。'
     },
     {
       id: 'space.remove',
@@ -125,7 +125,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'spaceName',
-      hint: '删除一个空间。默认仓库不能删。空间里的物资会迁到默认仓库并去掉具体位置。须确认后执行。只删一个时用。'
+      hint: '删除一个空间。执行前须用户确认。默认仓库不能删。'
     },
     {
       id: 'space.removeMany',
@@ -134,7 +134,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'spaces[{ name }] 或 names[]',
-      hint: '一次删除多个空间（2～20）。默认仓库不能删；至少保留一个空间。物资迁到保留的默认仓。≥2 优先用这个。须确认。'
+      hint: '一次删除 2～20 个空间。执行前须用户确认。默认仓库不能删。'
     },
     {
       id: 'space.removeLocation',
@@ -143,7 +143,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'spaceName, locationName',
-      hint: '删除某个空间下的一个位置。物资保留在该空间，只清空具体位置。须确认。'
+      hint: '删除某个空间下的一个位置。执行前须用户确认。物资留在该空间。'
     },
     {
       id: 'space.removeLocationMany',
@@ -152,7 +152,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'locations[{ spaceName, locationName }]',
-      hint: '一次删除多个位置（2～20）。物资保留所属空间，只清空具体位置。≥2 优先。须确认。'
+      hint: '一次删除 2～20 个位置。执行前须用户确认。物资留在所属空间。'
     },
     {
       id: 'tag.create',
@@ -161,7 +161,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'name',
-      hint: '新建一个家庭级标签名。只要建一个时用。'
+      hint: '新建一个家庭级标签名。给物资挂签用 item.update 的 tagNames。'
     },
     {
       id: 'tag.createMany',
@@ -170,7 +170,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'tags[{ name }] 或 names[]',
-      hint: '一次新建多个家庭级标签（2～20）。≥2 优先。不要用来给物资挂签。'
+      hint: '一次新建 2～20 个家庭级标签。给物资挂签用 item.update 的 tagNames。'
     },
     {
       id: 'tag.remove',
@@ -179,7 +179,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'name',
-      hint: '删除一个家庭级标签；物资上的该标签会一起去掉。须确认。只删一个时用。'
+      hint: '删除一个家庭级标签。执行前须用户确认。本版不能改标签名。'
     },
     {
       id: 'tag.removeMany',
@@ -188,7 +188,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'names[] 或 tags[{ name }]',
-      hint: '一次删除多个家庭级标签（2～20）；物资上的这些标签会一起去掉。≥2 优先。须确认。'
+      hint: '一次删除 2～20 个家庭级标签。执行前须用户确认。本版不能改名。'
     },
     {
       id: 'item.merge',
@@ -197,7 +197,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: true,
       args: 'refs[], name?',
-      hint: '把多条已有物资合成一条并加总数量。refs 为本轮 FOCUS/PROBE 短号，至少两条。须确认后执行。同空间；单位须一致。'
+      hint: '把多条已有物资合成一条并加总数量。refs 至少两条；同空间、单位须一致。执行前须用户确认。'
     },
     {
       id: 'item.expireSubscribePanel',
@@ -206,7 +206,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: '',
-      hint: '打开临期消息订阅面板（列出已设过期日的物资开关）。微信要求家人亲手点开关授权，不能代开订阅。当家人要管理临期/过期提醒订阅时用此接口，calls 里只放这一步即可。'
+      hint: '打开临期消息订阅面板。不能代开微信订阅。'
     },
     {
       id: 'knowledge.get',
@@ -215,7 +215,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'topicId',
-      hint: '按知识目录的 topicId 读取一条产品说明（如 capacity=加强版/免费档上限）。问 VIP/会员/兑换/家数人数物资上限时用。一次只取一个 topic；不要编造目录外内容。'
+      hint: '按知识目录 topicId 取一篇。一次一个。不要编目录外内容，不要用来写库。'
     },
     {
       id: 'page.get',
@@ -224,7 +224,7 @@ const CAPABILITY_SEED = {
       enabled: true,
       confirm: false,
       args: 'pageId?, query?, open?, label?, ref?',
-      hint: '按需拉可直达产品页并出跳转按钮。无 pageId=目录；有 pageId=契约；要按钮须 open:true（如 family.tags 标签管理、ai.keys 密钥、family.messages 消息、spaces.list 空间）。家人说打开某某页/怎么改标签或密钥时优先用，不要只口头指路，也不要因此说还没学会。物资详情可用 query.ref=本轮 F*/P*。禁止臆造 path。'
+      hint: '按需取页面目录或契约。无 pageId 或未知 pageId 返回目录。跳转须 open:true。禁止臆造 path。'
     },
     {
       id: 'space.update',

@@ -175,14 +175,24 @@ async function askModel(deps, system, userText) {
   let sawQuota = false
   let lastContent = ''
   // 调试：云函数日志里完整打印发给模型的内容（密钥不落日志）
+  const hist = Array.isArray(deps.history) ? deps.history : []
   console.info('[ai.act] >>> system\n' + String(system || ''))
+  console.info(
+    '[ai.act] >>> history\n' +
+      (hist.length
+        ? hist
+            .map((row) => `${row.role === 'assistant' ? '助手' : '家人'}：${row.text || ''}`)
+            .join('\n')
+        : '无')
+  )
   console.info('[ai.act] >>> user\n' + String(userText || ''))
   for (let i = 0; i < tryKeys.length; i++) {
     const key = tryKeys[i]
     try {
       const result = await callDeepSeek(key.apiKey, system, userText, {
         timeout,
-        maxTokens
+        maxTokens,
+        history: deps.history
       })
       lastContent = result.content
       console.info('[ai.act] <<< model\n' + String(result.content || ''))

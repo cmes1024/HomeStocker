@@ -29,6 +29,9 @@ function buildUpdateSummary(row, call) {
       parts.push(`数量 ${after}`)
     }
   }
+  if (call.unit !== undefined && String(afterU) !== String(beforeU)) {
+    parts.push(`单位 ${beforeU || '无'}→${afterU || '无'}`)
+  }
   if (call.name !== undefined && String(call.name).trim() !== name) {
     parts.push(`改名「${String(call.name).trim()}」`)
   }
@@ -64,7 +67,16 @@ async function run(ctx, call, step) {
   }
   const payload = { itemId: row.itemId, source: 'agent' }
   if (call.name !== undefined) payload.name = call.name
-  if (call.quantity !== undefined) payload.quantity = call.quantity
+  if (call.quantity !== undefined) {
+    const n = Number(call.quantity)
+    if (Number.isFinite(n) && n === 0) {
+      return {
+        ok: false,
+        summary: `第 ${step} 步：数量须大于 0`
+      }
+    }
+    payload.quantity = call.quantity
+  }
   if (call.unit !== undefined) payload.unit = call.unit
   if (call.note !== undefined) payload.note = call.note
   if (call.expireDate !== undefined) payload.expireDate = call.expireDate

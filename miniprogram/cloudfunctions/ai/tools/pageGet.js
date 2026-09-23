@@ -16,6 +16,23 @@ function wantOpen(call) {
   return false
 }
 
+function indexResult(note) {
+  const index = renderIndex()
+  return {
+    ok: true,
+    summary: note || '已取回可直达页面目录',
+    pages: listEnabled().map((p) => ({
+      pageId: p.pageId,
+      hint: p.hint || '',
+      path: p.path
+    })),
+    pageDoc: {
+      kind: 'index',
+      body: index
+    }
+  }
+}
+
 async function run(ctx, call, step) {
   ctx._pageGetCount = (ctx._pageGetCount || 0) + 1
   if (ctx._pageGetCount > MAX_GETS_PER_ACT) {
@@ -37,13 +54,17 @@ async function run(ctx, call, step) {
 
   if (open) {
     if (!pageId) {
-      return { ok: false, summary: `第 ${step} 步：打开页面前请指定 pageId` }
+      return indexResult(`第 ${step} 步：打开页面前需要 pageId，已取回目录`)
     }
-    const built = buildNavUrl(pageId, query, ctx.refs || {})
+    const page = getPage(pageId)
+    if (!page) {
+      return indexResult(`没有「${pageId}」这个页面，已取回目录，请用目录里的 pageId`)
+    }
+    const built = buildNavUrl(page.pageId, query, ctx.refs || {})
     if (!built.ok) {
       return {
         ok: false,
-        summary: `第 ${step} 步：无法打开「${pageId}」——${built.error}`
+        summary: `第 ${step} 步：无法打开「${page.pageId}」——${built.error}`
       }
     }
     const label = String((call && call.label) || '').trim() || built.label
@@ -62,29 +83,12 @@ async function run(ctx, call, step) {
   }
 
   if (!pageId) {
-    const index = renderIndex()
-    const pages = listEnabled().map((p) => ({
-      pageId: p.pageId,
-      hint: p.hint || '',
-      path: p.path
-    }))
-    return {
-      ok: true,
-      summary: '已取回可直达页面目录',
-      pages,
-      pageDoc: {
-        kind: 'index',
-        body: index
-      }
-    }
+    return indexResult()
   }
 
   const page = getPage(pageId)
   if (!page) {
-    return {
-      ok: false,
-      summary: `第 ${step} 步：没有「${pageId}」这个页面，请只用目录里的 pageId`
-    }
+    return indexResult(`没有「${pageId}」这个页面，已取回目录，请用目录里的 pageId`)
   }
 
   const body = renderPageContract(page)

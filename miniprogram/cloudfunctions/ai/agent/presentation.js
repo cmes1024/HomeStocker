@@ -208,7 +208,10 @@ function buildExecutionPresentation(executed, failed, possibleDuplicates, tree) 
         dups
           .map((d) => {
             const place = placeLabel(d.spaceName, d.locationName)
-            return `${d.name}${place ? `（${place}）` : ''} ${d.count} 条`
+            const bits = []
+            if (place) bits.push(place)
+            if (d.count != null) bits.push(`${d.count} 条`)
+            return `${d.name || '物资'}${bits.length ? `：${bits.join(' · ')}` : ''}`
           })
           .join('；')
     )

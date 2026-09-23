@@ -25,3 +25,7 @@
 ## 上游
 
 V3 基线：[`../2026-09-22-ai-assistant-v3/`](../2026-09-22-ai-assistant-v3/)
+
+## 下游
+
+素养课表（知识 / hint / 场景归属）：[`../2026-09-23-ai-assist-curriculum/`](../2026-09-23-ai-assist-curriculum/)

@@ -1194,7 +1194,15 @@ async function mergeItems(openid, event, options = {}) {
     ...new Set(items.map((it) => String(it.unit || '').trim()).filter(Boolean))
   ]
   if (units.length > 1) {
-    return fail('INVALID_MERGE', '单位不一致，无法合并')
+    const shown = items
+      .map((it) => {
+        const n = String(it.name || '物资').trim()
+        const q = it.quantity == null ? '' : String(it.quantity)
+        const u = String(it.unit || '').trim() || '无单位'
+        return `${n} ${q}${u}`
+      })
+      .join(' / ')
+    return fail('INVALID_MERGE', `单位不一致，无法合并（${shown}）`)
   }
   const unit = units[0] || String(items[0].unit || '').trim()
 

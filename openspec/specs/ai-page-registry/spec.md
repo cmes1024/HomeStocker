@@ -18,7 +18,7 @@ The assistant MUST maintain a versioned, code-seeded registry of product pages t
 - **THEN** it does not include `packageDemo` or legacy `pages/chat` routes
 
 ### Requirement: page.get fetches registry progressively
-The capability catalog MUST expose an enabled `page.get` action. When the plan calls `page.get` without a page id, the system MUST return a compact index of page ids and hints for the model. When the plan calls `page.get` with a known page id, the system MUST return that entry’s path and query contract. Unknown page ids MUST fail without inventing a path. The system MUST NOT inject the full registry body into every act prompt by default.
+The capability catalog MUST expose an enabled `page.get` action. When the plan calls `page.get` without a page id, the system MUST return a compact index of page ids and hints for the model. When the plan calls `page.get` with a known page id, the system MUST return that entry’s path and query contract. A small alias table MAY map analogical ids (such as `family.keys`) to a registered id. Unknown page ids MUST return the compact index as `pageDoc` without inventing a path and without emitting navigation. The system MUST NOT inject the full registry body into every act prompt by default.
 
 #### Scenario: Index without pageId
 - **WHEN** a plan step uses `page.get` with no pageId
@@ -28,9 +28,13 @@ The capability catalog MUST expose an enabled `page.get` action. When the plan c
 - **WHEN** a plan step uses `page.get` with pageId for item detail
 - **THEN** the act report includes that page’s path and that `id` is required in query
 
-#### Scenario: Unknown pageId refused
-- **WHEN** a plan step uses `page.get` with a pageId not in the registry
-- **THEN** that step fails and no navigation UI is emitted
+#### Scenario: Unknown pageId returns index
+- **WHEN** a plan step uses `page.get` with a pageId not in the registry and not an alias
+- **THEN** the act report includes the compact index for the model and no navigation UI is emitted
+
+#### Scenario: family.keys aliases to ai.keys
+- **WHEN** a plan step uses `page.get` with pageId `family.keys`
+- **THEN** the system treats it as the registered `ai.keys` page
 
 ### Requirement: Optional open emits validated nav links
 When `page.get` includes `open: true` (or equivalent) with a registered pageId and query object, the system MUST validate query keys against that page’s contract, build a whitelist navigate URL, and return a UI directive of type nav links. Missing required query keys or unknown keys MUST fail the step without emitting a link. The system MUST NOT execute navigation server-side; only the client may navigate after the member taps a returned link.
@@ -45,4 +49,4 @@ When `page.get` includes `open: true` (or equivalent) with a registered pageId a
 
 #### Scenario: Invented path refused
 - **WHEN** a plan step asks to open a path or pageId outside the registry
-- **THEN** the system does not emit a nav link for that path
+- **THEN** the system does not emit a nav link for that path; if the pageId is unknown it returns the compact index instead

@@ -36,6 +36,9 @@ async function run(ctx, call, step) {
     locationName = locRes.locationName || call.locationName
     if (locRes.created) markTreeDirty(ctx)
   }
+  if (call.quantity !== undefined && Number(call.quantity) === 0) {
+    return { ok: false, summary: `第 ${step} 步：新开物资数量不能是 0` }
+  }
   const tags = resolveTagIds(tree, call.tagNames)
   const payload = {
     name,

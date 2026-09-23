@@ -22,8 +22,6 @@ const { bindCallIds, lookupRef, compactItem } = require('./refs')
 const { draftFromCalls, enrichAskOptionsFromProbe, probeOptionLabel, optionsFromProbeRows } = require('./plan')
 const {
   parseLatestQtyChangeReceipts,
-  formatRollbackHint,
-  rollbackAskFromReceipts,
   probeFromReceipts,
   completePartialReceiptRollbacks,
   callCoversReceipt
@@ -89,7 +87,34 @@ function ingestInventoryToProbeRefs(executed, tree, refs) {
   return rows
 }
 
-/** 改/删缺短号时先探查（有 name 按名；仅失效短号则扫库重绑——不按话术正则猜意图） */
+function namesFromCreateCalls(calls) {
+  const names = []
+  const spaces = []
+  function addName(n) {
+    const s = String(n || '').trim()
+    if (s && names.indexOf(s) < 0) names.push(s)
+  }
+  function addSpace(n) {
+    const s = String(n || '').trim()
+    if (s && spaces.indexOf(s) < 0) spaces.push(s)
+  }
+  ;(calls || []).forEach((c) => {
+    const use = String((c && c.use) || '').trim()
+    if (use === 'item.create') {
+      addName(c.name)
+      addSpace(c.spaceName)
+    }
+    if (use === 'item.createMany' && Array.isArray(c.items)) {
+      c.items.forEach((row) => {
+        addName(row && row.name)
+        addSpace((row && row.spaceName) || c.spaceName)
+      })
+    }
+  })
+  return { names, spaceName: spaces.length === 1 ? spaces[0] : '' }
+}
+
+/** 改/删缺短号、或要新开但本轮还没按名查过：先探查再让模型编（不按话术猜意图） */
 function ensureProbeForUnresolvedWrites(plan, refs) {
   if (!plan || plan.probe || (plan.ask && plan.ask.length)) return plan
   const calls = plan.calls || []
@@ -131,6 +156,13 @@ function ensureProbeForUnresolvedWrites(plan, refs) {
         return plan
       }
     }
+  }
+  const created = namesFromCreateCalls(calls)
+  if (created.names.length) {
+    plan.probe =
+      created.names.length === 1
+        ? { name: created.names[0], spaceName: created.spaceName }
+        : { names: created.names, spaceName: created.spaceName }
   }
   return plan
 }
@@ -619,7 +651,8 @@ async function act(env, openid, event) {
     callDeepSeek,
     keys,
     timeout: actHttpTimeoutMs || 20000,
-    maxTokens: actMaxTokens || 800
+    maxTokens: actMaxTokens || 800,
+    history: actCtx.history
   }
 
   let plan
@@ -662,39 +695,7 @@ async function act(env, openid, event) {
     }
   }
 
-  // 模型偶发空计划：若最近助手回执含「已改 A→B」，用机器摘要再探查+编排一轮（不按用户词路由）
-  if (isIdlePlan(plan)) {
-    const receipts = parseLatestQtyChangeReceipts(actCtx.history)
-    if (receipts.length) {
-      const hint = formatRollbackHint(receipts)
-      const recoverProbe = probeFromReceipts(receipts)
-      probedRows = await runProbe(db, actCtx.familyId, tree, recoverProbe, refs)
-      turnRows = turnRows.concat(probedRows)
-      const recoverVars = { ...vars, probe: renderProbe(probedRows) }
-      const recoverSystem = fillAssistPrompt(
-        promptDoc.system || ASSIST_PROMPT_V2,
-        recoverVars
-      )
-      const probeNote = probedRows.length
-        ? `探查结果：\n${renderProbe(probedRows)}`
-        : '探查结果：无匹配物资'
-      const recoverUser = `${userText}\n（系统：最近助手回报含可回写数量，禁止空计划。必须对下列每一项各写一条 item.update（少一条都不行），用本轮 PROBE 短号，数量写成箭头前：\n${hint}\n）\n${probeNote}`
-      try {
-        const recovered = await askModel(modelOpts, recoverSystem, recoverUser)
-        plan = recovered.plan
-      } catch (e) {
-        return fail(e.code || 'ACT_FAILED', e.message || '助手暂时不可用，请稍后重试')
-      }
-      plan.probe = null
-      bindUnresolvedWritesToProbe(plan, refs, probedRows)
-      completePartialReceiptRollbacks(plan, receipts, refs, probedRows, userText)
-      if (plan.ask.length) {
-        return buildAskResponse(plan.ask, focus, probedRows)
-      }
-    }
-  }
-
-  // 仍空计划：再给模型一轮软约束（不解析用户词映射接口）
+  // 仍空计划：再给模型一轮软约束（不解析用户词映射接口；不把空计划当成「撤销刚改」）
   if (isIdlePlan(plan)) {
     const idleVars = {
       ...vars,
@@ -705,7 +706,7 @@ async function act(env, openid, event) {
       probedRows.length || turnRows.length
         ? `本轮已有探查/关注行：\n${renderProbe(probedRows.length ? probedRows : turnRows)}`
         : '本轮尚无探查结果。'
-    const idleUser = `${userText}\n（系统：禁止交空计划。若话里点了物资名，先 probe：单名用 name，多件用 names 数组，可带 spaceName；加量/减量须有当前量再 item.update 写绝对值，可一次多条 update；不要用 create 冒充加量。若仍缺槽位则 ask。）\n${probeNote}`
+    const idleUser = `${userText}\n（系统：禁止交空计划。缺槽位则 ask。）\n${probeNote}`
     try {
       const recovered = await askModel(modelOpts, idleSystem, idleUser)
       plan = recovered.plan
@@ -728,7 +729,7 @@ async function act(env, openid, event) {
         const third = await askModel(
           modelOpts,
           afterProbeSystem,
-          `${userText}\n${afterNote}\n（系统：用本轮 P* 编排；加量写绝对值；禁止空计划。）`
+          `${userText}\n${afterNote}\n（系统：禁止空计划。）`
         )
         plan = third.plan
       } catch (e) {
@@ -746,17 +747,12 @@ async function act(env, openid, event) {
   }
 
   if (isIdlePlan(plan)) {
-    const receipts = parseLatestQtyChangeReceipts(actCtx.history)
-    const rollbackAsk = rollbackAskFromReceipts(receipts)
-    if (rollbackAsk) {
-      return buildAskResponse([rollbackAsk], focus, probedRows)
-    }
     const rowsForAsk = probedRows.length ? probedRows : turnRows
     if (rowsForAsk.length) {
       const question =
         rowsForAsk.length === 1
-          ? `要对「${probeOptionLabel(rowsForAsk[0])}」改数量吗？说下加多少/减多少，或点选确认。`
-          : '要对下面哪几条改数量？点选后说「各加一个」或具体数量；要新记请说「另开」。'
+          ? `要对「${probeOptionLabel(rowsForAsk[0])}」做什么？`
+          : '要对下面哪几条操作？点选后说要做什么。'
       return buildAskResponse(
         [
           {
@@ -771,8 +767,7 @@ async function act(env, openid, event) {
     return buildAskResponse(
       [
         {
-          question:
-            '这句我还没编排成具体操作。是要新记几件，还是改已有数量？说下名字和数量就行～',
+          question: '这句我还没编排成具体操作，请再说具体一点。',
           options: []
         }
       ],
@@ -1074,7 +1069,7 @@ async function act(env, openid, event) {
       exec: '无'
     }
     const knowSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, knowVars)
-    const knowUser = `${userText}\n（系统已取回知识正文，请只用 reply 两三句回答当前问题重点；禁止再 knowledge.get / probe / 写台账；禁止粘贴【】全文或合规长段。）\n知识正文：\n${knowledgeText}`
+    const knowUser = `${userText}\n（系统已取回知识正文。）\n知识正文：\n${knowledgeText}`
     let replyText = ''
     try {
       const second = await askModel(modelOpts, knowSystem, knowUser)
@@ -1127,7 +1122,7 @@ async function act(env, openid, event) {
       exec: '无'
     }
     const pageSystem = fillAssistPrompt(promptDoc.system || ASSIST_PROMPT_V2, pageVars)
-    const pageUser = `${userText}\n（系统已取回产品页说明。家人若要打开/去某页或问设置入口：必须再调 page.get，带 pageId 与 open:true（可加短 label）；不要只用 reply 口头指路。物资页可用本轮 ref。禁止臆造 path；禁止写台账/probe/knowledge.get。）\n页面说明：\n${pageText}`
+    const pageUser = `${userText}\n（系统已取回产品页说明。禁止臆造 path。）\n页面说明：\n${pageText}`
     try {
       const second = await askModel(modelOpts, pageSystem, pageUser)
       const nextPlan = second.plan || {}

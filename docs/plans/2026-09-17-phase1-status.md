@@ -58,6 +58,7 @@
 | `PRD-*`、功能清单、技术架构 | 愿景；文首已标明不要当实施范围 |
 | `2026-09-07-ai-assistant-design.md` | 后置半屏对话（LangGraph）；**不是** V2 |
 | `2026-09-17-ai-assistant-v2/` | **AI 助手 V2 方案**（已实施） |
+| `2026-09-23-ai-assist-curriculum/` | **管家素养课表**（实施中）；出问题先读同目录 [`迭代指南.md`](./2026-09-23-ai-assist-curriculum/迭代指南.md) |
 | `2026-09-16-package-ai-capture/` | **已退役** AI V1 拍照录入（历史；见 archive） |
 | `2026-09-17-as-built-surfaces.md` | 钥匙卡 / 货架 / 口袋（口袋无入口） |
 | `collections.md` | 集合/索引；背景已改为命名主题 |

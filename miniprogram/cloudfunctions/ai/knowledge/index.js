@@ -2,7 +2,12 @@
  * 助手知识包注册表（代码源；未来可改为读 aiKnowledge 集合）。
  * 正文禁止默认进 prompt；只暴露目录，按 topic 渐进 get。
  */
-const PACKS = [require('./capacity')]
+const PACKS = [
+  require('./product'),
+  require('./role'),
+  require('./ledger'),
+  require('./capacity')
+]
 
 const BY_ID = {}
 PACKS.forEach((p) => {
