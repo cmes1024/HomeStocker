@@ -22,12 +22,22 @@
   margin-bottom: 28rpx;
 }
 
-.image-picker {
+.image-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.image-slot {
   position: relative;
-  height: 280rpx;
+  flex: 1;
+  height: 200rpx;
   border-radius: 16rpx;
   overflow: hidden;
   background: #f6f4f1;
+}
+
+.image-slot-add {
+  background: transparent;
 }
 
 .image-hit {
@@ -61,22 +71,8 @@
 }
 
 .image-hint {
-  font-size: 24rpx;
-  color: rgba(26, 26, 26, 0.38);
-}
-
-.image-replace {
-  position: absolute;
-  left: 10rpx;
-  bottom: 10rpx;
-  z-index: 2;
-  height: 44rpx;
-  padding: 0 16rpx;
-  border-radius: 999rpx;
-  background: rgba(26, 26, 26, 0.48);
-  color: #ffffff;
   font-size: 22rpx;
-  line-height: 44rpx;
+  color: rgba(26, 26, 26, 0.38);
 }
 
 .image-clear {

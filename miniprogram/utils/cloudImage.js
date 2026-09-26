@@ -1,5 +1,7 @@
 const { compressImageForUpload } = require('./imageCompress')
 
+const MAX_ITEM_IMAGES = 3
+
 function extFromPath(path) {
   const match = /\.(\w+)(\?|$)/.exec(path || '')
   const ext = ((match && match[1]) || 'jpg').toLowerCase()
@@ -13,34 +15,65 @@ function randomSuffix() {
 }
 
 /**
- * 选一张图：相册或拍照。
- * @returns {Promise<string>} 本地临时路径
+ * 读路径：有 imageFileIDs 用它，否则把旧单张 imageFileID 收成数组。
  */
-async function chooseLocalImage() {
+function itemImageFileIDs(item) {
+  if (!item) return []
+  if (Array.isArray(item.imageFileIDs) && item.imageFileIDs.length) {
+    return item.imageFileIDs
+      .map((id) => String(id || '').trim())
+      .filter(Boolean)
+      .slice(0, MAX_ITEM_IMAGES)
+  }
+  const one = String(item.imageFileID || '').trim()
+  return one ? [one] : []
+}
+
+function itemCoverFileID(item) {
+  return itemImageFileIDs(item)[0] || ''
+}
+
+/**
+ * 选若干张图：相册或拍照。
+ * @param {number} count 1–3
+ * @returns {Promise<string[]>} 本地临时路径
+ */
+async function chooseLocalImages(count) {
+  const n = Math.max(1, Math.min(MAX_ITEM_IMAGES, Number(count) || 1))
   if (typeof wx.chooseMedia === 'function') {
     const res = await wx.chooseMedia({
-      count: 1,
+      count: n,
       mediaType: ['image'],
       sourceType: ['album', 'camera'],
       sizeType: ['compressed']
     })
-    const file = res && res.tempFiles && res.tempFiles[0]
-    const path = file && file.tempFilePath
-    if (path) return path
+    const paths = ((res && res.tempFiles) || [])
+      .map((file) => file && file.tempFilePath)
+      .filter(Boolean)
+    if (paths.length) return paths
   }
 
   const legacy = await wx.chooseImage({
-    count: 1,
+    count: n,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera']
   })
-  const path = legacy && legacy.tempFilePaths && legacy.tempFilePaths[0]
-  if (!path) {
+  const paths = (legacy && legacy.tempFilePaths) || []
+  if (!paths.length) {
     const err = new Error('未选择图片')
     err.code = 'NO_IMAGE'
     throw err
   }
-  return path
+  return paths
+}
+
+/**
+ * 选一张图：相册或拍照。
+ * @returns {Promise<string>} 本地临时路径
+ */
+async function chooseLocalImage() {
+  const paths = await chooseLocalImages(1)
+  return paths[0]
 }
 
 /**
@@ -78,46 +111,99 @@ async function resolveImageFileID({ localPath, cleared, kind }) {
   return undefined
 }
 
+/**
+ * 物资多图：已有 cloud:// 保留，本地新图逐张上传，最多 3 张。
+ */
+async function resolveImageFileIDs({ existingFileIDs, localPaths, clearedAll }) {
+  if (clearedAll && !(localPaths && localPaths.length)) return []
+  const existing = (existingFileIDs || [])
+    .map((id) => String(id || '').trim())
+    .filter((id) => id.startsWith('cloud://'))
+  const locals = (localPaths || []).filter(Boolean)
+  const room = Math.max(0, MAX_ITEM_IMAGES - existing.length)
+  const uploaded = []
+  for (let i = 0; i < locals.length && uploaded.length < room; i++) {
+    uploaded.push(await uploadEntityImage(locals[i], 'item'))
+  }
+  return existing.concat(uploaded).slice(0, MAX_ITEM_IMAGES)
+}
+
 const displayUrlCache = {}
 
 /**
  * 把 cloud:// fileID 换成可给 <image> 用的临时链；本地路径 / https 原样返回。
  */
 async function resolveDisplayUrl(fileID) {
-  const src = String(fileID || '').trim()
-  if (!src) return ''
-  if (!src.startsWith('cloud://')) return src
-  if (displayUrlCache[src]) return displayUrlCache[src]
-  try {
-    const res = await wx.cloud.getTempFileURL({ fileList: [src] })
-    const row = res && res.fileList && res.fileList[0]
-    const url = row && row.tempFileURL
-    if (url) {
-      displayUrlCache[src] = url
-      return url
+  const urls = await resolveDisplayUrls([fileID])
+  return urls[0] || ''
+}
+
+async function resolveDisplayUrls(fileIDs) {
+  const list = (fileIDs || []).map((id) => String(id || '').trim()).filter(Boolean)
+  if (!list.length) return []
+  const result = new Array(list.length)
+  const need = []
+  list.forEach((src, i) => {
+    if (!src.startsWith('cloud://')) {
+      result[i] = src
+      return
     }
+    if (displayUrlCache[src]) {
+      result[i] = displayUrlCache[src]
+      return
+    }
+    need.push({ src, i })
+  })
+  if (!need.length) return result
+  try {
+    const res = await wx.cloud.getTempFileURL({ fileList: need.map((row) => row.src) })
+    const rows = (res && res.fileList) || []
+    need.forEach((row, idx) => {
+      const url = rows[idx] && rows[idx].tempFileURL
+      if (url) {
+        displayUrlCache[row.src] = url
+        result[row.i] = url
+      } else {
+        result[row.i] = row.src
+      }
+    })
   } catch (e) {
     console.warn('getTempFileURL failed', e)
+    need.forEach((row) => {
+      if (!result[row.i]) result[row.i] = row.src
+    })
   }
-  return src
+  return result
 }
 
 /**
  * 用系统预览放大看图；cloud:// 会先换成临时链。
  */
 async function previewEntityImage(src) {
-  const url = await resolveDisplayUrl(src)
-  if (!url) return
+  return previewEntityImages([src], src)
+}
+
+async function previewEntityImages(srcs, current) {
+  const urls = (await resolveDisplayUrls(srcs || [])).filter(Boolean)
+  if (!urls.length) return
+  const cur = current ? await resolveDisplayUrl(current) : ''
   wx.previewImage({
-    current: url,
-    urls: [url]
+    current: cur && urls.indexOf(cur) >= 0 ? cur : urls[0],
+    urls
   })
 }
 
 module.exports = {
+  MAX_ITEM_IMAGES,
+  itemImageFileIDs,
+  itemCoverFileID,
   chooseLocalImage,
+  chooseLocalImages,
   uploadEntityImage,
   resolveImageFileID,
+  resolveImageFileIDs,
   resolveDisplayUrl,
-  previewEntityImage
+  resolveDisplayUrls,
+  previewEntityImage,
+  previewEntityImages
 }

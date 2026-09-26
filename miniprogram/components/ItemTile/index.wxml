@@ -1,11 +1,24 @@
 <view
-  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}} {{selectable ? 'selectable' : ''}} {{selected ? 'selected' : ''}} {{image ? 'has-photo' : ''}}"
+  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}} {{selectable ? 'selectable' : ''}} {{selected ? 'selected' : ''}} {{photos.length ? 'has-photo' : ''}}"
   style="{{animate ? 'animation-delay: ' + delay + 'ms;' : ''}}"
   hover-class="tile-hover"
   bind:tap="onTap"
 >
-  <view class="tile-photo-clip" wx:if="{{image}}">
-    <image class="tile-photo" src="{{image}}" mode="aspectFill" />
+  <view class="tile-photo-clip" wx:if="{{photos.length}}">
+    <swiper
+      wx:if="{{autoplay}}"
+      class="tile-photo-swiper"
+      autoplay
+      circular
+      interval="{{3000}}"
+      duration="{{500}}"
+      disable-touch
+    >
+      <swiper-item wx:for="{{photos}}" wx:for-item="src" wx:key="*this">
+        <image class="tile-photo" src="{{src}}" mode="aspectFill" />
+      </swiper-item>
+    </swiper>
+    <image wx:else class="tile-photo" src="{{photos[0]}}" mode="aspectFill" />
     <view class="tile-frost"></view>
   </view>
   <view class="tile-check" wx:if="{{selectable}}" aria-hidden="true">

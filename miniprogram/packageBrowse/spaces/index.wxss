@@ -59,7 +59,6 @@
   width: calc(100% + 32rpx);
   height: calc(100% + 32rpx);
   z-index: 0;
-  filter: blur(0rpx);
 }
 
 .space-frost {

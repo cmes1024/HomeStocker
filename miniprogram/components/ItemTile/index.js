@@ -49,12 +49,34 @@ Component({
     image: {
       type: String,
       value: ''
+    },
+    images: {
+      type: Array,
+      value: []
     }
   },
 
   data: {
     badgeExpired: copy.items.badgeExpired,
-    badgeSoon: copy.items.badgeSoon
+    badgeSoon: copy.items.badgeSoon,
+    photos: [],
+    autoplay: false
+  },
+
+  observers: {
+    'image, images': function (image, images) {
+      const list =
+        images && images.length
+          ? images.map((id) => String(id || '').trim()).filter(Boolean).slice(0, 3)
+          : image
+            ? [String(image).trim()].filter(Boolean)
+            : []
+      const autoplay = list.length > 1
+      const key = list.join('|')
+      if (this._photosKey === key && this.data.autoplay === autoplay) return
+      this._photosKey = key
+      this.setData({ photos: list, autoplay })
+    }
   },
 
   methods: {

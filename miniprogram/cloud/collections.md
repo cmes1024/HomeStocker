@@ -70,13 +70,14 @@
 | `productionDate` | string \| null | 可选；生产日 `YYYY-MM-DD`（Asia/Shanghai 日历） |
 | `expireDate` | string \| null | 可选；过期日 `YYYY-MM-DD`；无此字段则无临期/过期状态 |
 | `expireReminderEnabled` | boolean | 遗留字段，不再作为提醒真相；读接口会覆盖为**当前用户**是否订阅了该物资 |
-| `imageFileID` | string | 可选；云存储 `cloud://` fileID；一张物品图，列表当卡片背景 |
+| `imageFileIDs` | string[] | 可选；0–3 个云存储 `cloud://` fileID；物品图列表，顺序即上传顺序 |
+| `imageFileID` | string | 封面兼容字段，等于 `imageFileIDs[0]` 或空串；列表卡片背景仍读这个 |
 | `createdBy` | string | openid |
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
 | `updatedAt` | number | |
 
-硬删除。旧数据若缺 `spaceId`，由 `space.ensureDefault` / `item` 写路径回填。旧数据缺 `tagIds` / 日期字段时按空数组 / null 处理。物资级提醒改记在 `itemExpireSubs`，不再用本字段做全家共用开关。
+硬删除。旧数据若缺 `spaceId`，由 `space.ensureDefault` / `item` 写路径回填。旧数据缺 `tagIds` / 日期字段时按空数组 / null 处理。旧数据只有 `imageFileID`、没有 `imageFileIDs` 时，读路径按单张数组处理；下次保存会双写。物资级提醒改记在 `itemExpireSubs`，不再用本字段做全家共用开关。
 
 临期/过期状态**不持久化**：由 `expireDate` 相对「今天」（Asia/Shanghai）派生——`expired`（早于今天）、`expiring`（今天…今天+3）、`normal`（更晚）。
 

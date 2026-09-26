@@ -1,7 +1,15 @@
 const { callItem, callSpace, callTag, callFamily } = require('../../utils/cloud')
 const { bindThemeToPage } = require('../../utils/theme')
 const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
-const { resolveImageFileID, chooseLocalImage, resolveDisplayUrl, previewEntityImage } = require('../../utils/cloudImage')
+const {
+  MAX_ITEM_IMAGES,
+  itemImageFileIDs,
+  resolveImageFileID,
+  resolveImageFileIDs,
+  chooseLocalImages,
+  resolveDisplayUrls,
+  previewEntityImages
+} = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 function unlockMask(page, id) {
@@ -55,10 +63,7 @@ Page({
     productionDate: '',
     expireDate: '',
     expireReminderEnabled: false,
-    imageFileID: '',
-    imageLocalPath: '',
-    imagePreview: '',
-    imageCleared: false,
+    imageSlots: [],
     locImageLocalPath: '',
     locImagePreview: ''
   },
@@ -148,13 +153,10 @@ Page({
           productionDate: item.productionDate || '',
           expireDate: item.expireDate || '',
           expireReminderEnabled: !!item.expireReminderEnabled,
-          imageFileID: item.imageFileID || '',
-          imageLocalPath: '',
-          imagePreview: item.imageFileID || '',
-          imageCleared: false,
+          imageSlots: this.slotsFromItem(item),
           loading: false
         })
-        this.hydrateImagePreview(item.imageFileID)
+        this.hydrateImageSlots()
       } else {
         const prefill = this.prefill || {}
         await this.loadLocations(this.data.spaceId, '', prefill.locationName)
@@ -249,11 +251,7 @@ Page({
       patch.productionDate = item.productionDate || ''
       patch.expireDate = item.expireDate || ''
       patch.expireReminderEnabled = !!item.expireReminderEnabled
-      patch.imageFileID = item.imageFileID || ''
-      patch.imageLocalPath = ''
-      patch.imagePreview = item.imageFileID || ''
-      patch.imageCleared = false
-      this.hydrateImagePreview(item.imageFileID)
+      patch.imageSlots = this.slotsFromItem(item)
     } else {
       if (prefill.name) patch.name = prefill.name
       if (prefill.quantity) patch.quantity = String(prefill.quantity)
@@ -263,6 +261,7 @@ Page({
       if (prefill.productionDate) patch.productionDate = prefill.productionDate
     }
     this.setData(patch)
+    if (item) this.hydrateImageSlots()
   },
 
   async loadTags(preferredIds) {
@@ -447,25 +446,56 @@ Page({
     })
   },
 
-  async hydrateImagePreview(fileID) {
-    const src = await resolveDisplayUrl(fileID)
-    if (!src || this.data.imageLocalPath) return
-    if (src !== this.data.imagePreview) {
-      this.setData({ imagePreview: src })
-    }
+  slotsFromItem(item) {
+    return itemImageFileIDs(item).map((fileID, i) => ({
+      key: fileID || `slot-${i}`,
+      fileID,
+      preview: fileID,
+      localPath: ''
+    }))
   },
 
-  onPreviewImage() {
-    previewEntityImage(this.data.imagePreview)
+  async hydrateImageSlots() {
+    const slots = this.data.imageSlots || []
+    if (!slots.length) return
+    const fileIDs = slots.map((slot) => (slot.localPath ? '' : slot.fileID))
+    const urls = await resolveDisplayUrls(fileIDs)
+    const current = this.data.imageSlots || []
+    if (current.length !== slots.length) return
+    const next = current.map((slot, i) => {
+      if (slot.localPath || slot.fileID !== slots[i].fileID) return slot
+      const preview = urls[i] || slot.preview
+      if (preview === slot.preview) return slot
+      return { ...slot, preview }
+    })
+    this.setData({ imageSlots: next })
   },
 
-  async onPickImage() {
+  onPreviewSlot(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    const slots = this.data.imageSlots || []
+    const current = slots[idx]
+    if (!current) return
+    previewEntityImages(
+      slots.map((slot) => slot.preview),
+      current.preview
+    )
+  },
+
+  async onPickImages() {
+    const remain = MAX_ITEM_IMAGES - (this.data.imageSlots || []).length
+    if (remain <= 0) return
     try {
-      const path = await chooseLocalImage()
+      const paths = await chooseLocalImages(remain)
+      const stamp = Date.now()
+      const added = paths.map((path, i) => ({
+        key: `local-${stamp}-${i}`,
+        fileID: '',
+        preview: path,
+        localPath: path
+      }))
       this.setData({
-        imageLocalPath: path,
-        imagePreview: path,
-        imageCleared: false
+        imageSlots: (this.data.imageSlots || []).concat(added).slice(0, MAX_ITEM_IMAGES)
       })
     } catch (e) {
       if (e && (e.errMsg || '').indexOf('cancel') >= 0) return
@@ -474,12 +504,12 @@ Page({
     }
   },
 
-  onImageClear() {
-    this.setData({
-      imageLocalPath: '',
-      imagePreview: '',
-      imageCleared: true
-    })
+  onClearSlot(e) {
+    const idx = Number(e.currentTarget.dataset.index)
+    const slots = (this.data.imageSlots || []).slice()
+    if (idx < 0 || idx >= slots.length) return
+    slots.splice(idx, 1)
+    this.setData({ imageSlots: slots })
   },
 
   onLocImageChange(e) {
@@ -585,12 +615,17 @@ Page({
         )
       }
       try {
-        const imageFileID = await resolveImageFileID({
-          localPath: this.data.imageLocalPath,
-          cleared: this.data.imageCleared,
-          kind: 'item'
+        const slots = this.data.imageSlots || []
+        const existing = slots
+          .filter((slot) => slot.fileID && !slot.localPath)
+          .map((slot) => slot.fileID)
+        const locals = slots.filter((slot) => slot.localPath).map((slot) => slot.localPath)
+        const imageFileIDs = await resolveImageFileIDs({
+          existingFileIDs: existing,
+          localPaths: locals
         })
-        if (imageFileID !== undefined) payload.imageFileID = imageFileID
+        payload.imageFileIDs = imageFileIDs
+        payload.imageFileID = imageFileIDs[0] || ''
       } catch (uploadErr) {
         this.setData({ error: copy.edit.imageUploadFailed })
         return

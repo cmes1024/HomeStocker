@@ -4,7 +4,11 @@ const { bindThemeToPage } = require('../../utils/theme')
 const { shelfLifeStatus } = require('../../utils/expireStatus')
 const { formatActivityLine } = require('../../utils/activityLine')
 const { takePendingItemSnapshot } = require('../../utils/itemDetailNav')
-const { resolveDisplayUrl, previewEntityImage } = require('../../utils/cloudImage')
+const {
+  itemImageFileIDs,
+  resolveDisplayUrls,
+  previewEntityImages
+} = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 const ITEM_COMPARE_KEYS = [
@@ -19,6 +23,7 @@ const ITEM_COMPARE_KEYS = [
   'expireDate',
   'expireReminderEnabled',
   'imageFileID',
+  'imageFileIDs',
   'updatedAt',
   'createdAt',
   'source'
@@ -63,15 +68,20 @@ function tagIdsKey(ids) {
     .join(',')
 }
 
+function imageIdsKey(item) {
+  return itemImageFileIDs(item).join(',')
+}
+
 function itemCoreEqual(a, b) {
   if (!a || !b) return false
   for (let i = 0; i < ITEM_COMPARE_KEYS.length; i++) {
     const k = ITEM_COMPARE_KEYS[i]
+    if (k === 'imageFileIDs') continue
     if (String(a[k] == null ? '' : a[k]) !== String(b[k] == null ? '' : b[k])) {
       return false
     }
   }
-  return tagIdsKey(a.tagIds) === tagIdsKey(b.tagIds)
+  return tagIdsKey(a.tagIds) === tagIdsKey(b.tagIds) && imageIdsKey(a) === imageIdsKey(b)
 }
 
 function normalizeSnapshot(raw) {
@@ -105,7 +115,9 @@ Page({
     headerTitle: copy.detail.pageTitle,
     theme: null,
     loadingColors: ['#C4A484', '#8B6914'],
-    imageSrc: ''
+    imageSrc: '',
+    imageSrcs: [],
+    imageCurrent: 0
   },
 
   onLoad(options) {
@@ -205,25 +217,40 @@ Page({
     if (options.locationName !== undefined) patch.locationName = options.locationName
     if (options.tagNames !== undefined) patch.tagNames = options.tagNames
     if (options.recentOps !== undefined) patch.recentOps = options.recentOps
-    const imageFileID = (item && item.imageFileID) || ''
-    patch.imageSrc = imageFileID
+    const fileIDs = itemImageFileIDs(item)
+    patch.imageSrc = fileIDs[0] || ''
+    patch.imageSrcs = fileIDs
+    patch.imageCurrent = 0
     this.setData(patch)
     this.syncLoadingColors()
-    this.hydrateImageSrc(imageFileID)
+    this.hydrateImageSrcs(fileIDs)
   },
 
-  async hydrateImageSrc(fileID) {
-    const src = await resolveDisplayUrl(fileID)
-    if (src && src !== this.data.imageSrc) {
-      this.setData({ imageSrc: src })
+  async hydrateImageSrcs(fileIDs) {
+    const urls = await resolveDisplayUrls(fileIDs)
+    const next = {
+      imageSrc: urls[0] || '',
+      imageSrcs: urls
     }
-    if (!fileID && this.data.imageSrc) {
-      this.setData({ imageSrc: '' })
+    if (urls.length && this.data.imageCurrent >= urls.length) {
+      next.imageCurrent = 0
     }
+    this.setData(next)
+  },
+
+  onSwiperChange(e) {
+    const current = Number(e.detail && e.detail.current) || 0
+    const src = (this.data.imageSrcs || [])[current] || ''
+    if (current === this.data.imageCurrent && src === this.data.imageSrc) return
+    const patch = { imageCurrent: current }
+    if (src) patch.imageSrc = src
+    this.setData(patch)
   },
 
   onPreviewImage() {
-    previewEntityImage(this.data.imageSrc)
+    const urls = this.data.imageSrcs || []
+    const current = urls[this.data.imageCurrent] || urls[0]
+    previewEntityImages(urls, current)
   },
 
   async resolvePlaceAndTags(item, soft) {

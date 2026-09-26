@@ -20,18 +20,23 @@
     <view class="edit-page">
       <scroll-view class="slip" scroll-y enhanced show-scrollbar="{{false}}">
         <view class="image-field">
-          <view class="image-picker">
-            <view class="image-hit" wx:if="{{!imagePreview}}" bind:tap="onPickImage">
+          <view class="image-row">
+            <view class="image-slot" wx:for="{{imageSlots}}" wx:key="key">
+              <view class="image-hit" bind:tap="onPreviewSlot" data-index="{{index}}">
+                <image class="image-preview" src="{{item.preview}}" mode="aspectFill" />
+              </view>
+              <view class="image-clear" catch:tap="onClearSlot" data-index="{{index}}">×</view>
+            </view>
+            <view
+              class="image-slot image-slot-add"
+              wx:if="{{imageSlots.length < 3}}"
+              bind:tap="onPickImages"
+            >
               <view class="image-empty">
                 <text class="image-plus">＋</text>
                 <text class="image-hint">{{copy.imageHint}}</text>
               </view>
             </view>
-            <view class="image-hit" wx:else bind:tap="onPreviewImage">
-              <image class="image-preview" src="{{imagePreview}}" mode="aspectFit" />
-            </view>
-            <view class="image-replace" wx:if="{{imagePreview}}" catch:tap="onPickImage">{{common.imageReplace}}</view>
-            <view class="image-clear" wx:if="{{imagePreview}}" catch:tap="onImageClear">×</view>
           </view>
         </view>
 

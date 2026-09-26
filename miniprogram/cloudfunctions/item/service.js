@@ -405,7 +405,7 @@ const ACTIVITY_FIELD_KEYS = [
   'tagIds',
   'productionDate',
   'expireDate',
-  'imageFileID'
+  'imageFileIDs'
 ]
 
 const ACTIVITY_FIELD_LABELS = {
@@ -418,16 +418,58 @@ const ACTIVITY_FIELD_LABELS = {
   tagIds: '标签',
   productionDate: '生产日',
   expireDate: '过期日',
-  imageFileID: '图片'
+  imageFileIDs: '图片'
 }
 
-function normalizeImageFileID(value) {
-  if (value === undefined) return { skip: true }
-  if (value === null || value === '') return { fileID: '' }
-  const s = String(value).trim()
-  if (!s) return { fileID: '' }
-  if (!s.startsWith('cloud://')) return { error: true }
-  return { fileID: s }
+const MAX_ITEM_IMAGES = 3
+
+function itemImageFileIDs(doc) {
+  if (!doc) return []
+  if (Array.isArray(doc.imageFileIDs) && doc.imageFileIDs.length) {
+    return doc.imageFileIDs
+      .map((id) => String(id || '').trim())
+      .filter((id) => id.startsWith('cloud://'))
+      .slice(0, MAX_ITEM_IMAGES)
+  }
+  const one = String(doc.imageFileID || '').trim()
+  return one.startsWith('cloud://') ? [one] : []
+}
+
+function sameImageFileIDs(before, after) {
+  const aa = itemImageFileIDs(before)
+  const bb = itemImageFileIDs(after)
+  if (aa.length !== bb.length) return false
+  return aa.every((v, i) => v === bb[i])
+}
+
+function normalizeImageFileIDs(event) {
+  const hasArr = Object.prototype.hasOwnProperty.call(event, 'imageFileIDs')
+  const hasOne = Object.prototype.hasOwnProperty.call(event, 'imageFileID')
+  if (!hasArr && !hasOne) return { skip: true }
+
+  let raw
+  if (hasArr) {
+    if (event.imageFileIDs == null || event.imageFileIDs === '') raw = []
+    else if (!Array.isArray(event.imageFileIDs)) return { error: true }
+    else raw = event.imageFileIDs
+  } else if (event.imageFileID == null || event.imageFileID === '') {
+    raw = []
+  } else {
+    raw = [event.imageFileID]
+  }
+
+  const seen = {}
+  const fileIDs = []
+  for (let i = 0; i < raw.length; i++) {
+    const s = String(raw[i] || '').trim()
+    if (!s) continue
+    if (!s.startsWith('cloud://')) return { error: true }
+    if (seen[s]) continue
+    seen[s] = true
+    fileIDs.push(s)
+    if (fileIDs.length >= MAX_ITEM_IMAGES) break
+  }
+  return { fileIDs, cover: fileIDs[0] || '' }
 }
 
 async function deleteCloudFiles(fileIDs) {
@@ -468,6 +510,10 @@ function computeChangedFields(before, after) {
     const key = ACTIVITY_FIELD_KEYS[i]
     if (key === 'tagIds') {
       if (!sameTagIds(before.tagIds, after.tagIds)) changed.push(key)
+      continue
+    }
+    if (key === 'imageFileIDs') {
+      if (!sameImageFileIDs(before, after)) changed.push(key)
       continue
     }
     const bv = normalizeComparable(key, before[key])
@@ -601,7 +647,7 @@ async function createItem(openid, event, options = {}) {
     expireDate = d
   }
 
-  const imageRes = normalizeImageFileID(event.imageFileID)
+  const imageRes = normalizeImageFileIDs(event)
   if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
 
   const cap = await assertItemCapacity(ctx.familyId, 1)
@@ -624,7 +670,10 @@ async function createItem(openid, event, options = {}) {
     createdAt: now,
     updatedAt: now
   }
-  if (!imageRes.skip && imageRes.fileID) doc.imageFileID = imageRes.fileID
+  if (!imageRes.skip && imageRes.fileIDs.length) {
+    doc.imageFileIDs = imageRes.fileIDs
+    doc.imageFileID = imageRes.cover
+  }
 
   const addRes = await db.collection('items').add({ data: doc })
   await bumpItemCount(ctx.familyId, 1)
@@ -909,14 +958,11 @@ async function updateItem(openid, event, options = {}) {
   if (event.note !== undefined) {
     patch.note = String(event.note)
   }
-  if (Object.prototype.hasOwnProperty.call(event, 'imageFileID')) {
-    const imageRes = normalizeImageFileID(event.imageFileID)
-    if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
-    if (!imageRes.skip) {
-      const next = imageRes.fileID
-      const prev = String(snap.data.imageFileID || '').trim()
-      if (next !== prev) patch.imageFileID = next
-    }
+  const imageRes = normalizeImageFileIDs(event)
+  if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
+  if (!imageRes.skip && !sameImageFileIDs(snap.data, { imageFileIDs: imageRes.fileIDs })) {
+    patch.imageFileIDs = imageRes.fileIDs
+    patch.imageFileID = imageRes.cover
   }
 
   if (event.tagIds !== undefined) {
@@ -995,11 +1041,13 @@ async function updateItem(openid, event, options = {}) {
   }
 
   await db.collection('items').doc(itemId).update({ data: patch })
-  if (patch.imageFileID !== undefined) {
-    const prevImage = String(snap.data.imageFileID || '').trim()
-    if (prevImage && prevImage !== patch.imageFileID) {
-      await deleteCloudFiles([prevImage])
-    }
+  if (patch.imageFileIDs !== undefined) {
+    const nextSet = {}
+    patch.imageFileIDs.forEach((id) => {
+      nextSet[id] = true
+    })
+    const stale = itemImageFileIDs(snap.data).filter((id) => !nextSet[id])
+    if (stale.length) await deleteCloudFiles(stale)
   }
   const merged = { ...snap.data, ...patch }
   const changedFields = computeChangedFields(snap.data, merged)
@@ -1066,7 +1114,7 @@ async function removeItem(openid, event, options = {}) {
     null
   )
   await db.collection('items').doc(itemId).remove()
-  await deleteCloudFiles([snap.data.imageFileID])
+  await deleteCloudFiles(itemImageFileIDs(snap.data))
   await bumpItemCount(ctx.familyId, -1)
   await removeExpireSubsForItem(itemId).catch((e) => {
     console.warn('removeExpireSubsForItem failed', itemId, e)
@@ -1143,7 +1191,9 @@ async function removeMany(openid, event, options = {}) {
     return fail('INTERNAL', e.message || '批量删除失败')
   }
 
-  await deleteCloudFiles(items.map((it) => it.imageFileID))
+  await deleteCloudFiles(
+    items.reduce((acc, it) => acc.concat(itemImageFileIDs(it)), [])
+  )
   await bumpItemCount(ctx.familyId, -items.length)
 
   await Promise.all(

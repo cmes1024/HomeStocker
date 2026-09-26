@@ -148,7 +148,7 @@ const copy = {
     kickerEdit: '改一件家里的东西',
     titleCreate: '添加物品',
     titleEdit: '编辑物品',
-    imageHint: '点这里加一张图',
+    imageHint: '最多 3 张',
     imageUploadFailed: '图片没传上去，再试一次',
     locImageHint: '给这个位置加一张图',
     labelName: '物品名称',

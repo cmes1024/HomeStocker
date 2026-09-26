@@ -28,9 +28,28 @@
         class="slip {{theme.isPhoto ? 'on-photo' : ''}}"
         style="box-shadow: 0 2rpx 10px 0 var(--theme-shadow);"
       >
-        <view class="detail-photo-wrap" wx:if="{{imageSrc}}" bind:tap="onPreviewImage">
-          <image class="detail-photo" src="{{imageSrc}}" mode="aspectFit" />
-        </view>
+        <swiper
+          wx:if="{{imageSrcs.length}}"
+          class="detail-photo-wrap"
+          current="{{imageCurrent}}"
+          indicator-dots="{{imageSrcs.length > 1}}"
+          indicator-color="rgba(26, 26, 26, 0.25)"
+          indicator-active-color="rgba(26, 26, 26, 0.65)"
+          circular="{{imageSrcs.length > 1}}"
+          autoplay="{{imageSrcs.length > 1}}"
+          interval="{{3000}}"
+          duration="{{500}}"
+          bindchange="onSwiperChange"
+        >
+          <swiper-item wx:for="{{imageSrcs}}" wx:for-item="src" wx:key="*this">
+            <image
+              class="detail-photo"
+              src="{{src}}"
+              mode="aspectFit"
+              bind:tap="onPreviewImage"
+            />
+          </swiper-item>
+        </swiper>
         <view class="field">
           <view class="label">{{copy.labelName}}</view>
           <view class="value">{{item.name}}</view>

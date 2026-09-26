@@ -95,6 +95,7 @@
             unit="{{item.unit}}"
             expireStatus="{{item.expireStatus}}"
             image="{{item.imageFileID}}"
+            images="{{item.imageFileIDs}}"
             place="{{item.placeText}}"
             bind:tap="goDetail"
           />
