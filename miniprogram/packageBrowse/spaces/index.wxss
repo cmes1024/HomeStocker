@@ -39,6 +39,7 @@
 }
 
 .space-tile {
+  position: relative;
   width: calc(50% - 20rpx);
   margin: 10rpx;
   padding: 28rpx 24rpx 22rpx;
@@ -46,6 +47,35 @@
   border-radius: 24rpx;
   background: #ffffff;
   box-shadow: 0 10rpx 28rpx var(--theme-shadow);
+  overflow: hidden;
+}
+
+.space-photo {
+  position: absolute;
+  top: -16rpx;
+  right: -16rpx;
+  bottom: -16rpx;
+  left: -16rpx;
+  width: calc(100% + 32rpx);
+  height: calc(100% + 32rpx);
+  z-index: 0;
+  filter: blur(0rpx);
+}
+
+.space-frost {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.space-tile .space-hd,
+.space-tile .space-ft {
+  position: relative;
+  z-index: 1;
 }
 
 .space-hd {

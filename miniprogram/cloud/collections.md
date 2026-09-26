@@ -70,6 +70,7 @@
 | `productionDate` | string \| null | 可选；生产日 `YYYY-MM-DD`（Asia/Shanghai 日历） |
 | `expireDate` | string \| null | 可选；过期日 `YYYY-MM-DD`；无此字段则无临期/过期状态 |
 | `expireReminderEnabled` | boolean | 遗留字段，不再作为提醒真相；读接口会覆盖为**当前用户**是否订阅了该物资 |
+| `imageFileID` | string | 可选；云存储 `cloud://` fileID；一张物品图，列表当卡片背景 |
 | `createdBy` | string | openid |
 | `source` | string | `ui` \| `agent` |
 | `createdAt` | number | |
@@ -129,6 +130,7 @@
 | `floorId` | string \| null | 可选；本版 UI 不露 |
 | `isDefault` | boolean | 默认仓库标记 |
 | `coverKey` | string | 可选，默认氛围图 key（如 `default-indoor`） |
+| `imageFileID` | string | 可选；用户上传的空间图，云存储 `cloud://` fileID；展示优先于 `coverKey` |
 | `createdAt` | number | |
 | `updatedAt` | number | |
 
@@ -140,6 +142,7 @@
 | `familyId` | string | |
 | `spaceId` | string | 所属空间 |
 | `name` | string | 如「右边第一个柜子」 |
+| `imageFileID` | string | 可选；云存储 `cloud://` fileID |
 | `createdAt` | number | |
 | `updatedAt` | number | |
 
@@ -340,6 +343,7 @@ V2 种子 enabled：`item.search` / `listExpiring` / `create` / `createMany` / `
 - 离开或解散后若仍有其他 membership，自动切到其中一个；否则回 onboarding
 - 解散家庭时同步清理该家庭的 `items` / `spaces` / `locations` / `tags` / `activities` / `itemExpireSubs` / `familyAiKeys` / `familyTrees` / `familySubscriptions` / `memberships`；成员离开时清该人在该家的 `itemExpireSubs`，**不删**家庭 AI 密钥与结构树与订阅
 - 关系写、物资写、空间/位置写、标签写、活动写、过期订阅写、AI 密钥/助手 act/结构树写一律云函数
+- 物品 / 空间 / 位置图：客户端压缩后上传云存储，fileID 走 `item` / `space` 写路径；换图或删实体时 best-effort 删旧文件
 
 ## 容量会员（内测兑换）
 

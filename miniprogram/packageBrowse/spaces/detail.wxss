@@ -12,7 +12,7 @@
   padding: 36rpx 40rpx 0;
   box-sizing: border-box;
   border-radius: 36rpx 36rpx 0 0;
-  background: #ffffff;
+  background: rgba(255,255,255, .9);
   display: flex;
   flex-direction: column;
 }
@@ -20,7 +20,7 @@
 .list-scroll {
   flex: 1;
   height: 0;
-  min-height: 0;
+  min-height: 50vh;
 }
 
 .scroll-pad {
@@ -60,30 +60,88 @@
   padding: 24rpx 4rpx;
 }
 
-.loc-row {
+.loc-grid {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24rpx;
-  padding: 28rpx 4rpx;
+  flex-wrap: wrap;
+  margin: 0 -10rpx;
+  padding: 8rpx 0 8rpx;
 }
 
-.loc-row + .loc-row {
-  border-top: 1rpx solid var(--theme-shadow);
+.loc-tile {
+  position: relative;
+  width: calc(50% - 20rpx);
+  margin: 10rpx;
+  padding: 28rpx 24rpx 22rpx;
+  box-sizing: border-box;
+  border-radius: 24rpx;
+  background: #ffffff;
+  box-shadow: 0 10rpx 28rpx var(--theme-shadow);
+  overflow: hidden;
+}
+
+.loc-tile.is-on {
+  box-shadow: 0 10rpx 28rpx var(--theme-shadow), inset 0 0 0 3rpx var(--theme-primary);
+}
+
+.loc-photo {
+  position: absolute;
+  top: -16rpx;
+  right: -16rpx;
+  bottom: -16rpx;
+  left: -16rpx;
+  width: calc(100% + 32rpx);
+  height: calc(100% + 32rpx);
+  z-index: 0;
+}
+
+.loc-frost {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.loc-tile .loc-hd,
+.loc-tile .loc-ft {
+  position: relative;
+  z-index: 1;
+}
+
+.loc-hd {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
 }
 
 .loc-name {
-  flex: 1;
   min-width: 0;
   font-size: 30rpx;
+  font-weight: 600;
   color: #1a1a1a;
-  line-height: 1.4;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.loc-actions {
+.loc-ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12rpx;
+  margin-top: 28rpx;
+}
+
+.loc-look {
+  font-size: 24rpx;
+  color: var(--theme-primary);
+  line-height: 1.2;
+}
+
+.loc-icons {
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -91,8 +149,8 @@
 }
 
 .ico-btn {
-  width: 48rpx;
-  height: 48rpx;
+  width: 44rpx;
+  height: 44rpx;
   display: flex;
   align-items: center;
   justify-content: center;

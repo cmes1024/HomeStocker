@@ -4,6 +4,7 @@ const { bindThemeToPage } = require('../../utils/theme')
 const { shelfLifeStatus } = require('../../utils/expireStatus')
 const { formatActivityLine } = require('../../utils/activityLine')
 const { takePendingItemSnapshot } = require('../../utils/itemDetailNav')
+const { resolveDisplayUrl, previewEntityImage } = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 const ITEM_COMPARE_KEYS = [
@@ -17,6 +18,7 @@ const ITEM_COMPARE_KEYS = [
   'productionDate',
   'expireDate',
   'expireReminderEnabled',
+  'imageFileID',
   'updatedAt',
   'createdAt',
   'source'
@@ -102,7 +104,8 @@ Page({
     removing: false,
     headerTitle: copy.detail.pageTitle,
     theme: null,
-    loadingColors: ['#C4A484', '#8B6914']
+    loadingColors: ['#C4A484', '#8B6914'],
+    imageSrc: ''
   },
 
   onLoad(options) {
@@ -202,8 +205,25 @@ Page({
     if (options.locationName !== undefined) patch.locationName = options.locationName
     if (options.tagNames !== undefined) patch.tagNames = options.tagNames
     if (options.recentOps !== undefined) patch.recentOps = options.recentOps
+    const imageFileID = (item && item.imageFileID) || ''
+    patch.imageSrc = imageFileID
     this.setData(patch)
     this.syncLoadingColors()
+    this.hydrateImageSrc(imageFileID)
+  },
+
+  async hydrateImageSrc(fileID) {
+    const src = await resolveDisplayUrl(fileID)
+    if (src && src !== this.data.imageSrc) {
+      this.setData({ imageSrc: src })
+    }
+    if (!fileID && this.data.imageSrc) {
+      this.setData({ imageSrc: '' })
+    }
+  },
+
+  onPreviewImage() {
+    previewEntityImage(this.data.imageSrc)
   },
 
   async resolvePlaceAndTags(item, soft) {

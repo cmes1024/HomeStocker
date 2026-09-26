@@ -11,7 +11,8 @@ const copy = {
     back: '返回',
     loadFailed: '加载失败',
     opFailed: '操作失败',
-    all: '全部'
+    all: '全部',
+    imageReplace: '换一张'
   },
 
   items: {
@@ -147,6 +148,9 @@ const copy = {
     kickerEdit: '改一件家里的东西',
     titleCreate: '添加物品',
     titleEdit: '编辑物品',
+    imageHint: '点这里加一张图',
+    imageUploadFailed: '图片没传上去，再试一次',
+    locImageHint: '给这个位置加一张图',
     labelName: '物品名称',
     namePlaceholder: '例如：抽纸、洗衣液',
     labelQty: '数量',
@@ -454,6 +458,9 @@ const copy = {
     createSubmit: '加上去',
     createCta: '新增空间',
     createTitle: '新增空间',
+    imageHint: '给这个空间加一张图',
+    imageUploadFailed: '图片没传上去，再试一次',
+    locImageHint: '给这个位置加一张图',
     nameRequired: '先写个名字',
     renameEmpty: '名字不能空',
     createdToast: '已添加',
@@ -485,6 +492,7 @@ const copy = {
     locRemoveContent: '删掉后，挂在上面的物品会变成「不指定位置」。',
     locRemoveConfirm: '删除',
     locItemsTitle: '空间物品',
+    locItemsAll: '全部',
     locBelongLabel: '所属位置：'
   },
 

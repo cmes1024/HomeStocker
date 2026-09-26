@@ -22,58 +22,79 @@
     <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
   </view>
 
-  <view class="page-col" wx:elif="{{!loading}}">
+  <view class="page-col" style="{{pageColHeight ? 'height:' + pageColHeight + 'px;' : ''}}" wx:elif="{{!loading}}">
     <view class="panel">
-      <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}">
+      <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}" scroll-into-view="{{scrollInto}}">
         <view class="section-hd">
           <view class="section-title">{{copy.locSectionTitle}}</view>
           <view class="section-action theme-text" bind:tap="openCreateLoc">{{copy.locCreate}}</view>
         </view>
 
-        <block wx:if="{{locations.length}}">
-          <view class="loc-row" wx:for="{{locations}}" wx:key="_id">
-            <view class="loc-name">{{item.name}}</view>
-            <view class="loc-actions">
-              <view
-                class="ico-btn"
-                hover-class="press"
-                data-id="{{item._id}}"
-                data-name="{{item.name}}"
-                catch:tap="openRenameLoc"
-              >
-                <image class="ico" src="{{editIcon}}" mode="aspectFit" />
-              </view>
-              <view
-                class="ico-btn"
-                hover-class="press"
-                data-id="{{item._id}}"
-                catch:tap="onRemoveLoc"
-              >
-                <image class="ico" src="{{deleteIcon}}" mode="aspectFit" />
+        <view class="loc-grid" wx:if="{{locations.length}}">
+          <view
+            class="loc-tile {{item.imageFileID ? 'has-photo' : ''}} {{filterLocationId === item._id ? 'is-on' : ''}}"
+            wx:for="{{locations}}"
+            wx:key="_id"
+            hover-class="press"
+            data-id="{{item._id}}"
+            data-name="{{item.name}}"
+            bind:tap="onLookLoc"
+          >
+            <image wx:if="{{item.imageFileID}}" class="loc-photo" src="{{item.imageFileID}}" mode="aspectFill" />
+            <view wx:if="{{item.imageFileID}}" class="loc-frost"></view>
+            <view class="loc-hd">
+              <text class="loc-name">{{item.name}}</text>
+            </view>
+            <view class="loc-ft">
+              <text class="loc-look">{{copy.lookCta}}</text>
+              <view class="loc-icons">
+                <view
+                  class="ico-btn"
+                  hover-class="press"
+                  data-id="{{item._id}}"
+                  data-name="{{item.name}}"
+                  catch:tap="openRenameLoc"
+                >
+                  <image class="ico" src="{{editIcon}}" mode="aspectFit" />
+                </view>
+                <view
+                  class="ico-btn"
+                  hover-class="press"
+                  data-id="{{item._id}}"
+                  catch:tap="onRemoveLoc"
+                >
+                  <image class="ico" src="{{deleteIcon}}" mode="aspectFit" />
+                </view>
               </view>
             </view>
           </view>
-        </block>
+        </view>
         <view class="loc-empty" wx:else>{{copy.locEmpty}}</view>
 
-        <view class="section-hd items-hd">
+        <view id="items-section" class="section-hd items-hd">
           <view class="section-title">{{copy.locItemsTitle}}</view>
+          <view
+            class="section-action theme-text"
+            wx:if="{{filterLocationId}}"
+            bind:tap="clearLocFilter"
+          >{{copy.locItemsAll}}</view>
         </view>
 
-        <view class="empty" wx:if="{{!items.length}}">
+        <view class="empty" wx:if="{{!visibleItems.length}}">
           <view class="empty-text">{{copy.detailEmpty}}</view>
           <view class="pill-btn theme-btn" bind:tap="goAdd">{{copy.detailAdd}}</view>
         </view>
 
         <view class="shelf" wx:else>
           <ItemTile
-            wx:for="{{items}}"
+            wx:for="{{visibleItems}}"
             wx:key="_id"
             itemId="{{item._id}}"
             name="{{item.name}}"
             quantity="{{item.quantity}}"
             unit="{{item.unit}}"
             expireStatus="{{item.expireStatus}}"
+            image="{{item.imageFileID}}"
             place="{{item.placeText}}"
             bind:tap="goDetail"
           />
@@ -94,8 +115,12 @@
     cancelText="{{common.cancel}}"
     confirmText="{{common.save}}"
     busy="{{locActing}}"
+    imageSrc="{{locImagePreview}}"
+    imageHint="{{copy.locImageHint}}"
     bind:input="onLocName"
     bind:confirm="onSaveLoc"
     bind:cancel="closeLocModal"
+    bind:imagechange="onLocImageChange"
+    bind:imageclear="onLocImageClear"
   />
 </AppShell>

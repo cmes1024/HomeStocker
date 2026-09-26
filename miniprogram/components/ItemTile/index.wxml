@@ -1,9 +1,13 @@
 <view
-  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}} {{selectable ? 'selectable' : ''}} {{selected ? 'selected' : ''}}"
+  class="tile {{animate ? 'anim' : ''}} {{place ? 'has-place' : ''}} {{selectable ? 'selectable' : ''}} {{selected ? 'selected' : ''}} {{image ? 'has-photo' : ''}}"
   style="{{animate ? 'animation-delay: ' + delay + 'ms;' : ''}}"
   hover-class="tile-hover"
   bind:tap="onTap"
 >
+  <view class="tile-photo-clip" wx:if="{{image}}">
+    <image class="tile-photo" src="{{image}}" mode="aspectFill" />
+    <view class="tile-frost"></view>
+  </view>
   <view class="tile-check" wx:if="{{selectable}}" aria-hidden="true">
     <view class="tile-check-dot {{selected ? 'on' : ''}}"></view>
   </view>

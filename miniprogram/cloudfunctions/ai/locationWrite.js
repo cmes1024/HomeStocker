@@ -13,6 +13,30 @@ module.exports = function createLocationWriter(db) {
     return { ok: false, code, message }
   }
 
+  function normalizeImageFileID(value) {
+    if (value === undefined) return { skip: true }
+    if (value === null || value === '') return { fileID: '' }
+    const s = String(value).trim()
+    if (!s) return { fileID: '' }
+    if (!s.startsWith('cloud://')) return { error: true }
+    return { fileID: s }
+  }
+
+  async function deleteCloudFiles(fileIDs) {
+    const list = (fileIDs || [])
+      .map((id) => String(id || '').trim())
+      .filter((id) => id.startsWith('cloud://'))
+    if (!list.length) return
+    try {
+      const cloud = require('wx-server-sdk')
+      for (let i = 0; i < list.length; i += 50) {
+        await cloud.deleteFile({ fileList: list.slice(i, i + 50) })
+      }
+    } catch (e) {
+      console.warn('deleteCloudFiles failed', e && e.message)
+    }
+  }
+
   function membershipId(openid, familyId) {
     return `${openid}_${familyId}`
   }
@@ -112,6 +136,9 @@ module.exports = function createLocationWriter(db) {
     }
     if (!space) return fail('NOT_FOUND', '空间不存在')
 
+    const imageRes = normalizeImageFileID(event.imageFileID)
+    if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
+
     const now = Date.now()
     const doc = {
       familyId: ctx.familyId,
@@ -120,6 +147,7 @@ module.exports = function createLocationWriter(db) {
       createdAt: now,
       updatedAt: now
     }
+    if (!imageRes.skip && imageRes.fileID) doc.imageFileID = imageRes.fileID
     const addRes = await db.collection('locations').add({ data: doc })
     return ok({ _id: addRes._id, ...doc })
   }
@@ -209,6 +237,7 @@ module.exports = function createLocationWriter(db) {
     const now = Date.now()
     await clearItemsLocation(ctx.familyId, locationId, now)
     await db.collection('locations').doc(locationId).remove()
+    await deleteCloudFiles([snap.data.imageFileID])
     return ok({
       removed: true,
       locationId,
@@ -245,6 +274,7 @@ module.exports = function createLocationWriter(db) {
       await clearItemsLocation(ctx.familyId, locs[i]._id, now)
       await db.collection('locations').doc(locs[i]._id).remove()
     }
+    await deleteCloudFiles(locs.map((l) => l.imageFileID))
 
     return ok({
       removed: true,

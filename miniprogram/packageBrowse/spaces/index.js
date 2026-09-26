@@ -1,6 +1,7 @@
 const { callSpace } = require('../../utils/cloud')
 const { listSpaces } = require('../../utils/db')
 const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
+const { resolveImageFileID } = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 const EDIT_SVG =
@@ -44,7 +45,11 @@ Page({
     modalTitle: copy.spaces.createTitle,
     modalName: '',
     editingId: '',
-    modalError: ''
+    modalError: '',
+    modalImageFileID: '',
+    modalImageLocalPath: '',
+    modalImagePreview: '',
+    modalImageCleared: false
   },
 
   onShow() {
@@ -84,19 +89,48 @@ Page({
       modalTitle: copy.spaces.createTitle,
       modalName: '',
       editingId: '',
-      modalError: ''
+      modalError: '',
+      modalImageFileID: '',
+      modalImageLocalPath: '',
+      modalImagePreview: '',
+      modalImageCleared: false
     })
   },
 
   openRename(e) {
     if (this.data.acting) return
+    const id = e.currentTarget.dataset.id || ''
+    const space = (this.data.spaces || []).find((s) => s && s._id === id)
+    const imageFileID = (space && space.imageFileID) || ''
     this.setData({
       showModal: true,
       modalMode: 'rename',
       modalTitle: copy.spaces.renameTitle,
       modalName: e.currentTarget.dataset.name || '',
-      editingId: e.currentTarget.dataset.id || '',
-      modalError: ''
+      editingId: id,
+      modalError: '',
+      modalImageFileID: imageFileID,
+      modalImageLocalPath: '',
+      modalImagePreview: imageFileID,
+      modalImageCleared: false
+    })
+  },
+
+  onModalImageChange(e) {
+    const path = (e.detail && e.detail.path) || ''
+    if (!path) return
+    this.setData({
+      modalImageLocalPath: path,
+      modalImagePreview: path,
+      modalImageCleared: false
+    })
+  },
+
+  onModalImageClear() {
+    this.setData({
+      modalImageLocalPath: '',
+      modalImagePreview: '',
+      modalImageCleared: true
     })
   },
 
@@ -106,7 +140,11 @@ Page({
       showModal: false,
       modalName: '',
       editingId: '',
-      modalError: ''
+      modalError: '',
+      modalImageFileID: '',
+      modalImageLocalPath: '',
+      modalImagePreview: '',
+      modalImageCleared: false
     })
   },
 
@@ -128,11 +166,29 @@ Page({
     }
     this.setData({ acting: true, modalError: '' })
     try {
+      let imageFileID
+      try {
+        imageFileID = await resolveImageFileID({
+          localPath: this.data.modalImageLocalPath,
+          cleared: this.data.modalImageCleared,
+          kind: 'space'
+        })
+      } catch (uploadErr) {
+        this.setData({
+          acting: false,
+          modalError: copy.spaces.imageUploadFailed
+        })
+        return
+      }
       if (this.data.modalMode === 'rename') {
-        await callSpace('update', { spaceId: this.data.editingId, name })
+        const payload = { spaceId: this.data.editingId, name }
+        if (imageFileID !== undefined) payload.imageFileID = imageFileID
+        await callSpace('update', payload)
         wx.showToast({ title: copy.spaces.renamedToast, icon: 'success' })
       } else {
-        await callSpace('create', { name })
+        const payload = { name }
+        if (imageFileID) payload.imageFileID = imageFileID
+        await callSpace('create', payload)
         wx.showToast({ title: copy.spaces.createdToast, icon: 'success' })
       }
       this.setData({

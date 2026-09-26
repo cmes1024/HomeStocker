@@ -1,6 +1,7 @@
 const { callItem, callSpace, callTag, callFamily } = require('../../utils/cloud')
 const { bindThemeToPage } = require('../../utils/theme')
 const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
+const { resolveImageFileID, chooseLocalImage, resolveDisplayUrl, previewEntityImage } = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 function unlockMask(page, id) {
@@ -53,7 +54,13 @@ Page({
     selectedTagIds: [],
     productionDate: '',
     expireDate: '',
-    expireReminderEnabled: false
+    expireReminderEnabled: false,
+    imageFileID: '',
+    imageLocalPath: '',
+    imagePreview: '',
+    imageCleared: false,
+    locImageLocalPath: '',
+    locImagePreview: ''
   },
 
   onLoad(options) {
@@ -141,8 +148,13 @@ Page({
           productionDate: item.productionDate || '',
           expireDate: item.expireDate || '',
           expireReminderEnabled: !!item.expireReminderEnabled,
+          imageFileID: item.imageFileID || '',
+          imageLocalPath: '',
+          imagePreview: item.imageFileID || '',
+          imageCleared: false,
           loading: false
         })
+        this.hydrateImagePreview(item.imageFileID)
       } else {
         const prefill = this.prefill || {}
         await this.loadLocations(this.data.spaceId, '', prefill.locationName)
@@ -237,6 +249,11 @@ Page({
       patch.productionDate = item.productionDate || ''
       patch.expireDate = item.expireDate || ''
       patch.expireReminderEnabled = !!item.expireReminderEnabled
+      patch.imageFileID = item.imageFileID || ''
+      patch.imageLocalPath = ''
+      patch.imagePreview = item.imageFileID || ''
+      patch.imageCleared = false
+      this.hydrateImagePreview(item.imageFileID)
     } else {
       if (prefill.name) patch.name = prefill.name
       if (prefill.quantity) patch.quantity = String(prefill.quantity)
@@ -424,8 +441,55 @@ Page({
       showNewLocation: true,
       newLocationName: '',
       modalError: '',
-      creatingLocation: false
+      creatingLocation: false,
+      locImageLocalPath: '',
+      locImagePreview: ''
     })
+  },
+
+  async hydrateImagePreview(fileID) {
+    const src = await resolveDisplayUrl(fileID)
+    if (!src || this.data.imageLocalPath) return
+    if (src !== this.data.imagePreview) {
+      this.setData({ imagePreview: src })
+    }
+  },
+
+  onPreviewImage() {
+    previewEntityImage(this.data.imagePreview)
+  },
+
+  async onPickImage() {
+    try {
+      const path = await chooseLocalImage()
+      this.setData({
+        imageLocalPath: path,
+        imagePreview: path,
+        imageCleared: false
+      })
+    } catch (e) {
+      if (e && (e.errMsg || '').indexOf('cancel') >= 0) return
+      if (e && e.code === 'NO_IMAGE') return
+      wx.showToast({ title: '选图失败', icon: 'none' })
+    }
+  },
+
+  onImageClear() {
+    this.setData({
+      imageLocalPath: '',
+      imagePreview: '',
+      imageCleared: true
+    })
+  },
+
+  onLocImageChange(e) {
+    const path = (e.detail && e.detail.path) || ''
+    if (!path) return
+    this.setData({ locImageLocalPath: path, locImagePreview: path })
+  },
+
+  onLocImageClear() {
+    this.setData({ locImageLocalPath: '', locImagePreview: '' })
   },
 
   closeNewLocation() {
@@ -433,7 +497,9 @@ Page({
     this.setData({
       showNewLocation: false,
       newLocationName: '',
-      modalError: ''
+      modalError: '',
+      locImageLocalPath: '',
+      locImagePreview: ''
     })
   },
 
@@ -454,10 +520,24 @@ Page({
     }
     this.setData({ creatingLocation: true, modalError: '' })
     try {
-      const loc = await callSpace('createLocation', {
+      const payload = {
         spaceId: this.data.spaceId,
         name
-      })
+      }
+      try {
+        const locImageFileID = await resolveImageFileID({
+          localPath: this.data.locImageLocalPath,
+          kind: 'location'
+        })
+        if (locImageFileID) payload.imageFileID = locImageFileID
+      } catch (uploadErr) {
+        this.setData({
+          creatingLocation: false,
+          modalError: copy.edit.imageUploadFailed
+        })
+        return
+      }
+      const loc = await callSpace('createLocation', payload)
       await this.loadLocations(this.data.spaceId, loc._id)
       this.setData({
         showNewLocation: false,
@@ -503,6 +583,17 @@ Page({
         expireReminderEnabled: !!(
           this.data.expireDate && this.data.expireReminderEnabled
         )
+      }
+      try {
+        const imageFileID = await resolveImageFileID({
+          localPath: this.data.imageLocalPath,
+          cleared: this.data.imageCleared,
+          kind: 'item'
+        })
+        if (imageFileID !== undefined) payload.imageFileID = imageFileID
+      } catch (uploadErr) {
+        this.setData({ error: copy.edit.imageUploadFailed })
+        return
       }
       if (isEdit) {
         await callItem('update', {

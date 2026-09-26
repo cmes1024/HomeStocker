@@ -1,4 +1,6 @@
 const { getAppTheme } = require('../../utils/theme')
+const { chooseLocalImage, previewEntityImage } = require('../../utils/cloudImage')
+const copy = require('../../utils/copy')
 
 Component({
   options: {
@@ -53,11 +55,20 @@ Component({
     busy: {
       type: Boolean,
       value: false
+    },
+    imageSrc: {
+      type: String,
+      value: ''
+    },
+    imageHint: {
+      type: String,
+      value: ''
     }
   },
 
   data: {
-    cssVarStyle: ''
+    cssVarStyle: '',
+    imageReplace: copy.common.imageReplace
   },
 
   observers: {
@@ -113,6 +124,28 @@ Component({
       this.triggerEvent('confirm', {
         value: this.properties.value || ''
       })
+    },
+
+    onPreviewImage() {
+      if (this.properties.busy) return
+      previewEntityImage(this.properties.imageSrc)
+    },
+
+    async onPickImage() {
+      if (this.properties.busy) return
+      try {
+        const path = await chooseLocalImage()
+        this.triggerEvent('imagechange', { path })
+      } catch (e) {
+        if (e && (e.errMsg || '').indexOf('cancel') >= 0) return
+        if (e && e.code === 'NO_IMAGE') return
+        wx.showToast({ title: '选图失败', icon: 'none' })
+      }
+    },
+
+    onClearImage() {
+      if (this.properties.busy) return
+      this.triggerEvent('imageclear')
     }
   }
 })

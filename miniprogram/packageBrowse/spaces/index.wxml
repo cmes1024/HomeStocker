@@ -28,7 +28,7 @@
       <scroll-view class="list-scroll" scroll-y enhanced show-scrollbar="{{false}}">
         <view class="space-grid">
           <view
-            class="space-tile"
+            class="space-tile {{item.imageFileID ? 'has-photo' : ''}}"
             wx:for="{{spaces}}"
             wx:key="_id"
             hover-class="press"
@@ -36,6 +36,8 @@
             data-name="{{item.name}}"
             bind:tap="goDetail"
           >
+            <image wx:if="{{item.imageFileID}}" class="space-photo" src="{{item.imageFileID}}" mode="aspectFill" />
+            <view wx:if="{{item.imageFileID}}" class="space-frost"></view>
             <view class="space-hd">
               <text class="space-name">{{item.name}}</text>
               <text class="space-default" wx:if="{{item.isDefault}}">{{copy.defaultMark}}</text>
@@ -83,8 +85,12 @@
     cancelText="{{common.cancel}}"
     confirmText="{{common.save}}"
     busy="{{acting}}"
+    imageSrc="{{modalImagePreview}}"
+    imageHint="{{copy.imageHint}}"
     bind:input="onModalName"
     bind:confirm="onSaveModal"
     bind:cancel="closeModal"
+    bind:imagechange="onModalImageChange"
+    bind:imageclear="onModalImageClear"
   />
 </AppShell>

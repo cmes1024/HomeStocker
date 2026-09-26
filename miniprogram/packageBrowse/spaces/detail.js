@@ -4,6 +4,7 @@ const { bindThemeToPage, getAppTheme } = require('../../utils/theme')
 const { resolveSpaceAtmosphere } = require('../../utils/spaceAtmosphere')
 const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const { navigateToItemDetail } = require('../../utils/itemDetailNav')
+const { resolveImageFileID } = require('../../utils/cloudImage')
 const copy = require('../../utils/copy')
 
 const EDIT_SVG =
@@ -44,7 +45,10 @@ Page({
     spaceId: '',
     space: null,
     items: [],
+    visibleItems: [],
     locations: [],
+    filterLocationId: '',
+    scrollInto: '',
     loading: true,
     loadingColors: ['#C4A484', '#C4A484'],
     error: '',
@@ -52,6 +56,7 @@ Page({
     headerTitle: '',
     editIcon: '',
     deleteIcon: '',
+    pageColHeight: 0,
     atmosphere: {
       bgImage: '',
       lightHeader: false,
@@ -63,6 +68,10 @@ Page({
     locName: '',
     locModalError: '',
     locActing: false,
+    locImageFileID: '',
+    locImageLocalPath: '',
+    locImagePreview: '',
+    locImageCleared: false,
     loadingText: copy.spaces.detailLoading
   },
 
@@ -70,6 +79,20 @@ Page({
     const atmosphere = resolveSpaceAtmosphere(space || this.data.space, getAppTheme())
     this.setData({ atmosphere })
     return atmosphere
+  },
+
+  syncPageColHeight() {
+    try {
+      const menu = wx.getMenuButtonBoundingClientRect()
+      const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+      const shellTop = menu.top + menu.height + 8 + 12
+      const pageColHeight = Math.max((windowInfo.windowHeight || 0) - shellTop, 0)
+      if (pageColHeight && pageColHeight !== this.data.pageColHeight) {
+        this.setData({ pageColHeight })
+      }
+    } catch (e) {
+      // keep stylesheet fallback
+    }
   },
 
   onLoad(options) {
@@ -85,6 +108,7 @@ Page({
       headerTitle: spaceName,
       ...themeIcons()
     })
+    this.syncPageColHeight()
     this.syncAtmosphere(null)
     if (spaceId) {
       this.load(spaceId, { silent: false })
@@ -98,6 +122,7 @@ Page({
       headerTitle: this.data.headerTitle || (this.data.space && this.data.space.name) || '',
       ...themeIcons()
     })
+    this.syncPageColHeight()
     this.syncAtmosphere(this.data.space)
     if (this.data.spaceId && !this.data.loading) {
       this.load(this.data.spaceId, { silent: true })
@@ -127,11 +152,17 @@ Page({
           (item.locationName || '').trim() || copy.detail.locationNone
         }`
       }))
+      const filterLocationId = this.data.filterLocationId
+      const stillThere =
+        filterLocationId && locations.some((loc) => loc && loc._id === filterLocationId)
+      const nextFilter = stillThere ? filterLocationId : ''
       const atmosphere = resolveSpaceAtmosphere(space, getAppTheme())
       this.setData({
         space,
         items,
+        visibleItems: this.itemsForLocation(items, nextFilter),
         locations,
+        filterLocationId: nextFilter,
         loading: false,
         headerTitle: (space && space.name) || this.data.headerTitle || '',
         atmosphere
@@ -164,9 +195,43 @@ Page({
     })
   },
 
+  itemsForLocation(items, locationId) {
+    const list = items || []
+    if (!locationId) return list
+    return list.filter((item) => item && item.locationId === locationId)
+  },
+
+  onLookLoc(e) {
+    const id = (e.currentTarget && e.currentTarget.dataset.id) || ''
+    if (!id) return
+    const next = this.data.filterLocationId === id ? '' : id
+    this.setData({
+      filterLocationId: next,
+      visibleItems: this.itemsForLocation(this.data.items, next),
+      scrollInto: ''
+    })
+    wx.nextTick(() => {
+      this.setData({ scrollInto: 'items-section' })
+    })
+  },
+
+  clearLocFilter() {
+    this.setData({
+      filterLocationId: '',
+      visibleItems: this.data.items || [],
+      scrollInto: 'items-section'
+    })
+  },
+
   goAdd() {
     const spaceId = this.data.spaceId || ''
-    const qs = spaceId ? `?spaceId=${encodeURIComponent(spaceId)}` : ''
+    const loc = (this.data.locations || []).find(
+      (item) => item && item._id === this.data.filterLocationId
+    )
+    const parts = []
+    if (spaceId) parts.push(`spaceId=${encodeURIComponent(spaceId)}`)
+    if (loc && loc.name) parts.push(`locationName=${encodeURIComponent(loc.name)}`)
+    const qs = parts.length ? `?${parts.join('&')}` : ''
     wx.navigateTo({ url: `/pages/items/edit${qs}` })
   },
 
@@ -177,20 +242,48 @@ Page({
       locEditingId: '',
       locName: '',
       locModalError: '',
-      locActing: false
+      locActing: false,
+      locImageFileID: '',
+      locImageLocalPath: '',
+      locImagePreview: '',
+      locImageCleared: false
     })
   },
 
   openRenameLoc(e) {
     const id = e.currentTarget.dataset.id
     const name = e.currentTarget.dataset.name || ''
+    const loc = (this.data.locations || []).find((l) => l && l._id === id)
+    const imageFileID = (loc && loc.imageFileID) || ''
     this.setData({
       showLocModal: true,
       locModalMode: 'rename',
       locEditingId: id,
       locName: name,
       locModalError: '',
-      locActing: false
+      locActing: false,
+      locImageFileID: imageFileID,
+      locImageLocalPath: '',
+      locImagePreview: imageFileID,
+      locImageCleared: false
+    })
+  },
+
+  onLocImageChange(e) {
+    const path = (e.detail && e.detail.path) || ''
+    if (!path) return
+    this.setData({
+      locImageLocalPath: path,
+      locImagePreview: path,
+      locImageCleared: false
+    })
+  },
+
+  onLocImageClear() {
+    this.setData({
+      locImageLocalPath: '',
+      locImagePreview: '',
+      locImageCleared: true
     })
   },
 
@@ -200,7 +293,11 @@ Page({
       showLocModal: false,
       locName: '',
       locModalError: '',
-      locEditingId: ''
+      locEditingId: '',
+      locImageFileID: '',
+      locImageLocalPath: '',
+      locImagePreview: '',
+      locImageCleared: false
     })
   },
 
@@ -220,14 +317,32 @@ Page({
 
     this.setData({ locActing: true, locModalError: '' })
     try {
+      let imageFileID
+      try {
+        imageFileID = await resolveImageFileID({
+          localPath: this.data.locImageLocalPath,
+          cleared: this.data.locImageCleared,
+          kind: 'location'
+        })
+      } catch (uploadErr) {
+        this.setData({
+          locActing: false,
+          locModalError: copy.spaces.imageUploadFailed
+        })
+        return
+      }
       if (this.data.locModalMode === 'rename') {
-        await callSpace('updateLocation', {
+        const payload = {
           locationId: this.data.locEditingId,
           name
-        })
+        }
+        if (imageFileID !== undefined) payload.imageFileID = imageFileID
+        await callSpace('updateLocation', payload)
         wx.showToast({ title: copy.spaces.locRenamedToast, icon: 'success' })
       } else {
-        await callSpace('createLocation', { spaceId, name })
+        const payload = { spaceId, name }
+        if (imageFileID) payload.imageFileID = imageFileID
+        await callSpace('createLocation', payload)
         wx.showToast({ title: copy.spaces.locCreatedToast, icon: 'success' })
       }
       this.setData({

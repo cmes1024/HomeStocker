@@ -12,6 +12,20 @@
   background: #ffffff;
 }
 
+.detail-photo-wrap {
+  margin: 16rpx -8rpx 8rpx;
+  height: 280rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: #f6f4f1;
+}
+
+.detail-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
 .slip.on-photo {
   background: rgba(255, 255, 255, 0.96);
 }

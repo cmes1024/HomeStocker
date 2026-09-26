@@ -45,6 +45,10 @@ Component({
     selected: {
       type: Boolean,
       value: false
+    },
+    image: {
+      type: String,
+      value: ''
     }
   },
 

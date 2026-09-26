@@ -372,6 +372,7 @@
   justify-content: space-between;
   gap: 16rpx;
   padding: 8rpx 12rpx 10rpx;
+  border-radius: 8rpx;
 }
 
 .space-block-hd-hover {

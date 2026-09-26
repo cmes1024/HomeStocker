@@ -10,12 +10,14 @@ const SPACE_COVER_IMAGES = {
 
 /**
  * 空间页背景优先级：
- * 1. 空间 coverKey 对应的预设图片
- * 2. 当前家庭主题色（径向渐变由 AppShell / ThemeRadialBg 绘制）
- * 3. 默认主题兜底
+ * 1. 用户上传的空间图 imageFileID
+ * 2. 空间 coverKey 对应的预设图片
+ * 3. 当前家庭主题色（径向渐变由 AppShell / ThemeRadialBg 绘制）
+ * 4. 默认主题兜底
  */
 function resolveSpaceAtmosphere(space, familyTheme) {
   const theme = familyTheme || getAppTheme() || DEFAULT_THEME
+  const photo = space && space.imageFileID
   const coverKey = space && space.coverKey
   const coverSrc = coverKey && SPACE_COVER_IMAGES[coverKey]
 
@@ -25,6 +27,16 @@ function resolveSpaceAtmosphere(space, familyTheme) {
     shadow: theme.shadow || DEFAULT_THEME.shadow,
     themeColor: theme.primary || theme.themeColor || DEFAULT_THEME.primary,
     themeSoft: theme.secondary || theme.themeSoft || DEFAULT_THEME.secondary
+  }
+
+  if (photo) {
+    return {
+      bgImage: photo,
+      lightHeader: false,
+      isPhoto: true,
+      ...colors,
+      source: 'space-photo'
+    }
   }
 
   if (coverSrc) {

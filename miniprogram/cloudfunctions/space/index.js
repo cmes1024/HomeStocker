@@ -19,6 +19,29 @@ function fail(code, message) {
   return { ok: false, code, message }
 }
 
+function normalizeImageFileID(value) {
+  if (value === undefined) return { skip: true }
+  if (value === null || value === '') return { fileID: '' }
+  const s = String(value).trim()
+  if (!s) return { fileID: '' }
+  if (!s.startsWith('cloud://')) return { error: true }
+  return { fileID: s }
+}
+
+async function deleteCloudFiles(fileIDs) {
+  const list = (fileIDs || [])
+    .map((id) => String(id || '').trim())
+    .filter((id) => id.startsWith('cloud://'))
+  if (!list.length) return
+  try {
+    for (let i = 0; i < list.length; i += 50) {
+      await cloud.deleteFile({ fileList: list.slice(i, i + 50) })
+    }
+  } catch (e) {
+    console.warn('deleteCloudFiles failed', e && e.message)
+  }
+}
+
 function membershipId(openid, familyId) {
   return `${openid}_${familyId}`
 }
@@ -168,8 +191,23 @@ async function updateSpace(openid, event) {
   if (event.coverKey !== undefined) {
     patch.coverKey = String(event.coverKey || DEFAULT_COVER_KEY)
   }
+  if (Object.prototype.hasOwnProperty.call(event, 'imageFileID')) {
+    const imageRes = normalizeImageFileID(event.imageFileID)
+    if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
+    if (!imageRes.skip) {
+      const next = imageRes.fileID
+      const prev = String(snap.data.imageFileID || '').trim()
+      if (next !== prev) patch.imageFileID = next
+    }
+  }
 
   await db.collection('spaces').doc(spaceId).update({ data: patch })
+  if (patch.imageFileID !== undefined) {
+    const prevImage = String(snap.data.imageFileID || '').trim()
+    if (prevImage && prevImage !== patch.imageFileID) {
+      await deleteCloudFiles([prevImage])
+    }
+  }
   return ok({ _id: spaceId, ...snap.data, ...patch })
 }
 
@@ -234,8 +272,23 @@ async function updateLocation(openid, event) {
     if (!name) return fail('INVALID_NAME', '请输入位置名称')
     patch.name = name
   }
+  if (Object.prototype.hasOwnProperty.call(event, 'imageFileID')) {
+    const imageRes = normalizeImageFileID(event.imageFileID)
+    if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
+    if (!imageRes.skip) {
+      const next = imageRes.fileID
+      const prev = String(snap.data.imageFileID || '').trim()
+      if (next !== prev) patch.imageFileID = next
+    }
+  }
 
   await db.collection('locations').doc(locationId).update({ data: patch })
+  if (patch.imageFileID !== undefined) {
+    const prevImage = String(snap.data.imageFileID || '').trim()
+    if (prevImage && prevImage !== patch.imageFileID) {
+      await deleteCloudFiles([prevImage])
+    }
+  }
   return ok({ _id: locationId, ...snap.data, ...patch })
 }
 

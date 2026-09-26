@@ -14,6 +14,30 @@ module.exports = function createSpaceWriter(db) {
     return { ok: false, code, message }
   }
 
+  function normalizeImageFileID(value) {
+    if (value === undefined) return { skip: true }
+    if (value === null || value === '') return { fileID: '' }
+    const s = String(value).trim()
+    if (!s) return { fileID: '' }
+    if (!s.startsWith('cloud://')) return { error: true }
+    return { fileID: s }
+  }
+
+  async function deleteCloudFiles(fileIDs) {
+    const list = (fileIDs || [])
+      .map((id) => String(id || '').trim())
+      .filter((id) => id.startsWith('cloud://'))
+    if (!list.length) return
+    try {
+      const cloud = require('wx-server-sdk')
+      for (let i = 0; i < list.length; i += 50) {
+        await cloud.deleteFile({ fileList: list.slice(i, i + 50) })
+      }
+    } catch (e) {
+      console.warn('deleteCloudFiles failed', e && e.message)
+    }
+  }
+
   function membershipId(openid, familyId) {
     return `${openid}_${familyId}`
   }
@@ -103,14 +127,19 @@ module.exports = function createSpaceWriter(db) {
   }
 
   async function deleteLocationsForSpace(spaceId) {
+    const fileIDs = []
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const locRes = await db.collection('locations').where({ spaceId }).limit(100).get()
       const locs = locRes.data || []
       if (!locs.length) break
+      locs.forEach((l) => {
+        if (l && l.imageFileID) fileIDs.push(l.imageFileID)
+      })
       await Promise.all(locs.map((l) => db.collection('locations').doc(l._id).remove()))
       if (locs.length < 100) break
     }
+    await deleteCloudFiles(fileIDs)
   }
 
   async function createSpace(openid, event, options = {}) {
@@ -119,6 +148,9 @@ module.exports = function createSpaceWriter(db) {
 
     const name = String(event.name || '').trim()
     if (!name) return fail('INVALID_NAME', '请输入空间名称')
+
+    const imageRes = normalizeImageFileID(event.imageFileID)
+    if (imageRes.error) return fail('INVALID_IMAGE', '图片无效')
 
     const now = Date.now()
     const existing = await listSpacesForFamily(ctx.familyId)
@@ -131,6 +163,7 @@ module.exports = function createSpaceWriter(db) {
       createdAt: now,
       updatedAt: now
     }
+    if (!imageRes.skip && imageRes.fileID) doc.imageFileID = imageRes.fileID
     const addRes = await db.collection('spaces').add({ data: doc })
     return ok({ _id: addRes._id, ...doc })
   }
@@ -219,6 +252,7 @@ module.exports = function createSpaceWriter(db) {
     await migrateItemsFromSpace(ctx.familyId, spaceId, target._id, now)
     await deleteLocationsForSpace(spaceId)
     await db.collection('spaces').doc(spaceId).remove()
+    await deleteCloudFiles([snap.data.imageFileID])
 
     return ok({
       removed: true,
@@ -282,6 +316,7 @@ module.exports = function createSpaceWriter(db) {
       await migrateItemsFromSpace(ctx.familyId, space._id, target._id, now)
       await deleteLocationsForSpace(space._id)
       await db.collection('spaces').doc(space._id).remove()
+      await deleteCloudFiles([space.imageFileID])
       removedIds.push(space._id)
       names.push(space.name || '')
     }

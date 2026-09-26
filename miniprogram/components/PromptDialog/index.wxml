@@ -21,6 +21,19 @@
       bindinput="onInput"
       bindconfirm="onConfirm"
     />
+    <view class="image-picker" wx:if="{{imageHint}}">
+      <view class="image-hit" wx:if="{{!imageSrc}}" catch:tap="onPickImage">
+        <view class="image-empty">
+          <text class="image-plus">＋</text>
+          <text class="image-hint">{{imageHint}}</text>
+        </view>
+      </view>
+      <view class="image-hit" wx:else catch:tap="onPreviewImage">
+        <image class="image-preview" src="{{imageSrc}}" mode="aspectFit" />
+      </view>
+      <view class="image-replace" wx:if="{{imageSrc}}" catch:tap="onPickImage">{{imageReplace}}</view>
+      <view class="image-clear" wx:if="{{imageSrc}}" catch:tap="onClearImage">×</view>
+    </view>
     <view class="error" wx:if="{{error}}">{{error}}</view>
     <slot></slot>
     <view class="actions">
