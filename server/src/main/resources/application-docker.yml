@@ -1,0 +1,26 @@
+# Active when SPRING_PROFILES_ACTIVE=docker (Compose / server).
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/homestocker
+    username: homestocker
+    password: homestocker
+  data:
+    redis:
+      host: redis
+      port: 6379
+
+logging:
+  level:
+    com.homestocker: INFO
+
+homestocker:
+  storage:
+    provider: minio
+    # In-cluster endpoint for the API container
+    endpoint: http://minio:9000
+    access-key: minioadmin
+    secret-key: minioadmin
+    bucket: homestocker
+  cors:
+    allowed-origin-patterns:
+      - "*"

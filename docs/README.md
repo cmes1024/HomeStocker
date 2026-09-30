@@ -17,6 +17,7 @@
 
 ## 正在设计 / 待实施
 
+- **[Java 后端迁移（进行中）](./plans/2026-09-30-java-backend-migration/README.md)** — 小程序保留；全部云函数 → `server/`（Spring Boot + PG + Redis）；实施勾选见 [路线图](./plans/2026-09-30-java-backend-migration/05-migration-roadmap.md)
 - [管家素养课表](./plans/2026-09-23-ai-assist-curriculum/README.md) — OpenSpec `ai-assist-curriculum`；出问题先读 [迭代指南](./plans/2026-09-23-ai-assist-curriculum/迭代指南.md)
 - [受众与适配（思考记录，未锁定）](./plans/2026-09-23-audience-and-fit.md) — 专人 / 手记脑记 / 出库优先；不是方案，不改现行家庭范围
 

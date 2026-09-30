@@ -3,8 +3,11 @@
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
 **第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。管家素养课表见 `docs/plans/2026-09-23-ai-assist-curriculum/`。**改管家出问题先读** `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md`（按模块排查，禁止「说 xxx 就做 xxx」）。
 
+**进行中：Java 后端迁移（替代全部云函数）。** 小程序前端保留；openid 由 Java `code2session` 获取；**开发/部署以 Docker Compose 为准（不必本机 JDK/Maven）**。脚手架在 `server/`（含 Dockerfile 与 `api` 服务）；实施向导 **`docs/plans/2026-09-30-java-backend-migration/`**（先读该目录 README 与 `05-migration-roadmap.md`）。未完成切流前，云函数仍是线上真相。
+
 ## 权威范围
 
+- **Java 后端迁移（进行中）：** `docs/plans/2026-09-30-java-backend-migration/`；代码 `server/`
 - **第一阶段现状（对照代码）：** `docs/plans/2026-09-17-phase1-status.md`
 - **MVP 基线决策：** `docs/plans/2026-09-10-mvp-cloudbase-redesign.md`（范围已被后续波次超过，勿当待做清单）
 - **空间版（已落地）：** `docs/plans/2026-09-10-next-spaces-locations.md`；归档 `openspec/changes/archive/2026-09-17-family-spaces-locations/`
@@ -39,7 +42,8 @@
 
 ## 技术栈
 
-- 微信**原生**小程序 + **云开发文档库**（不做 MySQL）
+- 微信**原生**小程序 + **云开发文档库**（现状；迁移完成后文档库/云函数退役）
+- **目标后端：** `server/` — Java 17 + Spring Boot + PostgreSQL + Redis + 对象存储（本地 MinIO）；见 `docs/plans/2026-09-30-java-backend-migration/`
 - 代码基线：裁剪现有 `miniprogram/`（保留 `extend/` / pageRouter 等）
 - 去掉产品路径上的 `pages/demo/*`、`pages/chat/*`（可留目录；`chatProxy` 壳子可保留）
 
@@ -90,9 +94,10 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 
 | 路径 | 说明 |
 |------|------|
-| `miniprogram/` | 小程序 + `cloudfunctions/` |
-| `docs/plans/` | 设计文档；第一阶段现状见 `2026-09-17-phase1-status.md`；AI 助手 V2 见 `2026-09-17-ai-assistant-v2/` |
-| `agent/` | 对话 Agent 后端雏形（后接） |
+| `miniprogram/` | 小程序 + `cloudfunctions/`（迁移期仍存在；目标为退役云函数） |
+| `server/` | Java API 脚手架与实现（迁移目标后端） |
+| `docs/plans/` | 设计文档；第一阶段现状见 `2026-09-17-phase1-status.md`；**Java 迁移向导**见 `2026-09-30-java-backend-migration/`；AI 助手 V2 见 `2026-09-17-ai-assistant-v2/` |
+| `agent/` | 对话 Agent 后端雏形（后接；与 `server` 管家迁徙不是同一刀） |
 | `family-supplies-prototype*` | HTML 原型参考，非运行时 |
 | `openspec/` | 规格与变更 |
 

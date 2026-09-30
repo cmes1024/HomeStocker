@@ -1,0 +1,11 @@
+# Local profile defaults (safe for docker-compose). Override secrets via env.
+logging:
+  level:
+    com.homestocker: DEBUG
+    org.springframework.jdbc: INFO
+
+homestocker:
+  cors:
+    # Mini program / WeChat DevTools local debugging
+    allowed-origin-patterns:
+      - "*"
