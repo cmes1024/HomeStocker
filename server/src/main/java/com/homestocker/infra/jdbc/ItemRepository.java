@@ -6,6 +6,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,8 +59,12 @@ public class ItemRepository {
     return hydrateAll(list);
   }
 
+  public List<ItemRow> list(String familyId, String spaceId, String tagId, int limit) {
+    return list(familyId, spaceId, tagId, null, limit);
+  }
+
   public List<ItemRow> list(
-      String familyId, String spaceId, String tagId, int limit) {
+      String familyId, String spaceId, String tagId, BigDecimal maxQuantity, int limit) {
     StringBuilder sql =
         new StringBuilder(
             """
@@ -76,6 +81,10 @@ public class ItemRepository {
       sql.append(
           " AND EXISTS (SELECT 1 FROM item_tags t WHERE t.item_id = i.id AND t.tag_id = ?)");
       args.add(tagId);
+    }
+    if (maxQuantity != null) {
+      sql.append(" AND i.quantity <= ?");
+      args.add(maxQuantity);
     }
     sql.append(" ORDER BY i.updated_at DESC LIMIT ?");
     args.add(limit);
@@ -102,6 +111,45 @@ public class ItemRepository {
         jdbc.queryForObject(
             "SELECT COUNT(1) FROM items WHERE family_id = ?", Integer.class, familyId);
     return n == null ? 0 : n;
+  }
+
+  /** space_id → count；未分组空间 id 也可能为空串，调用方用树解析名。 */
+  public List<Map<String, Object>> countBySpace(String familyId) {
+    return jdbc.query(
+        """
+        SELECT COALESCE(space_id, '') AS space_id, COUNT(1) AS cnt
+        FROM items
+        WHERE family_id = ?
+        GROUP BY COALESCE(space_id, '')
+        ORDER BY cnt DESC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new LinkedHashMap<>();
+          m.put("spaceId", rs.getString("space_id"));
+          m.put("count", rs.getInt("cnt"));
+          return m;
+        },
+        familyId);
+  }
+
+  public List<Map<String, Object>> countByTag(String familyId) {
+    return jdbc.query(
+        """
+        SELECT t.name AS tag_name, COUNT(DISTINCT it.item_id) AS cnt
+        FROM item_tags it
+        JOIN tags t ON t.id = it.tag_id AND t.family_id = ?
+        JOIN items i ON i.id = it.item_id AND i.family_id = ?
+        GROUP BY t.name
+        ORDER BY cnt DESC, t.name ASC
+        """,
+        (rs, i) -> {
+          Map<String, Object> m = new LinkedHashMap<>();
+          m.put("tagName", rs.getString("tag_name"));
+          m.put("count", rs.getInt("cnt"));
+          return m;
+        },
+        familyId,
+        familyId);
   }
 
   public int countExpiring(String familyId, String windowEndYmd) {

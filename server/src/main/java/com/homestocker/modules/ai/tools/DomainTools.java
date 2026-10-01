@@ -1,5 +1,7 @@
 package com.homestocker.modules.ai.tools;
 
+import com.homestocker.common.ShanghaiDates;
+import com.homestocker.infra.jdbc.ActivityRepository;
 import com.homestocker.infra.jdbc.ItemRepository;
 import com.homestocker.infra.jdbc.ItemRow;
 import com.homestocker.modules.ai.agent.ActRefs;
@@ -11,10 +13,13 @@ import com.homestocker.modules.ai.knowledge.KnowledgeService;
 import com.homestocker.modules.ai.pages.PageRegistry;
 import com.homestocker.modules.family.app.FamilyTreeService;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.stereotype.Component;
 
 /** Tool handlers port of miniprogram/cloudfunctions/ai/tools/* */
@@ -24,18 +29,25 @@ public class DomainTools {
   private final ItemsProbe itemsProbe;
   private final KnowledgeService knowledgeService;
   private final ItemRepository itemRepository;
+  private final ActivityRepository activityRepository;
 
   public DomainTools(
-      ItemsProbe itemsProbe, KnowledgeService knowledgeService, ItemRepository itemRepository) {
+      ItemsProbe itemsProbe,
+      KnowledgeService knowledgeService,
+      ItemRepository itemRepository,
+      ActivityRepository activityRepository) {
     this.itemsProbe = itemsProbe;
     this.knowledgeService = knowledgeService;
     this.itemRepository = itemRepository;
+    this.activityRepository = activityRepository;
   }
 
   public ToolResult run(String use, ToolContext ctx, Map<String, Object> call, int step) {
     return switch (use) {
       case "item.search" -> itemSearch(ctx, call, step);
       case "item.listExpiring" -> itemListExpiring(ctx, step);
+      case "activity.list" -> activityList(ctx, call, step);
+      case "item.stats" -> itemStats(ctx, call, step);
       case "item.create" -> itemCreate(ctx, call, step);
       case "item.createMany" -> itemCreateMany(ctx, call, step);
       case "item.update" -> itemUpdate(ctx, call, step);
@@ -69,17 +81,262 @@ public class DomainTools {
     if (keyword.isEmpty()) {
       keyword = ToolHelpers.str(call.get("keyword"));
     }
-    List<String> keywords = keyword.isEmpty() ? List.of() : List.of(keyword.toLowerCase());
+    List<String> keywords = keyword.isEmpty() ? List.of() : List.of(keyword.toLowerCase(Locale.ROOT));
     String spaceId = space != null ? ToolHelpers.str(space.get("id")) : null;
     String locationId = loc != null ? ToolHelpers.str(loc.get("id")) : null;
-    List<ItemRow> list = itemsProbe.listItemsCompact(ctx.familyId, spaceId, locationId, keywords, 100);
+    String tagName = ToolHelpers.str(call.get("tagName")).trim();
+    if (tagName.isEmpty()) {
+      tagName = ToolHelpers.str(call.get("tag")).trim();
+    }
+    String tagId = null;
+    if (!tagName.isEmpty()) {
+      Map<String, Object> tag = TreeMatch.matchTag(ctx.tree, tagName);
+      if (tag == null) {
+        return ToolResult.fail("第 " + step + " 步失败：标签「" + tagName + "」不在家庭结构里").build();
+      }
+      tagId = ToolHelpers.str(tag.get("id"));
+    }
+    BigDecimal maxQuantity = null;
+    if (call.get("maxQuantity") != null && !"".equals(String.valueOf(call.get("maxQuantity")))) {
+      try {
+        maxQuantity = new BigDecimal(String.valueOf(call.get("maxQuantity")).trim());
+        if (maxQuantity.compareTo(BigDecimal.ZERO) < 0) {
+          maxQuantity = BigDecimal.ZERO;
+        }
+      } catch (Exception e) {
+        return ToolResult.fail("第 " + step + " 步失败：maxQuantity 无效").build();
+      }
+    }
+    List<ItemRow> list =
+        itemsProbe.listItemsCompact(
+            ctx.familyId, spaceId, locationId, tagId, maxQuantity, keywords, 100);
     List<Map<String, Object>> capped = new ArrayList<>();
     for (ItemRow row : list) {
       capped.add(itemRowMap(row));
     }
+    String prefix = "查询";
+    if (maxQuantity != null) {
+      prefix = "数量≤" + maxQuantity.stripTrailingZeros().toPlainString();
+    } else if (!tagName.isEmpty()) {
+      prefix = "标签「" + tagName + "」";
+    }
     Presentation.PresentationView inv =
-        Presentation.buildInventoryPresentation(capped, ctx.tree, "查询", null);
+        Presentation.buildInventoryPresentation(capped, ctx.tree, prefix, null);
     return ToolResult.ok(inv.lead()).inventory(capped).build();
+  }
+
+  private ToolResult activityList(ToolContext ctx, Map<String, Object> call, int step) {
+    LocalDate today = ShanghaiDates.todayLocalDate();
+    String day = ToolHelpers.str(call.get("day")).trim().toLowerCase(Locale.ROOT);
+    int days = 1;
+    if (call.get("days") != null && !"".equals(String.valueOf(call.get("days")))) {
+      try {
+        days = Integer.parseInt(String.valueOf(call.get("days")).trim());
+      } catch (NumberFormatException ignored) {
+        days = 1;
+      }
+    }
+    days = Math.min(Math.max(days, 1), 7);
+    LocalDate startDay;
+    LocalDate endExclusive;
+    String windowLabel;
+    if ("yesterday".equals(day) || "昨天".equals(day) || "昨".equals(day)) {
+      startDay = today.minusDays(1);
+      endExclusive = today;
+      windowLabel = "昨天";
+    } else if ("recent".equals(day) || "近".equals(day) || days > 1) {
+      if ("recent".equals(day) || "近".equals(day)) {
+        days = Math.max(days, 3);
+      }
+      startDay = today.minusDays(days - 1L);
+      endExclusive = today.plusDays(1);
+      windowLabel = "近" + days + "天";
+    } else {
+      startDay = today;
+      endExclusive = today.plusDays(1);
+      windowLabel = "今天";
+    }
+
+    String action = ToolHelpers.str(call.get("action")).trim().toLowerCase(Locale.ROOT);
+    if ("all".equals(action) || "全部".equals(action)) {
+      action = "";
+    } else if ("add".equals(action) || "新增".equals(action) || "新建".equals(action)) {
+      action = "create";
+    } else if ("改".equals(action) || "修改".equals(action)) {
+      action = "update";
+    } else if ("删".equals(action) || "删除".equals(action)) {
+      action = "remove";
+    }
+    if (!action.isEmpty()
+        && !"create".equals(action)
+        && !"update".equals(action)
+        && !"remove".equals(action)) {
+      return ToolResult.fail("第 " + step + " 步失败：action 仅支持 create/update/remove").build();
+    }
+
+    final int limit = 40;
+    long startMs = ShanghaiDates.startOfDayEpochMs(startDay);
+    long endMs = ShanghaiDates.startOfDayEpochMs(endExclusive);
+    List<Map<String, Object>> raw =
+        activityRepository.listByFamilyBetween(ctx.familyId, startMs, endMs, action, limit + 1);
+    boolean truncated = raw.size() > limit;
+    if (truncated) {
+      raw = raw.subList(0, limit);
+    }
+
+    List<String> detailLines = new ArrayList<>();
+    List<Map<String, Object>> inventory = new ArrayList<>();
+    for (Map<String, Object> row : raw) {
+      String act = ToolHelpers.str(row.get("action")).trim().toLowerCase(Locale.ROOT);
+      String itemName = ToolHelpers.str(row.get("itemName")).trim();
+      if (itemName.isEmpty()) {
+        itemName = "未命名";
+      }
+      String when = ShanghaiDates.formatDateTimeMs(toLong(row.get("createdAt")));
+      String place =
+          TreeMatch.placeLabel(
+              ToolHelpers.str(row.get("spaceName")), ToolHelpers.str(row.get("locationName")));
+      String qtyBit = "";
+      if (row.get("quantity") != null) {
+        qtyBit = " qty=" + row.get("quantity") + ToolHelpers.str(row.get("unit"));
+      }
+      detailLines.add(
+          (when.isEmpty() ? "?" : when)
+              + " | "
+              + (act.isEmpty() ? "?" : act)
+              + " | "
+              + itemName
+              + qtyBit
+              + (place.isEmpty() ? "" : " | " + place));
+
+      String itemId = ToolHelpers.str(row.get("itemId")).trim();
+      if (("create".equals(act) || "update".equals(act))
+          && !itemId.isEmpty()
+          && inventory.size() < 24) {
+        Map<String, Object> inv = new LinkedHashMap<>();
+        inv.put("_id", itemId);
+        inv.put("name", itemName);
+        inv.put("quantity", row.get("quantity") != null ? row.get("quantity") : 1);
+        inv.put("unit", ToolHelpers.str(row.get("unit")));
+        inv.put("spaceName", ToolHelpers.str(row.get("spaceName")));
+        inv.put("locationName", ToolHelpers.str(row.get("locationName")));
+        inv.put("note", act + (when.isEmpty() ? "" : " " + when));
+        inventory.add(inv);
+      }
+    }
+
+    String actionBit = action.isEmpty() ? "all" : action;
+    if (raw.isEmpty()) {
+      String empty =
+          "activity.list window="
+              + windowLabel
+              + " action="
+              + actionBit
+              + " returned=0 truncated=false（无消息行；不是库存为空）";
+      return ToolResult.ok(empty).inventory(List.of()).inventoryPrefix("家庭消息").build();
+    }
+    StringBuilder sb = new StringBuilder();
+    sb.append("activity.list window=")
+        .append(windowLabel)
+        .append(" action=")
+        .append(actionBit)
+        .append(" returned=")
+        .append(raw.size())
+        .append(" truncated=")
+        .append(truncated)
+        .append("（明细供自行计数/去重；非库存快照）");
+    for (String line : detailLines) {
+      sb.append('\n').append(line);
+    }
+    return ToolResult.ok(sb.toString())
+        .inventory(inventory)
+        .inventoryPrefix("家庭消息")
+        .build();
+  }
+
+  private ToolResult itemStats(ToolContext ctx, Map<String, Object> call, int step) {
+    String groupBy = ToolHelpers.str(call.get("groupBy")).trim().toLowerCase(Locale.ROOT);
+    if (groupBy.isEmpty() || "total".equals(groupBy) || "none".equals(groupBy)) {
+      groupBy = "total";
+    } else if ("spaces".equals(groupBy) || "place".equals(groupBy)) {
+      groupBy = "space";
+    } else if ("tags".equals(groupBy)) {
+      groupBy = "tag";
+    }
+    if (!Set.of("total", "space", "tag").contains(groupBy)) {
+      return ToolResult.fail("第 " + step + " 步失败：groupBy 仅支持 total/space/tag").build();
+    }
+
+    int total = itemRepository.countByFamily(ctx.familyId);
+    StringBuilder sb = new StringBuilder();
+    sb.append("item.stats totalItems=").append(total);
+
+    if ("space".equals(groupBy)) {
+      List<Map<String, Object>> rows = itemRepository.countBySpace(ctx.familyId);
+      sb.append(" groupBy=space");
+      if (rows.isEmpty()) {
+        sb.append(" buckets=0");
+      } else {
+        for (Map<String, Object> row : rows) {
+          String spaceId = ToolHelpers.str(row.get("spaceId"));
+          String spaceName = spaceId;
+          Map<String, Object> space = findSpaceById(ctx.tree, spaceId);
+          if (space != null) {
+            spaceName = ToolHelpers.str(space.get("name"));
+            if (spaceName.isEmpty()) {
+              spaceName = spaceId;
+            }
+          } else if (spaceId.isEmpty()) {
+            spaceName = "未分组";
+          }
+          sb.append('\n').append(spaceName).append('=').append(row.get("count"));
+        }
+      }
+    } else if ("tag".equals(groupBy)) {
+      List<Map<String, Object>> rows = itemRepository.countByTag(ctx.familyId);
+      sb.append(" groupBy=tag（仅统计已挂签物资；无标签物资不计入各标签）");
+      if (rows.isEmpty()) {
+        sb.append(" buckets=0");
+      } else {
+        for (Map<String, Object> row : rows) {
+          sb.append('\n')
+              .append(ToolHelpers.str(row.get("tagName")))
+              .append('=')
+              .append(row.get("count"));
+        }
+      }
+    } else {
+      sb.append(" groupBy=total（全库台账行数，非名称去重种数）");
+    }
+    return ToolResult.ok(sb.toString()).build();
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> findSpaceById(Map<String, Object> tree, String spaceId) {
+    if (spaceId == null || spaceId.isBlank() || tree == null) {
+      return null;
+    }
+    Object raw = tree.get("spaces");
+    if (!(raw instanceof List<?> list)) {
+      return null;
+    }
+    for (Object o : list) {
+      if (o instanceof Map<?, ?> m && spaceId.equals(String.valueOf(m.get("id")))) {
+        return (Map<String, Object>) m;
+      }
+    }
+    return null;
+  }
+
+  private static long toLong(Object v) {
+    if (v instanceof Number n) {
+      return n.longValue();
+    }
+    try {
+      return Long.parseLong(String.valueOf(v).trim());
+    } catch (Exception e) {
+      return 0L;
+    }
   }
 
   private ToolResult itemListExpiring(ToolContext ctx, int step) {

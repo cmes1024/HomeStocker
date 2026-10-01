@@ -27,6 +27,15 @@ public final class ShanghaiDates {
     return WEEKDAY_CN[dow];
   }
 
+  /** Start of Asia/Shanghai calendar day as epoch millis. */
+  public static long startOfDayEpochMs(LocalDate day) {
+    return day.atStartOfDay(SHANGHAI).toInstant().toEpochMilli();
+  }
+
+  public static LocalDate todayLocalDate() {
+    return LocalDate.now(SHANGHAI);
+  }
+
   /** Asia/Shanghai 的 yyyy-MM-dd HH:mm；无效 epoch 返回空串 */
   public static String formatDateTimeMs(long epochMs) {
     if (epochMs <= 0) {

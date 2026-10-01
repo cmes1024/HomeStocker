@@ -116,7 +116,7 @@ public class ItemsProbe {
     String locationId = loc != null ? str(loc.get("id")) : null;
     int fetchLimit = keywords.isEmpty() ? (listAll ? FETCH_FAMILY : FETCH_SCOPED) : FETCH_NAMED;
     List<ItemRow> list =
-        listItemsCompact(familyId, spaceId, locationId, keywords, fetchLimit);
+        listItemsCompact(familyId, spaceId, locationId, null, null, keywords, fetchLimit);
     int cap = resultCapFor(spaceId, locationId, keywords);
     List<Map<String, Object>> rows = new ArrayList<>();
     for (int i = 0; i < Math.min(cap, list.size()); i++) {
@@ -129,12 +129,24 @@ public class ItemsProbe {
 
   public List<ItemRow> listItemsCompact(
       String familyId, String spaceId, String locationId, List<String> keywords, int limit) {
+    return listItemsCompact(familyId, spaceId, locationId, null, null, keywords, limit);
+  }
+
+  public List<ItemRow> listItemsCompact(
+      String familyId,
+      String spaceId,
+      String locationId,
+      String tagId,
+      java.math.BigDecimal maxQuantity,
+      List<String> keywords,
+      int limit) {
     int fetchLimit = Math.min(Math.max(limit, 1), 100);
     List<ItemRow> list =
         itemRepository.list(
             familyId,
             blankToNull(spaceId),
-            null,
+            blankToNull(tagId),
+            maxQuantity,
             fetchLimit);
     if (locationId != null && !locationId.isBlank()) {
       list = list.stream().filter(i -> locationId.equals(i.locationId())).toList();

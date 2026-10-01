@@ -227,10 +227,7 @@ public class AiActService {
       Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
       vars.put("probe", ActPrompt.renderProbeRows(invRows));
       String system = replanSystem(actCtx, vars);
-      String invNote =
-          invRows.isEmpty()
-              ? "查询结果：无匹配物资"
-              : "查询结果已写入本轮短号：\n" + ActPrompt.renderProbeRows(invRows);
+      String invNote = buildReadOnlyResultNote(inventoryReadReport, invRows);
       Map<String, Object> presentBefore = plan.present();
       plan = askPlan(modelOpts, system, actCtx.userText() + "\n" + invNote);
       Map<String, Object> presentAfter =
@@ -516,8 +513,43 @@ public class AiActService {
         .allMatch(
             c -> {
               String use = c == null ? "" : String.valueOf(c.get("use")).trim();
-              return "item.search".equals(use) || "item.listExpiring".equals(use);
+              return "item.search".equals(use)
+                  || "item.listExpiring".equals(use)
+                  || "activity.list".equals(use)
+                  || "item.stats".equals(use);
             });
+  }
+
+  /** Prefer tool summaries (aggregates) plus P* inventory when both exist. */
+  private static String buildReadOnlyResultNote(
+      Map<String, Object> report, List<Map<String, Object>> invRows) {
+    List<String> summaries = new ArrayList<>();
+    Object exec = report != null ? report.get("executed") : null;
+    if (exec instanceof List<?> executed) {
+      for (Object rowObj : executed) {
+        if (!(rowObj instanceof Map<?, ?> row)) {
+          continue;
+        }
+        String summary = str(row.get("summary")).trim();
+        if (!summary.isEmpty()) {
+          summaries.add(summary);
+        }
+      }
+    }
+    boolean hasInv = invRows != null && !invRows.isEmpty();
+    if (!summaries.isEmpty() && hasInv) {
+      return "查询结果：\n"
+          + String.join("\n", summaries)
+          + "\n短号：\n"
+          + ActPrompt.renderProbeRows(invRows);
+    }
+    if (hasInv) {
+      return "查询结果已写入本轮短号：\n" + ActPrompt.renderProbeRows(invRows);
+    }
+    if (!summaries.isEmpty()) {
+      return "查询结果：\n" + String.join("\n", summaries);
+    }
+    return "查询结果：无匹配";
   }
 
   private static ActPlan ensurePresentHasFacts(

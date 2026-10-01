@@ -158,7 +158,7 @@ function pickPresentation(data) {
   return { lead, blocks, report, present }
 }
 
-/** 服务端 present 白名单：table / stats / bars */
+/** 服务端 present 白名单：table / stats / bars / pie */
 function normalizePresent(raw) {
   if (!raw || typeof raw !== 'object') return null
   const type = String(raw.type || '')
@@ -195,8 +195,17 @@ function normalizePresent(raw) {
       colCount: columns.length
     }
   }
-  if (type === 'stats' || type === 'stat' || type === 'bars' || type === 'bar') {
-    const kind = type === 'bars' || type === 'bar' ? 'bars' : 'stats'
+  if (
+    type === 'stats' ||
+    type === 'stat' ||
+    type === 'bars' ||
+    type === 'bar' ||
+    type === 'pie' ||
+    type === 'donut'
+  ) {
+    let kind = 'stats'
+    if (type === 'bars' || type === 'bar') kind = 'bars'
+    else if (type === 'pie' || type === 'donut') kind = 'pie'
     const items = asArray(raw.items)
       .map((it, i) => {
         if (!it || typeof it !== 'object') return null
@@ -204,19 +213,71 @@ function normalizePresent(raw) {
         if (!label) return null
         const value = it.value != null ? it.value : it.count
         const pct = Math.max(0, Math.min(100, Number(it.pct) || 0))
+        const share = Math.max(0, Math.min(100, Number(it.share) || 0))
+        const color = sanitizePresentColor(it.color, i)
         return {
           key: `i${i}`,
           label: label.slice(0, 40),
           value: String(value == null ? '' : value).trim().slice(0, 24),
-          pct
+          pct,
+          share,
+          shareLabel: share > 0 ? `${share}%` : '',
+          color,
+          fillStyle: `width: ${pct}%; background: ${color};`
         }
       })
       .filter(Boolean)
       .slice(0, 12)
     if (!items.length) return null
-    return { type: kind, title, items }
+    const out = { type: kind, title, items }
+    if (kind === 'pie') {
+      const pieCss = String(raw.pieCss || '').trim()
+      out.pieCss = /^conic-gradient\(/i.test(pieCss) ? pieCss.slice(0, 800) : buildPieCss(items)
+      out.pieStyle = out.pieCss ? `background: ${out.pieCss};` : ''
+    }
+    return out
   }
   return null
+}
+
+const PRESENT_PALETTE = [
+  '#C4A484',
+  '#7A9E7E',
+  '#6B8CAE',
+  '#C48B7A',
+  '#9A8BB5',
+  '#B5A06A',
+  '#6A9B9B',
+  '#A67C7C',
+  '#8A9A6B',
+  '#7A8BA8',
+  '#B58A6A',
+  '#8B7A9A'
+]
+
+function sanitizePresentColor(raw, index) {
+  const s = String(raw || '')
+    .trim()
+    .toUpperCase()
+  if (/^#[0-9A-F]{6}$/.test(s)) return s
+  return PRESENT_PALETTE[index % PRESENT_PALETTE.length]
+}
+
+function buildPieCss(items) {
+  const list = asArray(items).filter((it) => it && Number(it.share) > 0)
+  if (!list.length) return ''
+  let cursor = 0
+  const parts = []
+  list.forEach((it) => {
+    const share = Math.max(0, Math.min(100, Number(it.share) || 0))
+    if (share <= 0) return
+    const end = Math.min(100, cursor + share)
+    parts.push(`${it.color} ${cursor}% ${end}%`)
+    cursor = end
+  })
+  if (!parts.length) return ''
+  if (cursor < 100) parts.push(`rgba(26,26,26,0.06) ${cursor}% 100%`)
+  return `conic-gradient(${parts.join(', ')})`
 }
 
 function presentToHistoryText(present) {
@@ -230,9 +291,10 @@ function presentToHistoryText(present) {
       if (line) parts.push(line)
     })
     if (present.footer) parts.push(present.footer)
-  } else if (present.type === 'stats' || present.type === 'bars') {
+  } else if (present.type === 'stats' || present.type === 'bars' || present.type === 'pie') {
     asArray(present.items).forEach((it) => {
-      parts.push(`${it.label} ${it.value}`.trim())
+      const share = it.shareLabel || (it.share > 0 ? `${it.share}%` : '')
+      parts.push(`${it.label} ${it.value}${share ? `（${share}）` : ''}`.trim())
     })
   }
   return parts.join('\n')

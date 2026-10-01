@@ -172,6 +172,7 @@ public class ActPrompt {
     return s.replace("{{TODAY}}", vars.getOrDefault("today", ""))
         .replace("{{WEEKDAY}}", vars.getOrDefault("weekday", ""))
         .replace("{{FAMILY_NAME}}", vars.getOrDefault("familyName", "家庭"))
+        .replace("{{MEMBER_COUNT}}", vars.getOrDefault("memberCount", "0"))
         .replace("{{CAPABILITIES}}", vars.getOrDefault("capabilities", ""))
         .replace("{{TREE}}", vars.getOrDefault("tree", ""))
         .replace("{{FOCUS}}", vars.getOrDefault("focus", "无"))

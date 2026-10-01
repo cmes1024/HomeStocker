@@ -66,6 +66,9 @@ public class ToolRegistry {
         if (result.inventory != null) {
           executedRow.put("inventory", result.inventory);
         }
+        if (result.inventoryPrefix != null && !result.inventoryPrefix.isBlank()) {
+          executedRow.put("inventoryPrefix", result.inventoryPrefix);
+        }
         if (result.knowledge != null) {
           executedRow.put("knowledge", result.knowledge);
         }

@@ -8,7 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Resolves model {@code present} into a client-safe structured view (table / stats / bars).
+ * Resolves model {@code present} into a client-safe structured view (table / stats / bars / pie).
  * Unknown types dropped; rows/items capped. Prefer {@code source: probe|inventory} over invented cells.
  */
 public final class PresentResolver {
@@ -16,6 +16,12 @@ public final class PresentResolver {
   public static final int MAX_ROWS = 40;
   public static final int MAX_COLS = 6;
   public static final int MAX_ITEMS = 12;
+
+  /** Fixed slice colors for bars/pie — no model-supplied colors. */
+  private static final String[] PALETTE = {
+    "#C4A484", "#7A9E7E", "#6B8CAE", "#C48B7A", "#9A8BB5", "#B5A06A",
+    "#6A9B9B", "#A67C7C", "#8A9A6B", "#7A8BA8", "#B58A6A", "#8B7A9A"
+  };
 
   private PresentResolver() {}
 
@@ -39,6 +45,7 @@ public final class PresentResolver {
       case "table" -> resolveTable(raw, rowsFromSource, title);
       case "stats", "stat" -> resolveStatsOrBars("stats", raw, rowsFromSource, title);
       case "bars", "bar" -> resolveStatsOrBars("bars", raw, rowsFromSource, title);
+      case "pie", "donut" -> resolveStatsOrBars("pie", raw, rowsFromSource, title);
       default -> null;
     };
   }
@@ -100,29 +107,43 @@ public final class PresentResolver {
     if (items.isEmpty()) {
       return null;
     }
-    if (items.size() > MAX_ITEMS) {
-      items = items.subList(0, MAX_ITEMS);
-    }
-    double max = 0;
+    List<Map<String, Object>> cleaned = new ArrayList<>();
     for (Map<String, Object> it : items) {
-      max = Math.max(max, toDouble(it.get("value")));
-    }
-    List<Map<String, Object>> view = new ArrayList<>();
-    for (Map<String, Object> it : items) {
-      Map<String, Object> row = new LinkedHashMap<>();
       String label = str(it.get("label")).trim();
       if (label.isEmpty()) {
         continue;
       }
-      double value = toDouble(it.get("value"));
+      Map<String, Object> row = new LinkedHashMap<>();
       row.put("label", label);
+      row.put("value", Math.max(0, toDouble(it.get("value"))));
+      cleaned.add(row);
+      if (cleaned.size() >= MAX_ITEMS) {
+        break;
+      }
+    }
+    if (cleaned.isEmpty()) {
+      return null;
+    }
+    double max = 0;
+    double sum = 0;
+    for (Map<String, Object> it : cleaned) {
+      double v = toDouble(it.get("value"));
+      max = Math.max(max, v);
+      sum += v;
+    }
+    int[] shares = sharesOfTotal(cleaned, sum);
+    List<Map<String, Object>> view = new ArrayList<>();
+    for (int i = 0; i < cleaned.size(); i++) {
+      Map<String, Object> it = cleaned.get(i);
+      Map<String, Object> row = new LinkedHashMap<>();
+      double value = toDouble(it.get("value"));
+      row.put("label", it.get("label"));
       row.put("value", stripNumber(value));
       int pct = max <= 0 ? 0 : (int) Math.round(100.0 * value / max);
       row.put("pct", Math.max(0, Math.min(100, pct)));
+      row.put("share", shares[i]);
+      row.put("color", PALETTE[i % PALETTE.length]);
       view.add(row);
-    }
-    if (view.isEmpty()) {
-      return null;
     }
     Map<String, Object> out = new LinkedHashMap<>();
     out.put("type", type);
@@ -130,7 +151,65 @@ public final class PresentResolver {
       out.put("title", title);
     }
     out.put("items", view);
+    if ("pie".equals(type)) {
+      String pieCss = buildPieCss(view);
+      if (!pieCss.isEmpty()) {
+        out.put("pieCss", pieCss);
+      }
+    }
     return out;
+  }
+
+  /** Largest-remainder shares that sum to 100 (or 0 if total is empty). */
+  private static int[] sharesOfTotal(List<Map<String, Object>> items, double sum) {
+    int n = items.size();
+    int[] shares = new int[n];
+    if (n == 0 || sum <= 0) {
+      return shares;
+    }
+    double[] exact = new double[n];
+    int assigned = 0;
+    for (int i = 0; i < n; i++) {
+      exact[i] = 100.0 * Math.max(0, toDouble(items.get(i).get("value"))) / sum;
+      shares[i] = (int) Math.floor(exact[i]);
+      assigned += shares[i];
+    }
+    int remain = 100 - assigned;
+    Integer[] order = new Integer[n];
+    for (int i = 0; i < n; i++) {
+      order[i] = i;
+    }
+    java.util.Arrays.sort(
+        order, (a, b) -> Double.compare(exact[b] - shares[b], exact[a] - shares[a]));
+    for (int k = 0; k < remain; k++) {
+      shares[order[k % n]]++;
+    }
+    return shares;
+  }
+
+  private static String buildPieCss(List<Map<String, Object>> view) {
+    if (view.isEmpty()) {
+      return "";
+    }
+    List<String> parts = new ArrayList<>();
+    int cursor = 0;
+    for (Map<String, Object> it : view) {
+      int share = ((Number) it.get("share")).intValue();
+      if (share <= 0) {
+        continue;
+      }
+      String color = str(it.get("color"));
+      int end = Math.min(100, cursor + share);
+      parts.add(color + " " + cursor + "% " + end + "%");
+      cursor = end;
+    }
+    if (parts.isEmpty()) {
+      return "";
+    }
+    if (cursor < 100) {
+      parts.add("rgba(26,26,26,0.06) " + cursor + "% 100%");
+    }
+    return "conic-gradient(" + String.join(", ", parts) + ")";
   }
 
   private static List<Map<String, Object>> aggregate(

@@ -100,7 +100,7 @@ public final class PlanParser {
       return null;
     }
     String type = str(map.get("type")).trim().toLowerCase();
-    if (!Set.of("table", "stats", "stat", "bars", "bar").contains(type)) {
+    if (!Set.of("table", "stats", "stat", "bars", "bar", "pie", "donut").contains(type)) {
       return null;
     }
     return map;

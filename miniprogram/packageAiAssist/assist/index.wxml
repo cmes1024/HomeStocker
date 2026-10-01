@@ -151,11 +151,37 @@
               wx:key="key"
             >
               <view class="present-bar-meta">
-                <text class="present-bar-label">{{it.label}}</text>
-                <text class="present-bar-value">{{it.value}}</text>
+                <view class="present-bar-label-wrap">
+                  <view class="present-swatch" style="background: {{it.color}};"></view>
+                  <text class="present-bar-label">{{it.label}}</text>
+                </view>
+                <view class="present-bar-nums">
+                  <text class="present-bar-value">{{it.value}}</text>
+                  <text class="present-bar-share" wx:if="{{it.shareLabel}}">{{it.shareLabel}}</text>
+                </view>
               </view>
               <view class="present-bar-track">
-                <view class="present-bar-fill" style="width: {{it.pct}}%;"></view>
+                <view class="present-bar-fill" style="{{it.fillStyle}}"></view>
+              </view>
+            </view>
+          </view>
+
+          <view class="present-pie" wx:if="{{item.present.type === 'pie'}}">
+            <view class="present-pie-chart-wrap">
+              <view class="present-pie-chart" style="{{item.present.pieStyle}}"></view>
+              <view class="present-pie-hole"></view>
+            </view>
+            <view class="present-pie-legend">
+              <view
+                class="present-pie-legend-row"
+                wx:for="{{item.present.items}}"
+                wx:for-item="it"
+                wx:key="key"
+              >
+                <view class="present-swatch" style="background: {{it.color}};"></view>
+                <text class="present-pie-legend-label">{{it.label}}</text>
+                <text class="present-pie-legend-value">{{it.value}}</text>
+                <text class="present-pie-legend-share" wx:if="{{it.shareLabel}}">{{it.shareLabel}}</text>
               </view>
             </view>
           </view>

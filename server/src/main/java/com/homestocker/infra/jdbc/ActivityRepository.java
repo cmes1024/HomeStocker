@@ -111,6 +111,22 @@ public class ActivityRepository {
     return listEnriched("a.family_id = ?", List.of(familyId), skip, limit);
   }
 
+  /** Inclusive start, exclusive end; action empty = all actions. */
+  public List<Map<String, Object>> listByFamilyBetween(
+      String familyId, long startMsInclusive, long endMsExclusive, String action, int limit) {
+    List<Object> args = new ArrayList<>();
+    StringBuilder where = new StringBuilder("a.family_id = ? AND a.created_at >= ? AND a.created_at < ?");
+    args.add(familyId);
+    args.add(new Timestamp(startMsInclusive));
+    args.add(new Timestamp(endMsExclusive));
+    String act = action == null ? "" : action.trim().toLowerCase();
+    if (!act.isEmpty() && !"all".equals(act)) {
+      where.append(" AND a.action = ?");
+      args.add(act);
+    }
+    return listEnriched(where.toString(), args, 0, limit);
+  }
+
   public OptionalCursor latestCursor(String familyId) {
     var list =
         jdbc.query(
@@ -134,7 +150,7 @@ public class ActivityRepository {
     args.add(Math.max(skip, 0));
     return jdbc.query(
         """
-        SELECT a.id, a.action, a.actor_openid, a.item_name, a.batch_count,
+        SELECT a.id, a.item_id, a.action, a.actor_openid, a.item_name, a.batch_count,
                a.space_id, a.space_name, a.location_id, a.location_name,
                a.quantity, a.unit,
                a.changed_fields::text AS changed_fields, a.summary, a.source, a.created_at,
@@ -152,6 +168,7 @@ public class ActivityRepository {
         (rs, i) -> {
           Map<String, Object> m = new java.util.LinkedHashMap<>();
           m.put("_id", rs.getString("id"));
+          m.put("itemId", rs.getString("item_id"));
           m.put("action", rs.getString("action"));
           m.put("actorOpenid", rs.getString("actor_openid"));
           m.put("itemName", rs.getString("item_name"));

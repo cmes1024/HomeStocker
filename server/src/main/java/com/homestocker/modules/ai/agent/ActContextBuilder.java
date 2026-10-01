@@ -57,11 +57,12 @@ public class ActContextBuilder {
     Map<String, Object> catalog = aiSeedService.ensureCapabilities();
     Map<String, Object> promptDoc = aiSeedService.ensurePrompt();
     Map<String, Object> tree = familyTreeService.getOrRebuild(familyId);
+    var familyOpt = familyRepository.findById(familyId);
     String familyName =
-        familyRepository
-            .findById(familyId)
+        familyOpt
             .map(f -> f.name() == null || f.name().isBlank() ? "家庭" : f.name())
             .orElse("家庭");
+    int memberCount = familyOpt.map(f -> Math.max(0, f.memberCount())).orElse(0);
     Map<String, String> today =
         Map.of("ymd", ShanghaiDates.todayYmd(), "weekday", ShanghaiDates.todayWeekdayCn());
     Map<String, Map<String, Object>> catalogMap = enabledMap(catalog);
@@ -78,6 +79,7 @@ public class ActContextBuilder {
     vars.put("today", today.get("ymd"));
     vars.put("weekday", today.get("weekday"));
     vars.put("familyName", familyName);
+    vars.put("memberCount", String.valueOf(memberCount));
     vars.put("capabilities", CapabilityCatalog.renderCapabilities(catalog));
     vars.put("tree", FamilyTreeService.renderTreeNames(tree));
     vars.put("history", ActPrompt.renderHistory(history));
