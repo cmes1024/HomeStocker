@@ -1,12 +1,13 @@
 /**
  * 氛围图等上传前压缩：限制边长与质量，失败则回退原图。
+ * 列表/详情只看个大概，默认偏省体积。
  * @param {string} src 本地临时路径
  * @param {{ maxEdge?: number, quality?: number }} [opts]
  * @returns {Promise<string>} 可用的本地路径
  */
 async function compressImageForUpload(src, opts = {}) {
-  const maxEdge = opts.maxEdge || 1600
-  const quality = opts.quality || 72
+  const maxEdge = opts.maxEdge || 800
+  const quality = opts.quality || 55
   if (!src) return src
 
   try {

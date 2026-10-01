@@ -114,9 +114,9 @@
 ## M6 — 对象存储
 
 - [x] MinIO bucket 初始化（`ObjectStorageClient` 启动时 ensure bucket + 匿名读策略）
-- [x] presign 上传 API（`POST /api/storage/presign|remove`）
-- [x] 内外网地址：`endpoint`（容器内）+ `public-endpoint`（小程序；Compose 默认 `http://127.0.0.1:9000`）
-- [x] 小程序 ImagePicker / 编辑页改直传（`cloudImage` → presign PUT）
+- [x] 经 API 上传（`POST /api/storage/upload` 默认）+ 可选 `presign` / `remove`
+- [x] 内外网地址：`endpoint`（容器内）+ `public-endpoint`（展示 URL；Compose 默认 `http://127.0.0.1:9000`）
+- [x] 小程序 ImagePicker / 编辑页上传（`cloudImage` → `/api/storage/upload`）
 - [x] item/space/location/avatar 可存 object_key / https（API 字段仍兼容 imageFileID）
 - [x] remove API best-effort 删对象（实体换图删旧可在写路径后续接）
 - [-] （可选）云存储存量迁移脚本草案 —— **本轮明确不做（M10 / 用户排除）**
@@ -257,7 +257,7 @@
 | 2026-10-01 | M3 | Item 全 action + activities | Agent |
 | 2026-10-01 | M4 | Space/Tag + family_trees | Agent |
 | 2026-10-01 | M5 | activity.list/cursor | Agent |
-| 2026-10-01 | M6 | MinIO + storage presign | Agent |
+| 2026-10-01 | M6 | MinIO + storage upload（API 默认）/ presign 可选 | Agent |
 | 2026-10-01 | M7 | expireNotify cron + 手动 run | Agent |
 | 2026-10-01 | M8 | AI 密钥 + act + rate limit | Agent |
 | 2026-10-01 | M9 | bootstrap.home；cloudImage 直传；backendRoute 全 java；去云 init/callFunction | Agent |

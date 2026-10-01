@@ -150,8 +150,8 @@ public class HomestockerProperties {
     /** API → MinIO（Compose 内网可用 http://minio:9000）。 */
     private String endpoint = "http://localhost:9000";
     /**
-     * 小程序 / 浏览器可达的基址（Compose 默认 http://127.0.0.1:9000）。
-     * 空则回退 endpoint。presign URL 与 publicUrl 均改写到此主机。
+     * 展示用公网基址（Compose 默认 http://127.0.0.1:9000）。
+     * 空则回退 endpoint。publicUrl 用此主机；上传默认经 API，不必让小程序直连。
      */
     private String publicEndpoint = "";
     private String accessKey = "minioadmin";

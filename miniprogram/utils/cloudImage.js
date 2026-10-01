@@ -103,51 +103,32 @@ function readFileBuffer(filePath) {
   })
 }
 
-async function uploadViaPresign(localPath, kind) {
+async function uploadViaApi(localPath, kind) {
   const ext = extFromPath(localPath)
   const contentType = contentTypeForExt(ext)
-  const presign = await javaApi.callModule('storage', 'presign', {
-    kind: kind || 'item',
-    contentType,
-    ext
-  })
   const body = await readFileBuffer(localPath)
-  await new Promise((resolve, reject) => {
-    wx.request({
-      url: presign.uploadUrl,
-      method: presign.method || 'PUT',
-      header: {
-        'content-type': contentType
-      },
-      data: body,
-      success(res) {
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          resolve(res)
-        } else {
-          const err = new Error('图片上传失败')
-          err.code = 'UPLOAD_FAILED'
-          err.statusCode = res.statusCode
-          reject(err)
-        }
-      },
-      fail: reject
-    })
-  })
-  return presign.publicUrl || presign.objectKey
+  const qKind = encodeURIComponent(kind || 'item')
+  const qExt = encodeURIComponent(ext)
+  const data = await javaApi.uploadBinary(
+    `/api/storage/upload?kind=${qKind}&ext=${qExt}`,
+    body,
+    { contentType }
+  )
+  return (data && (data.publicUrl || data.objectKey)) || ''
 }
 
 /**
- * 压缩后直传对象存储（MinIO/COS）。云开发 uploadFile 已退役。
+ * 压缩后经 Java API 写入对象存储（默认；不必直连 MinIO）。
  * @param {string} localPath
  * @param {'item'|'space'|'location'|'avatar'} kind
  * @returns {Promise<string>} https publicUrl 或 objectKey
  */
 async function uploadEntityImage(localPath, kind) {
   const src = await compressImageForUpload(localPath, {
-    maxEdge: 1280,
-    quality: 72
+    maxEdge: 800,
+    quality: 55
   })
-  return uploadViaPresign(src, kind || 'item')
+  return uploadViaApi(src, kind || 'item')
 }
 
 /**

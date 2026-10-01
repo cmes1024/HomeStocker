@@ -17,7 +17,7 @@ auth → family → item → space/tag → activity → storage → notify → a
 在 `miniprogram/`（排除 `packageDemo` / `cloudfunctions`）应无：
 
 - [x] `wx.cloud.callFunction`（主路径已清）  
-- [x] `wx.cloud.uploadFile`（主路径已清；走 MinIO presign）  
+- [x] `wx.cloud.uploadFile`（主路径已清；走 `/api/storage/upload`）  
 - [x] `wx.cloud.init` 启动依赖（`app.js` 已移除）  
 
 存量 `cloud://` 展示：关云后临时链不可用，列表可能空白图，待 M10 迁对象存储。
@@ -38,7 +38,8 @@ auth → family → item → space/tag → activity → storage → notify → a
 - [ ] Redis 策略  
 - [ ] HTTPS 反代  
 - [ ] 环境变量与密钥  
-- [ ] 微信后台：request / uploadFile 合法域名（含 MinIO 或 COS）  
+- [ ] 微信后台：request 合法域名（API）；uploadFile 可不配（上传走 `wx.request`）  
+- [ ] 图片展示：`MINIO_PUBLIC_ENDPOINT` 对小程序可达（同域反代或单独图床；不占 request）  
 - [ ] `curl https://<域名>/api/health`  
 
 ## 6. 发布当日

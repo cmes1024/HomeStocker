@@ -6,10 +6,12 @@ import com.homestocker.config.HomestockerProperties;
 import io.minio.BucketExistsArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import io.minio.RemoveObjectArgs;
 import io.minio.SetBucketPolicyArgs;
 import io.minio.http.Method;
 import jakarta.annotation.PostConstruct;
+import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,7 +74,7 @@ public class ObjectStorageClient {
   }
 
   public String presignPut(String objectKey, int expiryMinutes) {
-    requireClient();
+    requirePresignClient();
     try {
       // 必须用公网 endpoint 签名：SigV4 含 Host，改写 URL 会导致 SignatureDoesNotMatch。
       return minioPresign.getPresignedObjectUrl(
@@ -89,6 +91,30 @@ public class ObjectStorageClient {
           properties.getStorage().resolvePublicEndpoint(),
           e);
       throw ApiException.of(ErrorCodes.INTERNAL, "生成上传地址失败");
+    }
+  }
+
+  /** 服务端代写对象（小程序经 API 上传，不必直连 MinIO）。 */
+  public void putObject(String objectKey, InputStream stream, long size, String contentType) {
+    requireMinio();
+    if (stream == null || size <= 0) {
+      throw ApiException.of(ErrorCodes.INVALID_IMAGE, "图片内容为空");
+    }
+    try {
+      PutObjectArgs.Builder builder =
+          PutObjectArgs.builder()
+              .bucket(properties.getStorage().getBucket())
+              .object(objectKey)
+              .stream(stream, size, -1);
+      if (contentType != null && !contentType.isBlank()) {
+        builder.contentType(contentType.trim());
+      }
+      minio.putObject(builder.build());
+    } catch (ApiException e) {
+      throw e;
+    } catch (Exception e) {
+      log.error("putObject failed key={}", objectKey, e);
+      throw ApiException.of(ErrorCodes.INTERNAL, "图片上传失败");
     }
   }
 
@@ -149,8 +175,15 @@ public class ObjectStorageClient {
     return e;
   }
 
-  private void requireClient() {
-    if (minio == null || minioPresign == null) {
+  private void requireMinio() {
+    if (minio == null) {
+      throw ApiException.of(ErrorCodes.INTERNAL, "对象存储未就绪（请启动 MinIO）");
+    }
+  }
+
+  private void requirePresignClient() {
+    requireMinio();
+    if (minioPresign == null) {
       throw ApiException.of(ErrorCodes.INTERNAL, "对象存储未就绪（请启动 MinIO）");
     }
   }

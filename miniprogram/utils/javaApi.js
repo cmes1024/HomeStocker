@@ -244,12 +244,66 @@ async function callModule(module, action, data = {}, options = {}) {
   }
 }
 
+/**
+ * 二进制 POST（图片上传）。path 含 query，如 /api/storage/upload?kind=item&ext=jpg
+ * @param {string} path
+ * @param {ArrayBuffer|ArrayBufferView} data
+ * @param {{ contentType?: string, auth?: boolean, timeout?: number }} [options]
+ */
+async function uploadBinary(path, data, options = {}) {
+  const needAuth = options.auth !== false
+  if (needAuth) {
+    await ensureLogin()
+  }
+  const run = () => {
+    const header = {
+      'content-type': options.contentType || 'application/octet-stream'
+    }
+    const usedToken = needAuth ? getToken() : ''
+    if (needAuth && usedToken) header[HEADER_TOKEN] = usedToken
+    return new Promise((resolve, reject) => {
+      wx.request({
+        url: `${JAVA_BASE_URL}${path}`,
+        method: 'POST',
+        data,
+        header,
+        timeout: options.timeout || 60000,
+        success(res) {
+          try {
+            resolve(unwrap(res.data, res.statusCode, usedToken))
+          } catch (e) {
+            reject(e)
+          }
+        },
+        fail(e) {
+          const err = new Error(
+            (e && (e.errMsg || e.message)) || '网络异常（请确认 Java API 已启动）'
+          )
+          err.code = 'JAVA_CALL_FAILED'
+          err.cause = e
+          reject(err)
+        }
+      })
+    })
+  }
+  try {
+    return await run()
+  } catch (e) {
+    if (needAuth && e && e.code === 'UNAUTHORIZED') {
+      await login()
+      return run()
+    }
+    throw e
+  }
+}
+
 module.exports = {
   TOKEN_KEY,
   getToken,
   setToken,
   clearToken,
   request,
+  uploadBinary,
   login,
   logout,
   me,

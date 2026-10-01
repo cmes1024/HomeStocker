@@ -73,7 +73,7 @@ services:
       # AI 话术用「可添加的微信号」（非 openid）
       CAPACITY_ADMIN_WECHAT: ${CAPACITY_ADMIN_WECHAT:-}
       AI_ACT_RATE_PER_MINUTE: ${AI_ACT_RATE_PER_MINUTE:-30}
-      # Mini program reaches MinIO via host port mapping (not http://minio:9000).
+      # Mini program <image> / publicUrl base (upload goes through API).
       MINIO_PUBLIC_ENDPOINT: ${MINIO_PUBLIC_ENDPOINT:-http://127.0.0.1:9000}
     depends_on:
       postgres:

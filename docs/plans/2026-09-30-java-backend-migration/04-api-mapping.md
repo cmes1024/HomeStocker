@@ -205,10 +205,12 @@
 
 | Action | Path | 状态 |
 |--------|------|------|
-| 预签名上传 | POST `/api/storage/presign` | done（`cloudImage` 直传；`public-endpoint` 给小程序） |
+| 经 API 上传（默认） | POST `/api/storage/upload` | done（二进制 body；`kind`/`ext` query） |
+| 预签名上传（可选） | POST `/api/storage/presign` | done（保留；默认小程序不走） |
 | （可选）删除 | POST `/api/storage/remove` | done（待联调） |
 
-小程序：选图压缩 → 直传 MinIO/COS → 把 publicUrl/key 交给 item/space 写接口。
+小程序：选图压缩 → **POST `/api/storage/upload`** → 把 publicUrl/key 交给 item/space 写接口。  
+正式环境 request 合法域名只需 API 主机；`<image>` 展示仍用 `MINIO_PUBLIC_ENDPOINT` 拼出的 URL（不占 request）。
 
 ---
 
@@ -237,7 +239,7 @@
 | 订阅过期 | `utils/subscribeExpire.js` → `recordSubscribeExpire` | done |
 | AI 密钥 | `packageAi/**`、`callAi.js` | done |
 | 管家 | `packageAiAssist/**` | done |
-| 图片上传 | `utils/cloudImage.js` | done（presign PUT） |
+| 图片上传 | `utils/cloudImage.js` | done（经 `/api/storage/upload`） |
 | 上传图片 | ImagePicker / 各编辑页 | done（走 cloudImage） |
 
 `packageDemo` / `pages/chat`：已退役提示；未挂产品入口。

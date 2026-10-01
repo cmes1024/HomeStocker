@@ -42,7 +42,7 @@
 3. item（**已切 java**）  
 4. space + tag + familyTrees（**已切 java**）  
 5. activity + cursor（**已切 java**）  
-6. 对象存储（**presign + cloudImage 直传；已切 java**）  
+6. 对象存储（**API upload 默认 + 可选 presign；已切 java**）  
 7. expireNotify（**Java cron；客户端不依赖云触发器**）  
 8. ai（**密钥 + act + 限流；已切 java**）  
 9. 小程序全量切流（**客户端已切；去掉云 init / callFunction**）  
