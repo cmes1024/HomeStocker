@@ -74,16 +74,199 @@ function sanitizeBlocks(raw) {
     .filter((block) => block.cards.length)
 }
 
+/** 落盘用：与页面 normalizePresent 对齐的白名单结构 */
+function sanitizePresent(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const type = String(raw.type || '')
+    .trim()
+    .toLowerCase()
+  const title = String(raw.title || '').trim().slice(0, 80)
+  if (type === 'table') {
+    const columns = (Array.isArray(raw.columns) ? raw.columns : [])
+      .map((c) => String(c || '').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+    const rows = (Array.isArray(raw.rows) ? raw.rows : [])
+      .map((row, ri) => {
+        const cellsSrc = Array.isArray(row)
+          ? row
+          : row && Array.isArray(row.cells)
+            ? row.cells
+            : []
+        const cells = cellsSrc
+          .map((c) => String(c == null ? '' : c).trim().slice(0, 80))
+          .slice(0, columns.length || 6)
+        while (columns.length && cells.length < columns.length) cells.push('')
+        return { key: `r${ri}`, cells }
+      })
+      .filter((row) => row.cells.some((c) => c))
+      .slice(0, 40)
+    if (!columns.length || !rows.length) return null
+    return {
+      type: 'table',
+      title,
+      columns,
+      rows,
+      footer: String(raw.footer || '').trim().slice(0, 120),
+      colCount: columns.length
+    }
+  }
+  if (type === 'stats' || type === 'stat' || type === 'bars' || type === 'bar') {
+    const kind = type === 'bars' || type === 'bar' ? 'bars' : 'stats'
+    const items = (Array.isArray(raw.items) ? raw.items : [])
+      .map((it, i) => {
+        if (!it || typeof it !== 'object') return null
+        const label = String(it.label || it.name || '').trim()
+        if (!label) return null
+        const value = it.value != null ? it.value : it.count
+        const pct = Math.max(0, Math.min(100, Number(it.pct) || 0))
+        return {
+          key: `i${i}`,
+          label: label.slice(0, 40),
+          value: String(value == null ? '' : value).trim().slice(0, 24),
+          pct
+        }
+      })
+      .filter(Boolean)
+      .slice(0, 12)
+    if (!items.length) return null
+    return { type: kind, title, items }
+  }
+  return null
+}
+
+/** present 摊进 text 的行，用于恢复时去掉与表格重复的气泡正文 */
+function presentHistoryLines(present) {
+  if (!present) return []
+  const parts = []
+  if (present.title) parts.push(String(present.title).trim())
+  if (present.type === 'table') {
+    const cols = (present.columns || []).map((c) => String(c || '').trim()).filter(Boolean)
+    if (cols.length) parts.push(cols.join(' / '))
+    ;(present.rows || []).forEach((row) => {
+      const cells = Array.isArray(row)
+        ? row
+        : row && Array.isArray(row.cells)
+          ? row.cells
+          : []
+      const line = cells.map((c) => String(c || '').trim()).filter(Boolean).join(' · ')
+      if (line) parts.push(line)
+    })
+    const footer = String(present.footer || '').trim()
+    if (footer) parts.push(footer)
+  } else if (present.type === 'stats' || present.type === 'bars') {
+    ;(present.items || []).forEach((it) => {
+      if (!it) return
+      const line = `${String(it.label || '').trim()} ${String(it.value || '').trim()}`.trim()
+      if (line) parts.push(line)
+    })
+  }
+  return parts.filter(Boolean)
+}
+
+function bubbleTextWithoutPresentDup(text, present) {
+  const covered = {}
+  presentHistoryLines(present).forEach((l) => {
+    covered[l] = true
+  })
+  covered['没有需要执行的操作'] = true
+  return String(text || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !covered[l])
+    .join('\n')
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+/** 解析发言时间（epoch ms）；无效则 0 */
+function parseAt(value) {
+  const n = Number(value)
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0
+}
+
+/**
+ * 气泡右下角时间：当天 HH:mm；同年 MM-DD HH:mm；跨年 YYYY-MM-DD HH:mm。
+ * 用设备本地时区（家人看到的「什么时候说的」）。
+ */
+function formatBubbleTime(at) {
+  const ms = parseAt(at)
+  if (!ms) return ''
+  const d = new Date(ms)
+  if (!Number.isFinite(d.getTime())) return ''
+  const now = new Date()
+  const hm = `${pad2(d.getHours())}:${pad2(d.getMinutes())}`
+  const sameDay =
+    d.getFullYear() === now.getFullYear() &&
+    d.getMonth() === now.getMonth() &&
+    d.getDate() === now.getDate()
+  if (sameDay) return hm
+  const md = `${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+  if (d.getFullYear() === now.getFullYear()) return `${md} ${hm}`
+  return `${d.getFullYear()}-${md} ${hm}`
+}
+
+/** 给新消息打上 at + timeLabel（已有合法 at 则保留，否则用当前时刻） */
+function stampMessage(row, at) {
+  const base = row && typeof row === 'object' ? row : {}
+  const ts = parseAt(at != null ? at : base.at) || Date.now()
+  return Object.assign({}, base, { at: ts, timeLabel: formatBubbleTime(ts) })
+}
+
+/** 冷启动恢复：仅当落盘有合法 at 才显示时间，不伪造 */
+function attachStoredTime(row, at) {
+  const base = row && typeof row === 'object' ? row : {}
+  const ts = parseAt(at != null ? at : base.at)
+  if (!ts) return Object.assign({}, base)
+  return Object.assign({}, base, { at: ts, timeLabel: formatBubbleTime(ts) })
+}
+
 function normalizeTurn(row) {
   if (!row || typeof row !== 'object') return null
   const role = row.role === 'assistant' ? 'assistant' : row.role === 'user' ? 'user' : ''
   if (!role) return null
   const text = String(row.text || '').trim().slice(0, TEXT_MAX)
   const blocks = role === 'assistant' ? sanitizeBlocks(row.blocks) : []
-  if (!text && !blocks.length) return null
-  const turn = { role, text: text || (blocks.length ? '完成' : '') }
+  const present = role === 'assistant' ? sanitizePresent(row.present) : null
+  if (!text && !blocks.length && !present) return null
+  const turn = { role, text: text || (blocks.length || present ? '完成' : '') }
   if (blocks.length) turn.blocks = blocks
+  if (present) turn.present = present
+  const at = parseAt(row.at)
+  if (at) turn.at = at
   return turn
+}
+
+/** 展示用：去掉已被结果卡覆盖的正文行，避免「同文案气泡 + 卡片」各画一遍。 */
+function bubbleTextWithoutBlockDup(text, blocks) {
+  const list = Array.isArray(blocks) ? blocks : []
+  if (!list.length) return String(text || '').trim()
+  const covered = {}
+  function mark(s) {
+    const t = String(s || '').trim()
+    if (t) covered[t] = true
+  }
+  list.forEach((block) => {
+    const blockTitle = String((block && block.title) || '').trim()
+    mark(blockTitle)
+    ;(Array.isArray(block && block.cards) ? block.cards : []).forEach((card) => {
+      const title = String((card && card.title) || '').trim()
+      const subtitle = String((card && card.subtitle) || '').trim()
+      mark(title)
+      mark(subtitle)
+      if (title && subtitle) mark(`${title}：${subtitle}`)
+      if (blockTitle && title) mark(`${blockTitle}：${title}`)
+      if (blockTitle && title && subtitle) mark(`${blockTitle}：${title}：${subtitle}`)
+      ;(Array.isArray(card && card.facts) ? card.facts : []).forEach(mark)
+    })
+  })
+  return String(text || '')
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !covered[l])
+    .join('\n')
 }
 
 /** 可持久化轮次（排除问候与 pending）；含助手 blocks 快照 */
@@ -131,23 +314,33 @@ function clearTurns(familyId) {
   }
 }
 
-/** 冷启动恢复文字 + blocks；不恢复 confirm / chips / navLinks */
+/** 冷启动恢复文字 + blocks + present；不恢复 confirm / chips / navLinks */
 function turnsToMessages(turns, nextId) {
   const idFn = typeof nextId === 'function' ? nextId : () => `r${Math.random()}`
   return (turns || []).map((turn) => {
     const blocks = turn.role === 'assistant' ? sanitizeBlocks(turn.blocks) : []
-    return {
+    const present = turn.role === 'assistant' ? sanitizePresent(turn.present) : null
+    const text = turn.text || ''
+    let bubbleText = text
+    if (turn.role === 'assistant') {
+      bubbleText = bubbleTextWithoutBlockDup(text, blocks)
+      if (present) bubbleText = bubbleTextWithoutPresentDup(bubbleText, present)
+    }
+    const msg = {
       id: idFn(),
       role: turn.role,
       kind: turn.role === 'user' ? 'user' : 'result',
-      text: turn.text || '',
+      text,
+      bubbleText,
       blocks,
+      present,
       askList: [],
       confirmList: [],
       hasChips: false,
       subscribeItems: [],
       navLinks: []
     }
+    return attachStoredTime(msg, turn.at)
   })
 }
 
@@ -183,10 +376,14 @@ function textWithBlockSignals(turn) {
  * 长度与 TEXT_MAX / 服务端 sanitize 对齐。
  */
 function historyFromMessages(messages) {
-  return extractTurns(messages).map((row) => ({
-    role: row.role,
-    text: textWithBlockSignals(row).slice(0, TEXT_MAX)
-  }))
+  return extractTurns(messages).map((row) => {
+    const out = {
+      role: row.role,
+      text: textWithBlockSignals(row).slice(0, TEXT_MAX)
+    }
+    if (row.at) out.at = String(row.at)
+    return out
+  })
 }
 
 module.exports = {
@@ -197,6 +394,11 @@ module.exports = {
   clearTurns,
   turnsToMessages,
   historyFromMessages,
+  bubbleTextWithoutBlockDup,
   truncatePreferReceipts,
-  isQtyReceiptText
+  isQtyReceiptText,
+  formatBubbleTime,
+  stampMessage,
+  attachStoredTime,
+  parseAt
 }

@@ -2,6 +2,7 @@ package com.homestocker.modules.ai.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.homestocker.common.ErrorCodes;
+import com.homestocker.common.ShanghaiDates;
 import com.homestocker.modules.ai.app.AiKeyService;
 import com.homestocker.modules.ai.app.AssistPromptTexts;
 import com.homestocker.modules.ai.infra.DeepSeekClient;
@@ -72,9 +73,41 @@ public class ActPrompt {
       if (text.isEmpty()) {
         continue;
       }
-      out.add(Map.of("role", role, "text", text));
+      Map<String, String> turn = new LinkedHashMap<>();
+      turn.put("role", role);
+      turn.put("text", text);
+      String at = normalizeAt(row.get("at"));
+      if (!at.isEmpty()) {
+        turn.put("at", at);
+      }
+      out.add(turn);
     }
     return truncatePreferReceipts(out, HISTORY_LIMIT);
+  }
+
+  /** 保留合法 epoch ms 字符串，供模型侧打时间前缀；非法则丢弃 */
+  static String normalizeAt(Object raw) {
+    if (raw == null) {
+      return "";
+    }
+    String s = String.valueOf(raw).trim();
+    if (s.isEmpty()) {
+      return "";
+    }
+    try {
+      long ms = Long.parseLong(s);
+      return ms > 0 ? Long.toString(ms) : "";
+    } catch (NumberFormatException e) {
+      return "";
+    }
+  }
+
+  /** 送模型时的正文：可选 [yyyy-MM-dd HH:mm] 前缀；落盘 text 保持干净 */
+  public static String historyContentForModel(Map<String, String> row) {
+    if (row == null) {
+      return "";
+    }
+    return ShanghaiDates.stampContent(str(row.get("text")), str(row.get("at")));
   }
 
   public static List<Map<String, String>> truncatePreferReceipts(
@@ -113,7 +146,9 @@ public class ActPrompt {
       if (sb.length() > 0) {
         sb.append('\n');
       }
-      sb.append("assistant".equals(row.get("role")) ? "助手" : "家人").append("：").append(row.get("text"));
+      sb.append("assistant".equals(row.get("role")) ? "助手" : "家人")
+          .append("：")
+          .append(historyContentForModel(row));
     }
     return sb.toString();
   }
@@ -225,12 +260,19 @@ public class ActPrompt {
                 opts.maxTokens());
         lastContent = result.content();
         log.info("[ai.act] <<< model\n{}", lastContent);
-        PlanParser.ActPlan plan = PlanParser.parsePlan(lastContent, objectMapper);
-        Map<String, String> turn = new LinkedHashMap<>();
-        turn.put("system", system);
-        turn.put("user", userText);
-        turn.put("model", lastContent);
-        return new AskResult(plan, turn);
+        try {
+          PlanParser.ActPlan plan = PlanParser.parsePlan(lastContent, objectMapper);
+          Map<String, String> turn = new LinkedHashMap<>();
+          turn.put("system", system);
+          turn.put("user", userText);
+          turn.put("model", lastContent);
+          return new AskResult(plan, turn);
+        } catch (IllegalArgumentException badPlan) {
+          log.warn(
+              "[ai.act] invalid plan json, degrade ask. content={}",
+              lastContent == null ? "" : lastContent.trim());
+          return degradeAskResult(system, userText, lastContent);
+        }
       } catch (DeepSeekException e) {
         lastCode = e.code();
         lastMessage = e.getMessage();
@@ -247,6 +289,7 @@ public class ActPrompt {
         PlanParser.ActPlan plan = PlanParser.parsePlan(lastContent, objectMapper);
         return new AskResult(plan, Map.of("model", lastContent));
       } catch (Exception ignored) {
+        return degradeAskResult(system, userText, lastContent);
       }
     }
     if (sawQuota) {
@@ -254,6 +297,18 @@ public class ActPrompt {
           ErrorCodes.AI_QUOTA, "家庭 AI 额度可能已用完，请检查密钥余额或更换密钥");
     }
     throw new ActModelException(lastCode, lastMessage);
+  }
+
+  private static AskResult degradeAskResult(String system, String userText, String modelRaw) {
+    Map<String, Object> ask = new LinkedHashMap<>();
+    ask.put("question", AssistPromptTexts.DEGRADE_ASK);
+    ask.put("options", List.of());
+    PlanParser.ActPlan plan = new PlanParser.ActPlan(List.of(ask), null, List.of(), "", null);
+    Map<String, String> turn = new LinkedHashMap<>();
+    turn.put("system", system != null ? system : "");
+    turn.put("user", userText != null ? userText : "");
+    turn.put("model", modelRaw != null ? modelRaw : "");
+    return new AskResult(plan, turn);
   }
 
   public static class ActModelException extends Exception {

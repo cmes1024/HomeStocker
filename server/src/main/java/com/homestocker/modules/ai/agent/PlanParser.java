@@ -21,7 +21,16 @@ public final class PlanParser {
       List<Map<String, Object>> ask,
       Map<String, Object> probe,
       List<Map<String, Object>> calls,
-      String reply) {}
+      String reply,
+      Map<String, Object> present) {
+    public ActPlan(
+        List<Map<String, Object>> ask,
+        Map<String, Object> probe,
+        List<Map<String, Object>> calls,
+        String reply) {
+      this(ask, probe, calls, reply, null);
+    }
+  }
 
   public static ActPlan parsePlan(String text, ObjectMapper objectMapper) {
     String raw =
@@ -57,7 +66,8 @@ public final class PlanParser {
       if (!ask.isEmpty() || !calls.isEmpty()) {
         reply = "";
       }
-      ActPlan plan = new ActPlan(ask, probe, calls, reply);
+      Map<String, Object> present = normalizePresent(parsed.get("present"), objectMapper);
+      ActPlan plan = new ActPlan(ask, probe, calls, reply, present);
       return coerceBoundaryReplyToAsk(plan);
     } catch (Exception e) {
       throw new IllegalArgumentException("invalid plan json", e);
@@ -77,7 +87,23 @@ public final class PlanParser {
     one.put("question", reply);
     one.put("options", List.of());
     ask.add(one);
-    return new ActPlan(ask, null, List.of(), "");
+    return new ActPlan(ask, null, List.of(), "", null);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> normalizePresent(JsonNode raw, ObjectMapper objectMapper) {
+    if (raw == null || raw.isNull() || !raw.isObject()) {
+      return null;
+    }
+    Map<String, Object> map = objectMapper.convertValue(raw, Map.class);
+    if (map == null || map.isEmpty()) {
+      return null;
+    }
+    String type = str(map.get("type")).trim().toLowerCase();
+    if (!Set.of("table", "stats", "stat", "bars", "bar").contains(type)) {
+      return null;
+    }
+    return map;
   }
 
   @SuppressWarnings("unchecked")
@@ -242,17 +268,20 @@ public final class PlanParser {
     if (row == null) {
       return "";
     }
+    String name = str(row.get("name")).trim();
+    if (name.isEmpty()) {
+      return "";
+    }
     String qty = str(row.get("quantity")) + str(row.get("unit"));
     String place = TreeMatch.placeLabel(str(row.get("spaceName")), str(row.get("locationName")));
-    List<String> bits = new ArrayList<>();
-    bits.add(str(row.get("name")));
+    StringBuilder sb = new StringBuilder(name);
     if (!qty.isEmpty()) {
-      bits.add(qty);
+      sb.append(' ').append(qty);
     }
     if (!place.isEmpty()) {
-      bits.add(place);
+      sb.append('（').append(place).append('）');
     }
-    return String.join(" · ", bits);
+    return sb.toString();
   }
 
   public static List<Map<String, Object>> optionsFromProbeRows(List<Map<String, Object>> rows) {
@@ -282,7 +311,8 @@ public final class PlanParser {
 
   public static List<Map<String, Object>> enrichAskOptionsFromProbe(
       List<Map<String, Object>> ask, List<Map<String, Object>> probedRows) {
-    if (ask == null || ask.isEmpty() || probedRows == null || probedRows.isEmpty()) {
+    if (ask == null || ask.isEmpty() || probedRows == null || probedRows.size() < 2) {
+      // 单条命中不需要「点哪条」身份芯片；否则会盖住模型的动作澄清选项
       return ask;
     }
     List<Map<String, Object>> chips = optionsFromProbeRows(probedRows);
@@ -309,8 +339,9 @@ public final class PlanParser {
     return out;
   }
 
+  /** 仅当模型没给可用选项、或只给了裸短号时，才用 probe 行补「点哪条」芯片。 */
   private static boolean askOptionsNeedEnrichment(List<Map<String, Object>> options) {
-    if (options == null || options.size() < 2) {
+    if (options == null || options.isEmpty()) {
       return true;
     }
     if (options.size() == 1) {

@@ -60,7 +60,8 @@
         id="msg-{{item.id}}"
         class="msg msg-{{item.role}}"
       >
-        <view class="bubble" wx:if="{{item.text}}">{{item.text}}</view>
+        <view class="bubble" wx:if="{{item.bubbleText}}">{{item.bubbleText}}</view>
+        <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
 
         <view class="blocks" wx:if="{{item.blocks && item.blocks.length}}">
           <view
@@ -101,6 +102,66 @@
             <view class="block-footer" wx:if="{{grp.footer}}">{{grp.footer}}</view>
           </view>
         </view>
+
+        <view class="present" wx:if="{{item.present}}">
+          <view class="present-title" wx:if="{{item.present.title}}">{{item.present.title}}</view>
+
+          <view class="present-table" wx:if="{{item.present.type === 'table'}}">
+            <view class="present-tr present-th">
+              <view
+                class="present-td"
+                wx:for="{{item.present.columns}}"
+                wx:for-item="col"
+                wx:key="*this"
+              >{{col}}</view>
+            </view>
+            <view
+              class="present-tr"
+              wx:for="{{item.present.rows}}"
+              wx:for-item="row"
+              wx:key="key"
+            >
+              <view
+                class="present-td"
+                wx:for="{{row.cells}}"
+                wx:for-item="cell"
+                wx:key="*this"
+              >{{cell}}</view>
+            </view>
+          </view>
+          <view class="present-footer" wx:if="{{item.present.type === 'table' && item.present.footer}}">{{item.present.footer}}</view>
+
+          <view class="present-stats" wx:if="{{item.present.type === 'stats'}}">
+            <view
+              class="present-stat"
+              wx:for="{{item.present.items}}"
+              wx:for-item="it"
+              wx:key="key"
+            >
+              <view class="present-stat-value theme-text">{{it.value}}</view>
+              <view class="present-stat-label">{{it.label}}</view>
+            </view>
+          </view>
+
+          <view class="present-bars" wx:if="{{item.present.type === 'bars'}}">
+            <view
+              class="present-bar-row"
+              wx:for="{{item.present.items}}"
+              wx:for-item="it"
+              wx:key="key"
+            >
+              <view class="present-bar-meta">
+                <text class="present-bar-label">{{it.label}}</text>
+                <text class="present-bar-value">{{it.value}}</text>
+              </view>
+              <view class="present-bar-track">
+                <view class="present-bar-fill" style="width: {{it.pct}}%;"></view>
+              </view>
+            </view>
+          </view>
+        </view>
+
+        <view class="msg-time" wx:if="{{item.timeLabel}}">{{item.timeLabel}}</view>
 
         <view class="ask-block" wx:if="{{item.hasChips}}">
           <view class="chips">

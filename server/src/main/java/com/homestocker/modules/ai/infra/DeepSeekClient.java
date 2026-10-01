@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.homestocker.common.ErrorCodes;
+import com.homestocker.common.ShanghaiDates;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
@@ -58,7 +59,8 @@ public class DeepSeekClient {
     messages.addObject().put("role", "system").put("content", system != null ? system : "");
     for (Map<String, String> row : history != null ? history : List.<Map<String, String>>of()) {
       String role = row.get("role");
-      String content = row.get("text");
+      String text = row.get("text");
+      String content = ShanghaiDates.stampContent(text, row.get("at"));
       if (content == null || content.isBlank()) {
         continue;
       }

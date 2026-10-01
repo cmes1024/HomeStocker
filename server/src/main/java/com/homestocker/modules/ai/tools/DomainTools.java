@@ -10,6 +10,7 @@ import com.homestocker.modules.ai.knowledge.KnowledgePacks;
 import com.homestocker.modules.ai.knowledge.KnowledgeService;
 import com.homestocker.modules.ai.pages.PageRegistry;
 import com.homestocker.modules.family.app.FamilyTreeService;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -118,10 +119,14 @@ public class DomainTools {
     if (call.get("quantity") != null && "0".equals(String.valueOf(call.get("quantity")))) {
       return ToolResult.fail("第 " + step + " 步：新开物资数量不能是 0").build();
     }
+    ToolResult folded = foldCreateIntoExisting(ctx, space, loc, name, call, step);
+    if (folded != null) {
+      return folded;
+    }
     TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames")));
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("name", name);
-    payload.put("quantity", call.get("quantity"));
+    payload.put("quantity", call.get("quantity") != null ? call.get("quantity") : 1);
     payload.put("unit", call.get("unit"));
     payload.put("note", call.get("note"));
     payload.put("spaceId", space.get("id"));
@@ -136,29 +141,16 @@ public class DomainTools {
     }
     @SuppressWarnings("unchecked")
     Map<String, Object> data = (Map<String, Object>) res.get("data");
-    String qty = ToolHelpers.str(call.get("quantity")) + ToolHelpers.str(call.get("unit"));
+    String qty = ToolHelpers.str(call.get("quantity") != null ? call.get("quantity") : 1) + ToolHelpers.str(call.get("unit"));
     String place = TreeMatch.placeLabel(ToolHelpers.str(space.get("name")), loc.locationName());
     String summary =
         "已记下 "
             + name
             + (qty.isBlank() ? "" : " " + qty)
             + (place.isEmpty() ? "" : "（" + place + "）");
-    Map<String, Object> dup =
-        Map.of(
-            "name",
-            name,
-            "spaceId",
-            space.get("id"),
-            "locationId",
-            loc.locationId() != null ? loc.locationId() : "",
-            "spaceName",
-            space.get("name"),
-            "locationName",
-            loc.locationName());
     return ToolResult.ok(summary)
         .wrote(true)
         .remember(ToolResult.rememberItem(ToolHelpers.str(data.get("_id")), name, "create", null, null))
-        .duplicateCheck(dup)
         .build();
   }
 
@@ -174,6 +166,7 @@ public class DomainTools {
     List<Map<String, Object>> payloads = new ArrayList<>();
     List<String> labels = new ArrayList<>();
     List<Map<String, Object>> remember = new ArrayList<>();
+    List<String> foldSummaries = new ArrayList<>();
     for (int i = 0; i < items.size(); i++) {
       Object o = items.get(i);
       if (!(o instanceof Map<?, ?>)) {
@@ -200,10 +193,30 @@ public class DomainTools {
         return ToolResult.fail("第 " + step + " 步失败：第 " + (i + 1) + " 件 — " + loc.errorMessage())
             .build();
       }
+      if (row.get("quantity") != null && "0".equals(String.valueOf(row.get("quantity")))) {
+        return ToolResult.fail("第 " + step + " 步：第 " + (i + 1) + " 件数量不能是 0").build();
+      }
+      ToolResult folded = foldCreateIntoExisting(ctx, space, loc, name, row, step);
+      if (folded != null) {
+        if (!folded.ok) {
+          return folded;
+        }
+        foldSummaries.add(folded.summary);
+        if (folded.remember instanceof Map<?, ?> rem) {
+          Map<String, Object> one = new LinkedHashMap<>();
+          for (Map.Entry<?, ?> e : rem.entrySet()) {
+            if (e.getKey() != null) {
+              one.put(String.valueOf(e.getKey()), e.getValue());
+            }
+          }
+          remember.add(one);
+        }
+        continue;
+      }
       TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(row.get("tagNames")));
       Map<String, Object> payload = new LinkedHashMap<>();
       payload.put("name", name);
-      payload.put("quantity", row.get("quantity"));
+      payload.put("quantity", row.get("quantity") != null ? row.get("quantity") : 1);
       payload.put("unit", row.get("unit"));
       payload.put("note", row.get("note"));
       payload.put("spaceId", space.get("id"));
@@ -213,9 +226,16 @@ public class DomainTools {
       payload.put("productionDate", row.get("productionDate"));
       payload.put("source", "agent");
       payloads.add(payload);
-      String qty = ToolHelpers.str(row.get("quantity")) + ToolHelpers.str(row.get("unit"));
+      String qty =
+          ToolHelpers.str(row.get("quantity") != null ? row.get("quantity") : 1)
+              + ToolHelpers.str(row.get("unit"));
       String place = TreeMatch.placeLabel(ToolHelpers.str(space.get("name")), loc.locationName());
       labels.add(name + (qty.isBlank() ? "" : " " + qty) + (place.isEmpty() ? "" : "（" + place + "）"));
+    }
+    if (payloads.isEmpty()) {
+      String summary =
+          foldSummaries.isEmpty() ? "" : String.join("；", foldSummaries);
+      return ToolResult.ok(summary).wrote(!foldSummaries.isEmpty()).remember(remember).build();
     }
     Map<String, Object> body = new LinkedHashMap<>();
     body.put("items", payloads);
@@ -240,11 +260,13 @@ public class DomainTools {
         }
       }
     }
+    List<String> allLabels = new ArrayList<>(foldSummaries);
     String preview =
         labels.size() <= 8
             ? String.join("、", labels)
             : String.join("、", labels.subList(0, 8)) + "等 " + labels.size() + " 件";
-    return ToolResult.ok("已记下 " + preview).wrote(true).remember(remember).build();
+    allLabels.add("已记下 " + preview);
+    return ToolResult.ok(String.join("；", allLabels)).wrote(true).remember(remember).build();
   }
 
   private ToolResult itemUpdate(ToolContext ctx, Map<String, Object> call, int step) {
@@ -719,6 +741,162 @@ public class DomainTools {
       return true;
     }
     return "open".equalsIgnoreCase(ToolHelpers.str(call.get("action")));
+  }
+
+  /**
+   * 记入意图：同位置同名已有行则并入数量（多行先收成一条），直接告知，不先 ask。
+   *
+   * @return 已并入的结果；无同名则 null（继续 create）
+   */
+  private ToolResult foldCreateIntoExisting(
+      ToolContext ctx,
+      Map<String, Object> space,
+      ToolHelpers.LocationEnsure loc,
+      String name,
+      Map<String, Object> call,
+      int step) {
+    List<ItemRow> existing =
+        itemRepository.findDuplicates(
+            ctx.familyId,
+            ToolHelpers.str(space.get("id")),
+            loc.locationId(),
+            name);
+    if (existing.isEmpty()) {
+      return null;
+    }
+
+    String addUnit = ToolHelpers.str(call.get("unit")).trim();
+    for (ItemRow row : existing) {
+      String u = row.unit() == null ? "" : row.unit().trim();
+      if (!addUnit.isEmpty() && !u.isEmpty() && !addUnit.equals(u)) {
+        return ToolResult.fail(
+                "第 "
+                    + step
+                    + " 步：同位置「"
+                    + name
+                    + "」单位不一致（已有 "
+                    + u
+                    + "，本次 "
+                    + addUnit
+                    + "），未合并也未新建")
+            .build();
+      }
+    }
+
+    BigDecimal before =
+        existing.stream()
+            .map(r -> r.quantity() == null ? BigDecimal.ZERO : r.quantity())
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+    BigDecimal add = parsePositiveQuantity(call.get("quantity"), BigDecimal.ONE);
+    BigDecimal after = before.add(add);
+
+    ItemRow keep = existing.get(0);
+    if (existing.size() >= 2) {
+      List<String> ids = existing.stream().map(ItemRow::id).toList();
+      Map<String, Object> mergeBody = new LinkedHashMap<>();
+      mergeBody.put("itemIds", ids);
+      mergeBody.put("name", name);
+      mergeBody.put("source", "agent");
+      Map<String, Object> mergeRes =
+          ToolHelpers.runService(() -> ctx.itemService.merge(mergeBody));
+      if (!ToolHelpers.ok(mergeRes)) {
+        return ToolResult.fail(
+                "第 " + step + " 步失败：合并已有「" + name + "」— " + ToolHelpers.msg(mergeRes))
+            .build();
+      }
+      @SuppressWarnings("unchecked")
+      Map<String, Object> mergeData = (Map<String, Object>) mergeRes.get("data");
+      String keepId =
+          mergeData != null
+              ? (ToolHelpers.str(mergeData.get("_id")).isEmpty()
+                  ? ToolHelpers.str(mergeData.get("id"))
+                  : ToolHelpers.str(mergeData.get("_id")))
+              : keep.id();
+      if (!keepId.isEmpty()) {
+        keep =
+            itemRepository
+                .findById(keepId)
+                .orElse(keep);
+      }
+      before =
+          keep.quantity() == null ? BigDecimal.ZERO : keep.quantity(); // merge 已加总，after 仍 = before+add
+      after = before.add(add);
+    }
+
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("itemId", keep.id());
+    payload.put("quantity", after);
+    payload.put("source", "agent");
+    if (!addUnit.isEmpty()) {
+      payload.put("unit", addUnit);
+    } else if (keep.unit() != null && !keep.unit().isBlank()) {
+      payload.put("unit", keep.unit());
+    }
+    if (call.get("note") != null && !ToolHelpers.str(call.get("note")).isBlank()) {
+      payload.put("note", call.get("note"));
+    }
+    if (call.get("expireDate") != null) {
+      payload.put("expireDate", call.get("expireDate"));
+    }
+    if (call.get("productionDate") != null) {
+      payload.put("productionDate", call.get("productionDate"));
+    }
+    if (call.get("tagNames") instanceof List<?>) {
+      payload.put(
+          "tagIds", TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames"))).tagIds());
+    }
+    Map<String, Object> upd =
+        ToolHelpers.runService(() -> ctx.itemService.update(payload));
+    if (!ToolHelpers.ok(upd)) {
+      return ToolResult.fail(
+              "第 " + step + " 步失败：并入「" + name + "」— " + ToolHelpers.msg(upd))
+          .build();
+    }
+
+    String unit = addUnit.isEmpty() ? ToolHelpers.str(keep.unit()) : addUnit;
+    String place = TreeMatch.placeLabel(ToolHelpers.str(space.get("name")), loc.locationName());
+    String beforeText = stripTrailingZero(before) + unit;
+    String afterText = stripTrailingZero(after) + unit;
+    String summary =
+        "已并入现有 "
+            + name
+            + "："
+            + beforeText
+            + "→"
+            + afterText
+            + (place.isEmpty() ? "" : "（" + place + "）");
+    return ToolResult.ok(summary)
+        .wrote(true)
+        .remember(
+            ToolResult.rememberItem(
+                keep.id(),
+                name,
+                "update",
+                beforeText,
+                afterText))
+        .build();
+  }
+
+  private static BigDecimal parsePositiveQuantity(Object raw, BigDecimal fallback) {
+    if (raw == null || "".equals(raw)) {
+      return fallback;
+    }
+    try {
+      BigDecimal q = new BigDecimal(String.valueOf(raw).trim());
+      if (q.compareTo(BigDecimal.ZERO) <= 0) {
+        return fallback;
+      }
+      return q.stripTrailingZeros();
+    } catch (NumberFormatException e) {
+      return fallback;
+    }
+  }
+
+  private static String stripTrailingZero(BigDecimal q) {
+    if (q == null) {
+      return "0";
+    }
+    return q.stripTrailingZeros().toPlainString();
   }
 
   private static List<String> tagNames(Object raw) {

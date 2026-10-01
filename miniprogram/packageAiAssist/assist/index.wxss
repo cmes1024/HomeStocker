@@ -120,6 +120,14 @@
   box-sizing: border-box;
 }
 
+.msg-time {
+  margin-top: 6rpx;
+  padding: 0 4rpx;
+  font-size: 20rpx;
+  line-height: 1.2;
+  color: rgba(26, 26, 26, 0.4);
+}
+
 .msg-user .bubble {
   color: #fff;
   background: linear-gradient(
@@ -130,11 +138,19 @@
   border-top-right-radius: 8rpx;
 }
 
+.msg-user .msg-time {
+  align-self: flex-end;
+}
+
 .msg-assistant .bubble {
   width: 100%;
   color: #1a1a1a;
   background: rgba(255, 255, 255, 0.96);
   border-top-left-radius: 8rpx;
+}
+
+.msg-assistant .msg-time {
+  align-self: flex-start;
 }
 
 .blocks {
@@ -468,4 +484,135 @@
 .state-text.error {
   color: #fa5151;
   margin-bottom: 32rpx;
+}
+
+.present {
+  margin-top: 8rpx;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  background: rgba(255, 255, 255, 0.96);
+  box-sizing: border-box;
+}
+
+.present-title {
+  margin-bottom: 16rpx;
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
+.present-table {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1rpx solid rgba(26, 26, 26, 0.08);
+  border-radius: 12rpx;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.present-tr {
+  display: flex;
+  flex-direction: row;
+  border-bottom: 1rpx solid rgba(26, 26, 26, 0.06);
+}
+
+.present-tr:last-child {
+  border-bottom: none;
+}
+
+.present-th {
+  background: rgba(26, 26, 26, 0.04);
+}
+
+.present-td {
+  flex: 1;
+  min-width: 140rpx;
+  padding: 14rpx 16rpx;
+  font-size: 24rpx;
+  line-height: 1.35;
+  color: #1a1a1a;
+  box-sizing: border-box;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.present-th .present-td {
+  font-weight: 500;
+  color: rgba(26, 26, 26, 0.65);
+}
+
+.present-footer {
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.present-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+}
+
+.present-stat {
+  flex: 1;
+  min-width: 160rpx;
+  padding: 16rpx;
+  border-radius: 16rpx;
+  background: rgba(26, 26, 26, 0.03);
+  box-sizing: border-box;
+}
+
+.present-stat-value {
+  font-size: 36rpx;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--theme-primary, #c4a484);
+}
+
+.present-stat-label {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.present-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.present-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.present-bar-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  font-size: 24rpx;
+}
+
+.present-bar-label {
+  color: #1a1a1a;
+}
+
+.present-bar-value {
+  color: rgba(26, 26, 26, 0.55);
+}
+
+.present-bar-track {
+  height: 16rpx;
+  border-radius: 999rpx;
+  background: rgba(26, 26, 26, 0.06);
+  overflow: hidden;
+}
+
+.present-bar-fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: var(--theme-primary, #c4a484);
+  min-width: 0;
 }

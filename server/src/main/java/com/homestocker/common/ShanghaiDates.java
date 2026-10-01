@@ -1,5 +1,6 @@
 package com.homestocker.common;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -9,6 +10,8 @@ public final class ShanghaiDates {
 
   public static final ZoneId SHANGHAI = ZoneId.of("Asia/Shanghai");
   private static final DateTimeFormatter YMD = DateTimeFormatter.ISO_LOCAL_DATE;
+  private static final DateTimeFormatter YMD_HM =
+      DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
   private ShanghaiDates() {}
 
@@ -22,6 +25,33 @@ public final class ShanghaiDates {
   public static String todayWeekdayCn() {
     int dow = LocalDate.now(SHANGHAI).getDayOfWeek().getValue() % 7;
     return WEEKDAY_CN[dow];
+  }
+
+  /** Asia/Shanghai 的 yyyy-MM-dd HH:mm；无效 epoch 返回空串 */
+  public static String formatDateTimeMs(long epochMs) {
+    if (epochMs <= 0) {
+      return "";
+    }
+    return Instant.ofEpochMilli(epochMs).atZone(SHANGHAI).format(YMD_HM);
+  }
+
+  /**
+   * 给对话正文加 [yyyy-MM-dd HH:mm] 前缀（Asia/Shanghai）。at 非法则原样返回 text。
+   */
+  public static String stampContent(String text, String atEpochMs) {
+    String body = text == null ? "" : text;
+    if (atEpochMs == null || atEpochMs.isBlank()) {
+      return body;
+    }
+    try {
+      String stamped = formatDateTimeMs(Long.parseLong(atEpochMs.trim()));
+      if (stamped.isEmpty()) {
+        return body;
+      }
+      return "[" + stamped + "] " + body;
+    } catch (NumberFormatException e) {
+      return body;
+    }
   }
 
   public static String addDaysYmd(String ymd, int days) {

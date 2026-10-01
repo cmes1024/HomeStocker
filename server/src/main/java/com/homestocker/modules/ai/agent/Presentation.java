@@ -154,9 +154,7 @@ public final class Presentation {
     if (lead.isEmpty() && okCount > 1) {
       lead = "完成 " + okCount + " 项";
     }
-    if (lead.isEmpty() && blocks.isEmpty()) {
-      lead = "没有需要执行的操作";
-    }
+    // 空结果不写用户可见占位；由编排层降级 ask
     List<String> lines = new ArrayList<>(inventoryLines);
     for (Map<String, Object> c : actionCards) {
       String line =

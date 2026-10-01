@@ -189,7 +189,7 @@ public final class Receipts {
         refs.put(str(hit.get("ref")), hit);
       }
     }
-    return new PlanParser.ActPlan(plan.ask(), plan.probe(), calls, plan.reply());
+    return new PlanParser.ActPlan(plan.ask(), plan.probe(), calls, plan.reply(), plan.present());
   }
 
   private static Map<String, Object> findProbeRowForReceipt(

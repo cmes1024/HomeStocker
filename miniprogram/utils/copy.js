@@ -340,7 +340,7 @@ const copy = {
     pageTitle: '家庭管家',
     kicker: '跟家里的本子说话',
     sub: '查库存、记一件、改一改、确认后删掉。不录音、不看图。',
-    hello: '查库存、记一件、改一改都可以直接说。发完接着聊下一句就行。',
+    hello: '我在呢。查库存、记东西、改数量，说一句就办。',
     placeholder: '例如：厨房冰箱再放两瓶牛奶',
     send: '发送',
     sending: '稍等，管家正在操作…',
@@ -370,7 +370,7 @@ const copy = {
     duplicatesTitle: '可能重复（未合并）',
     focusLabel: '当前关注',
     openFail: '家庭管家暂时打不开',
-    doneEmpty: '没有需要执行的操作',
+    doneEmpty: '刚才没办妥，你再说具体一点？查家里有什么、记一笔或改数量都可以～',
     // ask 页兜底话术（服务端 question 优先）
     capabilityLimited: '抱歉，这个我还没有学会～',
     outOfScope: '这类事我帮不上忙呢～家里有什么想查、想记的，随时叫我',

@@ -6,7 +6,9 @@ const {
   clearTurns,
   turnsToMessages,
   historyFromMessages,
-  extractTurns
+  extractTurns,
+  bubbleTextWithoutBlockDup,
+  stampMessage
 } = require('../utils/transcript')
 const { ensureSession } = require('../../utils/session')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
@@ -152,7 +154,88 @@ function pickPresentation(data) {
   const blocks = normalizeBlocks(
     (data && data.blocks) || report.blocks || []
   )
-  return { lead, blocks, report }
+  const present = normalizePresent(data && data.present)
+  return { lead, blocks, report, present }
+}
+
+/** 服务端 present 白名单：table / stats / bars */
+function normalizePresent(raw) {
+  if (!raw || typeof raw !== 'object') return null
+  const type = String(raw.type || '')
+    .trim()
+    .toLowerCase()
+  const title = String(raw.title || '').trim()
+  if (type === 'table') {
+    const columns = asArray(raw.columns)
+      .map((c) => String(c || '').trim())
+      .filter(Boolean)
+      .slice(0, 6)
+    const rows = asArray(raw.rows)
+      .map((row, ri) => {
+        const cellsSrc = Array.isArray(row)
+          ? row
+          : row && Array.isArray(row.cells)
+            ? row.cells
+            : []
+        const cells = cellsSrc
+          .map((c) => String(c == null ? '' : c).trim())
+          .slice(0, columns.length || 6)
+        while (columns.length && cells.length < columns.length) cells.push('')
+        return { key: `r${ri}`, cells }
+      })
+      .filter((row) => row.cells.some((c) => c))
+      .slice(0, 40)
+    if (!columns.length || !rows.length) return null
+    return {
+      type: 'table',
+      title,
+      columns,
+      rows,
+      footer: String(raw.footer || '').trim(),
+      colCount: columns.length
+    }
+  }
+  if (type === 'stats' || type === 'stat' || type === 'bars' || type === 'bar') {
+    const kind = type === 'bars' || type === 'bar' ? 'bars' : 'stats'
+    const items = asArray(raw.items)
+      .map((it, i) => {
+        if (!it || typeof it !== 'object') return null
+        const label = String(it.label || it.name || '').trim()
+        if (!label) return null
+        const value = it.value != null ? it.value : it.count
+        const pct = Math.max(0, Math.min(100, Number(it.pct) || 0))
+        return {
+          key: `i${i}`,
+          label: label.slice(0, 40),
+          value: String(value == null ? '' : value).trim().slice(0, 24),
+          pct
+        }
+      })
+      .filter(Boolean)
+      .slice(0, 12)
+    if (!items.length) return null
+    return { type: kind, title, items }
+  }
+  return null
+}
+
+function presentToHistoryText(present) {
+  if (!present) return ''
+  const parts = []
+  if (present.title) parts.push(present.title)
+  if (present.type === 'table') {
+    parts.push(present.columns.join(' / '))
+    asArray(present.rows).forEach((row) => {
+      const line = asArray(row.cells).filter(Boolean).join(' · ')
+      if (line) parts.push(line)
+    })
+    if (present.footer) parts.push(present.footer)
+  } else if (present.type === 'stats' || present.type === 'bars') {
+    asArray(present.items).forEach((it) => {
+      parts.push(`${it.label} ${it.value}`.trim())
+    })
+  }
+  return parts.join('\n')
 }
 
 /** 仅信任服务端下发的白名单 URL */
@@ -515,15 +598,17 @@ Page({
     const pending = this.data.pendingCalls || []
     const isMerge = pending.some((c) => c && c.use === 'item.merge')
     const messages = clearConfirmCards(this._messages || this.data.messages || [])
-    messages.push({
-      id: this.nextId(),
-      role: 'assistant',
-      kind: 'result',
-      text: isMerge ? copy.assist.confirmMergeCancelled : copy.assist.confirmCancelled,
-      askList: [],
-      confirmList: [],
-      subscribeItems: []
-    })
+    messages.push(
+      stampMessage({
+        id: this.nextId(),
+        role: 'assistant',
+        kind: 'result',
+        text: isMerge ? copy.assist.confirmMergeCancelled : copy.assist.confirmCancelled,
+        askList: [],
+        confirmList: [],
+        subscribeItems: []
+      })
+    )
     this.commitMessages(messages, { pendingCalls: [] })
     this.scrollToBottom()
   },
@@ -643,13 +728,15 @@ Page({
       if (last && last.role === 'assistant' && last.retry) messages.pop()
     }
     if (!options.skipUserBubble) {
-      messages.push({
-        id: this.nextId(),
-        role: 'user',
-        text,
-        askList: [],
-        confirmList: []
-      })
+      messages.push(
+        stampMessage({
+          id: this.nextId(),
+          role: 'user',
+          text,
+          askList: [],
+          confirmList: []
+        })
+      )
     }
     const pendingId = this.nextId()
     messages.push({
@@ -663,17 +750,22 @@ Page({
     this._messages = messages
     this._pendingId = pendingId
 
-    this.setData({
-      loading: true,
-      fatalError: '',
-      noKey: false,
-      text: '',
-      inputHeight: this._composerMinH || this.data.inputHeight,
-      composerOn: false,
-      originalText: resetRound ? actText : this.data.originalText || actText,
-      messages
-    }, () => {
-      this.setData({ composerOn: true })
+    await new Promise((resolve) => {
+      this.setData(
+        {
+          loading: true,
+          fatalError: '',
+          noKey: false,
+          text: '',
+          inputHeight: this._composerMinH || this.data.inputHeight,
+          composerOn: false,
+          originalText: resetRound ? actText : this.data.originalText || actText,
+          messages
+        },
+        () => {
+          this.setData({ composerOn: true }, resolve)
+        }
+      )
     })
     this.persistTranscript()
     this.scrollToBottom()
@@ -725,7 +817,7 @@ Page({
       })
     } finally {
       this._submitting = false
-      if (this.data.loading) this.setData({ loading: false })
+      // loading 由 replacePending 关闭；此处再 setData 会与结果气泡并发，偶发丢掉渲染
     }
   },
 
@@ -740,7 +832,7 @@ Page({
       realIdx = idx >= 0 ? messages.length - 1 - idx : -1
     }
     // 换新 id：pending→结果结构变化大，同 id 差分偶发把气泡渲成空白
-    const next = {
+    let next = {
       id: this.nextId(),
       role: 'assistant',
       kind: 'result',
@@ -749,21 +841,47 @@ Page({
       confirmList: [],
       hasChips: false,
       blocks: [],
+      present: null,
       subscribeItems: [],
       navLinks: [],
       ...patch
     }
     if (!String(next.text || '').trim()) {
-      next.text = copy.assist.doneEmpty
+      if (!next.present) {
+        next.text = copy.assist.doneEmpty
+      }
     }
+    if (next.present) {
+      const covered = {
+        [copy.assist.doneEmpty]: true,
+        没有需要执行的操作: true
+      }
+      String(presentToHistoryText(next.present) || '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .forEach((l) => {
+          covered[l] = true
+        })
+      next.bubbleText = String(next.text || '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !covered[l])
+        .join('\n')
+    } else if (next.bubbleText == null) {
+      next.bubbleText = bubbleTextWithoutBlockDup(next.text, next.blocks)
+    }
+    next = stampMessage(next)
     if (realIdx >= 0) messages[realIdx] = next
     else messages.push(next)
     this._messages = messages
     this._pendingId = ''
     const data = Object.assign({ messages, loading: false }, extra || {})
-    this.setData(data)
-    this.persistTranscript()
-    this.scrollToBottom()
+    // 串行 setData：与 scrollIntoView 并发时，偶发丢掉刚写入的结果气泡（重进页才从落盘恢复）
+    this.setData(data, () => {
+      this.persistTranscript()
+      this.scrollToBottom()
+    })
   },
 
   applyResult(data, askRound) {
@@ -829,12 +947,16 @@ Page({
     }
 
     if (status === 'subscribe') {
-      const { lead, blocks, report } = pickPresentation(data)
+      const { lead, blocks, report, present } = pickPresentation(data)
       const lines = asArray(report.lines).filter(Boolean)
+      const text = [buildResultText(lead, blocks, lines, false), presentToHistoryText(present)]
+        .filter(Boolean)
+        .join('\n')
       this.replacePending(
         {
-          text: buildResultText(lead, blocks, lines, false) || copy.assist.subscribeTitle,
+          text: text || copy.assist.subscribeTitle,
           blocks,
+          present,
           askList: [],
           confirmList: [],
           subscribeItems: asArray(data && data.subscribeItems),
@@ -849,7 +971,7 @@ Page({
       return
     }
 
-    const { lead, blocks, report } = pickPresentation(data)
+    const { lead, blocks, report, present } = pickPresentation(data)
     const lines = asArray(report.lines).filter(Boolean)
     if (
       !blocks.length &&
@@ -867,11 +989,22 @@ Page({
             .join('；')
       )
     }
-    const text = buildResultText(lead, blocks, lines, !!(data && data.wrote))
+    const textParts = [
+      buildResultText(lead, blocks, lines, !!(data && data.wrote)),
+      presentToHistoryText(present)
+    ].filter(Boolean)
+    // 有结构化展示时，丢掉空操作占位文案
+    const text = textParts
+      .join('\n')
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && l !== copy.assist.doneEmpty && l !== '没有需要执行的操作')
+      .join('\n')
     this.replacePending(
       {
-        text,
-        blocks,
+        text: text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty),
+        blocks: present ? [] : blocks,
+        present,
         askList: [],
         confirmList: [],
         subscribeItems: [],

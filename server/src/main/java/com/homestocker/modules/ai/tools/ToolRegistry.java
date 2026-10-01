@@ -134,8 +134,7 @@ public class ToolRegistry {
 
     Presentation.PresentationView presentation =
         Presentation.buildExecutionPresentation(executed, failed, possibleDuplicates, ctx.tree);
-    List<String> lines =
-        presentation.lines().isEmpty() ? List.of("没有需要执行的操作") : presentation.lines();
+    List<String> lines = presentation.lines();
     if (subscribeUi) {
       for (Map<String, Object> row : executed) {
         if ("subscribePanel".equals(row.get("ui")) && row.get("summary") != null) {

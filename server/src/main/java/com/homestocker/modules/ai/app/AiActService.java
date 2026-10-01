@@ -16,6 +16,7 @@ import com.homestocker.modules.ai.agent.ActPrompt.ModelOpts;
 import com.homestocker.modules.ai.agent.ActRefs;
 import com.homestocker.modules.ai.agent.Guardrails;
 import com.homestocker.modules.ai.agent.ItemsProbe;
+import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
@@ -115,7 +116,7 @@ public class AiActService {
       itemsProbe.loadItemsByIds(familyId, tree, ids, refs, null);
       Map<String, Object> report =
           execute(familyId, openid, tree, replayCalls, refs, catalogMap, ShanghaiDates.todayYmd());
-      return buildDonePayload(replayCalls, report, null);
+      return sanitizeUserPayload(buildDonePayload(replayCalls, report, null), null, List.of());
     }
 
     String text = event.get("text") == null ? "" : String.valueOf(event.get("text")).trim();
@@ -147,6 +148,7 @@ public class AiActService {
     }
 
     plan = ensureProbeForUnresolvedWrites(plan, actCtx.refs());
+    plan = ensurePresentHasFacts(plan, turnRows);
 
     if (plan.probe() != null) {
       probedRows = itemsProbe.runProbe(familyId, actCtx.tree(), plan.probe(), actCtx.refs());
@@ -158,8 +160,11 @@ public class AiActService {
           probedRows.isEmpty()
               ? "探查结果：无匹配物资"
               : "探查结果：\n" + ActPrompt.renderProbeRows(probedRows);
+      Map<String, Object> presentBefore = plan.present();
       plan = askPlan(modelOpts, system, actCtx.userText() + "\n" + probeNote);
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply());
+      Map<String, Object> presentAfter =
+          plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
       bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
       if (!plan.ask().isEmpty()) {
         return buildAskResponse(plan.ask(), actCtx.focus(), probedRows);
@@ -186,14 +191,18 @@ public class AiActService {
             rowsForAsk);
       }
       return buildAskResponse(
-          List.of(Map.of("question", "这句我还没编排成具体操作，请再说具体一点。", "options", List.of())),
+          List.of(Map.of("question", AssistPromptTexts.DEGRADE_ASK, "options", List.of())),
           actCtx.focus(),
           List.of());
     }
 
-    if (!plan.reply().isEmpty() && plan.calls().isEmpty()) {
+    if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
+        && plan.calls().isEmpty()) {
       Guardrails.inventoryAuthorityForReply(Map.of());
-      return attachDoneReply(plan.reply(), actCtx.focus());
+      return sanitizeUserPayload(
+          attachDoneReply(plan.reply(), actCtx.focus(), plan.present(), turnRows, null),
+          actCtx.focus(),
+          turnRows);
     }
 
     if (Guardrails.planNeedsUnavailableCapability(plan.calls(), actCtx.catalogMap())) {
@@ -222,16 +231,27 @@ public class AiActService {
           invRows.isEmpty()
               ? "查询结果：无匹配物资"
               : "查询结果已写入本轮短号：\n" + ActPrompt.renderProbeRows(invRows);
+      Map<String, Object> presentBefore = plan.present();
       plan = askPlan(modelOpts, system, actCtx.userText() + "\n" + invNote);
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply());
+      Map<String, Object> presentAfter =
+          plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
       if (!plan.ask().isEmpty()) {
         return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
       }
-      if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
-        return buildDonePayload(readCalls, inventoryReadReport, actCtx.focus());
+      if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
+          && plan.calls().isEmpty()) {
+        Map<String, Object> payload =
+            attachDoneReply(
+                plan.reply(), actCtx.focus(), plan.present(), invRows, inventoryReadReport);
+        payload.put("calls", readCalls);
+        return sanitizeUserPayload(payload, actCtx.focus(), invRows);
       }
-      if (!plan.reply().isEmpty() && plan.calls().isEmpty()) {
-        return attachDoneReplyWithReport(plan.reply(), readCalls, inventoryReadReport, actCtx.focus());
+      if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
+        return sanitizeUserPayload(
+            buildDonePayload(readCalls, inventoryReadReport, actCtx.focus()),
+            actCtx.focus(),
+            invRows);
       }
       if (Guardrails.planNeedsUnavailableCapability(plan.calls(), actCtx.catalogMap())) {
         return buildAskResponse(Guardrails.capabilityLimitAsk(), actCtx.focus(), List.of());
@@ -350,7 +370,8 @@ public class AiActService {
       return buildSubscribePayload(finalCalls, finalReport, actCtx.focus());
     }
 
-    return buildDonePayload(finalCalls, finalReport, actCtx.focus());
+    return sanitizeUserPayload(
+        buildDonePayload(finalCalls, finalReport, actCtx.focus()), actCtx.focus(), turnRows);
   }
 
   private ActPlan askPlan(ModelOpts opts, String system, String user) {
@@ -404,10 +425,10 @@ public class AiActService {
               modelOpts,
               afterSystem,
               actCtx.userText() + "\n" + afterNote + "\n（系统：禁止空计划。）");
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply());
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), plan.present());
       bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
     } else {
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply());
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), plan.present());
       bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
     }
     return plan;
@@ -481,6 +502,9 @@ public class AiActService {
     if (!plan.calls().isEmpty()) {
       return false;
     }
+    if (plan.present() != null && !plan.present().isEmpty()) {
+      return false;
+    }
     return plan.reply().isEmpty();
   }
 
@@ -494,6 +518,54 @@ public class AiActService {
               String use = c == null ? "" : String.valueOf(c.get("use")).trim();
               return "item.search".equals(use) || "item.listExpiring".equals(use);
             });
+  }
+
+  private static ActPlan ensurePresentHasFacts(
+      ActPlan plan, List<Map<String, Object>> turnRows) {
+    if (plan == null || plan.present() == null || plan.present().isEmpty()) {
+      return plan;
+    }
+    if (plan.probe() != null || !plan.ask().isEmpty()) {
+      return plan;
+    }
+    if (turnRows != null && !turnRows.isEmpty()) {
+      return plan;
+    }
+    Map<String, Object> present = new LinkedHashMap<>(plan.present());
+    if (!presentNeedsFactSource(present)) {
+      return plan;
+    }
+    if (str(present.get("source")).isBlank()) {
+      present.put("source", "probe");
+    }
+    return new ActPlan(plan.ask(), Map.of("listAll", true), plan.calls(), plan.reply(), present);
+  }
+
+  private static boolean presentNeedsFactSource(Map<String, Object> present) {
+    if (present == null) {
+      return false;
+    }
+    String type = str(present.get("type")).trim().toLowerCase();
+    if (type.isEmpty()) {
+      return false;
+    }
+    if (present.get("rows") instanceof List<?> rows && !rows.isEmpty()) {
+      return false;
+    }
+    if (present.get("items") instanceof List<?> items && !items.isEmpty()) {
+      return false;
+    }
+    String source = str(present.get("source")).trim().toLowerCase();
+    return source.isEmpty()
+        || source.equals("probe")
+        || source.equals("p")
+        || source.equals("inventory")
+        || source.equals("inv")
+        || source.equals("search");
+  }
+
+  private static String str(Object v) {
+    return v == null ? "" : String.valueOf(v);
   }
 
   private static ActPlan ensureProbeForUnresolvedWrites(
@@ -517,9 +589,9 @@ public class AiActService {
           probe.put("name", name);
           probe.put("spaceName", String.valueOf(call.get("fromSpaceName")).trim());
           probe.put("locationName", String.valueOf(call.get("fromLocationName")).trim());
-          return new ActPlan(plan.ask(), probe, plan.calls(), plan.reply());
+          return new ActPlan(plan.ask(), probe, plan.calls(), plan.reply(), plan.present());
         }
-        return new ActPlan(plan.ask(), Map.of("listAll", true), plan.calls(), plan.reply());
+        return new ActPlan(plan.ask(), Map.of("listAll", true), plan.calls(), plan.reply(), plan.present());
       }
     }
     return plan;
@@ -939,17 +1011,183 @@ public class AiActService {
   }
 
   private Map<String, Object> attachDoneReply(String reply, Map<String, Object> focus) {
-    Presentation.PresentationView p = Presentation.textOnlyPresentation(reply);
+    return attachDoneReply(reply, focus, null, List.of(), null);
+  }
+
+  private Map<String, Object> attachDoneReply(
+      String reply,
+      Map<String, Object> focus,
+      Map<String, Object> presentRaw,
+      List<Map<String, Object>> probeRows,
+      Map<String, Object> inventoryReadReport) {
+    Map<String, Object> present =
+        PresentResolver.resolve(presentRaw, probeRows, inventoryReadReport);
+    String replyText = reply == null ? "" : reply.trim();
+    // 有结构化展示时，不把空 reply / 占位 lead 冒充正文
+    if (present != null && isNoopLead(replyText)) {
+      replyText = "";
+    }
+    Presentation.PresentationView p = Presentation.textOnlyPresentation(replyText);
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("status", "done");
     payload.put("ask", List.of());
     payload.put("confirm", List.of());
     payload.put("calls", List.of());
-    payload.put("report", Map.of("executed", List.of(), "failed", List.of(), "possibleDuplicates", List.of(), "lines", p.lines(), "wrote", false));
+    if (inventoryReadReport != null) {
+      Map<String, Object> report = new LinkedHashMap<>(slimReport(inventoryReadReport));
+      if (present != null) {
+        report.put("blocks", List.of());
+        report.put("lines", List.of());
+        report.put("lead", replyText);
+        payload.put("blocks", List.of());
+        payload.put("lead", replyText);
+      }
+      payload.put("report", report);
+    } else {
+      Map<String, Object> report = new LinkedHashMap<>();
+      report.put("executed", List.of());
+      report.put("failed", List.of());
+      report.put("possibleDuplicates", List.of());
+      report.put("lines", present != null ? List.of() : p.lines());
+      report.put("lead", replyText);
+      report.put("wrote", false);
+      payload.put("report", report);
+      payload.put("lead", replyText);
+      if (present != null) {
+        payload.put("blocks", List.of());
+      }
+    }
     payload.put("draft", PlanParser.draftFromCalls(List.of()));
     payload.put("focus", focusPublic(focus));
     payload.put("wrote", false);
+    if (present != null) {
+      payload.put("present", present);
+      return payload;
+    }
     return Presentation.attachPresentation(payload, p);
+  }
+
+  private static boolean isNoopLead(String text) {
+    String t = text == null ? "" : text.trim();
+    return t.isEmpty() || AssistPromptTexts.INTERNAL_NOOP_LEAD.equals(t);
+  }
+
+  /** 空 done / 内部 noop 不得直接给用户：降级为 ask。 */
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> sanitizeUserPayload(
+      Map<String, Object> payload, Map<String, Object> focus, List<Map<String, Object>> rows) {
+    if (payload == null) {
+      return buildDegradeAsk(focus, rows);
+    }
+    scrubInternalNoop(payload);
+    if (needsUserDegrade(payload)) {
+      log.warn("act degrade: empty or noop done payload");
+      return buildDegradeAsk(focus, rows);
+    }
+    return payload;
+  }
+
+  private Map<String, Object> buildDegradeAsk(
+      Map<String, Object> focus, List<Map<String, Object>> rows) {
+    return buildAskResponse(
+        List.of(Map.of("question", AssistPromptTexts.DEGRADE_ASK, "options", List.of())),
+        focus,
+        rows != null ? rows : List.of());
+  }
+
+  @SuppressWarnings("unchecked")
+  private static boolean needsUserDegrade(Map<String, Object> payload) {
+    if (!"done".equals(String.valueOf(payload.get("status")))) {
+      return false;
+    }
+    if (Boolean.TRUE.equals(payload.get("wrote"))) {
+      return false;
+    }
+    if (payload.get("present") instanceof Map<?, ?> p && !p.isEmpty()) {
+      return false;
+    }
+    if (payload.get("subscribeItems") instanceof List<?> s && !s.isEmpty()) {
+      return false;
+    }
+    if (payload.get("navLinks") instanceof List<?> n && !n.isEmpty()) {
+      return false;
+    }
+    if (payload.get("confirm") instanceof List<?> c && !c.isEmpty()) {
+      return false;
+    }
+    if (hasVisibleBlocks(payload.get("blocks"))) {
+      return false;
+    }
+    Map<String, Object> report =
+        payload.get("report") instanceof Map<?, ?> m
+            ? (Map<String, Object>) m
+            : Map.of();
+    if (hasVisibleBlocks(report.get("blocks"))) {
+      return false;
+    }
+    if (hasUsefulLines(report.get("lines"))) {
+      return false;
+    }
+    String lead = str(payload.get("lead"));
+    if (lead.isEmpty()) {
+      lead = str(report.get("lead"));
+    }
+    return isNoopLead(lead);
+  }
+
+  private static boolean hasVisibleBlocks(Object raw) {
+    if (!(raw instanceof List<?> blocks) || blocks.isEmpty()) {
+      return false;
+    }
+    for (Object b : blocks) {
+      if (!(b instanceof Map<?, ?> block)) {
+        continue;
+      }
+      if (block.get("cards") instanceof List<?> cards && !cards.isEmpty()) {
+        return true;
+      }
+      if (!str(block.get("title")).isBlank()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasUsefulLines(Object raw) {
+    if (!(raw instanceof List<?> lines) || lines.isEmpty()) {
+      return false;
+    }
+    for (Object o : lines) {
+      String t = str(o).trim();
+      if (!t.isEmpty() && !AssistPromptTexts.INTERNAL_NOOP_LEAD.equals(t)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void scrubInternalNoop(Map<String, Object> payload) {
+    if (AssistPromptTexts.INTERNAL_NOOP_LEAD.equals(str(payload.get("lead")).trim())) {
+      payload.put("lead", "");
+    }
+    if (payload.get("report") instanceof Map<?, ?> raw) {
+      Map<String, Object> report = new LinkedHashMap<>((Map<String, Object>) raw);
+      if (AssistPromptTexts.INTERNAL_NOOP_LEAD.equals(str(report.get("lead")).trim())) {
+        report.put("lead", "");
+      }
+      if (report.get("lines") instanceof List<?> lines) {
+        List<String> cleaned = new ArrayList<>();
+        for (Object o : lines) {
+          String t = str(o).trim();
+          if (!t.isEmpty() && !AssistPromptTexts.INTERNAL_NOOP_LEAD.equals(t)) {
+            cleaned.add(t);
+          }
+        }
+        report.put("lines", cleaned);
+      }
+      payload.put("report", report);
+    }
   }
 
   private Map<String, Object> attachDoneReplyWithReport(
@@ -957,15 +1195,10 @@ public class AiActService {
       List<Map<String, Object>> readCalls,
       Map<String, Object> inventoryReadReport,
       Map<String, Object> focus) {
-    Presentation.PresentationView p = Presentation.textOnlyPresentation(reply);
-    Map<String, Object> payload = new LinkedHashMap<>();
-    payload.put("status", "done");
+    Map<String, Object> payload =
+        attachDoneReply(reply, focus, null, List.of(), inventoryReadReport);
     payload.put("calls", readCalls);
-    payload.put("report", slimReport(inventoryReadReport));
-    payload.put("draft", PlanParser.draftFromCalls(List.of()));
-    payload.put("focus", focusPublic(focus));
-    payload.put("wrote", false);
-    return Presentation.attachPresentation(payload, p);
+    return payload;
   }
 
   @SuppressWarnings("unchecked")
@@ -1107,7 +1340,7 @@ public class AiActService {
     if (replyText.isEmpty()) {
       return null;
     }
-    return attachDoneReply(replyText, actCtx.focus());
+    return sanitizeUserPayload(attachDoneReply(replyText, actCtx.focus()), actCtx.focus(), List.of());
   }
 
   private Map<String, Object> tryPageDocFollowUp(
@@ -1154,7 +1387,8 @@ public class AiActService {
         reply = pageFallbackText(finalReport);
       }
       if (!reply.isEmpty()) {
-        return attachDoneReply(reply, actCtx.focus());
+        return sanitizeUserPayload(
+            attachDoneReply(reply, actCtx.focus()), actCtx.focus(), probedRows);
       }
     } catch (Exception e) {
       log.warn("act page reply failed {}", e.getMessage());
@@ -1199,8 +1433,7 @@ public class AiActService {
     merged.put("pending", second.getOrDefault("pending", List.of()));
     merged.put("createClassFailed", Boolean.TRUE.equals(second.get("createClassFailed")));
     merged.put("possibleDuplicates", possibleDuplicates);
-    List<String> lines =
-        presentation.lines().isEmpty() ? List.of("没有需要执行的操作") : presentation.lines();
+    List<String> lines = presentation.lines();
     merged.put("lines", lines);
     merged.put(
         "lead",
