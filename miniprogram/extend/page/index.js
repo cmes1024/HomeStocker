@@ -1,5 +1,6 @@
 const pageBehavior = require("../behaviors/pageBehavior");
 const { getMenuButtonInfo, onMenuButtonInfoChange, offMenuButtonInfoChange } = require("../functions/menuButton");
+const { appName, share } = require("../../config/index");
 
 const pageExtend = Page => {
   return object => {
@@ -35,9 +36,9 @@ const pageExtend = Page => {
     if (!object.onShareAppMessage) {
       object.onShareAppMessage = function () {
         return {
-          title: '家庭物资',
-          path: '/pages/items/index',
-          imageUrl: '/assets/shared.png'
+          title: appName,
+          path: share.path,
+          imageUrl: share.imageUrl
         }
       }
     }

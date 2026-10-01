@@ -1,6 +1,8 @@
 /**
- * 产品展示配置。改应用名只动这里，页面不要写死。
+ * @deprecated 请改 `config/index.js`；本文件仅兼容旧 require。
  */
+const config = require('./index')
+
 module.exports = {
-  appName: '存哪儿'
+  appName: config.appName
 }

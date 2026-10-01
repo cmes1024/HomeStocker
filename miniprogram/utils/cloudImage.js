@@ -1,4 +1,5 @@
 const { compressImageForUpload } = require('./imageCompress')
+const javaApi = require('./javaApi')
 
 const MAX_ITEM_IMAGES = 3
 
@@ -10,8 +11,21 @@ function extFromPath(path) {
   return 'jpg'
 }
 
-function randomSuffix() {
-  return Math.random().toString(36).slice(2, 8)
+function contentTypeForExt(ext) {
+  if (ext === 'png') return 'image/png'
+  if (ext === 'webp') return 'image/webp'
+  if (ext === 'gif') return 'image/gif'
+  return 'image/jpeg'
+}
+
+/** 已持久化的图片引用（https / object key；历史 cloud:// 仅占位，不展示） */
+function isStoredImageRef(id) {
+  const s = String(id || '').trim()
+  if (!s) return false
+  if (s.startsWith('cloud://')) return true
+  if (s.startsWith('http://') || s.startsWith('https://')) return true
+  if (s.indexOf('/') > 0 && !s.startsWith('wxfile://') && !s.startsWith('http')) return true
+  return false
 }
 
 /**
@@ -76,34 +90,68 @@ async function chooseLocalImage() {
   return paths[0]
 }
 
+function readFileBuffer(filePath) {
+  return new Promise((resolve, reject) => {
+    const fs = wx.getFileSystemManager()
+    fs.readFile({
+      filePath,
+      success(res) {
+        resolve(res.data)
+      },
+      fail: reject
+    })
+  })
+}
+
+async function uploadViaPresign(localPath, kind) {
+  const ext = extFromPath(localPath)
+  const contentType = contentTypeForExt(ext)
+  const presign = await javaApi.callModule('storage', 'presign', {
+    kind: kind || 'item',
+    contentType,
+    ext
+  })
+  const body = await readFileBuffer(localPath)
+  await new Promise((resolve, reject) => {
+    wx.request({
+      url: presign.uploadUrl,
+      method: presign.method || 'PUT',
+      header: {
+        'content-type': contentType
+      },
+      data: body,
+      success(res) {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          resolve(res)
+        } else {
+          const err = new Error('图片上传失败')
+          err.code = 'UPLOAD_FAILED'
+          err.statusCode = res.statusCode
+          reject(err)
+        }
+      },
+      fail: reject
+    })
+  })
+  return presign.publicUrl || presign.objectKey
+}
+
 /**
- * 压缩后上传到云存储。
+ * 压缩后直传对象存储（MinIO/COS）。云开发 uploadFile 已退役。
  * @param {string} localPath
- * @param {'item'|'space'|'location'} kind
- * @returns {Promise<string>} cloud:// fileID
+ * @param {'item'|'space'|'location'|'avatar'} kind
+ * @returns {Promise<string>} https publicUrl 或 objectKey
  */
 async function uploadEntityImage(localPath, kind) {
   const src = await compressImageForUpload(localPath, {
     maxEdge: 1280,
     quality: 72
   })
-  const prefix =
-    kind === 'space' ? 'space-images' : kind === 'location' ? 'location-images' : 'item-images'
-  const cloudPath = `${prefix}/${Date.now()}-${randomSuffix()}.${extFromPath(src)}`
-  const up = await wx.cloud.uploadFile({
-    cloudPath,
-    filePath: src
-  })
-  if (!up || !up.fileID) {
-    const err = new Error('图片上传失败')
-    err.code = 'UPLOAD_FAILED'
-    throw err
-  }
-  return up.fileID
+  return uploadViaPresign(src, kind || 'item')
 }
 
 /**
- * 保存前：有新本地图就上传；用户清空则回空串；未改动则 undefined（云函数不改字段）。
+ * 保存前：有新本地图就上传；用户清空则回空串；未改动则 undefined。
  */
 async function resolveImageFileID({ localPath, cleared, kind }) {
   if (localPath) return uploadEntityImage(localPath, kind || 'item')
@@ -112,13 +160,13 @@ async function resolveImageFileID({ localPath, cleared, kind }) {
 }
 
 /**
- * 物资多图：已有 cloud:// 保留，本地新图逐张上传，最多 3 张。
+ * 物资多图：已有持久化引用保留，本地新图逐张上传，最多 3 张。
  */
 async function resolveImageFileIDs({ existingFileIDs, localPaths, clearedAll }) {
   if (clearedAll && !(localPaths && localPaths.length)) return []
   const existing = (existingFileIDs || [])
     .map((id) => String(id || '').trim())
-    .filter((id) => id.startsWith('cloud://'))
+    .filter(isStoredImageRef)
   const locals = (localPaths || []).filter(Boolean)
   const room = Math.max(0, MAX_ITEM_IMAGES - existing.length)
   const uploaded = []
@@ -128,10 +176,8 @@ async function resolveImageFileIDs({ existingFileIDs, localPaths, clearedAll }) 
   return existing.concat(uploaded).slice(0, MAX_ITEM_IMAGES)
 }
 
-const displayUrlCache = {}
-
 /**
- * 把 cloud:// fileID 换成可给 <image> 用的临时链；本地路径 / https 原样返回。
+ * 展示用 URL：https / object key / 本地原样；历史 cloud:// 返回空。
  */
 async function resolveDisplayUrl(fileID) {
   const urls = await resolveDisplayUrls([fileID])
@@ -140,52 +186,24 @@ async function resolveDisplayUrl(fileID) {
 
 async function resolveDisplayUrls(fileIDs) {
   const list = (fileIDs || []).map((id) => String(id || '').trim()).filter(Boolean)
-  if (!list.length) return []
-  const result = new Array(list.length)
-  const need = []
-  list.forEach((src, i) => {
-    if (!src.startsWith('cloud://')) {
-      result[i] = src
-      return
+  return list.map((src) => {
+    if (src.startsWith('cloud://')) {
+      return ''
     }
-    if (displayUrlCache[src]) {
-      result[i] = displayUrlCache[src]
-      return
-    }
-    need.push({ src, i })
+    return src
   })
-  if (!need.length) return result
-  try {
-    const res = await wx.cloud.getTempFileURL({ fileList: need.map((row) => row.src) })
-    const rows = (res && res.fileList) || []
-    need.forEach((row, idx) => {
-      const url = rows[idx] && rows[idx].tempFileURL
-      if (url) {
-        displayUrlCache[row.src] = url
-        result[row.i] = url
-      } else {
-        result[row.i] = row.src
-      }
-    })
-  } catch (e) {
-    console.warn('getTempFileURL failed', e)
-    need.forEach((row) => {
-      if (!result[row.i]) result[row.i] = row.src
-    })
-  }
-  return result
 }
 
-/**
- * 用系统预览放大看图；cloud:// 会先换成临时链。
- */
 async function previewEntityImage(src) {
   return previewEntityImages([src], src)
 }
 
 async function previewEntityImages(srcs, current) {
   const urls = (await resolveDisplayUrls(srcs || [])).filter(Boolean)
-  if (!urls.length) return
+  if (!urls.length) {
+    wx.showToast({ title: '图片暂不可预览', icon: 'none' })
+    return
+  }
   const cur = current ? await resolveDisplayUrl(current) : ''
   wx.previewImage({
     current: cur && urls.indexOf(cur) >= 0 ? cur : urls[0],

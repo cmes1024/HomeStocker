@@ -1,2 +1,2 @@
-/** Activity feed + cursor probe — maps cloud function {@code activity}. Client writes denied. */
+/** Activity feed + cursor. HTTP: {@code POST /api/activity/{action}}. */
 package com.homestocker.modules.activity;

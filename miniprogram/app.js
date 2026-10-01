@@ -4,9 +4,9 @@ require("/extend/component/index.js"); // 组件扩展
 const { autoUpdate } = require("./utils/update.js");
 const { setStorage } = require("./utils/storage")
 const { getParamsFormWxacode } = require("./utils/util")
-const { envId: cloudEnvId } = require("./utils/cloudbase-env")
 const { getThemeColors, hydrateThemeFromCache } = require("./utils/theme")
 const { markAppHidden, markAppShown } = require("./utils/cloud")
+const javaApi = require("./utils/javaApi")
 
 const env = "prod"
 
@@ -41,15 +41,25 @@ App({
   onLaunch(options) {
     // 同步回填上次家庭主题，避免冷启动先闪默认橙黄
     hydrateThemeFromCache()
-    if (wx.cloud) {
-      const initOpts = { traceUser: true }
-      if (cloudEnvId) {
-        initOpts.env = cloudEnvId
-      }
-      wx.cloud.init(initOpts)
-      console.log('[cloud] init', cloudEnvId || '(未指定 env，使用工具默认环境)')
-      // 会话由清单 bootstrap / onboarding ensureSession 拉取，避免冷启动再打一次 getMyFamily
-    }
+    // Java API 登录探活
+    setTimeout(() => {
+      javaApi
+        .ensureLogin()
+        .then((data) => {
+          const openid =
+            (data && data.user && data.user.openid) ||
+            (data && data.openid) ||
+            ''
+          console.log('[javaAuth] login ok', openid || '(no openid)')
+        })
+        .catch((e) => {
+          console.warn(
+            '[javaAuth] login probe failed',
+            (e && e.code) || '',
+            (e && e.message) || e
+          )
+        })
+    }, 0)
     console.log("小程序冷启动入参", options)
     wx.onNetworkStatusChange(function (res) {
       let { isConnected } = res;

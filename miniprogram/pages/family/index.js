@@ -1,4 +1,5 @@
 const { callFamily, invalidateFamilyReads } = require('../../utils/cloud')
+const { uploadEntityImage } = require('../../utils/cloudImage')
 const {
   THEME_PRESETS,
   setAppFamily,
@@ -7,6 +8,7 @@ const {
 } = require('../../utils/theme')
 const { getStorage, setStorage } = require('../../utils/storage')
 const copy = require('../../utils/copy')
+const { appName, share } = require('../../config/index')
 
 const KEY_SVG_PATH = '/assets/key.svg'
 const EDIT_SVG_PATH = '/assets/edit.svg'
@@ -266,9 +268,9 @@ Page({
       }
     }
     return {
-      title: '家庭物资',
-      path: '/pages/items/index',
-      imageUrl: '/assets/shared.png'
+      title: appName,
+      path: share.path,
+      imageUrl: share.imageUrl
     }
   },
 
@@ -479,16 +481,7 @@ Page({
       let avatarFileID
       const pending = this.data.profilePendingPath
       if (pending) {
-        const extMatch = /\.(\w+)(\?|$)/.exec(pending)
-        const ext = (extMatch && extMatch[1]) || 'jpg'
-        const cloudPath = `user-avatars/${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 8)}.${ext}`
-        const up = await wx.cloud.uploadFile({
-          cloudPath,
-          filePath: pending
-        })
-        avatarFileID = up.fileID
+        avatarFileID = await uploadEntityImage(pending, 'avatar')
       }
       const payload = { nickname }
       if (avatarFileID) payload.avatarFileID = avatarFileID

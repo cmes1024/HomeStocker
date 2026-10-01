@@ -29,13 +29,20 @@ homestocker:
     # Fill via env / application-local override; never commit secrets.
     app-id: ${WECHAT_APP_ID:}
     app-secret: ${WECHAT_APP_SECRET:}
+    # Local only: login body { "code": "dev-openid-1" } (or mock:dev-openid-1). Never in prod.
+    mock-enabled: ${WECHAT_MOCK_ENABLED:false}
   session:
     header: X-HS-Token
     ttl-days: 30
+  cors:
+    allowed-origin-patterns:
+      - "*"
   storage:
     # local = MinIO; later cos/oss
     provider: minio
     endpoint: http://localhost:9000
+    # Client-facing base (DevTools / 真机). Empty = same as endpoint.
+    public-endpoint: ${MINIO_PUBLIC_ENDPOINT:}
     access-key: minioadmin
     secret-key: minioadmin
     bucket: homestocker
@@ -43,4 +50,7 @@ homestocker:
     tmpl-id: ${EXPIRE_SUBSCRIBE_TMPL_ID:_oheW_DGsoqUxKsFIQrWSYIuoo4stYvsJv-JNf_uAiQ}
     cron: "0 0 8 * * *"
   admin:
-    openid: ${ADMIN_OPENID:}
+    # Comma-separated WeChat openids allowed to issue capacity redeem codes.
+    openids: ${ADMIN_OPENIDS:${ADMIN_OPENID:}}
+  ai:
+    act-rate-per-minute: ${AI_ACT_RATE_PER_MINUTE:30}

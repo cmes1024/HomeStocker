@@ -13,6 +13,6 @@ public class HealthController {
     return Map.of(
         "ok", true,
         "service", "homestocker-server",
-        "phase", "scaffold");
+        "phase", "m8a-ai-keys");
   }
 }

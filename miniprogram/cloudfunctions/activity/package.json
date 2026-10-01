@@ -1,9 +1,0 @@
-{
-  "name": "activity",
-  "version": "1.0.0",
-  "description": "家庭活动：list 消息流 / 物资最近操作",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~2.6.3"
-  }
-}

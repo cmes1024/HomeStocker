@@ -109,7 +109,7 @@ POST /api/auth/login { code }
 | 配置 | 来源 |
 |------|------|
 | `WECHAT_APP_ID` / `WECHAT_APP_SECRET` | 环境变量，不入库 |
-| `ADMIN_OPENID` | issueCodes |
+| `ADMIN_OPENIDS` | issueCodes（逗号分隔 openid） |
 | `EXPIRE_SUBSCRIBE_TMPL_ID` | 默认同现网 |
 | DeepSeek key | 库表 `family_ai_keys`（BYOK），接口只回掩码 |
 | DB / Redis | `application-local.yml` + docker-compose |

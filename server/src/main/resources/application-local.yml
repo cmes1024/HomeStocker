@@ -5,6 +5,9 @@ logging:
     org.springframework.jdbc: INFO
 
 homestocker:
+  wechat:
+    # Real code2session by default. Set WECHAT_MOCK_ENABLED=true only for emergency local probe.
+    mock-enabled: ${WECHAT_MOCK_ENABLED:false}
   cors:
     # Mini program / WeChat DevTools local debugging
     allowed-origin-patterns:

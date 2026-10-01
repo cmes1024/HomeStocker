@@ -17,11 +17,11 @@
 - [x] Flyway `V1__baseline_schema.sql`
 - [x] 本目录设计与计划文档（开发前提改为 **只需 Docker**）
 - [x] AGENTS.md / docs/README 挂接本目录（文档入口）
-- [ ] 开发机安装 **Docker Desktop**（或兼容引擎）——**不必装 JDK/Maven**
-- [ ] `cd server && docker compose up --build` 全绿
-- [ ] `curl http://localhost:8080/api/health` 返回 ok
+- [~] 开发机安装 **Docker Desktop**（或兼容引擎）——**不必装 JDK/Maven**（CLI 已装；**当前阻塞**：Docker 引擎/daemon 未启动，`docker.sock` 不可用）
+- [ ] `cd server && docker compose up --build` 全绿（依赖上一项）
+- [ ] `curl http://localhost:8080/api/health` 返回 ok（依赖上一项）
 
-**出口：** 健康检查通过；阻塞项仅「未装 Docker」。
+**出口：** 健康检查通过；阻塞项仅「Docker 引擎未开」。
 
 ---
 
@@ -29,14 +29,15 @@
 
 **目标：** openid 只来自微信 API；后续模块可复用 FamilyContext。
 
-- [ ] `WeChatClient.code2session`
-- [ ] `POST /api/auth/login|logout|me`
-- [ ] Redis session（`hs:sess:*`）+ `X-HS-Token` 过滤器
-- [ ] `users` upsert
-- [ ] 统一 `ApiResponse` / 错误码（对齐云函数常用 code）
-- [ ] `FamilyContext`：解析 currentFamilyId + membership 校验工具
-- [ ] 小程序：保存 token；开发者工具关域名校验；打通 login 探活
-- [ ] 模块路由开关骨架（`java` / `cloud`）落在 `utils`（可先仅 auth=java）
+- [x] `WeChatClient.code2session`（含本地 `WECHAT_MOCK_ENABLED`）
+- [x] `POST /api/auth/login|logout|me`
+- [x] Redis session（`hs:sess:*`）+ `X-HS-Token` Filter
+- [x] `users` upsert
+- [x] 统一 `ApiResponse` / 错误码（对齐云函数常用 code）
+- [x] `FamilyContext` / `FamilyAccess`：解析 currentFamilyId + membership 校验工具
+- [x] 小程序：`javaApi` 存 token；`backendRoute` 开关；`app.js` login 探活
+- [x] 模块路由开关（`java` / `cloud`）落在 `utils/backendRoute.js`（已全量 java）
+- [ ] Docker 起栈后 curl login/me 与开发者工具探活验收（依赖 M0 Docker 引擎）
 
 **出口：** 开发者工具能 login，后续请求带 token 返回 me。
 
@@ -48,16 +49,16 @@
 
 **对照：** `cloudfunctions/family` 全部 action（见 04）。
 
-- [ ] create / join（容量 familyLimit / memberLimit / ALREADY_IN_FAMILY）
-- [ ] getMyFamily / listMyFamilies / switchFamily / leave（含解散清理矩阵）
-- [ ] listMembers / updateProfile
-- [ ] updateName / updateBackground（THEME_IDS）
-- [ ] updateExpireReminder / recordSubscribeExpire
-- [ ] page（家庭页聚合，对齐现网字段）
-- [ ] getEntitlement / redeem / issueCodes（ADMIN_OPENID）
-- [ ] 建家种子：默认仓库 + 标签种子 + family_trees
-- [ ] 小程序 family 相关调用切 `java`
-- [ ] 写作废 L1 缓存策略接好
+- [x] create / join（容量 familyLimit / memberLimit / ALREADY_IN_FAMILY）
+- [x] getMyFamily / listMyFamilies / switchFamily / leave（含解散清理矩阵）
+- [x] listMembers / updateProfile
+- [x] updateName / updateBackground（THEME_IDS）
+- [x] updateExpireReminder / recordSubscribeExpire
+- [x] page（家庭页聚合，对齐现网字段）
+- [x] getEntitlement / redeem / issueCodes（ADMIN_OPENIDS）
+- [x] 建家种子：默认仓库 + 标签种子 + family_trees
+- [x] 小程序 family 相关调用切 `java`（`backendRoute`；含「立即检查提醒」→ `/api/notify/expire/run`）
+- [x] 写作废 L1 缓存策略接好（`cloud.js` invalidate；rawCall 仅 Java）
 
 **出口：** onboarding 建家/加入/切换/家庭页主路径不走云函数 family。
 
@@ -69,15 +70,15 @@
 
 **对照：** `cloudfunctions/item` + `service.js` 行为。
 
-- [ ] create / createMany / update / remove / removeMany / merge
-- [ ] get / detail / editForm / list / count / search / listExpiring / home
-- [ ] item_tags / item_images 读写组装兼容 tagIds / imageFileIDs
-- [ ] 容量 itemLimit + families.item_count
-- [ ] activities 旁路（create_batch、摘要、地点快照）
-- [ ] activityLimit 裁剪最旧消息
-- [ ] 过期状态派生（上海日历）；expire 订阅字段按「当前用户」覆盖
-- [ ] 小程序清单/详情/编辑切 java
-- [ ] Redis cursor 在写后更新（可与 M5 一并，但写路径要留钩子）
+- [x] create / createMany / update / remove / removeMany / merge
+- [x] get / detail / editForm / list / count / search / listExpiring / home
+- [x] item_tags / item_images 读写组装兼容 tagIds / imageFileIDs
+- [x] 容量 itemLimit + families.item_count
+- [x] activities 旁路（create_batch、摘要、地点快照）
+- [x] activityLimit 裁剪最旧消息
+- [x] 过期状态派生（上海日历）；expire 订阅字段按「当前用户」覆盖
+- [x] 小程序清单/详情/编辑切 java
+- [x] Redis cursor 在写后更新（`ActivityWriteService` → `ActivityCursorService.put`）
 
 **出口：** 清单增删改查、临期条、详情主路径走 Java。
 
@@ -87,12 +88,12 @@
 
 ## M4 — space + tag + familyTrees
 
-- [ ] space 全部 action（含 listPockets / detail / listItemsBySpace）
-- [ ] tag 全部 action
-- [ ] ensureDefault / ensureDefaults
-- [ ] 结构写后重建 family_trees + Redis 树缓存失效
-- [ ] 删除空间/位置的约束（有物资时行为对齐现网）
-- [ ] 小程序 browse / 家庭标签页切 java
+- [x] space 全部 action（含 listPockets / detail / listItemsBySpace）
+- [x] tag 全部 action
+- [x] ensureDefault / ensureDefaults
+- [x] 结构写后重建 family_trees（Redis 树缓存可后补；现已写 DB `family_trees`）
+- [x] 删除空间/位置的约束（有物资时迁移；默认/最后空间不可删）
+- [x] 小程序 browse / 家庭标签页切 java
 
 **出口：** 空间浏览、口袋、标签管理不走云函数。
 
@@ -100,11 +101,11 @@
 
 ## M5 — activity + 读缓存 cursor
 
-- [ ] activity.list（成员资料 join、limit）
-- [ ] activity.cursor（Redis + DB）
-- [ ] 小程序回前台探针改打 Java
-- [ ] 确认 L1 写作废表仍覆盖物资域/家庭域
-- [ ] 家庭消息页切 java
+- [x] activity.list（成员资料 join、limit）
+- [x] activity.cursor（Redis + DB；写 activity 后更新 Redis）
+- [x] 小程序回前台探针改打 Java（`activity.cursor`）
+- [x] 确认 L1 写作废表仍覆盖物资域/家庭域（`cloud.js`）
+- [x] 家庭消息页切 java
 
 **出口：** 消息流 + 省额度缓存行为与现网合同一致。
 
@@ -112,12 +113,13 @@
 
 ## M6 — 对象存储
 
-- [ ] MinIO bucket 初始化脚本/说明
-- [ ] presign 上传 API
-- [ ] 小程序 ImagePicker / 编辑页改直传
-- [ ] item/space/location/avatar 存 object_key；读返回可访问 URL
-- [ ] 换图/删实体 best-effort 删旧对象
-- [ ] （可选）云存储存量迁移脚本草案
+- [x] MinIO bucket 初始化（`ObjectStorageClient` 启动时 ensure bucket + 匿名读策略）
+- [x] presign 上传 API（`POST /api/storage/presign|remove`）
+- [x] 内外网地址：`endpoint`（容器内）+ `public-endpoint`（小程序；Compose 默认 `http://127.0.0.1:9000`）
+- [x] 小程序 ImagePicker / 编辑页改直传（`cloudImage` → presign PUT）
+- [x] item/space/location/avatar 可存 object_key / https（API 字段仍兼容 imageFileID）
+- [x] remove API best-effort 删对象（实体换图删旧可在写路径后续接）
+- [-] （可选）云存储存量迁移脚本草案 —— **本轮明确不做（M10 / 用户排除）**
 
 **出口：** 新上传不再写 `cloud://`。
 
@@ -125,12 +127,12 @@
 
 ## M7 — expireNotify
 
-- [ ] 定时任务 cron（本地可手动触发）
-- [ ] 筛选：家庭总开关 + expireDate 今天/+1/+3 + item_expire_subs
-- [ ] 调微信订阅消息发送；成功删订阅
-- [ ] POST 手动 run（家庭页「立即检查」）
-- [ ] tmplId 配置化
-- [ ] 文档标明：真机推送可能需公网/合法域名，本地先测查询与拼装
+- [x] 定时任务 cron（08:00 Asia/Shanghai）
+- [x] 筛选：家庭总开关 + expireDate 今天/+1/+3 + item_expire_subs
+- [x] 调微信订阅消息发送；成功删订阅（无密钥时 dry-run 记日志）
+- [x] POST `/api/notify/expire/run`（成员可触发）
+- [x] tmplId 配置化
+- [x] 文档标明：真机推送可能需公网/合法域名，本地先测查询与拼装
 
 **出口：** 手动 run 在日志中体现正确收件人集合；真机推送可记为购机后项。
 
@@ -140,15 +142,15 @@
 
 **对照：** V2/V3 方案、context-retrieval、curriculum、capabilities 种子。
 
-- [ ] listKeys / addKey / removeKey / setDefaultKey（掩码、上限 3、默认一把）
-- [ ] 种子迁移 V2：ai_prompts / ai_capabilities
-- [ ] act 编排移植：history、查库、FOCUS/R*/PROBE、确认闸、回执
-- [ ] tools 全部走 Item/Space/Tag 等 domain（无平行写）
-- [ ] knowledgeGet / page.get
-- [ ] 禁 NL 关键词路由（code review 检查表）
-- [ ] Redis rate limit（可选但建议）
-- [ ] 小程序 packageAi + packageAiAssist 切 java
-- [ ] 对照课表主场景手测（增/减/删/撤销/澄清/直达页）
+- [x] listKeys / addKey / removeKey / setDefaultKey（掩码、上限 3、默认一把）— **M8a**
+- [x] 种子迁移 V2：ai_prompts / ai_capabilities（`AiSeedService` + capability-seed-v27）
+- [x] act 编排移植：history、查库、FOCUS/R*/PROBE、确认闸、回执（`/api/ai/act`）— **M8b/M8c**
+- [x] tools 全部走 Item/Space/Tag 等 domain（无平行写）
+- [x] knowledgeGet / page.get
+- [x] 禁 NL 关键词路由（编排无意图正则；回执解析仅机器文案）
+- [x] Redis rate limit（`AiRateLimitService`；`AI_ACT_RATE_PER_MINUTE`，默认 30）
+- [x] 小程序 packageAi + packageAiAssist 切 java（`callAi` → `/api/ai/*`）
+- [ ] 对照课表主场景手测（增/减/删/撤销/澄清/直达页；需 Docker + 密钥）
 
 **出口：** 管家主路径不走云函数 ai；行为无明显回归。
 
@@ -158,28 +160,29 @@
 
 ## M9 — 小程序全量切流与死代码
 
-- [ ] 路由表全部模块 `java`
-- [ ] grep 确认产品路径无 `wx.cloud.callFunction`
-- [ ] 移除/隔离云开发初始化依赖（app.js）
-- [ ] bootstrap / stt / chatProxy：确认无产品引用后标记废弃
-- [ ] 更新 `acceptance-checklist` 或本目录验收节
-- [ ] 开发者工具完整回归（见下「全量回归」）
+- [x] 路由表已迁模块 `java`（`backendRoute.js` 全量）
+- [x] grep：产品路径无 `wx.cloud.callFunction` / `uploadFile` / `init`
+- [x] 移除云开发启动依赖（`app.js`）
+- [x] bootstrap：`POST /api/bootstrap/home` + 开关 java
+- [x] chatProxy / stt：演示页提示退役；云函数目录仅备份
+- [x] 更新本目录切流清单（`07-cutover-checklist.md`）
+- [ ] 开发者工具完整回归（需 Docker Compose）
 
-**出口：** 干净的「仅 HTTP 后端」客户端。
+**出口：** 干净的「仅 HTTP 后端」客户端（存量 cloud:// 图待 M10）。
 
 ---
 
 ## M10 — 数据迁移、关云开发、上线准备
 
-（可在无用户数据的开发阶段延后；有存量时必做）
+（有存量数据必做；纯新环境可只做关云控制台）
 
 - [ ] CloudBase 导出脚本
 - [ ] 转换导入 PostgreSQL
-- [ ] 图片从云存储迁对象存储
+- [ ] 图片从云存储迁对象存储（清掉 `cloud://`）
 - [ ] 校验计数 / 邀请码 / 订阅
-- [ ] 购买服务器：JDK、Docker/原生 Postgres+Redis、反向代理 HTTPS
+- [ ] 购买/配置服务器：Docker Compose + HTTPS
 - [ ] 微信小程序后台配置 request / upload 合法域名
-- [ ] 关云函数触发器与文档库计费
+- [ ] 关云函数触发器与文档库计费（见 `07-cutover-checklist.md` §4）
 - [ ] 监控与备份最低配
 
 ---
@@ -239,7 +242,7 @@
 | 10 | M9 | M1–M8 |
 | 11 | M10 | 有服务器 / 有存量时 |
 
-**原则：** 每一阶段结束只增加「可切换模块」，保持云函数对其余模块可用，直到 M9。
+**原则：** 客户端已全切 Java；服务端以 Docker Compose 为准验收。
 
 ---
 
@@ -249,3 +252,13 @@
 |------|------|------|------|
 | 2026-09-30 | M0 | 骨架与计划文档落地 | Agent |
 | 2026-09-30 | M0 | Dockerfile + compose `api`；文档改为只需 Docker | Agent |
+| 2026-09-30 | M1 | Auth API + Redis session + ApiResponse/FamilyAccess；小程序双跑开关与 login 探活 | Agent |
+| 2026-09-30 | M2 | Family 全 action Java 实现 | Agent |
+| 2026-10-01 | M3 | Item 全 action + activities | Agent |
+| 2026-10-01 | M4 | Space/Tag + family_trees | Agent |
+| 2026-10-01 | M5 | activity.list/cursor | Agent |
+| 2026-10-01 | M6 | MinIO + storage presign | Agent |
+| 2026-10-01 | M7 | expireNotify cron + 手动 run | Agent |
+| 2026-10-01 | M8 | AI 密钥 + act + rate limit | Agent |
+| 2026-10-01 | M9 | bootstrap.home；cloudImage 直传；backendRoute 全 java；去云 init/callFunction | Agent |
+| 2026-10-01 | M6/M7/验收 | MinIO public-endpoint；expireNotify dry-run+家庭页「立即检查」；04/05 勾选对齐；排除 M10 | Agent |

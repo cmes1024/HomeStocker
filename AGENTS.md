@@ -3,7 +3,7 @@
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
 **第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。管家素养课表见 `docs/plans/2026-09-23-ai-assist-curriculum/`。**改管家出问题先读** `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md`（按模块排查，禁止「说 xxx 就做 xxx」）。
 
-**进行中：Java 后端迁移（替代全部云函数）。** 小程序前端保留；openid 由 Java `code2session` 获取；**开发/部署以 Docker Compose 为准（不必本机 JDK/Maven）**。脚手架在 `server/`（含 Dockerfile 与 `api` 服务）；实施向导 **`docs/plans/2026-09-30-java-backend-migration/`**（先读该目录 README 与 `05-migration-roadmap.md`）。未完成切流前，云函数仍是线上真相。
+**进行中：Java 后端迁移。** 小程序前端保留；openid 由 Java `code2session` 获取；**开发/部署以 Docker Compose 为准（不必本机 JDK/Maven）**。代码在 `server/`；实施向导 **`docs/plans/2026-09-30-java-backend-migration/`**（先读该目录 README 与 `05-migration-roadmap.md`）。**本分支已去掉云函数 / 云开发客户端路径**（`cloudfunctions/`、`wx.cloud` 均不在树内；主分支仍保留历史副本）。小程序配置见 `miniprogram/config/index.js`。仍须 Docker 联调与 M10 关云控制台 / 存量数据迁移。
 
 ## 权威范围
 
@@ -18,7 +18,7 @@
 - **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
 - **AI 助手 V3（已落地）：** `docs/plans/2026-09-22-ai-assistant-v3/` + 归档 `openspec/changes/archive/2026-09-23-ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
 - **AI 助手上下文优化（已落地）：** `docs/plans/2026-09-22-ai-assist-context-retrieval/` + 归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/` — 查库召回 / history 保回执 / prompt 瘦身
-- **页面直达（`page.get`，已落地）：** 云函数 `ai/pages` 注册表 + 能力 `page.get`；归档 `openspec/changes/archive/2026-09-23-ai-page-nav/`
+- **页面直达（`page.get`，已落地）：** Java `PageRegistry` + 能力 `page.get`；归档 `openspec/changes/archive/2026-09-23-ai-page-nav/`
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 
 ## 产品范围（已锁定）
@@ -42,12 +42,12 @@
 
 ## 技术栈
 
-- 微信**原生**小程序 + **云开发文档库**（现状；迁移完成后文档库/云函数退役）
-- **目标后端：** `server/` — Java 17 + Spring Boot + PostgreSQL + Redis + 对象存储（本地 MinIO）；见 `docs/plans/2026-09-30-java-backend-migration/`
-- 代码基线：裁剪现有 `miniprogram/`（保留 `extend/` / pageRouter 等）
-- 去掉产品路径上的 `pages/demo/*`、`pages/chat/*`（可留目录；`chatProxy` 壳子可保留）
+- 微信**原生**小程序 + **Java API**（`server/`：Java 17 + Spring Boot + PostgreSQL + Redis + MinIO）
+- 本地开发以 Docker Compose 为准；见 `docs/plans/2026-09-30-java-backend-migration/06-local-dev.md`
+- 小程序运行时配置：`miniprogram/config/index.js`
+- 去掉产品路径上的 `pages/demo/*`、`pages/chat/*`（可留目录）
 
-## 数据模型（文档库）
+## 数据模型（领域）
 
 ```
 users (_openid, currentFamilyId, nickname?, avatarUrl?)
@@ -63,30 +63,24 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 ```
 
 - **禁止**把成员、物资或空间树嵌进 `families` 大数组
-- 索引：`families.inviteCode`；`memberships.openid` / `familyId` / 复合唯一；`items.familyId+updatedAt` / `familyId+spaceId` / `familyId+expireDate`；`spaces.familyId`；`locations.spaceId`；`tags.familyId`；`activities.familyId+createdAt` / `itemId+createdAt`；`itemExpireSubs.familyId+openid` / `itemId`
 - 可多 membership（受容量档 `familyLimit` 约束；免费默认 1）；create/join 撞限拒绝；同家重复 join 拒绝；切换改 `currentFamilyId`
-- 字段与索引细节、换环境控制台步骤见 `miniprogram/cloud/collections.md`
+- 持久化实现见 `server/`（PostgreSQL / Flyway）；历史云文档库字段说明在 **main** 分支 `miniprogram/cloud/collections.md`
 
-## 云函数与写路径
+## API 写路径（Java）
 
-- `family`：create / join / getMyFamily / leave / listMyFamilies / switchFamily / updateName / updateBackground（仅命名主题） / updateExpireReminder / recordSubscribeExpire（关系写仅云函数；解散清理 spaces/locations/tags/activities/itemExpireSubs/familyAiKeys/familyTrees）
-- `item`：create / update / remove / get / list / search / listExpiring（**物资写一律走这里**；成功后旁路写 activities）
-- `space`：ensureDefault / list / create / update / remove / listLocations / createLocation / updateLocation / removeLocation / listItemsBySpace
-- `tag`：ensureDefaults / list / create / update / remove
-- `activity`：list（家庭消息 / 按 itemId 最近操作）；`cursor`（读缓存水位探针）；客户端写 deny
-- `expireNotify`：定时触发，订阅消息临期提醒（须小程序端或 IDE 定时触发器鉴权）
-- `ai`：密钥 CRUD + `act`（助手；不替代 `item.create`，经白名单 tool 调现有写路径）
-- 列表**读**可走云函数（调用层有内存读缓存）；**写**禁止客户端直写 items/spaces/locations/tags/activities/itemExpireSubs/familyAiKeys/aiPrompts/familyTrees/aiCapabilities（安全规则 deny）
-- 身份只用云函数 `OPENID` → `currentFamilyId` + membership；不信任入参伪造身份
+- 小程序经 `utils/cloud.js`（读缓存门面）→ `utils/javaApi.js` → `POST /api/{module}/{action}`
+- 模块与云函数时期 action 名对齐：`family` / `item` / `space` / `tag` / `activity` / `bootstrap` / `ai` / `storage` / `notify`
+- 身份：`X-HS-Token`（login 后下发）；服务端 openid → `currentFamilyId` + membership；不信任入参伪造身份
+- 物资写一律走 `item`；成功后旁路写 activities；AI 助手经白名单 tool 调同一写路径（`source: agent`）
 
 ## Agent 预留（必须遵守）
 
 - 页面、AI 助手、未来对话 **同一写入口**（`item` / `family` / `space` / `tag`），禁止另套改库逻辑；活动由 `item` 写路径产生
 - `items.source`：`ui` | `agent`（助手写走 `agent`）
 - `packageAi` 仅 **密钥页**；助手 UI 在 `packageAiAssist`；不要复活 `pages/chat` 当本阶段入口
-- **AI 助手 V2** 走云函数 `ai.act` + `packageAiAssist`，仍只调现有 `item`/`space`/`tag`；不要先上仓库根 `agent/` LangGraph
-- 后接 09-07 式独立 Agent：`chatProxy`（注入 OPENID）→ Agent 服务 → tool 映射云函数 action（与 V2 不是同一刀）
-- 仓库内已有 `agent/`（LangGraph 雏形 + MockBackend）；接真库时应对齐上述云函数，不要平行造第二套领域模型
+- **AI 助手** 走 Java `ai.act` + `packageAiAssist`，仍只调现有 `item`/`space`/`tag`；不要先上仓库根 `agent/` LangGraph
+- 后接 09-07 式独立 Agent：Agent 服务 → tool 映射 Java API action（与当前管家不是同一刀）
+- 仓库内已有 `agent/`（LangGraph 雏形 + MockBackend）；接真库时应对齐 Java API，不要平行造第二套领域模型
 - 对话查询优先 `item.search` 结构化检索，不默认上 RAG
 - **严禁自然语言意图关键词路由（硬禁）：** 禁止用正则 / 固定话术表，把用户句子或芯片文案映射成「必须走某条接口 / 旁路拼 calls / 改写计划」。意图、该增该减该删、确认后怎么执行，一律由模型根据上下文（FOCUS/R*/PROBE、history、`quantityBefore` 等机器事实）编排。允许：短号解析、白名单校验、确认闸门、空计划兜底、执行回执——**不是**「匹配到『各减一个』就自动 update」。客户端芯片点选只把原文/澄清句交给 `ai.act`，禁止 `if (/撤销|各减/.test(text))` 一类旁路。违规示例：`isUndoQtyAffirmChip`、`isDeleteAffirmChip`、按「刚加|刚才」升硬确认等。
 
@@ -94,9 +88,9 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 
 | 路径 | 说明 |
 |------|------|
-| `miniprogram/` | 小程序 + `cloudfunctions/`（迁移期仍存在；目标为退役云函数） |
-| `server/` | Java API 脚手架与实现（迁移目标后端） |
-| `docs/plans/` | 设计文档；第一阶段现状见 `2026-09-17-phase1-status.md`；**Java 迁移向导**见 `2026-09-30-java-backend-migration/`；AI 助手 V2 见 `2026-09-17-ai-assistant-v2/` |
+| `miniprogram/` | 小程序（本分支无云函数；配置 `config/index.js`） |
+| `server/` | Java API（迁移目标后端） |
+| `docs/plans/` | 设计文档；第一阶段现状见 `2026-09-17-phase1-status.md`；**Java 迁移向导**见 `2026-09-30-java-backend-migration/`；AI 助手见 `2026-09-17-ai-assistant-v2/` |
 | `agent/` | 对话 Agent 后端雏形（后接；与 `server` 管家迁徙不是同一刀） |
 | `family-supplies-prototype*` | HTML 原型参考，非运行时 |
 | `openspec/` | 规格与变更 |
@@ -106,6 +100,6 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 1. 改范围前先读 `docs/plans/2026-09-17-phase1-status.md`；历史决策再翻 MVP / 空间方案
 2. 新能力默认 YAGNI；角色 / 对话半屏 / 实景 3D / 软删除 / ES 不进当前阶段
 3. 人↔家用 `memberships`；物资独立 `items`；空间/位置独立集合 + `familyId`；活动独立 `activities`
-4. 领域写操作做成可被 tool 调用的云函数 action，保持单一写模型
+4. 领域写操作做成可被 tool 调用的 Java API action，保持单一写模型
 5. 用户未要求时不要擅自 commit / push
 6. **助手相关改动禁止再加 NL 关键词路由**（见上文「严禁自然语言意图关键词路由」）。办砸了按 `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md` 先对三类：信息不够、私自决定并执行、拦截/忽略模型计划。不要在 prompt/hint 加「说 xxx 就做 xxx」

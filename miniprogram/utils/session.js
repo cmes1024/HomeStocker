@@ -1,4 +1,4 @@
-const { callFamily, friendlyCloudError } = require('./cloud')
+const { callFamily } = require('./cloud')
 
 /**
  * 读 App 全局家庭缓存。onboarding / 切家 / 离家会写 globalData.family。
@@ -91,6 +91,5 @@ module.exports = {
   getCachedSession,
   rememberSession,
   peekSessionMemory,
-  clearSessionMemory,
-  friendlyCloudError
+  clearSessionMemory
 }

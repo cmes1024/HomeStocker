@@ -1,26 +1,11 @@
 const cache = require('./queryCache')
 const { shanghaiTodayYmd } = require('./expireStatus')
+const javaApi = require('./javaApi')
 
-function friendlyCloudError(e) {
-  const msg = (e && (e.errMsg || e.message)) || ''
-  if (
-    msg.includes('FUNCTION_NOT_FOUND') ||
-    msg.includes('-501000') ||
-    msg.includes('FunctionName parameter could not be found')
-  ) {
-    return '找不到云函数 family。控制台若已部署，多半是云环境不一致：请到云开发「设置」复制环境 ID，填入 utils/cloudbase-env.js 的 envId 后重新编译'
-  }
-  return msg || '网络或云开发异常'
-}
-
-function unwrap(res) {
-  const result = (res && res.result) || {}
-  if (result.ok) return result.data
-  const err = new Error(result.message || '请求失败')
-  err.code = result.code || 'UNKNOWN'
-  err.result = result
-  throw err
-}
+/**
+ * 领域 API 门面（读缓存 + 写失效）。
+ * 底层一律 Java HTTP（utils/javaApi），与微信云开发无关。
+ */
 
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
@@ -146,6 +131,11 @@ function invalidateFamilyReads() {
 }
 
 function applyWriteInvalidation(name, action) {
+  // 临期扫描可能消费订阅；轻量作废物资读缓存即可
+  if (name === 'expireNotify') {
+    cache.dropByName('item')
+    return
+  }
   if (name === 'item' && (action === 'create' || action === 'createMany' || action === 'update' || action === 'remove' || action === 'removeMany' || action === 'merge')) {
     invalidateItemDomain()
     return
@@ -257,16 +247,13 @@ function seedBootstrapBundle(bundle, requestData) {
 }
 
 async function rawCall(name, payload) {
+  const action = payload && payload.action
   try {
-    const res = await wx.cloud.callFunction({
-      name,
-      data: payload
-    })
-    return unwrap(res)
+    return await javaApi.callModule(name, action, payload || {})
   } catch (e) {
     if (e.code && e.result) throw e
-    const err = new Error(friendlyCloudError(e))
-    err.code = 'CLOUD_CALL_FAILED'
+    const err = new Error(e.message || 'Java API 调用失败')
+    err.code = e.code || 'JAVA_CALL_FAILED'
     err.cause = e
     throw err
   }
@@ -413,6 +400,11 @@ async function callBootstrap(action, data = {}) {
   return invoke('bootstrap', { ...data, action })
 }
 
+/** 手动触发临期订阅扫描。 */
+async function callExpireNotify(action = 'run', data = {}) {
+  return invoke('expireNotify', { ...data, action })
+}
+
 module.exports = {
   callFamily,
   callItem,
@@ -420,9 +412,9 @@ module.exports = {
   callTag,
   callActivity,
   callBootstrap,
+  callExpireNotify,
   seedBootstrapBundle,
   seedFamilyPageBundle,
-  friendlyCloudError,
   markAppHidden,
   markAppShown,
   invalidateItemDomain,

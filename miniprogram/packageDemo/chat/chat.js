@@ -1,4 +1,4 @@
-// pages/chat/chat.js
+// pages/chat/chat.js — 演示页；产品入口是 packageAiAssist
 Page({
   data: {
     messages: [],
@@ -10,7 +10,7 @@ Page({
   onLoad() {
     this.pushMsg(
       'assistant',
-      '你好，我是物资助手。你可以问「家里还有牛奶吗」，或说「帮我记一下：买了 2 瓶牛奶，放冰箱冷藏，9 月 20 日过期」。'
+      '演示对话已退役。请从家庭页打开「家庭管家」。'
     )
   },
 
@@ -26,20 +26,8 @@ Page({
   async send() {
     const text = (this.data.input || '').trim()
     if (!text || this.data.sending) return
-    if (!wx.cloud) {
-      this.pushMsg('assistant', '云开发未启用，请先在开发者工具中开通云开发')
-      return
-    }
-    this.setData({ input: '', sending: true })
+    this.setData({ input: '' })
     this.pushMsg('user', text)
-    try {
-      const res = await wx.cloud.callFunction({ name: 'chatProxy', data: { message: text } })
-      const r = (res && res.result) || {}
-      this.pushMsg('assistant', r.ok ? r.reply : '出错了：' + (r.error || '未知错误'))
-    } catch (e) {
-      this.pushMsg('assistant', '网络异常，请稍后再试')
-    } finally {
-      this.setData({ sending: false })
-    }
+    this.pushMsg('assistant', '演示对话已退役。请使用家庭管家。')
   }
 })

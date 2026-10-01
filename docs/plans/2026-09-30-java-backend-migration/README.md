@@ -36,17 +36,19 @@
 
 ## 阶段一览（细节见 roadmap）
 
-0. 脚手架与本地基建（**进行中 / 骨架已落**）  
-1. 鉴权（code2session + Redis session）  
-2. family  
-3. item  
-4. space + tag + familyTrees  
-5. activity + 读缓存 cursor  
-6. 对象存储（替换云存储）  
-7. expireNotify  
-8. ai（密钥 + act + tools）  
-9. 小程序全量切流  
-10. 数据迁移 / 关云开发 / 上线准备  
+0. 脚手架与本地基建（**骨架已落；需 Docker 起栈验收**）  
+1. 鉴权（**已切 java**）  
+2. family（**已切 java**）  
+3. item（**已切 java**）  
+4. space + tag + familyTrees（**已切 java**）  
+5. activity + cursor（**已切 java**）  
+6. 对象存储（**presign + cloudImage 直传；已切 java**）  
+7. expireNotify（**Java cron；客户端不依赖云触发器**）  
+8. ai（**密钥 + act + 限流；已切 java**）  
+9. 小程序全量切流（**客户端已切；去掉云 init / callFunction**）  
+10. 数据迁移 / 关云开发控制台 / 上线（**运维待办**）  
+
+**目标：** 完全废弃云开发。客户端产品路径已不依赖云；**代码层 M0–M9 已齐**。仍须本机启动 Docker 引擎做联调；控制台关云 / 存量数据属 **M10（本轮不做）**，见 `07-cutover-checklist.md`。
 
 ## Agent 约定
 

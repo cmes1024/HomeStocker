@@ -1,9 +1,0 @@
-{
-  "name": "family",
-  "version": "1.0.0",
-  "description": "家庭协同：create / join / getMyFamily / listMembers / updateProfile / leave",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~2.6.3"
-  }
-}

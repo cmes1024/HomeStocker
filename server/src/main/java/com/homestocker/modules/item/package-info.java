@@ -1,2 +1,6 @@
-/** Item ledger write/read — maps cloud function {@code item}. Sole write entry for items. */
+/**
+ * Item domain — sole write entry for inventory (UI and future AI tools).
+ *
+ * <p>HTTP: {@code POST /api/item/{action}} — migration roadmap M3.
+ */
 package com.homestocker.modules.item;

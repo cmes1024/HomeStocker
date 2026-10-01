@@ -1,9 +1,0 @@
-{
-  "name": "space",
-  "version": "1.0.0",
-  "description": "家庭空间与位置：ensureDefault / CRUD",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~2.6.3"
-  }
-}

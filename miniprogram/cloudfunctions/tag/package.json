@@ -1,9 +1,0 @@
-{
-  "name": "tag",
-  "version": "1.0.0",
-  "description": "家庭标签：ensureDefaults / CRUD",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~2.6.3"
-  }
-}

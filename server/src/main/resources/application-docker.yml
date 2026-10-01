@@ -14,10 +14,15 @@ logging:
     com.homestocker: INFO
 
 homestocker:
+  wechat:
+    # Real code2session by default. Emergency only: WECHAT_MOCK_ENABLED=true
+    mock-enabled: ${WECHAT_MOCK_ENABLED:false}
   storage:
     provider: minio
     # In-cluster endpoint for the API container
     endpoint: http://minio:9000
+    # Host-mapped port for mini program PUT/GET (not the docker DNS name)
+    public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://127.0.0.1:9000}
     access-key: minioadmin
     secret-key: minioadmin
     bucket: homestocker

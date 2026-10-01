@@ -1,6 +1,7 @@
-// const HTTPS_PROTOCOL = "https://";
-// const HOST = 'api.lufanglife.com'
-
+/**
+ * 旧演示站 API host（packageDemo / 历史 RequestUrl）。
+ * 产品 Java 后端配置请改 config/index.js，不要改这里。
+ */
 const HTTPS_PROTOCOL = "https://";
 const HOST = 'xcx.moquyun.com';
 const STATICHOST = 'xcx.moquyun.com'

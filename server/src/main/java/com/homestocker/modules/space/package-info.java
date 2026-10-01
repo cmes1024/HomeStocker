@@ -1,2 +1,2 @@
-/** Spaces, locations, pockets — maps cloud function {@code space}. */
+/** Space / location domain. HTTP: {@code POST /api/space/{action}}. */
 package com.homestocker.modules.space;

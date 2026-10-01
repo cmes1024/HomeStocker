@@ -1,9 +1,0 @@
-{
-  "name": "bootstrap",
-  "version": "1.0.0",
-  "description": "清单首页只读聚合：family + spaces + board + cursor（身份只解析一次）",
-  "main": "index.js",
-  "dependencies": {
-    "wx-server-sdk": "~2.6.3"
-  }
-}

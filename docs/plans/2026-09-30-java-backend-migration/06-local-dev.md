@@ -34,7 +34,8 @@ docker compose ps
 | redis | 6379 |
 | minio | 9000（API）/ 9001（控制台） |
 
-MinIO 控制台：`http://localhost:9001`（minioadmin / minioadmin）。bucket `homestocker` 在 M6 再初始化。
+MinIO 控制台：`http://localhost:9001`（minioadmin / minioadmin）。  
+api 容器用内网 `http://minio:9000`；**小程序上传/展示**用 `MINIO_PUBLIC_ENDPOINT`（默认 `http://127.0.0.1:9000`）。bucket `homestocker` 启动时自动创建并设匿名读。真机联调把 `MINIO_PUBLIC_ENDPOINT` 改成电脑局域网 IP。
 
 改 Java 代码后需重新构建 api：
 
@@ -46,15 +47,36 @@ docker compose up --build -d api
 
 1. 开发者工具 → 详情 → 本地设置 → **不校验合法域名**  
 2. API Base：`http://127.0.0.1:8080`（模拟器）或 `http://<局域网IP>:8080`（真机同一 Wi-Fi）  
-3. M1 完成后：`wx.login` → `POST /api/auth/login` → 存 token  
-4. 模块开关：已迁模块走 HTTP，未迁仍 `callFunction`  
+3. 冷启动：`javaApi.ensureLogin`（`wx.login` → Java `code2session`）→ 存 `X-HS-Token`  
+4. 模块开关：`config/index.js` 的 `javaBaseUrl`；`cloud.js` 一律走 Java HTTP  
+
 
 真机：防火墙放行 8080。
 
 ## 4. 微信登录在本地是否可行
 
 **可行。** `code2session` 从跑 `api` 容器的机器出网即可。  
-密钥放 `server/.env`，不要写进仓库。
+密钥放 `server/.env`（`WECHAT_APP_ID` / `WECHAT_APP_SECRET`），不要写进仓库。
+
+**默认真实登录（无 mock）：**
+
+- Compose / profiles 默认 `WECHAT_MOCK_ENABLED=false`
+- 小程序 `config/index.js`：`authUseMockCode=false`，走 `wx.login`
+- 须配置 `.env` 里的 AppID/Secret，且与 `project.config.json` / `config.appId` 一致
+- 应急才临时设 `WECHAT_MOCK_ENABLED=true` 且 `authUseMockCode=true`（默认勿开）
+
+探活（需有效微信 `code`，或临时开 mock 后用假 code）：
+
+```bash
+curl -s -X POST http://localhost:8080/api/auth/login \
+  -H 'content-type: application/json' \
+  -d '{"code":"<wx.login code>"}'
+# 取返回 data.token，再：
+curl -s -X POST http://localhost:8080/api/auth/me \
+  -H 'content-type: application/json' \
+  -H 'X-HS-Token: <token>' \
+  -d '{}'
+```
 
 订阅消息完整真机链路可等有域名/服务器后再验；本地先测业务逻辑。
 

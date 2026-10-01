@@ -1,6 +1,6 @@
 /**
- * WeChat login ({@code code2session}), session tokens, request principal (openid).
+ * WeChat login ({@code code2session}), Redis session tokens, request principal (openid).
  *
- * <p>See migration docs: auth module M0 / M1.
+ * <p>Endpoints: {@code POST /api/auth/login|logout|me}. Header: {@code X-HS-Token}.
  */
 package com.homestocker.auth;

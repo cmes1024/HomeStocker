@@ -7,7 +7,7 @@ const { enrichLedgerItemsAsync } = require('../../utils/runLedgerEnrich')
 const { shanghaiTodayYmd, normalizeDateInput } = require('../../utils/expireStatus')
 const { navigateToItemDetail } = require('../../utils/itemDetailNav')
 const copy = require('../../utils/copy')
-const { appName } = require('../../config/app')
+const { appName } = require('../../config/index')
 
 /** v2：空字符串 = 全部；旧 key 不再读取，避免默认卡在空仓库 */
 const FILTER_SPACE_KEY = 'itemsFilterSpaceId_v2'

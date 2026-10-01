@@ -1,7 +1,10 @@
 /**
  * 产品 UI 文案统一入口。页面展示、Toast、确认框优先从此取，避免「柜子」等旧隐喻散落。
  * 云函数错误 message 仍由服务端返回；此处只管小程序端话术。
+ * 产品名等运行时配置见 config/index.js。
  */
+const { appName } = require('../config/index')
+
 const copy = {
   common: {
     retry: '再试一次',
@@ -232,10 +235,6 @@ const copy = {
     reminderOff: '已关',
     reminderTurnOn: '开启提醒',
     reminderTurnOff: '关闭提醒',
-    reminderRunNow: '立即检查提醒',
-    reminderRunOk: '提醒已尝试发送',
-    reminderRunFail: '发送失败',
-    reminderRunning: '检查中…',
     wallTitle: '家庭氛围',
     myHomes: '我加入的家庭',
     chipHere: '正在用',
@@ -372,7 +371,7 @@ const copy = {
     focusLabel: '当前关注',
     openFail: '家庭管家暂时打不开',
     doneEmpty: '没有需要执行的操作',
-    // 与 cloudfunctions/ai/promptAssist.js 固定话术保持一致（页面 ask 通常直接用云端 question）
+    // ask 页兜底话术（服务端 question 优先）
     capabilityLimited: '抱歉，这个我还没有学会～',
     outOfScope: '这类事我帮不上忙呢～家里有什么想查、想记的，随时叫我',
     timeout: '助手这次没跑完，请再试一次。若反复出现，请把云函数 ai 超时设为 60 秒并确认已开通出网',
@@ -498,7 +497,7 @@ const copy = {
 
   onboarding: {
     bootLoading: '正在找你的家…',
-    kicker: '家庭物资',
+    kicker: appName,
     title: '先有一个家',
     sub: '建好或加入之后，和家人一起记家里的东西',
     createCta: '建一个家',

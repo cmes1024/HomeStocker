@@ -1,6 +1,4 @@
 /**
- * Family steward ({@code ai.act}) + BYOK keys — maps cloud function {@code ai}.
- * Tools must call the same domain services as UI (no parallel write path).
- * No NL keyword routing — see curriculum 迭代指南.
+ * AI keys + act (M8). Orchestrator ports V3 history/probe/confirm/tools; no NL keyword routing.
  */
 package com.homestocker.modules.ai;

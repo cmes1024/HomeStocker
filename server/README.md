@@ -8,15 +8,22 @@
 
 ## 当前状态
 
-- **脚手架已建**：包结构、Dockerfile、Compose（含 `api`）、Flyway 基线 DDL、`GET /api/health`
-- **业务代码未写**：按迁移路线图分模块实施
-- **本机前提**：**只需 Docker**（Desktop 或兼容引擎）。不必安装 JDK / Maven
+- **M0**：包结构、Dockerfile、Compose（含 `api`）、Flyway 基线、`GET /api/health`
+- **M1**：`POST /api/auth/login|logout|me`、Redis session（`X-HS-Token`）、`ApiResponse` / `FamilyAccess`
+- **M2**：`POST /api/family/*` 全 action（建家种子 / 解散清理 / 权益兑换）
+- **M3**：`POST /api/item/*` 全 action（activities 旁路 / 临期 home / merge）
+- **M4**：`POST /api/space/*`、`/api/tag/*`（family_trees 重建）
+- **M5**：`POST /api/activity/list|cursor`（Redis cursor）
+- **M6**：`POST /api/storage/presign|remove`（MinIO）
+- **M7**：expireNotify 定时 + `POST /api/notify/expire/run`
+- **M8a**：`POST /api/ai/listKeys|addKey|removeKey|setDefaultKey`（`act` 未迁）
+- **运行**：有 Docker 的机器上 `docker compose up --build`；开发机可只写代码、后置联调
 
 ## 本地一键起
 
 ```bash
 cd server
-# 可选：cp .env.example .env 并填入 WECHAT_APP_ID / WECHAT_APP_SECRET
+cp .env.example .env   # 填入 WECHAT_APP_ID / WECHAT_APP_SECRET
 docker compose up --build
 ```
 
@@ -24,6 +31,7 @@ docker compose up --build
 
 ```bash
 curl http://localhost:8080/api/health
+# 登录走真实 code2session（需小程序 wx.login 的 code；默认已关 mock）
 docker compose ps
 ```
 
@@ -69,3 +77,7 @@ server/
 ## 密钥
 
 复制 `.env.example` → `.env`（勿提交）。Compose 会自动读 `server/.env`。
+
+真实 `wx.login`：填入 `WECHAT_APP_ID` / `WECHAT_APP_SECRET`，保持 `WECHAT_MOCK_ENABLED=false`；小程序 `config/index.js` 的 `authUseMockCode` 保持 `false`。
+
+可发内测码：在 `.env` 设 `ADMIN_OPENIDS`（逗号分隔 openid；本地 mock 常用 `local-dev-openid`）。AI 话术联系微信号用 `CAPACITY_ADMIN_WECHAT`（非 openid）。

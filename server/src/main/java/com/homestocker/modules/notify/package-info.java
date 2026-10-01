@@ -1,2 +1,2 @@
-/** Expire subscribe reminders — maps cloud function {@code expireNotify} (scheduled). */
+/** Expire subscribe-message notify (cron + manual run). */
 package com.homestocker.modules.notify;
