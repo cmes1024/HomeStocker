@@ -203,9 +203,8 @@ Page({
     if (cached && typeof cached.isAdmin !== 'boolean') {
       invalidateFamilyReads()
     }
-    if (!this.data.family || typeof this.data.family.isAdmin !== 'boolean') {
-      this.load()
-    }
+    // 每次进入都走 load（经 callFamily，短 TTL 内可命中）；避免前台驻留时家庭资料一直脏
+    this.load()
   },
 
   formatInviteCode(code, visible) {

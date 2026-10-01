@@ -41,10 +41,10 @@ App({
   onLaunch(options) {
     // 同步回填上次家庭主题，避免冷启动先闪默认橙黄
     hydrateThemeFromCache()
-    // Java API 登录探活
+    // 冷启动探活一次（/me 或 login）；业务请求不再每次打 /me
     setTimeout(() => {
       javaApi
-        .ensureLogin()
+        .probeSession()
         .then((data) => {
           const openid =
             (data && data.user && data.user.openid) ||
@@ -74,6 +74,7 @@ App({
   },
   onShow(options) {
     markAppShown()
+    javaApi.markAuthShown()
     if (options?.query) {
       const { scene } = getParamsFormWxacode(options.query);
       scene && setStorage('EnterScene', scene)
@@ -89,6 +90,7 @@ App({
   },
   onHide() {
     markAppHidden()
+    javaApi.markAuthHidden()
   },
   onError: function (error) { },
   onUnload: function () {

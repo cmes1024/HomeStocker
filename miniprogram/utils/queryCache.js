@@ -1,6 +1,7 @@
 /**
- * 云函数读的进程内存缓存。摘除缓存时删本文件，并把 cloud.js 改回直传即可。
+ * 领域读的进程内存缓存。摘除缓存时删本文件，并把 cloud.js 改回直传即可。
  * 不依赖页面；key 含 familyId，切家时由 cloud.js 整表清空。
+ * 条目带 expiresAt；过期视为未命中并删除。
  */
 
 const SEP = '\x1f'
@@ -46,17 +47,37 @@ function splitKey(key) {
   }
 }
 
+function isFresh(entry) {
+  if (!entry) return false
+  const exp = Number(entry.expiresAt)
+  if (!Number.isFinite(exp)) return true
+  return Date.now() < exp
+}
+
 function get(key) {
   if (!store.has(key)) return undefined
-  return store.get(key)
+  const entry = store.get(key)
+  if (!isFresh(entry)) {
+    store.delete(key)
+    return undefined
+  }
+  return entry.value
 }
 
 function has(key) {
-  return store.has(key)
+  return get(key) !== undefined
 }
 
-function set(key, value) {
-  store.set(key, value)
+/**
+ * @param {string} key
+ * @param {*} value
+ * @param {number} [ttlMs] 毫秒；缺省或非正数则不过期（仍可被 invalidate / clearAll 清掉）
+ */
+function set(key, value, ttlMs) {
+  const ms = Number(ttlMs)
+  const expiresAt =
+    Number.isFinite(ms) && ms > 0 ? Date.now() + ms : Number.POSITIVE_INFINITY
+  store.set(key, { value, expiresAt })
 }
 
 function getInflight(key) {

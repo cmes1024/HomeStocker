@@ -57,14 +57,15 @@ GET /api/activity/cursor
 - item 写**不**改树（与现网一致）。  
 - AI act 读树：Redis → DB → 三表重绘。
 
-## 6. 小程序 L1 策略（迁移后保留）
+## 6. 小程序 L1 策略（迁移后保留并收紧）
 
-- 读：先 L1；miss 打 Java。  
-- 写成功：按策略作废物资域 / 家庭域（复用现策略表，改调用端即可）。  
+- 读：先 L1；miss / **TTL 过期** 打 Java。  
+- 写成功：按策略作废物资域 / 家庭域（复用现策略表）。  
 - 回前台：探 Java cursor；变则作废 L1。  
-- **不设短 TTL**（与现方案一致）：同会话未作废且未跨日可一直有效。  
+- **短 TTL（额度目标已退役）：** 物资域 15s（`item.*`、`activity.list`、`bootstrap.home`、含物资的 `space` 读）；结构/家庭域 45s（`family.*`、`space.list|listLocations`、`tag.list`）。  
+- 家庭页 `onShow` 每次走 `callFamily('page')`（TTL 内仍可命中），避免页面层跳过 load。
 
-空间/标签无 activity 时：本机写作废；家人改名仍可能延迟感知——与现网合同一致，本迁移不扩大保证。
+空间/标签无 activity 时：本机写作废；家人改名主要靠结构域 TTL，cursor 不扩大保证。
 
 ## 7. 明确不做（YAGNI）
 

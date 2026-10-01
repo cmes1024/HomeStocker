@@ -5,7 +5,14 @@ const javaApi = require('./javaApi')
 /**
  * 领域 API 门面（读缓存 + 写失效）。
  * 底层一律 Java HTTP（utils/javaApi），与微信云开发无关。
+ *
+ * TTL：物资域 15s、结构/家庭域 45s（偏多人鲜度；跳页仍可短时命中）。
  */
+
+/** 物资域读 TTL（item / activity.list / bootstrap / 含物资的 space 读） */
+const TTL_ITEM_MS = 15 * 1000
+/** 结构/家庭域读 TTL（family / space 结构 / tag） */
+const TTL_STRUCT_MS = 45 * 1000
 
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
@@ -53,6 +60,16 @@ function isItemDomainRead(name, action) {
     return true
   }
   return false
+}
+
+function ttlFor(name, action) {
+  if (isItemDomainRead(name, action)) return TTL_ITEM_MS
+  return TTL_STRUCT_MS
+}
+
+function cacheSet(key, value, name, action) {
+  if (!key) return
+  cache.set(key, value, ttlFor(name, action))
 }
 
 function cacheAction(name, action) {
@@ -191,24 +208,26 @@ function seedFamilyPageBundle(bundle) {
     ''
   if (!fid) return
 
-  cache.set(cache.makeKey(fid, 'family', 'page', {}, ''), bundle)
-  cache.set(cache.makeKey(fid, 'family', 'listMyFamilies', {}, ''), {
+  cacheSet(cache.makeKey(fid, 'family', 'page', {}, ''), bundle, 'family', 'page')
+  cacheSet(cache.makeKey(fid, 'family', 'listMyFamilies', {}, ''), {
     currentFamilyId: bundle.currentFamilyId,
     family: bundle.family,
     list: bundle.list || [],
     profile: bundle.profile || { nickname: '', avatarUrl: '' }
-  })
-  cache.set(cache.makeKey(fid, 'family', 'listMembers', {}, ''), {
+  }, 'family', 'listMyFamilies')
+  cacheSet(cache.makeKey(fid, 'family', 'listMembers', {}, ''), {
     list: bundle.members || [],
     profile: bundle.profile || { nickname: '', avatarUrl: '' }
-  })
+  }, 'family', 'listMembers')
   if (bundle.family && bundle.family._id) {
-    cache.set(
+    cacheSet(
       cache.makeKey(fid, 'family', 'getMyFamily', {}, ''),
       {
         ...bundle.family,
         profile: bundle.profile || { nickname: '', avatarUrl: '' }
-      }
+      },
+      'family',
+      'getMyFamily'
     )
   }
 }
@@ -221,28 +240,34 @@ function seedBootstrapBundle(bundle, requestData) {
   const fid = String(bundle.family._id)
   const params = paramsForKey(requestData || {})
 
-  cache.set(
+  cacheSet(
     cache.makeKey(fid, 'family', 'getMyFamily', {}, ''),
-    bundle.family
+    bundle.family,
+    'family',
+    'getMyFamily'
   )
   if (bundle.spaces) {
-    cache.set(cache.makeKey(fid, 'space', 'list', {}, ''), bundle.spaces)
+    cacheSet(cache.makeKey(fid, 'space', 'list', {}, ''), bundle.spaces, 'space', 'list')
   }
   if (bundle.board) {
     const homeParams = {}
     if (params.limit !== undefined) homeParams.limit = params.limit
     if (params.spaceId) homeParams.spaceId = params.spaceId
-    cache.set(
+    cacheSet(
       cache.makeKey(fid, 'item', 'home', homeParams, shanghaiTodayYmd()),
-      bundle.board
+      bundle.board,
+      'item',
+      'home'
     )
   }
   if (bundle.cursor) {
     rememberCursor(fid, bundle.cursor)
   }
-  cache.set(
+  cacheSet(
     cache.makeKey(fid, 'bootstrap', 'home', params, shanghaiTodayYmd()),
-    bundle
+    bundle,
+    'bootstrap',
+    'home'
   )
 }
 
@@ -349,7 +374,7 @@ async function invoke(name, data = {}) {
         (isBootstrapHome && result && result.family && result.family._id) ||
         ''
       if (fid) {
-        cache.set(readCacheKey(name, action, data, fid), result)
+        cacheSet(readCacheKey(name, action, data, fid), result, name, action)
       }
       if (isBootstrapHome && result) {
         seedBootstrapBundle(result, data)

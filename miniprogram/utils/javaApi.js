@@ -1,6 +1,9 @@
 /**
  * Java API 客户端（X-HS-Token）。
  * 注意：utils/api.js 是旧演示 RequestUrl，勿混用。
+ *
+ * 鉴权策略：本地有 token 则业务请求直接带出；AuthFilter + 401 重登兜底。
+ * /api/auth/me 只在冷启动 / 回前台探活，不在每次 callModule 前打。
  */
 const {
   JAVA_BASE_URL,
@@ -13,6 +16,10 @@ const HEADER_TOKEN = 'X-HS-Token'
 
 /** 登录单飞：避免并发 wx.login / code2session 把 code 用废 */
 let loginInflight = null
+/** /me 探活单飞 */
+let probeInflight = null
+/** 曾经进过后台，下次 onShow 再探一次会话 */
+let needsSessionProbe = false
 
 function getToken() {
   try {
@@ -145,42 +152,73 @@ function sessionOpenid(data) {
   return (data && data.user && data.user.openid) || (data && data.openid) || ''
 }
 
-async function ensureLoginOnce() {
+/**
+ * 有本地 token 时打 /me 校验；过期或假 mock 会话则重新 login。
+ * 无 token 时直接 login。
+ */
+async function probeSessionOnce() {
   const token = getToken()
-  if (token) {
-    try {
-      const data = await me()
-      const openid = sessionOpenid(data)
-      if (
-        !AUTH_USE_MOCK_CODE &&
-        openid &&
-        AUTH_MOCK_OPENID &&
-        openid === AUTH_MOCK_OPENID
-      ) {
-        console.warn('[javaAuth] stale mock session, re-login with wx.login')
-        clearToken()
-        return loginOnce()
-      }
-      return data
-    } catch (e) {
-      if (e.code !== 'UNAUTHORIZED' && e.code !== 'JAVA_CALL_FAILED') {
-        console.warn('[javaAuth] me failed, retry login', e.code || e.message)
-      }
+  if (!token) return loginOnce()
+  try {
+    const data = await me()
+    const openid = sessionOpenid(data)
+    if (
+      !AUTH_USE_MOCK_CODE &&
+      openid &&
+      AUTH_MOCK_OPENID &&
+      openid === AUTH_MOCK_OPENID
+    ) {
+      console.warn('[javaAuth] stale mock session, re-login with wx.login')
+      clearToken()
+      return loginOnce()
+    }
+    return data
+  } catch (e) {
+    if (e.code !== 'UNAUTHORIZED' && e.code !== 'JAVA_CALL_FAILED') {
+      console.warn('[javaAuth] me failed, retry login', e.code || e.message)
     }
   }
   return loginOnce()
 }
 
 /**
- * 冷启动 / 业务请求前：保证有有效会话。
- * mock 已关时若会话仍是假 openid（旧缓存），清 token 后强制 wx.login。
+ * 冷启动 / 回前台：探活会话（会打 /me 或 login）。
+ */
+async function probeSession() {
+  if (probeInflight) return probeInflight
+  if (loginInflight) return loginInflight
+  probeInflight = probeSessionOnce().finally(() => {
+    probeInflight = null
+  })
+  return probeInflight
+}
+
+/**
+ * 业务请求前：保证本地有 token。有则直接返回，不打 /me。
+ * 无 token 时走 login（与 probe 共享 loginInflight）。
  */
 async function ensureLogin() {
-  if (loginInflight) return loginInflight
-  loginInflight = ensureLoginOnce().finally(() => {
-    loginInflight = null
+  if (getToken()) {
+    return { token: getToken() }
+  }
+  if (probeInflight) return probeInflight
+  return login()
+}
+
+function markAuthHidden() {
+  needsSessionProbe = true
+}
+
+function markAuthShown() {
+  if (!needsSessionProbe) return
+  needsSessionProbe = false
+  probeSession().catch((e) => {
+    console.warn(
+      '[javaAuth] resume probe failed',
+      (e && e.code) || '',
+      (e && e.message) || e
+    )
   })
-  return loginInflight
 }
 
 /** POST /api/{module}/{action}，body 对齐云函数 event（含其余字段，不含 action）。 */
@@ -216,5 +254,8 @@ module.exports = {
   logout,
   me,
   ensureLogin,
+  probeSession,
+  markAuthHidden,
+  markAuthShown,
   callModule
 }
