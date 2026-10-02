@@ -254,7 +254,7 @@ public class AiActService {
               actCtx.userText()
                   + "\n"
                   + invNote
-                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats。）");
+                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
@@ -279,7 +279,7 @@ public class AiActService {
                 actCtx.userText()
                     + "\n"
                     + invNote
-                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats。）");
+                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list。）");
         presentAfter =
             plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
         plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
@@ -611,7 +611,8 @@ public class AiActService {
               return "item.search".equals(use)
                   || "item.listExpiring".equals(use)
                   || "activity.list".equals(use)
-                  || "item.stats".equals(use);
+                  || "item.stats".equals(use)
+                  || "habit.list".equals(use);
             });
   }
 
@@ -711,7 +712,7 @@ public class AiActService {
     return false;
   }
 
-  /** Prefer tool summaries (aggregates) plus P* inventory when both exist. */
+  /** Prefer tool summaries (aggregates / habits) plus P* inventory when both exist. */
   private static String buildReadOnlyResultNote(
       Map<String, Object> report, List<Map<String, Object>> invRows) {
     List<String> summaries = new ArrayList<>();
@@ -719,6 +720,11 @@ public class AiActService {
     if (exec instanceof List<?> executed) {
       for (Object rowObj : executed) {
         if (!(rowObj instanceof Map<?, ?> row)) {
+          continue;
+        }
+        if ("habit.list".equals(str(row.get("use")).trim())
+            && row.get("habits") instanceof List<?> habitRows) {
+          summaries.add(formatHabitFactsForModel(habitRows));
           continue;
         }
         String summary = str(row.get("summary")).trim();
@@ -741,6 +747,29 @@ public class AiActService {
       return "查询结果：\n" + String.join("\n", summaries);
     }
     return "查询结果：无匹配";
+  }
+
+  /** habit.list 结构化事实 → 重编排注；由模型决定 reply/present，代码不写家人气泡。 */
+  private static String formatHabitFactsForModel(List<?> habitRows) {
+    if (habitRows == null || habitRows.isEmpty()) {
+      return "本家习惯：无";
+    }
+    StringBuilder sb = new StringBuilder("本家习惯（").append(habitRows.size()).append(" 条，按槽计）：");
+    for (Object o : habitRows) {
+      if (!(o instanceof Map<?, ?> m)) {
+        continue;
+      }
+      String label = str(m.get("label")).trim();
+      if (label.isEmpty()) {
+        label = str(m.get("slot")).trim();
+      }
+      String text = str(m.get("text")).trim();
+      sb.append('\n').append("- ").append(label).append("：").append(text);
+      if (Boolean.TRUE.equals(m.get("needsResplit"))) {
+        sb.append("（非纯空间名，应拆成空间名 + 其它槽重记）");
+      }
+    }
+    return sb.toString();
   }
 
   private static ActPlan ensurePresentHasFacts(

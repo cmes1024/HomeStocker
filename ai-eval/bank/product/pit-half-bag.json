@@ -1,0 +1,19 @@
+{
+  "id": "product-pit-half-bag",
+  "perspective": "product",
+  "title": "踩坑：盐还剩半袋",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "盐还剩半袋",
+  "expected": {
+    "outcome": "半袋可以记成大约一半，或先问一句；别写成 0",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.update"
+    ]
+  }
+}

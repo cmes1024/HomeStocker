@@ -1,0 +1,16 @@
+{
+  "id": "user-expire-yogurt",
+  "perspective": "user",
+  "title": "过期：酸奶还能喝吗",
+  "tags": [
+    "expire"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "酸奶还能喝吗",
+  "expected": {
+    "outcome": "结合过期日说能不能喝/快不行了",
+    "mustProbe": true
+  }
+}

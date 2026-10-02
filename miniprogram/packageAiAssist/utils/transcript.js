@@ -301,8 +301,14 @@ function bubbleTextWithoutBlockDup(text, blocks) {
   if (!list.length) return String(text || '').trim()
   const covered = {}
   function mark(s) {
-    const t = String(s || '').trim()
-    if (t) covered[t] = true
+    const raw = String(s || '').trim()
+    if (!raw) return
+    covered[raw] = true
+    // 卡片 title 可能是多行；正文按行过滤，须逐行标记
+    raw.split('\n').forEach((line) => {
+      const t = String(line || '').trim()
+      if (t) covered[t] = true
+    })
   }
   list.forEach((block) => {
     const blockTitle = String((block && block.title) || '').trim()

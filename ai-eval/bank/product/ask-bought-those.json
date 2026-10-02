@@ -1,0 +1,20 @@
+{
+  "id": "product-ask-bought-those",
+  "perspective": "product",
+  "title": "含糊：刚买的那些都记上",
+  "tags": [
+    "ask",
+    "vague"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "刚买的那些都记上",
+  "expected": {
+    "outcome": "「那些」指不清：要问买了啥、各多少、放哪，不能空记",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.createMany"
+    ]
+  }
+}

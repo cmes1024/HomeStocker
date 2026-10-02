@@ -1,0 +1,21 @@
+{
+  "id": "user-shop-chips",
+  "perspective": "user",
+  "title": "拆袋：薯片扔零食柜",
+  "tags": [
+    "shopping",
+    "create"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "薯片三袋，零食柜",
+  "expected": {
+    "outcome": "薯片记到零食柜，数量对得上",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.create",
+      "item.update"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "user-expire-fridge-deal",
+  "perspective": "user",
+  "title": "过期：冰箱里快过期的处理一下",
+  "tags": [
+    "expire",
+    "vague"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "冰箱里快过期的处理一下",
+  "expected": {
+    "outcome": "先列出快过期的再问怎么处理（删/用掉），不能一声不吭全删",
+    "mustAsk": true,
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.removeMany"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "user-shop-milk",
+  "perspective": "user",
+  "title": "拆袋：牛奶两盒放冰箱",
+  "tags": [
+    "shopping",
+    "create"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "牛奶两盒，放冰箱",
+  "expected": {
+    "outcome": "家里账上多了/加上冰箱里的牛奶两盒，跟人说清楚记哪儿了",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.create",
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove"
+    ]
+  }
+}

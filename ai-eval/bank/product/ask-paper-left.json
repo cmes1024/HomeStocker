@@ -1,0 +1,17 @@
+{
+  "id": "product-ask-paper-left",
+  "perspective": "product",
+  "title": "查有没有：还有没有纸",
+  "tags": [
+    "ask"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "还有没有纸",
+  "expected": {
+    "outcome": "「纸」可能纸巾/厕纸：不清楚就问哪种，或把相关的都说一下",
+    "mustAsk": true,
+    "mustProbe": true
+  }
+}

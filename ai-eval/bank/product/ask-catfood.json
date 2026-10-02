@@ -1,0 +1,17 @@
+{
+  "id": "product-ask-catfood",
+  "perspective": "product",
+  "title": "记一笔：记一下新买的猫粮",
+  "tags": [
+    "ask",
+    "create"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "记一下新买的猫粮",
+  "expected": {
+    "outcome": "数量/放哪不清楚就问全再记",
+    "mustAsk": true
+  }
+}

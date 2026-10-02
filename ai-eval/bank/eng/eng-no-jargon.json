@@ -1,0 +1,19 @@
+{
+  "id": "eng-no-jargon",
+  "perspective": "eng",
+  "title": "红线：家人不会说接口名",
+  "tags": [
+    "eng"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "纸巾减一",
+  "expected": {
+    "outcome": "正常减纸巾并回人话；全程不要求家人说什么接口名",
+    "mustProbe": true,
+    "requiredTools": [
+      "item.update"
+    ]
+  }
+}

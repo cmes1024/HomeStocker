@@ -1,0 +1,17 @@
+{
+  "id": "product-ask-snacks-minus",
+  "perspective": "product",
+  "title": "批量：零食都减一个",
+  "tags": [
+    "ask",
+    "batch"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "零食都减一个",
+  "expected": {
+    "outcome": "先弄清有哪些零食再减；弄不清就问",
+    "mustProbe": true
+  }
+}

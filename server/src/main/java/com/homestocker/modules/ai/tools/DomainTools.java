@@ -1,5 +1,6 @@
 package com.homestocker.modules.ai.tools;
 
+import com.homestocker.common.ApiException;
 import com.homestocker.common.ShanghaiDates;
 import com.homestocker.infra.jdbc.ActivityRepository;
 import com.homestocker.infra.jdbc.ItemRepository;
@@ -8,6 +9,9 @@ import com.homestocker.modules.ai.agent.ActRefs;
 import com.homestocker.modules.ai.agent.ItemsProbe;
 import com.homestocker.modules.ai.agent.Presentation;
 import com.homestocker.modules.ai.agent.TreeMatch;
+import com.homestocker.modules.ai.habits.FamilyHabit;
+import com.homestocker.modules.ai.habits.FamilyHabitService;
+import com.homestocker.modules.ai.habits.HabitSlots;
 import com.homestocker.modules.ai.knowledge.KnowledgePacks;
 import com.homestocker.modules.ai.knowledge.KnowledgeService;
 import com.homestocker.modules.ai.pages.PageRegistry;
@@ -30,16 +34,19 @@ public class DomainTools {
   private final KnowledgeService knowledgeService;
   private final ItemRepository itemRepository;
   private final ActivityRepository activityRepository;
+  private final FamilyHabitService familyHabitService;
 
   public DomainTools(
       ItemsProbe itemsProbe,
       KnowledgeService knowledgeService,
       ItemRepository itemRepository,
-      ActivityRepository activityRepository) {
+      ActivityRepository activityRepository,
+      FamilyHabitService familyHabitService) {
     this.itemsProbe = itemsProbe;
     this.knowledgeService = knowledgeService;
     this.itemRepository = itemRepository;
     this.activityRepository = activityRepository;
+    this.familyHabitService = familyHabitService;
   }
 
   public ToolResult run(String use, ToolContext ctx, Map<String, Object> call, int step) {
@@ -69,6 +76,9 @@ public class DomainTools {
       case "item.expireSubscribePanel" -> expireSubscribePanel(ctx, step);
       case "knowledge.get" -> knowledgeGet(ctx, call, step);
       case "page.get" -> pageGet(ctx, call, step);
+      case "habit.list" -> habitList(ctx, step);
+      case "habit.upsert" -> habitUpsert(ctx, call, step);
+      case "habit.remove" -> habitRemove(ctx, call, step);
       default -> ToolResult.fail("第 " + step + " 步不能执行（" + use + "）").build();
     };
   }
@@ -902,6 +912,76 @@ public class DomainTools {
             ? "还没有设置过期日的物资。先给物资加上过期日期，再来订阅临期提醒。"
             : "临期提醒要你本人点开关授权。下面是已设过期日的物资，打开即可订阅：";
     return ToolResult.ok(summary).ui("subscribePanel").subscribeItems(items).build();
+  }
+
+  private ToolResult habitList(ToolContext ctx, int step) {
+    List<FamilyHabit> habits = familyHabitService.list(ctx.familyId);
+    List<Map<String, Object>> rows = new ArrayList<>();
+    StringBuilder fact = new StringBuilder("habit.list ").append(habits.size());
+    for (FamilyHabit h : habits) {
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("slot", h.slot());
+      row.put("label", HabitSlots.label(h.slot()));
+      row.put("text", h.text());
+      boolean defaultSpaceOk =
+          !HabitSlots.DEFAULT_SPACE.equals(h.slot())
+              || TreeMatch.exactSpaceName(ctx.tree, h.text()) != null;
+      if (!defaultSpaceOk) {
+        row.put("needsResplit", true);
+      }
+      rows.add(row);
+      fact.append('\n')
+          .append("- ")
+          .append(HabitSlots.label(h.slot()))
+          .append('(')
+          .append(h.slot())
+          .append(")：")
+          .append(h.text());
+      if (!defaultSpaceOk) {
+        fact.append("（非纯空间名，记一笔时勿直接当 spaceName；应拆成空间名 + 其它槽重记）");
+      }
+    }
+    // 机器向事实：喂重编排；对家人说话由模型 reply/present，勿在此写气泡文案
+    return ToolResult.ok(fact.toString()).habits(rows).build();
+  }
+
+  private ToolResult habitUpsert(ToolContext ctx, Map<String, Object> call, int step) {
+    try {
+      String slot = ToolHelpers.str(call.get("slot")).trim();
+      String text = ToolHelpers.str(call.get("text"));
+      if (text.isEmpty()) {
+        text = ToolHelpers.str(call.get("value"));
+      }
+      text = text.trim();
+      if (HabitSlots.DEFAULT_SPACE.equals(slot)) {
+        String spaceName = TreeMatch.exactSpaceName(ctx.tree, text);
+        if (spaceName == null) {
+          return ToolResult.fail(
+                  "「默认落点」只能写成家里已有的空间名（如客厅），不要写长句，也不要把多条规则拼进这一条。"
+                      + "按品类另放哪儿请用 focus 另记一条。")
+              .build();
+        }
+        text = spaceName;
+      }
+      familyHabitService.upsert(ctx.familyId, slot, text);
+      return ToolResult.ok("已记下 " + HabitSlots.label(slot) + "：" + text)
+          .wrote(true)
+          .build();
+    } catch (ApiException e) {
+      return ToolResult.fail(e.getMessage()).build();
+    }
+  }
+
+  private ToolResult habitRemove(ToolContext ctx, Map<String, Object> call, int step) {
+    try {
+      String slot = ToolHelpers.str(call.get("slot"));
+      familyHabitService.remove(ctx.familyId, slot);
+      return ToolResult.ok("已删掉 " + HabitSlots.label(slot.trim()) + "：习惯")
+          .wrote(true)
+          .build();
+    } catch (ApiException e) {
+      return ToolResult.fail(e.getMessage()).build();
+    }
   }
 
   private ToolResult knowledgeGet(ToolContext ctx, Map<String, Object> call, int step) {

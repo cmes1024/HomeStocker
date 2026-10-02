@@ -180,7 +180,8 @@ public class ActPrompt {
         .replace("{{HISTORY}}", vars.getOrDefault("history", "无"))
         .replace("{{EXEC}}", vars.getOrDefault("exec", "无"))
         .replace("{{KNOWLEDGE_INDEX}}", vars.getOrDefault("knowledgeIndex", "无"))
-        .replace("{{KNOWLEDGE}}", vars.getOrDefault("knowledge", "无"));
+        .replace("{{KNOWLEDGE}}", vars.getOrDefault("knowledge", "无"))
+        .replace("{{HABITS}}", vars.getOrDefault("habits", "无"));
   }
 
   public static String renderExecReceipt(Map<String, Object> report, String treeText) {

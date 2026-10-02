@@ -1,0 +1,31 @@
+{
+  "id": "user-day-home",
+  "perspective": "user",
+  "title": "一天·到家记东西又改位置",
+  "tags": [
+    "day"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "牛奶两盒冰箱，面包一袋"
+    },
+    {
+      "role": "assistant",
+      "text": "记上了：牛奶进冰箱两盒；面包一袋先挂厨房"
+    },
+    {
+      "role": "user",
+      "text": "面包放错了，在厨房橱柜"
+    }
+  ],
+  "expected": {
+    "outcome": "把面包改到厨房橱柜，别再多记一条面包",
+    "requiredTools": [
+      "item.update"
+    ]
+  }
+}

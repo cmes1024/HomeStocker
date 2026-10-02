@@ -11,3 +11,5 @@ node_modules/
 server/target/
 server/.idea/
 *.iml
+ai-eval/runs/*
+!ai-eval/runs/.gitkeep

@@ -1,0 +1,15 @@
+{
+  "id": "pitfalls",
+  "title": "我会踩的坑",
+  "description": "指代/单位/同名/一句多事/好/闲聊",
+  "cases": [
+    "product-pit-that-one",
+    "product-pit-fridge-one",
+    "product-pit-half-bag",
+    "product-pit-pack-unit",
+    "product-pit-same-milk",
+    "product-pit-many-things",
+    "product-pit-ok-confirm",
+    "product-pit-chat-mix"
+  ]
+}

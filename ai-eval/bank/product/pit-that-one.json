@@ -1,0 +1,33 @@
+{
+  "id": "product-pit-that-one",
+  "perspective": "product",
+  "title": "踩坑：刚才那个减一",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "厨房有啥"
+    },
+    {
+      "role": "assistant",
+      "text": "厨房大概有牛奶、鸡蛋、酱油、保鲜膜、酸奶、盐"
+    },
+    {
+      "role": "user",
+      "text": "刚才那个减一"
+    }
+  ],
+  "expected": {
+    "outcome": "「刚才那个」指不清就要问是哪样，不能猜一个就改",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

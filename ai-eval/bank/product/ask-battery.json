@@ -1,0 +1,19 @@
+{
+  "id": "product-ask-battery",
+  "perspective": "product",
+  "title": "查有没有：家里有电池吗",
+  "tags": [
+    "ask"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "家里有电池吗",
+  "expected": {
+    "outcome": "查过再说有没有；没有就说没有",
+    "mustProbe": true,
+    "forbiddenTools": [
+      "item.create"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "product-pit-ok-confirm",
+  "perspective": "product",
+  "title": "踩坑：确认时只说「好」",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "那瓶酱油没了，删掉"
+    },
+    {
+      "role": "assistant",
+      "text": "要删掉厨房橱柜那瓶酱油吗？"
+    },
+    {
+      "role": "user",
+      "text": "好"
+    }
+  ],
+  "expected": {
+    "outcome": "把「好」接成确认删酱油；别扯到别的东西",
+    "requiredTools": [
+      "item.remove"
+    ]
+  }
+}

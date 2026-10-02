@@ -30,6 +30,21 @@ public final class TreeMatch {
     return null;
   }
 
+  /** Exact space name only (habit default_space). No fuzzy contains — avoids swallowing compound prose. */
+  public static String exactSpaceName(Map<String, Object> tree, String name) {
+    String n = str(name).trim();
+    if (n.isEmpty()) {
+      return null;
+    }
+    for (Map<String, Object> s : spaces(tree)) {
+      String sn = str(s.get("name")).trim();
+      if (!sn.isEmpty() && sn.equals(n)) {
+        return sn;
+      }
+    }
+    return null;
+  }
+
   @SuppressWarnings("unchecked")
   public static Map<String, Object> matchLocation(Map<String, Object> space, String name) {
     String n = str(name).trim();

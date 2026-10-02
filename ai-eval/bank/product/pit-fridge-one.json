@@ -1,0 +1,16 @@
+{
+  "id": "product-pit-fridge-one",
+  "perspective": "product",
+  "title": "踩坑：冰箱里的减一",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "冰箱里的减一",
+  "expected": {
+    "outcome": "冰箱里不止一样：要问减的是啥",
+    "mustAsk": true
+  }
+}

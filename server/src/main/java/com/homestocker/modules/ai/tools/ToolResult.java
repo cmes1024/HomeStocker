@@ -23,6 +23,8 @@ public final class ToolResult {
   public final String inventoryPrefix;
   /** 只读聚合结构（如 item.stats）；给模型/present，不直接当用户卡片文案 */
   public final Map<String, Object> stats;
+  /** 本家习惯事实（habit.list）；给模型 reply/present，不直接当用户气泡 */
+  public final List<Map<String, Object>> habits;
 
   private ToolResult(Builder b) {
     this.ok = b.ok;
@@ -40,6 +42,7 @@ public final class ToolResult {
     this.navLinks = b.navLinks;
     this.inventoryPrefix = b.inventoryPrefix;
     this.stats = b.stats;
+    this.habits = b.habits;
   }
 
   public static Builder ok(String summary) {
@@ -66,6 +69,7 @@ public final class ToolResult {
     private List<Map<String, Object>> navLinks;
     private String inventoryPrefix;
     private Map<String, Object> stats;
+    private List<Map<String, Object>> habits;
 
     private Builder(boolean ok, String summary) {
       this.ok = ok;
@@ -134,6 +138,11 @@ public final class ToolResult {
 
     public Builder stats(Map<String, Object> v) {
       this.stats = v;
+      return this;
+    }
+
+    public Builder habits(List<Map<String, Object>> v) {
+      this.habits = v;
       return this;
     }
 

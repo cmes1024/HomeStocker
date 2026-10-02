@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homestocker.local/ai-eval/result.schema.json",
+  "title": "AiEvalResult",
+  "type": "object",
+  "required": ["id", "status", "judgedAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "status": { "type": "string", "enum": ["pass", "fail", "manual", "skipped", "error"] },
+    "judgedAt": { "type": "string" },
+    "mode": { "type": "string", "enum": ["mock", "live"] },
+    "actual": { "type": "object" },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "ok"],
+        "properties": {
+          "name": { "type": "string" },
+          "ok": { "type": "boolean" },
+          "detail": { "type": "string" }
+        }
+      }
+    },
+    "notes": { "type": "string" }
+  },
+  "additionalProperties": true
+}

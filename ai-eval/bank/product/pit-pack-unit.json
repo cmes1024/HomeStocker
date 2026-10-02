@@ -1,0 +1,16 @@
+{
+  "id": "product-pit-pack-unit",
+  "perspective": "product",
+  "title": "踩坑：纸巾一提",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "纸巾买了一提",
+  "expected": {
+    "outcome": "「一提」不是标准单位：问一提几包，或按家人说法记下并问放哪",
+    "mustAsk": true
+  }
+}

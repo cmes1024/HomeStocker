@@ -1,0 +1,16 @@
+{
+  "id": "product-pit-many-things",
+  "perspective": "product",
+  "title": "踩坑：一句里好几件事",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "牛奶两盒放冰箱，鸡蛋少了，顺便看看什么快过期",
+  "expected": {
+    "outcome": "三件事都要接住：牛奶能记就记；鸡蛋「少了」要问少到多少；临期要查。不能只办一件就当说完",
+    "mustAsk": true
+  }
+}

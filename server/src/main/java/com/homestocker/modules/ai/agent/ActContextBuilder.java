@@ -2,6 +2,7 @@ package com.homestocker.modules.ai.agent;
 
 import com.homestocker.modules.ai.app.AiSeedService;
 import com.homestocker.modules.ai.app.CapabilityCatalog;
+import com.homestocker.modules.ai.habits.FamilyHabitService;
 import com.homestocker.modules.ai.knowledge.KnowledgeService;
 import com.homestocker.modules.family.app.FamilyTreeService;
 import com.homestocker.common.ShanghaiDates;
@@ -21,18 +22,21 @@ public class ActContextBuilder {
   private final FamilyRepository familyRepository;
   private final ItemsProbe itemsProbe;
   private final KnowledgeService knowledgeService;
+  private final FamilyHabitService familyHabitService;
 
   public ActContextBuilder(
       AiSeedService aiSeedService,
       FamilyTreeService familyTreeService,
       FamilyRepository familyRepository,
       ItemsProbe itemsProbe,
-      KnowledgeService knowledgeService) {
+      KnowledgeService knowledgeService,
+      FamilyHabitService familyHabitService) {
     this.aiSeedService = aiSeedService;
     this.familyTreeService = familyTreeService;
     this.familyRepository = familyRepository;
     this.itemsProbe = itemsProbe;
     this.knowledgeService = knowledgeService;
+    this.familyHabitService = familyHabitService;
   }
 
   public record ActContext(
@@ -90,6 +94,7 @@ public class ActContextBuilder {
     vars.put("exec", "无");
     vars.put("knowledgeIndex", knowledgeService.renderIndex());
     vars.put("knowledge", "无");
+    vars.put("habits", familyHabitService.renderForPrompt(familyId, tree));
 
     String systemText =
         String.valueOf(

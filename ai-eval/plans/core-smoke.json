@@ -1,0 +1,16 @@
+{
+  "id": "core-smoke",
+  "title": "烟雾抽检",
+  "description": "每类抽一点",
+  "cases": [
+    "user-shop-milk",
+    "user-cook-eggs",
+    "user-expire-soon",
+    "user-use-eggs",
+    "user-list-kitchen",
+    "user-undo-revoke",
+    "product-pit-same-milk",
+    "product-pit-chat-mix",
+    "eng-vague-all-minus"
+  ]
+}

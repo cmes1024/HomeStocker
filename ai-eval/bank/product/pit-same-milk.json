@@ -1,0 +1,17 @@
+{
+  "id": "product-pit-same-milk",
+  "perspective": "product",
+  "title": "踩坑：牛奶减一（不止一处）",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "牛奶减一",
+  "expected": {
+    "outcome": "冰箱和常温都有牛奶时先问改哪边，不能默默改错",
+    "mustProbe": true,
+    "mustAsk": true
+  }
+}

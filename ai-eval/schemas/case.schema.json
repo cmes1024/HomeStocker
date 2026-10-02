@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://homestocker.local/ai-eval/case.schema.json",
+  "title": "AiEvalCase",
+  "type": "object",
+  "required": ["id", "perspective", "title", "prompt", "expected"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "perspective": { "type": "string", "enum": ["product", "eng", "user"] },
+    "title": { "type": "string" },
+    "prompt": {
+      "description": "家人原话；或多轮脚本（末条 user 交给 ai.act，前面进 history）",
+      "oneOf": [
+        { "type": "string" },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["role", "text"],
+            "properties": {
+              "role": { "type": "string", "enum": ["user", "assistant"] },
+              "text": { "type": "string" }
+            }
+          }
+        }
+      ]
+    },
+    "setup": {
+      "type": "object",
+      "properties": {
+        "fixture": { "type": "string" },
+        "notes": { "type": "string" }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "expected": {
+      "type": "object",
+      "required": ["outcome"],
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "description": "给人看的结果预期（必填）"
+        },
+        "requiredTools": { "type": "array", "items": { "type": "string" } },
+        "requiredToolsAny": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "至少命中其中一个 tool"
+        },
+        "forbiddenTools": { "type": "array", "items": { "type": "string" } },
+        "mustAsk": { "type": "boolean" },
+        "mustProbe": { "type": "boolean" },
+        "manual": { "type": "string" },
+        "mockPlan": {
+          "description": "可选：mock 模式下的确定性计划",
+          "type": "object"
+        }
+      }
+    }
+  },
+  "additionalProperties": true
+}

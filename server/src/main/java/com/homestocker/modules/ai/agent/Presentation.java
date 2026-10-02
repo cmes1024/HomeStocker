@@ -124,7 +124,7 @@ public final class Presentation {
             continue;
           }
         }
-        // 机器向只读回执（如 item.stats）只喂模型，不渲成用户卡片
+        // 机器向只读回执（如 item.stats / habit.list）只喂模型，不渲成用户卡片
         if (row != null && isModelOnlyReadRow(row)) {
           continue;
         }
@@ -330,14 +330,14 @@ public final class Presentation {
     return Map.of("title", text, "tone", tone != null ? tone : "ok");
   }
 
-  /** item.stats 等：summary 是模型注，不是家人可见回执 */
+  /** item.stats / habit.list 等：summary 是模型注，不是家人可见回执 */
   private static boolean isModelOnlyReadRow(Map<String, Object> row) {
     String use = str(row.get("use")).trim();
-    if ("item.stats".equals(use)) {
+    if ("item.stats".equals(use) || "habit.list".equals(use)) {
       return true;
     }
     String summary = str(row.get("summary")).trim();
-    return summary.startsWith("item.stats ");
+    return summary.startsWith("item.stats ") || summary.startsWith("habit.list ");
   }
 
   private static String duplicateLine(List<Map<String, Object>> dups) {

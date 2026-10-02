@@ -1,0 +1,13 @@
+{
+  "id": "ask-gaps",
+  "title": "口语问法补缺",
+  "description": "钥匙/电池/猫粮/含糊批量等",
+  "cases": [
+    "product-ask-keys",
+    "product-ask-battery",
+    "product-ask-catfood",
+    "product-ask-bought-those",
+    "product-ask-snacks-minus",
+    "product-ask-paper-left"
+  ]
+}

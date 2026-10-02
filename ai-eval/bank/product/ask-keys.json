@@ -1,0 +1,16 @@
+{
+  "id": "product-ask-keys",
+  "perspective": "product",
+  "title": "查在哪：钥匙放哪了",
+  "tags": [
+    "ask"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "钥匙放哪了",
+  "expected": {
+    "outcome": "说出钥匙大概在哪",
+    "mustProbe": true
+  }
+}

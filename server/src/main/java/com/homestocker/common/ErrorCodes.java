@@ -53,6 +53,8 @@ public final class ErrorCodes {
   public static final String ACT_FAILED = "ACT_FAILED";
   public static final String AI_QUOTA = "AI_QUOTA";
   public static final String RATE_LIMITED = "RATE_LIMITED";
+  public static final String HABIT_LIMIT_REACHED = "HABIT_LIMIT_REACHED";
+  public static final String INVALID_HABIT = "INVALID_HABIT";
 
   private ErrorCodes() {}
 }

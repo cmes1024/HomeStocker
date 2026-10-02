@@ -1,0 +1,10 @@
+{
+  "id": "day-flow",
+  "title": "更贴近一天",
+  "description": "",
+  "cases": [
+    "user-day-morning",
+    "user-day-noon",
+    "user-day-home"
+  ]
+}

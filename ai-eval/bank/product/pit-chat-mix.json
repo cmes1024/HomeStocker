@@ -1,0 +1,19 @@
+{
+  "id": "product-pit-chat-mix",
+  "perspective": "product",
+  "title": "踩坑：聊着天突然问库存",
+  "tags": [
+    "pitfall"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "今天好累啊，对了纸巾还有吗",
+  "expected": {
+    "outcome": "可以接一句累，但纸巾要查过再答",
+    "mustProbe": true,
+    "forbiddenTools": [
+      "item.remove"
+    ]
+  }
+}
