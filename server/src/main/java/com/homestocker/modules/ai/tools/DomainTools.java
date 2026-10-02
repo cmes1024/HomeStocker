@@ -11,6 +11,7 @@ import com.homestocker.modules.ai.agent.Presentation;
 import com.homestocker.modules.ai.agent.TreeMatch;
 import com.homestocker.modules.ai.habits.FamilyHabit;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
+import com.homestocker.modules.ai.habits.HabitObserveService;
 import com.homestocker.modules.ai.habits.HabitSlots;
 import com.homestocker.modules.ai.knowledge.KnowledgePacks;
 import com.homestocker.modules.ai.knowledge.KnowledgeService;
@@ -35,18 +36,21 @@ public class DomainTools {
   private final ItemRepository itemRepository;
   private final ActivityRepository activityRepository;
   private final FamilyHabitService familyHabitService;
+  private final HabitObserveService habitObserveService;
 
   public DomainTools(
       ItemsProbe itemsProbe,
       KnowledgeService knowledgeService,
       ItemRepository itemRepository,
       ActivityRepository activityRepository,
-      FamilyHabitService familyHabitService) {
+      FamilyHabitService familyHabitService,
+      HabitObserveService habitObserveService) {
     this.itemsProbe = itemsProbe;
     this.knowledgeService = knowledgeService;
     this.itemRepository = itemRepository;
     this.activityRepository = activityRepository;
     this.familyHabitService = familyHabitService;
+    this.habitObserveService = habitObserveService;
   }
 
   public ToolResult run(String use, ToolContext ctx, Map<String, Object> call, int step) {
@@ -77,6 +81,7 @@ public class DomainTools {
       case "knowledge.get" -> knowledgeGet(ctx, call, step);
       case "page.get" -> pageGet(ctx, call, step);
       case "habit.list" -> habitList(ctx, step);
+      case "habit.observe" -> habitObserve(ctx, step);
       case "habit.upsert" -> habitUpsert(ctx, call, step);
       case "habit.remove" -> habitRemove(ctx, call, step);
       default -> ToolResult.fail("第 " + step + " 步不能执行（" + use + "）").build();
@@ -943,6 +948,14 @@ public class DomainTools {
     }
     // 机器向事实：喂重编排；对家人说话由模型 reply/present，勿在此写气泡文案
     return ToolResult.ok(fact.toString()).habits(rows).build();
+  }
+
+  private ToolResult habitObserve(ToolContext ctx, int step) {
+    Map<String, Object> observe = habitObserveService.observe(ctx.familyId, List.of());
+    String summary = HabitObserveService.renderForModel(observe);
+    return ToolResult.ok(summary.startsWith("habit.observe") ? summary : "habit.observe\n" + summary)
+        .observe(observe)
+        .build();
   }
 
   private ToolResult habitUpsert(ToolContext ctx, Map<String, Object> call, int step) {

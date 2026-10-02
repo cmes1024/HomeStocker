@@ -22,13 +22,23 @@ public final class PlanParser {
       Map<String, Object> probe,
       List<Map<String, Object>> calls,
       String reply,
-      Map<String, Object> present) {
+      Map<String, Object> present,
+      List<String> appliedHabits) {
+    public ActPlan(
+        List<Map<String, Object>> ask,
+        Map<String, Object> probe,
+        List<Map<String, Object>> calls,
+        String reply,
+        Map<String, Object> present) {
+      this(ask, probe, calls, reply, present, List.of());
+    }
+
     public ActPlan(
         List<Map<String, Object>> ask,
         Map<String, Object> probe,
         List<Map<String, Object>> calls,
         String reply) {
-      this(ask, probe, calls, reply, null);
+      this(ask, probe, calls, reply, null, List.of());
     }
   }
 
@@ -67,7 +77,8 @@ public final class PlanParser {
         reply = "";
       }
       Map<String, Object> present = normalizePresent(parsed.get("present"), objectMapper);
-      ActPlan plan = new ActPlan(ask, probe, calls, reply, present);
+      List<String> appliedHabits = normalizeAppliedHabits(parsed.get("appliedHabits"));
+      ActPlan plan = new ActPlan(ask, probe, calls, reply, present, appliedHabits);
       return coerceBoundaryReplyToAsk(plan);
     } catch (Exception e) {
       throw new IllegalArgumentException("invalid plan json", e);
@@ -126,7 +137,25 @@ public final class PlanParser {
     one.put("question", reply);
     one.put("options", List.of());
     ask.add(one);
-    return new ActPlan(ask, null, List.of(), "", null);
+    return new ActPlan(ask, null, List.of(), "", null, List.of());
+  }
+
+  private static List<String> normalizeAppliedHabits(JsonNode raw) {
+    if (raw == null || raw.isNull() || !raw.isArray()) {
+      return List.of();
+    }
+    List<String> out = new ArrayList<>();
+    for (JsonNode n : raw) {
+      String id = n == null || n.isNull() ? "" : n.asText("").trim();
+      if (id.isEmpty() || out.contains(id)) {
+        continue;
+      }
+      out.add(id);
+      if (out.size() >= 7) {
+        break;
+      }
+    }
+    return List.copyOf(out);
   }
 
   @SuppressWarnings("unchecked")

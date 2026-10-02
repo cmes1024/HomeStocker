@@ -20,7 +20,10 @@ import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
-import com.homestocker.modules.ai.agent.Receipts;
+import com.homestocker.modules.ai.habits.FamilyHabit;
+import com.homestocker.modules.ai.habits.FamilyHabitService;
+import com.homestocker.modules.ai.habits.HabitApplied;
+import com.homestocker.modules.ai.habits.HabitObserveService;
 import com.homestocker.modules.ai.app.AiKeyService.KeyRow;
 import com.homestocker.modules.ai.tools.ToolContext;
 import com.homestocker.modules.ai.tools.ToolRegistry;
@@ -57,6 +60,8 @@ public class AiActService {
   private final SpaceService spaceService;
   private final TagService tagService;
   private final FamilyTreeService familyTreeService;
+  private final FamilyHabitService familyHabitService;
+  private final HabitObserveService habitObserveService;
 
   public AiActService(
       UserRepository userRepository,
@@ -71,7 +76,9 @@ public class AiActService {
       ItemService itemService,
       SpaceService spaceService,
       TagService tagService,
-      FamilyTreeService familyTreeService) {
+      FamilyTreeService familyTreeService,
+      FamilyHabitService familyHabitService,
+      HabitObserveService habitObserveService) {
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
     this.aiKeyService = aiKeyService;
@@ -85,6 +92,8 @@ public class AiActService {
     this.spaceService = spaceService;
     this.tagService = tagService;
     this.familyTreeService = familyTreeService;
+    this.familyHabitService = familyHabitService;
+    this.habitObserveService = habitObserveService;
   }
 
   public Map<String, Object> act(Map<String, Object> event) {
@@ -182,7 +191,7 @@ public class AiActService {
               + "\n（系统：item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
       bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
       if (!plan.ask().isEmpty()) {
         return buildAskResponse(plan.ask(), actCtx.focus(), probedRows);
@@ -254,10 +263,10 @@ public class AiActService {
               actCtx.userText()
                   + "\n"
                   + invNote
-                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list。）");
+                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list / habit.observe。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
+      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
       if (!plan.ask().isEmpty()) {
         return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
       }
@@ -267,6 +276,7 @@ public class AiActService {
             attachDoneReply(
                 plan.reply(), actCtx.focus(), plan.present(), invRows, inventoryReadReport);
         payload.put("calls", readCalls);
+        attachHabitApplied(payload, plan.appliedHabits(), familyId, List.of());
         return sanitizeUserPayload(payload, actCtx.focus(), invRows);
       }
       // 模型又甩只读或交空：再催一轮；仍空则用结构化 stats present，再不编散文、不泄机器 summary
@@ -279,10 +289,10 @@ public class AiActService {
                 actCtx.userText()
                     + "\n"
                     + invNote
-                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list。）");
+                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list / habit.observe。）");
         presentAfter =
             plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-        plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
+        plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
         if (!plan.ask().isEmpty()) {
           return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
         }
@@ -428,8 +438,18 @@ public class AiActService {
       return buildSubscribePayload(finalCalls, finalReport, actCtx.focus());
     }
 
-    return sanitizeUserPayload(
-        buildDonePayload(finalCalls, finalReport, actCtx.focus()), actCtx.focus(), turnRows);
+    Map<String, Object> habitFollow =
+        tryHabitObserveFollowUp(
+            modelOpts, actCtx, finalCalls, finalReport, familyId, openid, plan, turnRows);
+    if (habitFollow != null) {
+      return habitFollow;
+    }
+
+    Map<String, Object> done =
+        buildDonePayload(finalCalls, finalReport, actCtx.focus());
+    attachHabitApplied(
+        done, plan.appliedHabits(), familyId, itemWriteFactsFromCalls(finalCalls));
+    return sanitizeUserPayload(done, actCtx.focus(), turnRows);
   }
 
   private ActPlan askPlan(ModelOpts opts, String system, String user) {
@@ -612,7 +632,8 @@ public class AiActService {
                   || "item.listExpiring".equals(use)
                   || "activity.list".equals(use)
                   || "item.stats".equals(use)
-                  || "habit.list".equals(use);
+                  || "habit.list".equals(use)
+                  || "habit.observe".equals(use);
             });
   }
 
@@ -1260,6 +1281,191 @@ public class AiActService {
       payload.put("navLinks", navLinks);
     }
     return payload;
+  }
+
+  /** Soft fact inject after item writes: observe candidates; model may upsert habits. */
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> tryHabitObserveFollowUp(
+      ModelOpts modelOpts,
+      ActContext actCtx,
+      List<Map<String, Object>> finalCalls,
+      Map<String, Object> finalReport,
+      String familyId,
+      String openid,
+      ActPlan writePlan,
+      List<Map<String, Object>> turnRows) {
+    if (!Boolean.TRUE.equals(finalReport.get("wrote"))) {
+      return null;
+    }
+    if (!hasItemWriteCalls(finalCalls)) {
+      return null;
+    }
+    List<Map<String, Object>> writeFacts = itemWriteFactsFromCalls(finalCalls);
+    Map<String, Object> observe = habitObserveService.observe(familyId, writeFacts);
+    Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
+    vars.put("probe", vars.getOrDefault("probe", "无"));
+    vars.put("exec", str(finalReport.get("lead")));
+    vars.put("habits", familyHabitService.renderForPrompt(familyId, actCtx.tree()));
+    String note = HabitObserveService.renderForModel(observe);
+    ActPlan next;
+    try {
+      next =
+          askPlan(
+              modelOpts,
+              replanSystem(actCtx, vars),
+              actCtx.userText()
+                  + "\n（系统：物资写已完成。以下为本家办事统计候选，供参考。）\n"
+                  + note);
+    } catch (Exception e) {
+      log.warn("act habit observe follow-up failed {}", e.getMessage());
+      return null;
+    }
+    List<String> applied =
+        !next.appliedHabits().isEmpty() ? next.appliedHabits() : writePlan.appliedHabits();
+    List<Map<String, Object>> habitCalls =
+        next.calls().stream()
+            .filter(
+                c -> {
+                  String use = c == null ? "" : String.valueOf(c.get("use")).trim();
+                  return use.startsWith("habit.");
+                })
+            .toList();
+    Map<String, Object> mergedReport = finalReport;
+    List<Map<String, Object>> mergedCalls = new ArrayList<>(finalCalls);
+    if (!habitCalls.isEmpty()) {
+      Map<String, Object> habitReport =
+          execute(
+              familyId,
+              openid,
+              actCtx.tree(),
+              habitCalls,
+              actCtx.refs(),
+              actCtx.catalogMap(),
+              actCtx.today().get("ymd"));
+      mergedReport = mergeCreateReports(finalReport, habitReport);
+      mergedCalls = concatCalls(finalCalls, habitCalls);
+    }
+    if (!next.ask().isEmpty() && habitCalls.isEmpty()) {
+      // Soft path: do not force ask about habits; fall through to normal done
+      Map<String, Object> done = buildDonePayload(mergedCalls, mergedReport, actCtx.focus());
+      attachHabitApplied(done, applied, familyId, writeFacts);
+      return sanitizeUserPayload(done, actCtx.focus(), turnRows);
+    }
+    if ((!next.reply().isEmpty() || (next.present() != null && !next.present().isEmpty()))
+        && habitCalls.isEmpty()
+        && next.calls().isEmpty()) {
+      Map<String, Object> payload =
+          attachDoneReply(next.reply(), actCtx.focus(), next.present(), turnRows, null);
+      payload.put("calls", mergedCalls);
+      payload.put("wrote", Boolean.TRUE.equals(mergedReport.get("wrote")));
+      if (mergedReport.get("blocks") instanceof List<?> blocks && !blocks.isEmpty()) {
+        payload.put("blocks", blocks);
+        payload.put("lead", mergedReport.get("lead"));
+        payload.put("report", slimReport(mergedReport));
+      }
+      attachHabitApplied(payload, applied, familyId, writeFacts);
+      return sanitizeUserPayload(payload, actCtx.focus(), turnRows);
+    }
+    Map<String, Object> done = buildDonePayload(mergedCalls, mergedReport, actCtx.focus());
+    attachHabitApplied(done, applied, familyId, writeFacts);
+    return sanitizeUserPayload(done, actCtx.focus(), turnRows);
+  }
+
+  private void attachHabitApplied(
+      Map<String, Object> payload,
+      List<String> declared,
+      String familyId,
+      List<Map<String, Object>> writeFacts) {
+    if (payload == null) {
+      return;
+    }
+    List<FamilyHabit> stored = familyHabitService.list(familyId);
+    List<Map<String, Object>> applied = HabitApplied.resolve(declared, stored, writeFacts);
+    if (applied.isEmpty()) {
+      return;
+    }
+    payload.put("habitApplied", applied);
+    String line = HabitApplied.labelLine(applied);
+    if (!line.isEmpty()) {
+      String lead = str(payload.get("lead"));
+      if (lead.isEmpty()) {
+        payload.put("lead", line);
+      } else if (!lead.contains("根据习惯")) {
+        payload.put("lead", lead + "\n" + line);
+      }
+      Object reportObj = payload.get("report");
+      if (reportObj instanceof Map<?, ?> raw) {
+        Map<String, Object> report = new LinkedHashMap<>((Map<String, Object>) raw);
+        List<String> lines = new ArrayList<>();
+        if (report.get("lines") instanceof List<?> existing) {
+          for (Object o : existing) {
+            if (o != null && !String.valueOf(o).isBlank()) {
+              lines.add(String.valueOf(o).trim());
+            }
+          }
+        }
+        if (!lines.contains(line)) {
+          lines.add(line);
+        }
+        report.put("lines", lines);
+        report.put("habitApplied", applied);
+        payload.put("report", report);
+      }
+    }
+  }
+
+  private static boolean hasItemWriteCalls(List<Map<String, Object>> calls) {
+    if (calls == null) {
+      return false;
+    }
+    for (Map<String, Object> c : calls) {
+      String use = c == null ? "" : String.valueOf(c.get("use")).trim();
+      if ("item.create".equals(use)
+          || "item.createMany".equals(use)
+          || "item.update".equals(use)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> itemWriteFactsFromCalls(List<Map<String, Object>> calls) {
+    List<Map<String, Object>> out = new ArrayList<>();
+    if (calls == null) {
+      return out;
+    }
+    for (Map<String, Object> c : calls) {
+      if (c == null) {
+        continue;
+      }
+      String use = String.valueOf(c.get("use")).trim();
+      if ("item.create".equals(use) || "item.update".equals(use)) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("kind", "item.create".equals(use) ? "create" : "update");
+        row.put("name", str(c.get("name")));
+        row.put("itemName", str(c.get("name")));
+        row.put("spaceName", str(c.get("spaceName")));
+        row.put("locationName", str(c.get("locationName")));
+        row.put("unit", str(c.get("unit")));
+        out.add(row);
+      } else if ("item.createMany".equals(use) && c.get("items") instanceof List<?> items) {
+        for (Object o : items) {
+          if (!(o instanceof Map<?, ?> m)) {
+            continue;
+          }
+          Map<String, Object> row = new LinkedHashMap<>();
+          row.put("kind", "create");
+          row.put("name", str(m.get("name")));
+          row.put("itemName", str(m.get("name")));
+          row.put("spaceName", str(m.get("spaceName")));
+          row.put("locationName", str(m.get("locationName")));
+          row.put("unit", str(m.get("unit")));
+          out.add(row);
+        }
+      }
+    }
+    return out;
   }
 
   @SuppressWarnings("unchecked")

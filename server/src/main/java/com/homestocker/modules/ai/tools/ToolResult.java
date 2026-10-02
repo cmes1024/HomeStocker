@@ -25,6 +25,8 @@ public final class ToolResult {
   public final Map<String, Object> stats;
   /** 本家习惯事实（habit.list）；给模型 reply/present，不直接当用户气泡 */
   public final List<Map<String, Object>> habits;
+  /** 习惯统计候选（habit.observe）；机器向，不进气泡 */
+  public final Map<String, Object> observe;
 
   private ToolResult(Builder b) {
     this.ok = b.ok;
@@ -43,6 +45,7 @@ public final class ToolResult {
     this.inventoryPrefix = b.inventoryPrefix;
     this.stats = b.stats;
     this.habits = b.habits;
+    this.observe = b.observe;
   }
 
   public static Builder ok(String summary) {
@@ -70,6 +73,7 @@ public final class ToolResult {
     private String inventoryPrefix;
     private Map<String, Object> stats;
     private List<Map<String, Object>> habits;
+    private Map<String, Object> observe;
 
     private Builder(boolean ok, String summary) {
       this.ok = ok;
@@ -143,6 +147,11 @@ public final class ToolResult {
 
     public Builder habits(List<Map<String, Object>> v) {
       this.habits = v;
+      return this;
+    }
+
+    public Builder observe(Map<String, Object> v) {
+      this.observe = v;
       return this;
     }
 

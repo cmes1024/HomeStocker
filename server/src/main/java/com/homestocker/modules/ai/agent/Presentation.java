@@ -330,14 +330,16 @@ public final class Presentation {
     return Map.of("title", text, "tone", tone != null ? tone : "ok");
   }
 
-  /** item.stats / habit.list 等：summary 是模型注，不是家人可见回执 */
+  /** item.stats / habit.list / habit.observe 等：summary 是模型注，不是家人可见回执 */
   private static boolean isModelOnlyReadRow(Map<String, Object> row) {
     String use = str(row.get("use")).trim();
-    if ("item.stats".equals(use) || "habit.list".equals(use)) {
+    if ("item.stats".equals(use) || "habit.list".equals(use) || "habit.observe".equals(use)) {
       return true;
     }
     String summary = str(row.get("summary")).trim();
-    return summary.startsWith("item.stats ") || summary.startsWith("habit.list ");
+    return summary.startsWith("item.stats ")
+        || summary.startsWith("habit.list ")
+        || summary.startsWith("habit.observe");
   }
 
   private static String duplicateLine(List<Map<String, Object>> dups) {

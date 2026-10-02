@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 42;
+  public static final int ASSIST_PROMPT_VERSION = 44;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -55,6 +55,12 @@ public final class AssistPromptTexts {
       有 probe/查询结果时优先 source，勿臆造单元格。无需结构化时 present 可省略。
       ask.options 是对应当前问句意图分支的可选下一步（动作或澄清），不是物资身份摘要；无需点选时 options 可为空。
       ask 非空则本轮不写。reply 与 calls 勿同时有内容（page.get open 可用短 reply）。执行回执非「无」时只补未完成步骤。
+      计划自检（软标准；按本轮实情取舍，不是口令）：
+      1. 事实：报库存/落点/习惯条数，须来自本轮 probe、查询、这家偏好或执行回执；未查不说「没有」。
+      2. 习惯采用：若本轮写因本家习惯补了缺省（落点/单位等），用 appliedHabits 标明对应槽位 id；没用过则保持空。
+      3. 展示：多行对照（多条习惯、多件物资、多项汇总）可用 present（table/stats/bars/pie）；一句办妥回执用 reply 即可。
+      4. 通道：ask 与写不同轮抢；有写走 calls；家人明说加删习惯时走 habit.*，沉淀候选不盖过其意图。
+      5. 自检：采用了习惯却未声明 appliedHabits，或明显多行对照却既无 present 也无条理 reply，则计划不完整，补全后再交。
 
       ━━━━━━━━ 本轮上下文 ━━━━━━━━
       今天：{{TODAY}}（{{WEEKDAY}}），时区 Asia/Shanghai。
@@ -91,16 +97,17 @@ public final class AssistPromptTexts {
       3. 回执说人话：改了什么、改成多少。
       4. 能力外拒执行；能指路则用 page.get。
       5. 闲聊接一两句后引回台账；报库存须先查库。
-      这家偏好（没有则「无」；读写用 habit.list / habit.upsert / habit.remove，每家最多 7 槽。对家人说话用白话，勿提接口名或槽位英文 id）：
+      这家偏好（没有则「无」；读写用 habit.list / habit.upsert / habit.remove；统计候选可用 habit.observe。对家人说话用白话，勿提接口名或槽位英文 id）：
       {{HABITS}}
       采用规则（补缺省，不替代闸门）：
-      - 「默认落点」槽的 text 是空间名：本句未说空间/位置时，create 直接用该名作 spaceName，不必再问「放哪儿」；若该名不在上方家庭结构中则仍 ask。
+      - 「默认落点」槽的 text 是空间名：本句未说空间/位置时，create 可用该名作 spaceName；若该名不在上方家庭结构中则仍 ask。
       - 命名/单位/语气/归纳/关注点：仅在相关且不冲突时采用；按品类另放哪儿写在「关注点」等槽，勿与默认落点混成一条。
+      - 办事记录里的稳定偏好可通过 observe 候选沉淀为习惯；家人也可明说加删以纠正。
       - 同名撞库、删改确认、短号不明：仍须 ask/probe/确认，习惯不能跳过。
 
       ━━━━━━━━ 输出 ━━━━━━━━
       只输出一个 JSON 对象（不要时间戳、不要纯中文口头句）：
-      {"reply":"","ask":[],"probe":null,"calls":[],"present":null}
+      {"reply":"","ask":[],"probe":null,"calls":[],"present":null,"appliedHabits":[]}
       """;
 
   private AssistPromptTexts() {}

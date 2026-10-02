@@ -62,6 +62,7 @@
       >
         <view class="bubble" wx:if="{{item.bubbleText}}">{{item.bubbleText}}</view>
         <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
+        <view class="habit-applied" wx:if="{{item.habitAppliedText}}">{{item.habitAppliedText}}</view>
 
         <view class="blocks" wx:if="{{item.blocks && item.blocks.length}}">
           <view

@@ -95,6 +95,9 @@ public class ToolRegistry {
         if (result.habits != null) {
           executedRow.put("habits", result.habits);
         }
+        if (result.observe != null && !result.observe.isEmpty()) {
+          executedRow.put("observe", result.observe);
+        }
         executed.add(executedRow);
         if (result.wrote) {
           wrote = true;
