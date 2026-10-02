@@ -102,7 +102,7 @@ public class ActPrompt {
     }
   }
 
-  /** 送模型时的正文：可选 [yyyy-MM-dd HH:mm] 前缀；落盘 text 保持干净 */
+  /** 送模型时的正文：可选句末（消息时间 …）；落盘 text 保持干净 */
   public static String historyContentForModel(Map<String, String> row) {
     if (row == null) {
       return "";
@@ -238,6 +238,11 @@ public class ActPrompt {
     return String.join("\n", lines);
   }
 
+  private static final String JSON_REPAIR_NOTE =
+      "（系统：上轮输出不是合法 JSON 计划，已丢弃。请只输出一个 JSON 对象；禁止口头句与时间戳标记。）";
+  private static final String JSON_EMPTY_NOTE =
+      "（系统：上轮输出为空。请只输出一个 JSON 对象计划。）";
+
   public AskResult askModel(ModelOpts opts, String system, String userText) throws ActModelException {
     List<AiKeyService.KeyRow> tryKeys =
         opts.keys().size() > 2 ? opts.keys().subList(0, 2) : opts.keys();
@@ -261,19 +266,7 @@ public class ActPrompt {
                 opts.maxTokens());
         lastContent = result.content();
         log.info("[ai.act] <<< model\n{}", lastContent);
-        try {
-          PlanParser.ActPlan plan = PlanParser.parsePlan(lastContent, objectMapper);
-          Map<String, String> turn = new LinkedHashMap<>();
-          turn.put("system", system);
-          turn.put("user", userText);
-          turn.put("model", lastContent);
-          return new AskResult(plan, turn);
-        } catch (IllegalArgumentException badPlan) {
-          log.warn(
-              "[ai.act] invalid plan json, degrade ask. content={}",
-              lastContent == null ? "" : lastContent.trim());
-          return degradeAskResult(system, userText, lastContent);
-        }
+        return acceptOrRepairPlan(opts, key, system, userText, lastContent);
       } catch (DeepSeekException e) {
         lastCode = e.code();
         lastMessage = e.getMessage();
@@ -286,18 +279,91 @@ public class ActPrompt {
       }
     }
     if (!lastContent.isEmpty()) {
-      try {
-        PlanParser.ActPlan plan = PlanParser.parsePlan(lastContent, objectMapper);
-        return new AskResult(plan, Map.of("model", lastContent));
-      } catch (Exception ignored) {
-        return degradeAskResult(system, userText, lastContent);
+      AskResult recovered = recoverFromBadPlan(system, userText, lastContent);
+      if (recovered != null) {
+        return recovered;
       }
+      return degradeAskResult(system, userText, lastContent);
     }
     if (sawQuota) {
       throw new ActModelException(
           ErrorCodes.AI_QUOTA, "家庭 AI 额度可能已用完，请检查密钥余额或更换密钥");
     }
     throw new ActModelException(lastCode, lastMessage);
+  }
+
+  private AskResult acceptOrRepairPlan(
+      ModelOpts opts,
+      AiKeyService.KeyRow key,
+      String system,
+      String userText,
+      String content)
+      throws DeepSeekException {
+    try {
+      return okPlan(system, userText, content);
+    } catch (IllegalArgumentException badPlan) {
+      String trimmed = content == null ? "" : content.trim();
+      log.warn(
+          "[ai.act] invalid plan json, retry once. content={}",
+          trimmed.length() > 200 ? trimmed.substring(0, 200) : trimmed);
+      String repairUser =
+          userText
+              + "\n"
+              + (trimmed.isEmpty() ? JSON_EMPTY_NOTE : JSON_REPAIR_NOTE);
+      DeepSeekClient.ChatResult retry =
+          deepSeekClient.chatCompletions(
+              key.apiKey(),
+              key.baseUrl(),
+              key.model(),
+              system,
+              repairUser,
+              opts.history(),
+              opts.timeoutMs(),
+              opts.maxTokens());
+      String retryContent = retry.content();
+      log.info("[ai.act] <<< model (json repair)\n{}", retryContent);
+      try {
+        return okPlan(system, repairUser, retryContent);
+      } catch (IllegalArgumentException stillBad) {
+        AskResult recovered = recoverFromBadPlan(system, userText, retryContent);
+        if (recovered != null) {
+          return recovered;
+        }
+        recovered = recoverFromBadPlan(system, userText, content);
+        if (recovered != null) {
+          return recovered;
+        }
+        log.warn(
+            "[ai.act] invalid plan json after repair, degrade ask. content={}",
+            retryContent == null ? "" : retryContent.trim());
+        return degradeAskResult(system, userText, retryContent);
+      }
+    }
+  }
+
+  private AskResult okPlan(String system, String userText, String content) {
+    PlanParser.ActPlan plan = PlanParser.parsePlan(content, objectMapper);
+    Map<String, String> turn = new LinkedHashMap<>();
+    turn.put("system", system != null ? system : "");
+    turn.put("user", userText != null ? userText : "");
+    turn.put("model", content != null ? content : "");
+    return new AskResult(plan, turn);
+  }
+
+  /** 把非 JSON 口头句收成 reply；疑似伪写回执则放弃。 */
+  private AskResult recoverFromBadPlan(String system, String userText, String content) {
+    PlanParser.ActPlan loose = PlanParser.coercePlainTextPlan(content);
+    if (loose == null) {
+      return null;
+    }
+    log.warn(
+        "[ai.act] coerced plain text to reply. content={}",
+        content == null ? "" : content.trim());
+    Map<String, String> turn = new LinkedHashMap<>();
+    turn.put("system", system != null ? system : "");
+    turn.put("user", userText != null ? userText : "");
+    turn.put("model", content != null ? content : "");
+    return new AskResult(loose, turn);
   }
 
   private static AskResult degradeAskResult(String system, String userText, String modelRaw) {

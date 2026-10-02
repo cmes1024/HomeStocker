@@ -89,6 +89,9 @@ public class ToolRegistry {
           executedRow.put("navLinks", result.navLinks);
           navLinks.addAll(result.navLinks);
         }
+        if (result.stats != null && !result.stats.isEmpty()) {
+          executedRow.put("stats", result.stats);
+        }
         executed.add(executedRow);
         if (result.wrote) {
           wrote = true;

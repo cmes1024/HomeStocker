@@ -143,11 +143,23 @@ public class AiActService {
     List<Map<String, Object>> probedRows = new ArrayList<>();
     List<Map<String, Object>> turnRows = new ArrayList<>(actCtx.turnRows());
 
-    if (!plan.ask().isEmpty()) {
+    // 未查库就声称「没找到」：丢掉这手，逼模型先 probe / item.search（类型 1：事实未到）
+    if (claimsInventoryAbsenceWithoutFacts(plan, turnRows)) {
+      log.warn("act: premature inventory-absence claim; replan to probe/search first");
+      plan =
+          askPlan(
+              modelOpts,
+              actCtx.system(),
+              actCtx.userText()
+                  + "\n（系统：本轮尚无探查/查询结果。禁止声称台账没有某物；请先 probe 或 item.search，再依据本轮结果 ask / reply / calls。）");
+    }
+
+    if (!plan.ask().isEmpty() && plan.probe() == null && plan.calls().isEmpty()) {
       return buildAskResponse(plan.ask(), actCtx.focus(), List.of());
     }
 
     plan = ensureProbeForUnresolvedWrites(plan, actCtx.refs());
+    plan = ensureProbeForNamedCreates(plan);
     plan = ensurePresentHasFacts(plan, turnRows);
 
     if (plan.probe() != null) {
@@ -161,7 +173,13 @@ public class AiActService {
               ? "探查结果：无匹配物资"
               : "探查结果：\n" + ActPrompt.renderProbeRows(probedRows);
       Map<String, Object> presentBefore = plan.present();
-      plan = askPlan(modelOpts, system, actCtx.userText() + "\n" + probeNote);
+      plan = askPlan(
+          modelOpts,
+          system,
+          actCtx.userText()
+              + "\n"
+              + probeNote
+              + "\n（系统：item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
@@ -229,7 +247,14 @@ public class AiActService {
       String system = replanSystem(actCtx, vars);
       String invNote = buildReadOnlyResultNote(inventoryReadReport, invRows);
       Map<String, Object> presentBefore = plan.present();
-      plan = askPlan(modelOpts, system, actCtx.userText() + "\n" + invNote);
+      plan =
+          askPlan(
+              modelOpts,
+              system,
+              actCtx.userText()
+                  + "\n"
+                  + invNote
+                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
@@ -244,11 +269,47 @@ public class AiActService {
         payload.put("calls", readCalls);
         return sanitizeUserPayload(payload, actCtx.focus(), invRows);
       }
+      // 模型又甩只读或交空：再催一轮；仍空则用结构化 stats present，再不编散文、不泄机器 summary
       if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
-        return sanitizeUserPayload(
-            buildDonePayload(readCalls, inventoryReadReport, actCtx.focus()),
-            actCtx.focus(),
-            invRows);
+        presentBefore = plan.present();
+        plan =
+            askPlan(
+                modelOpts,
+                system,
+                actCtx.userText()
+                    + "\n"
+                    + invNote
+                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats。）");
+        presentAfter =
+            plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
+        plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter);
+        if (!plan.ask().isEmpty()) {
+          return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
+        }
+        if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
+            && plan.calls().isEmpty()) {
+          Map<String, Object> payload =
+              attachDoneReply(
+                  plan.reply(), actCtx.focus(), plan.present(), invRows, inventoryReadReport);
+          payload.put("calls", readCalls);
+          return sanitizeUserPayload(payload, actCtx.focus(), invRows);
+        }
+        if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
+          Map<String, Object> autoPresent = presentFromStatsReport(inventoryReadReport);
+          if (autoPresent != null) {
+            Map<String, Object> payload =
+                attachDoneReply("", actCtx.focus(), autoPresent, invRows, inventoryReadReport);
+            payload.put("calls", readCalls);
+            return sanitizeUserPayload(payload, actCtx.focus(), invRows);
+          }
+          if (hasUserFacingInventory(inventoryReadReport)) {
+            return sanitizeUserPayload(
+                buildDonePayload(readCalls, inventoryReadReport, actCtx.focus()),
+                actCtx.focus(),
+                invRows);
+          }
+          return buildDegradeAsk(actCtx.focus(), invRows);
+        }
       }
       if (Guardrails.planNeedsUnavailableCapability(plan.calls(), actCtx.catalogMap())) {
         return buildAskResponse(Guardrails.capabilityLimitAsk(), actCtx.focus(), List.of());
@@ -505,6 +566,40 @@ public class AiActService {
     return plan.reply().isEmpty();
   }
 
+  /**
+   * 模型未拿到本轮库存事实却在 ask/reply 里声称「没找到」——常见于照抄历史口头句。
+   * 这不是用户话术路由，只拦「无事实却报无货」的空口断言。
+   */
+  private static boolean claimsInventoryAbsenceWithoutFacts(
+      ActPlan plan, List<Map<String, Object>> turnRows) {
+    if (plan == null) {
+      return false;
+    }
+    if (turnRows != null && !turnRows.isEmpty()) {
+      return false;
+    }
+    if (plan.probe() != null || isInventoryReadOnlyCalls(plan.calls())) {
+      return false;
+    }
+    String blob = str(plan.reply());
+    for (Map<String, Object> ask : plan.ask()) {
+      if (ask != null) {
+        blob = blob + "\n" + str(ask.get("question"));
+      }
+    }
+    if (blob.isBlank()) {
+      return false;
+    }
+    return blob.contains("没找到")
+        || blob.contains("没有找到")
+        || blob.contains("未找到")
+        || blob.contains("查不到")
+        || blob.contains("台账里没")
+        || blob.contains("家里没查到")
+        || blob.contains("家里没有")
+        || blob.contains("库里没有");
+  }
+
   private static boolean isInventoryReadOnlyCalls(List<Map<String, Object>> calls) {
     if (calls == null || calls.isEmpty()) {
       return false;
@@ -518,6 +613,102 @@ public class AiActService {
                   || "activity.list".equals(use)
                   || "item.stats".equals(use);
             });
+  }
+
+  /**
+   * 从 item.stats 结构化 buckets 生成 present（不编汇报散文）。优先带分桶的 space/tag；否则用 total。
+   */
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> presentFromStatsReport(Map<String, Object> report) {
+    if (report == null) {
+      return null;
+    }
+    Object exec = report.get("executed");
+    if (!(exec instanceof List<?> executed) || executed.isEmpty()) {
+      return null;
+    }
+    Map<String, Object> best = null;
+    for (Object rowObj : executed) {
+      if (!(rowObj instanceof Map<?, ?> row)) {
+        continue;
+      }
+      if (!"item.stats".equals(str(row.get("use")).trim())) {
+        continue;
+      }
+      Object statsObj = row.get("stats");
+      if (!(statsObj instanceof Map<?, ?>)) {
+        continue;
+      }
+      Map<String, Object> stats = (Map<String, Object>) statsObj;
+      String groupBy = str(stats.get("groupBy")).trim().toLowerCase();
+      List<Map<String, Object>> buckets =
+          stats.get("buckets") instanceof List<?> b
+              ? (List<Map<String, Object>>) b
+              : List.of();
+      if (buckets.isEmpty()) {
+        continue;
+      }
+      Map<String, Object> candidate = new LinkedHashMap<>();
+      candidate.put("type", "stats");
+      candidate.put("groupBy", groupBy.isEmpty() ? "total" : groupBy);
+      if ("space".equals(groupBy)) {
+        candidate.put("title", "各空间物资行数");
+      } else if ("tag".equals(groupBy)) {
+        candidate.put("title", "各标签物资行数");
+      } else {
+        candidate.put("title", "物资行数");
+      }
+      List<Map<String, Object>> items = new ArrayList<>();
+      for (Map<String, Object> bucket : buckets) {
+        if (bucket == null) {
+          continue;
+        }
+        String label = str(bucket.get("label")).trim();
+        if (label.isEmpty()) {
+          continue;
+        }
+        items.add(Map.of("label", label, "value", bucket.get("value")));
+      }
+      if (items.isEmpty()) {
+        continue;
+      }
+      candidate.put("items", items);
+      if ("space".equals(groupBy) || "tag".equals(groupBy)) {
+        return candidate;
+      }
+      best = candidate;
+    }
+    return best;
+  }
+
+  /** 查询回执里是否已有可给家人看的库存列表卡（不含 item.stats 机器串） */
+  @SuppressWarnings("unchecked")
+  private static boolean hasUserFacingInventory(Map<String, Object> report) {
+    if (report == null) {
+      return false;
+    }
+    if (report.get("blocks") instanceof List<?> blocks && !blocks.isEmpty()) {
+      for (Object b : blocks) {
+        if (b instanceof Map<?, ?> block
+            && block.get("cards") instanceof List<?> cards
+            && !cards.isEmpty()) {
+          return true;
+        }
+      }
+    }
+    Object exec = report.get("executed");
+    if (!(exec instanceof List<?> executed)) {
+      return false;
+    }
+    for (Object rowObj : executed) {
+      if (!(rowObj instanceof Map<?, ?> row)) {
+        continue;
+      }
+      if (row.get("inventory") instanceof List<?> inv && !inv.isEmpty()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** Prefer tool summaries (aggregates) plus P* inventory when both exist. */
@@ -627,6 +818,50 @@ public class AiActService {
       }
     }
     return plan;
+  }
+
+  /**
+   * 记入前先按名称查库：让模型看见同名行（单位/位置），避免漏单位、或另开位置造成「同名两条」。
+   */
+  @SuppressWarnings("unchecked")
+  private static ActPlan ensureProbeForNamedCreates(ActPlan plan) {
+    if (plan == null || plan.probe() != null || !plan.ask().isEmpty()) {
+      return plan;
+    }
+    List<String> names = new ArrayList<>();
+    java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
+    for (Map<String, Object> call : plan.calls()) {
+      if (call == null) {
+        continue;
+      }
+      String use = String.valueOf(call.get("use")).trim();
+      if ("item.create".equals(use)) {
+        String name = str(call.get("name")).trim();
+        if (!name.isEmpty() && seen.add(name)) {
+          names.add(name);
+        }
+      } else if ("item.createMany".equals(use) && call.get("items") instanceof List<?> items) {
+        for (Object o : items) {
+          if (!(o instanceof Map<?, ?> m)) {
+            continue;
+          }
+          String name = str(m.get("name")).trim();
+          if (!name.isEmpty() && seen.add(name)) {
+            names.add(name);
+          }
+        }
+      }
+    }
+    if (names.isEmpty()) {
+      return plan;
+    }
+    Map<String, Object> probe = new LinkedHashMap<>();
+    if (names.size() == 1) {
+      probe.put("name", names.get(0));
+    } else {
+      probe.put("names", names);
+    }
+    return new ActPlan(plan.ask(), probe, plan.calls(), plan.reply(), plan.present());
   }
 
   private static void bindUnresolvedWritesToProbe(
@@ -1411,8 +1646,14 @@ public class AiActService {
                 actCtx.refs(),
                 actCtx.catalogMap(),
                 actCtx.today().get("ymd"));
-        mergeCreateReports(finalReport, secondReport);
-        return null;
+        // 必须吃下合并结果：原先丢掉 return 值，open:true 的 navLinks 会随「空 done」被降级成「刚才没办妥」
+        Map<String, Object> merged = mergeCreateReports(finalReport, secondReport);
+        List<Map<String, Object>> mergedCalls = concatCalls(finalCalls, nextCalls);
+        if (Boolean.TRUE.equals(merged.get("subscribeUi"))) {
+          return buildSubscribePayload(mergedCalls, merged, actCtx.focus());
+        }
+        return sanitizeUserPayload(
+            buildDonePayload(mergedCalls, merged, actCtx.focus()), actCtx.focus(), probedRows);
       }
       String reply = nextPlan.reply().trim();
       if (reply.isEmpty()) {
@@ -1544,6 +1785,10 @@ public class AiActService {
 
   private static boolean isPageDocOnlyReport(Map<String, Object> report) {
     if (Boolean.TRUE.equals(report.get("wrote")) || Boolean.TRUE.equals(report.get("subscribeUi"))) {
+      return false;
+    }
+    // 已带跳转链时不再当「仅说明」跟进，避免再次问模型
+    if (report.get("navLinks") instanceof List<?> n && !n.isEmpty()) {
       return false;
     }
     if (!(report.get("executed") instanceof List<?> exec)) {

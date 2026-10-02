@@ -24,7 +24,10 @@ public final class Presentation {
     List<Map<String, Object>> rows = list != null ? list : List.of();
     String label = prefix != null ? prefix : "查询";
     if (rows.isEmpty()) {
-      String lead = emptyText != null ? emptyText : label + "：没有找到匹配的物品";
+      String lead =
+          emptyText != null && !emptyText.isBlank()
+              ? emptyText
+              : label + "：没有找到匹配的物品";
       return new PresentationView(lead, List.of(), List.of(lead));
     }
     List<Map<String, Object>> cards = new ArrayList<>();
@@ -70,7 +73,7 @@ public final class Presentation {
                       ? "查询"
                       : str(row.get("inventoryPrefix"));
           String emptyText =
-              "item.listExpiring".equals(str(row.get("use"))) ? "没有临期或过期物品" : "";
+              "item.listExpiring".equals(str(row.get("use"))) ? "没有临期或过期物品" : null;
           @SuppressWarnings("unchecked")
           List<Map<String, Object>> invList = (List<Map<String, Object>>) row.get("inventory");
           PresentationView inv = buildInventoryPresentation(invList, tree, prefix, emptyText);
@@ -120,6 +123,10 @@ public final class Presentation {
           if (row.get("pageDoc") != null) {
             continue;
           }
+        }
+        // 机器向只读回执（如 item.stats）只喂模型，不渲成用户卡片
+        if (row != null && isModelOnlyReadRow(row)) {
+          continue;
         }
         if (row != null && !str(row.get("summary")).isEmpty()) {
           Map<String, Object> card = actionCardFromSummary(str(row.get("summary")), "ok");
@@ -308,6 +315,10 @@ public final class Presentation {
     if (text.isEmpty()) {
       return null;
     }
+    // 机器向聚合串不得当用户标题（兜底；正常路径已在 isModelOnlyReadRow 跳过）
+    if (text.startsWith("item.stats ")) {
+      return null;
+    }
     Matcher m = ACTION_SUMMARY.matcher(text);
     if (m.find()) {
       Map<String, Object> card = new LinkedHashMap<>();
@@ -317,6 +328,16 @@ public final class Presentation {
       return card;
     }
     return Map.of("title", text, "tone", tone != null ? tone : "ok");
+  }
+
+  /** item.stats 等：summary 是模型注，不是家人可见回执 */
+  private static boolean isModelOnlyReadRow(Map<String, Object> row) {
+    String use = str(row.get("use")).trim();
+    if ("item.stats".equals(use)) {
+      return true;
+    }
+    String summary = str(row.get("summary")).trim();
+    return summary.startsWith("item.stats ");
   }
 
   private static String duplicateLine(List<Map<String, Object>> dups) {

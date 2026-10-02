@@ -74,6 +74,45 @@ public final class PlanParser {
     }
   }
 
+  /**
+   * 模型偶发吐出口头句（常带历史时间戳样式）而不是 JSON。把可读回复收成 reply 计划，
+   * 避免服务端用「刚才没办妥」顶掉模型已经说清楚的话。疑似伪造写回执则拒绝回收。
+   */
+  public static ActPlan coercePlainTextPlan(String text) {
+    String t = stripImitatedStamp(str(text).trim());
+    if (t.isEmpty() || t.startsWith("{") || t.startsWith("[")) {
+      return null;
+    }
+    if (looksLikeFalseWriteReceipt(t)) {
+      return null;
+    }
+    String reply = normalizeReply(t);
+    if (reply.isEmpty()) {
+      return null;
+    }
+    return new ActPlan(List.of(), null, List.of(), reply, null);
+  }
+
+  /** 去掉模型模仿历史消息时加的时间戳外壳。 */
+  static String stripImitatedStamp(String text) {
+    String t = str(text).trim();
+    t = t.replaceFirst("^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\\]\\s*", "");
+    t = t.replaceFirst("（消息时间 \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）\\s*$", "");
+    return t.trim();
+  }
+
+  /** 口头句若声称已写入/已改数量，不能当 reply 直接给用户（库可能没动）。 */
+  static boolean looksLikeFalseWriteReceipt(String text) {
+    String t = str(text);
+    if (t.contains("已改") && t.contains("→")) {
+      return true;
+    }
+    if (t.contains("已记下") || t.contains("已删除") || t.contains("已删掉")) {
+      return true;
+    }
+    return t.contains("从") && t.contains("改成");
+  }
+
   private static ActPlan coerceBoundaryReplyToAsk(ActPlan plan) {
     if (!plan.ask.isEmpty() || !plan.calls.isEmpty() || plan.probe != null) {
       return plan;

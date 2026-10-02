@@ -45,7 +45,8 @@ public final class ShanghaiDates {
   }
 
   /**
-   * 给对话正文加 [yyyy-MM-dd HH:mm] 前缀（Asia/Shanghai）。at 非法则原样返回 text。
+   * 给对话正文附上发言时间（Asia/Shanghai）。放在句末，避免模型把「[时间] 正文」学成输出格式。
+   * at 非法则原样返回 text。
    */
   public static String stampContent(String text, String atEpochMs) {
     String body = text == null ? "" : text;
@@ -57,7 +58,10 @@ public final class ShanghaiDates {
       if (stamped.isEmpty()) {
         return body;
       }
-      return "[" + stamped + "] " + body;
+      if (body.isEmpty()) {
+        return "（消息时间 " + stamped + "）";
+      }
+      return body + "（消息时间 " + stamped + "）";
     } catch (NumberFormatException e) {
       return body;
     }

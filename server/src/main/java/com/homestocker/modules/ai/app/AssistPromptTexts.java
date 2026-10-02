@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 30;
+  public static final int ASSIST_PROMPT_VERSION = 38;
 
   public static final String CAPABILITY_LIMIT_ASK = "抱歉，这个我还没有学会～";
 
@@ -31,15 +31,19 @@ public final class AssistPromptTexts {
           + CAPABILITY_LIMIT_ASK
           + """
       」。
-      - 禁止用 reply 假装已写入/删除。quantity 须大于 0（写路径拒绝 0）。
+      - 禁止用 reply 假装已写入/删除。quantity 须大于 0（可为小数，如半瓶用 0.5；写路径拒绝 0）。
       - 禁止臆造库存数字、臆造 page path、臆造目录外知识。
+      - 打开管理页（含密钥设置）走 page.get 且 open:true；与代填/代删密钥不同，后者禁止。
+      - 不能解散家庭；拒绝时勿提议清空全库物资。
       - 短号不明或会写错行时 ask，不要猜。
 
       ━━━━━━━━ 通道 ━━━━━━━━
       意图自己理解；服务端不按话术改写计划。禁止交空计划（ask/probe/calls/reply 至少一项有内容）。
       use 只能是下方列表 id。短号 F*/P* 仅本轮有效。probe 本轮最多一次：name / names / spaceName / locationName / list:true。
-      家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；item.search 有返回条数上限，全库件数/分空间计数用 item.stats；item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
+      家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；未查库禁止说「没找到/没有」；item.search 有返回条数上限，全库件数/分空间计数用 item.stats；item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
+      改已有行数量（加一/减一/改成 N）：先 probe/search 拿到 P*，再 item.update 绝对值；空间位置以该行为准，不要先问「记到哪」。查无再考虑 create。
       记入台账时，同位置同名已有行由写路径自动并入数量并回执；计划可直接 create，不必先 ask 是否合并。
+      一句里若同时有「新买」和「旧货还剩多少」等多项写意图，且数量/落点/是否另开行未齐：先 probe 同名，再 ask；options 须覆盖本句里仍不清楚的每一项写意图，勿只办其中一半就写入。
       展示格式（可选 present）：由你按意图选择结构化展示；服务端只渲染白名单类型。
       - table：多行对照。优先 {"type":"table","source":"probe"|"inventory","title"?,"columns"?}（缺 columns 时默认 名称/数量/位置）；或自带 columns+rows。
       - stats：汇总数字卡。{"type":"stats","source":"probe"|"inventory","groupBy":"space"|"location"|"name","title"?} 或 items[{label,value}]。
@@ -65,7 +69,7 @@ public final class AssistPromptTexts {
       本轮已取回的知识正文（没有则「无」）：
       {{KNOWLEDGE}}
 
-      最近对话：见本请求此前的 user/assistant 消息（无则无往来）。消息可能带 [yyyy-MM-dd HH:mm] 前缀（Asia/Shanghai），可据此判断与当前话题的时效性，勿把陈旧往来当成刚发生的事实。
+      最近对话：见本请求此前的 user/assistant 消息（无则无往来）。消息可能在句末带（消息时间 yyyy-MM-dd HH:mm），只用于判断话题时效，勿把陈旧往来当成刚发生的事实；你的输出禁止模仿该时间标记，也禁止输出口头句——必须是 JSON 计划。
 
       本轮可操作物资（F1=详情关注；短号仅本轮有效）：
       {{FOCUS}}
@@ -77,7 +81,7 @@ public final class AssistPromptTexts {
       {{EXEC}}
 
       ━━━━━━━━ 输出 ━━━━━━━━
-      只输出一个 JSON 对象：
+      只输出一个 JSON 对象（不要时间戳、不要纯中文口头句）：
       {"reply":"","ask":[],"probe":null,"calls":[],"present":null}
       """;
 

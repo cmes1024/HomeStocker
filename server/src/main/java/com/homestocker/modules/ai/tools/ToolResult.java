@@ -21,6 +21,8 @@ public final class ToolResult {
   public final List<Map<String, Object>> subscribeItems;
   public final List<Map<String, Object>> navLinks;
   public final String inventoryPrefix;
+  /** 只读聚合结构（如 item.stats）；给模型/present，不直接当用户卡片文案 */
+  public final Map<String, Object> stats;
 
   private ToolResult(Builder b) {
     this.ok = b.ok;
@@ -37,6 +39,7 @@ public final class ToolResult {
     this.subscribeItems = b.subscribeItems;
     this.navLinks = b.navLinks;
     this.inventoryPrefix = b.inventoryPrefix;
+    this.stats = b.stats;
   }
 
   public static Builder ok(String summary) {
@@ -62,6 +65,7 @@ public final class ToolResult {
     private List<Map<String, Object>> subscribeItems;
     private List<Map<String, Object>> navLinks;
     private String inventoryPrefix;
+    private Map<String, Object> stats;
 
     private Builder(boolean ok, String summary) {
       this.ok = ok;
@@ -125,6 +129,11 @@ public final class ToolResult {
 
     public Builder navLinks(List<Map<String, Object>> v) {
       this.navLinks = v;
+      return this;
+    }
+
+    public Builder stats(Map<String, Object> v) {
+      this.stats = v;
       return this;
     }
 

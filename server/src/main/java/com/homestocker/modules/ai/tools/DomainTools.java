@@ -268,6 +268,7 @@ public class DomainTools {
     }
 
     int total = itemRepository.countByFamily(ctx.familyId);
+    List<Map<String, Object>> buckets = new ArrayList<>();
     StringBuilder sb = new StringBuilder();
     sb.append("item.stats totalItems=").append(total);
 
@@ -289,7 +290,9 @@ public class DomainTools {
           } else if (spaceId.isEmpty()) {
             spaceName = "未分组";
           }
-          sb.append('\n').append(spaceName).append('=').append(row.get("count"));
+          long count = toLong(row.get("count"));
+          sb.append('\n').append(spaceName).append('=').append(count);
+          buckets.add(Map.of("label", spaceName, "value", count));
         }
       }
     } else if ("tag".equals(groupBy)) {
@@ -299,16 +302,24 @@ public class DomainTools {
         sb.append(" buckets=0");
       } else {
         for (Map<String, Object> row : rows) {
-          sb.append('\n')
-              .append(ToolHelpers.str(row.get("tagName")))
-              .append('=')
-              .append(row.get("count"));
+          String tagName = ToolHelpers.str(row.get("tagName"));
+          if (tagName.isEmpty()) {
+            tagName = "未命名标签";
+          }
+          long count = toLong(row.get("count"));
+          sb.append('\n').append(tagName).append('=').append(count);
+          buckets.add(Map.of("label", tagName, "value", count));
         }
       }
     } else {
       sb.append(" groupBy=total（全库台账行数，非名称去重种数）");
+      buckets.add(Map.of("label", "全库", "value", (long) total));
     }
-    return ToolResult.ok(sb.toString()).build();
+    Map<String, Object> stats = new LinkedHashMap<>();
+    stats.put("totalItems", total);
+    stats.put("groupBy", groupBy);
+    stats.put("buckets", buckets);
+    return ToolResult.ok(sb.toString()).stats(stats).build();
   }
 
   @SuppressWarnings("unchecked")
@@ -369,7 +380,8 @@ public class DomainTools {
                   + "」不在家庭结构里，未新建空间")
           .build();
     }
-    ToolHelpers.LocationEnsure loc = ToolHelpers.ensureLocation(ctx, space, ToolHelpers.str(call.get("locationName")));
+    ToolHelpers.LocationEnsure loc =
+        ToolHelpers.ensureLocation(ctx, space, ToolHelpers.str(call.get("locationName")));
     if (loc.errorMessage() != null) {
       return ToolResult.fail("第 " + step + " 步失败：" + loc.errorMessage()).build();
     }
@@ -381,10 +393,14 @@ public class DomainTools {
       return folded;
     }
     TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames")));
+    String unit = ToolHelpers.str(call.get("unit")).trim();
+    if (unit.isEmpty()) {
+      unit = inferSharedUnit(ctx.familyId, name);
+    }
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("name", name);
     payload.put("quantity", call.get("quantity") != null ? call.get("quantity") : 1);
-    payload.put("unit", call.get("unit"));
+    payload.put("unit", unit.isEmpty() ? call.get("unit") : unit);
     payload.put("note", call.get("note"));
     payload.put("spaceId", space.get("id"));
     payload.put("locationId", loc.locationId());
@@ -398,7 +414,9 @@ public class DomainTools {
     }
     @SuppressWarnings("unchecked")
     Map<String, Object> data = (Map<String, Object>) res.get("data");
-    String qty = ToolHelpers.str(call.get("quantity") != null ? call.get("quantity") : 1) + ToolHelpers.str(call.get("unit"));
+    String qty =
+        ToolHelpers.str(call.get("quantity") != null ? call.get("quantity") : 1)
+            + (unit.isEmpty() ? ToolHelpers.str(call.get("unit")) : unit);
     String place = TreeMatch.placeLabel(ToolHelpers.str(space.get("name")), loc.locationName());
     String summary =
         "已记下 "
@@ -471,10 +489,14 @@ public class DomainTools {
         continue;
       }
       TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(row.get("tagNames")));
+      String unit = ToolHelpers.str(row.get("unit")).trim();
+      if (unit.isEmpty()) {
+        unit = inferSharedUnit(ctx.familyId, name);
+      }
       Map<String, Object> payload = new LinkedHashMap<>();
       payload.put("name", name);
       payload.put("quantity", row.get("quantity") != null ? row.get("quantity") : 1);
-      payload.put("unit", row.get("unit"));
+      payload.put("unit", unit.isEmpty() ? row.get("unit") : unit);
       payload.put("note", row.get("note"));
       payload.put("spaceId", space.get("id"));
       payload.put("locationId", loc.locationId());
@@ -485,13 +507,12 @@ public class DomainTools {
       payloads.add(payload);
       String qty =
           ToolHelpers.str(row.get("quantity") != null ? row.get("quantity") : 1)
-              + ToolHelpers.str(row.get("unit"));
+              + (unit.isEmpty() ? ToolHelpers.str(row.get("unit")) : unit);
       String place = TreeMatch.placeLabel(ToolHelpers.str(space.get("name")), loc.locationName());
       labels.add(name + (qty.isBlank() ? "" : " " + qty) + (place.isEmpty() ? "" : "（" + place + "）"));
     }
     if (payloads.isEmpty()) {
-      String summary =
-          foldSummaries.isEmpty() ? "" : String.join("；", foldSummaries);
+      String summary = foldSummaries.isEmpty() ? "" : String.join("；", foldSummaries);
       return ToolResult.ok(summary).wrote(!foldSummaries.isEmpty()).remember(remember).build();
     }
     Map<String, Object> body = new LinkedHashMap<>();
@@ -1023,6 +1044,9 @@ public class DomainTools {
     }
 
     String addUnit = ToolHelpers.str(call.get("unit")).trim();
+    if (addUnit.isEmpty()) {
+      addUnit = inferSharedUnit(ctx.familyId, name);
+    }
     for (ItemRow row : existing) {
       String u = row.unit() == null ? "" : row.unit().trim();
       if (!addUnit.isEmpty() && !u.isEmpty() && !addUnit.equals(u)) {
@@ -1195,6 +1219,27 @@ public class DomainTools {
     m.put("note", row.note());
     m.put("tagIds", row.tagIds());
     return m;
+  }
+
+  /** 同名台账若单位一致，create 漏写 unit 时补上（不解析用户口语句式）。 */
+  private String inferSharedUnit(String familyId, String name) {
+    if (familyId == null || familyId.isBlank() || name == null || name.isBlank()) {
+      return "";
+    }
+    List<ItemRow> rows = itemRepository.findByFamilyAndExactName(familyId, name, 20);
+    String shared = null;
+    for (ItemRow row : rows) {
+      String u = row.unit() == null ? "" : row.unit().trim();
+      if (u.isEmpty()) {
+        continue;
+      }
+      if (shared == null) {
+        shared = u;
+      } else if (!shared.equals(u)) {
+        return "";
+      }
+    }
+    return shared == null ? "" : shared;
   }
 
   private static String buildUpdateSummary(Map<String, Object> row, Map<String, Object> call) {

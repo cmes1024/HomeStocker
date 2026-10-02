@@ -410,4 +410,20 @@ public class ItemRepository {
             spaceId,
             name));
   }
+
+  /** Exact name across the family (for unit inheritance / collide awareness). */
+  public List<ItemRow> findByFamilyAndExactName(String familyId, String name, int limit) {
+    int lim = Math.min(Math.max(limit, 1), 40);
+    return hydrateAll(
+        jdbc.query(
+            """
+            SELECT * FROM items
+            WHERE family_id = ? AND name = ?
+            ORDER BY updated_at DESC LIMIT ?
+            """,
+            BASE_ROW,
+            familyId,
+            name,
+            lim));
+  }
 }
