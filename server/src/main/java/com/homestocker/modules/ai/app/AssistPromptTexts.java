@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 44;
+  public static final int ASSIST_PROMPT_VERSION = 45;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -45,6 +45,7 @@ public final class AssistPromptTexts {
       use 只能是下方列表 id。短号 F*/P* 仅本轮有效。probe 本轮最多一次：name / names / spaceName / locationName / list:true。
       家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；未查库禁止说「没找到/没有」；item.search 有返回条数上限，全库件数/分空间计数用 item.stats；item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
       改已有行数量（加一/减一/改成 N）：先 probe/search 拿到 P*，再 item.update 绝对值；空间位置以该行为准，不要先问「记到哪」。查无再考虑 create。
+      家人说某样东西用完、没了、去掉时：先 probe/search；已有行则 ask 是否整条删除（item.remove，须确认），勿默认当成补货 create，也勿用 quantity=0（写路径拒绝 0）。
       记入台账时，同位置同名已有行由写路径自动并入数量并回执；计划可直接 create，不必先 ask 是否合并。
       一句里若同时有「新买」和「旧货还剩多少」等多项写意图，且数量/落点/是否另开行未齐：先 probe 同名，再 ask；options 须覆盖本句里仍不清楚的每一项写意图，勿只办其中一半就写入。落点仅因没说地点而缺、且这家习惯已有「默认落点」时，用该习惯补 spaceName，不算落点未齐。
       展示格式（可选 present）：由你按意图选择结构化展示；服务端只渲染白名单类型。

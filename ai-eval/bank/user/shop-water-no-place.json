@@ -9,9 +9,14 @@
   "setup": {
     "fixture": "home-daily"
   },
-  "prompt": "刚买了6瓶水",
+  "prompt": "刚买了6瓶气泡水",
   "expected": {
-    "outcome": "没说放哪就先问一句放哪/记到哪，不能瞎记到一个房间",
-    "mustAsk": true
+    "outcome": "没说放哪就先问一句放哪/记到哪，不能瞎记到一个房间（用少见品名，避免并进旧账）",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.create",
+      "item.update",
+      "item.remove"
+    ]
   }
 }

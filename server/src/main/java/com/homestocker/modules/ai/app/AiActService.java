@@ -20,6 +20,7 @@ import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
+import com.homestocker.modules.ai.agent.Receipts;
 import com.homestocker.modules.ai.habits.FamilyHabit;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
 import com.homestocker.modules.ai.habits.HabitApplied;
@@ -272,9 +273,18 @@ public class AiActService {
       }
       if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
           && plan.calls().isEmpty()) {
+        Map<String, Object> presentRaw = plan.present();
         Map<String, Object> payload =
             attachDoneReply(
-                plan.reply(), actCtx.focus(), plan.present(), invRows, inventoryReadReport);
+                plan.reply(), actCtx.focus(), presentRaw, invRows, inventoryReadReport);
+        // 模型交了 present 但解析空（常见：stats+source=inventory 只有 buckets）→ 用 stats 结构化兜底，勿降级
+        if (needsUserDegrade(payload)) {
+          Map<String, Object> autoPresent = presentFromStatsReport(inventoryReadReport);
+          if (autoPresent != null) {
+            payload =
+                attachDoneReply("", actCtx.focus(), autoPresent, invRows, inventoryReadReport);
+          }
+        }
         payload.put("calls", readCalls);
         attachHabitApplied(payload, plan.appliedHabits(), familyId, List.of());
         return sanitizeUserPayload(payload, actCtx.focus(), invRows);

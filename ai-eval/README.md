@@ -31,7 +31,9 @@ node ai-eval/runner.mjs --plan pitfalls
 node ai-eval/runner.mjs --plan day-flow
 node ai-eval/runner.mjs --plan all-butler
 
+# 真打管家（会按 case.setup.fixture 灌库存；确认闸/澄清芯片由 runner 代点）
 HS_TOKEN=xxx node ai-eval/runner.mjs --plan core-smoke --mode act
+HS_TOKEN=xxx AI_ACT_RATE_PER_MINUTE=200 node ai-eval/runner.mjs --plan daily-use --mode act
 ```
 
-`mock`：无 `mockPlan` 时标 `pending`（等实跑）。`act`：请求 `/api/ai/act` 后按约束判定。
+`mock`：无 `mockPlan` 时标 `pending`（等实跑）。`act`：请求 `/api/ai/act` 后按约束判定；本地建议把 `AI_ACT_RATE_PER_MINUTE` 调高，避免长套件撞限流。

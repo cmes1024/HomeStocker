@@ -43,9 +43,9 @@ public final class PresentResolver {
 
     return switch (type) {
       case "table" -> resolveTable(raw, rowsFromSource, title);
-      case "stats", "stat" -> resolveStatsOrBars("stats", raw, rowsFromSource, title);
-      case "bars", "bar" -> resolveStatsOrBars("bars", raw, rowsFromSource, title);
-      case "pie", "donut" -> resolveStatsOrBars("pie", raw, rowsFromSource, title);
+      case "stats", "stat" -> resolveStatsOrBars("stats", raw, rowsFromSource, inventoryReport, title);
+      case "bars", "bar" -> resolveStatsOrBars("bars", raw, rowsFromSource, inventoryReport, title);
+      case "pie", "donut" -> resolveStatsOrBars("pie", raw, rowsFromSource, inventoryReport, title);
       default -> null;
     };
   }
@@ -95,14 +95,22 @@ public final class PresentResolver {
   }
 
   private static Map<String, Object> resolveStatsOrBars(
-      String type, Map<String, Object> raw, List<Map<String, Object>> sourceRows, String title) {
+      String type,
+      Map<String, Object> raw,
+      List<Map<String, Object>> sourceRows,
+      Map<String, Object> inventoryReport,
+      String title) {
     List<Map<String, Object>> items = itemList(raw.get("items"));
+    String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
+    if (groupBy.isEmpty()) {
+      groupBy = "space";
+    }
     if (items.isEmpty() && !sourceRows.isEmpty()) {
-      String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
-      if (groupBy.isEmpty()) {
-        groupBy = "space";
-      }
       items = aggregate(sourceRows, groupBy);
+    }
+    // item.stats 回执在 stats.buckets，没有 inventory 行；source=inventory 时仍要能画出分布卡
+    if (items.isEmpty()) {
+      items = itemsFromStatsReport(inventoryReport, groupBy);
     }
     if (items.isEmpty()) {
       return null;
@@ -210,6 +218,65 @@ public final class PresentResolver {
       parts.add("rgba(26,26,26,0.06) " + cursor + "% 100%");
     }
     return "conic-gradient(" + String.join(", ", parts) + ")";
+  }
+
+  /**
+   * item.stats 写入 report.executed[].stats.buckets，不是 inventory 行列表。
+   * 模型常交 present type=stats + source=inventory，须从 buckets 还原 items。
+   */
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> itemsFromStatsReport(
+      Map<String, Object> report, String preferredGroupBy) {
+    if (report == null || !(report.get("executed") instanceof List<?> executed)) {
+      return List.of();
+    }
+    List<Map<String, Object>> best = List.of();
+    for (Object rowObj : executed) {
+      if (!(rowObj instanceof Map<?, ?> row)) {
+        continue;
+      }
+      Object statsObj = row.get("stats");
+      if (!(statsObj instanceof Map<?, ?>)) {
+        continue;
+      }
+      Map<String, Object> stats = (Map<String, Object>) statsObj;
+      String groupBy = str(stats.get("groupBy")).trim().toLowerCase(Locale.ROOT);
+      List<Map<String, Object>> buckets =
+          stats.get("buckets") instanceof List<?> b
+              ? (List<Map<String, Object>>) b
+              : List.of();
+      if (buckets.isEmpty()) {
+        continue;
+      }
+      List<Map<String, Object>> items = new ArrayList<>();
+      for (Map<String, Object> bucket : buckets) {
+        if (bucket == null) {
+          continue;
+        }
+        String label = str(bucket.get("label")).trim();
+        if (label.isEmpty()) {
+          continue;
+        }
+        Map<String, Object> one = new LinkedHashMap<>();
+        one.put("label", label);
+        one.put("value", bucket.get("value"));
+        items.add(one);
+        if (items.size() >= MAX_ITEMS) {
+          break;
+        }
+      }
+      if (items.isEmpty()) {
+        continue;
+      }
+      if (!preferredGroupBy.isEmpty() && preferredGroupBy.equals(groupBy)) {
+        return items;
+      }
+      if ("space".equals(groupBy) || "tag".equals(groupBy)) {
+        return items;
+      }
+      best = items;
+    }
+    return best;
   }
 
   private static List<Map<String, Object>> aggregate(

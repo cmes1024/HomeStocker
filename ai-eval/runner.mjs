@@ -15,6 +15,7 @@ const ROOT = __dirname;
 const BANK = path.join(ROOT, "bank");
 const PLANS = path.join(ROOT, "plans");
 const RUNS = path.join(ROOT, "runs");
+const FIXTURES = path.join(ROOT, "fixtures");
 
 function parseArgs(argv) {
   const out = {
@@ -23,7 +24,9 @@ function parseArgs(argv) {
     copyOnly: false,
     mode: "mock",
     actUrl: process.env.HS_ACT_URL || "http://127.0.0.1:8080/api/ai/act",
+    apiBase: process.env.HS_API_BASE || "",
     token: process.env.HS_TOKEN || "",
+    skipFixture: false,
   };
   for (let i = 2; i < argv.length; i++) {
     const a = argv[i];
@@ -34,8 +37,18 @@ function parseArgs(argv) {
       out.mode = "copy-only";
     } else if (a === "--mode") out.mode = argv[++i];
     else if (a === "--act-url") out.actUrl = argv[++i];
+    else if (a === "--api-base") out.apiBase = argv[++i];
     else if (a === "--token") out.token = argv[++i];
+    else if (a === "--skip-fixture") out.skipFixture = true;
     else if (a === "--help" || a === "-h") out.help = true;
+  }
+  if (!out.apiBase) {
+    try {
+      const u = new URL(out.actUrl);
+      out.apiBase = `${u.protocol}//${u.host}`;
+    } catch {
+      out.apiBase = "http://127.0.0.1:8080";
+    }
   }
   return out;
 }
@@ -131,19 +144,66 @@ function collectToolsFromActPayload(payload) {
   return [...new Set(tools)];
 }
 
+function actPayloads(actual) {
+  const out = [];
+  if (actual?.act) out.push(actual.act);
+  for (const t of actual?.turns || []) {
+    const data = t?.body?.data ?? t?.body;
+    if (data && typeof data === "object") out.push(data);
+  }
+  return out;
+}
+
 function hasAskSignal(actual) {
   if (actual?.plan) {
     const ask = actual.plan.ask;
     return Array.isArray(ask) && ask.some((x) => String(x || "").trim());
   }
-  const p = actual?.act;
-  if (!p) return false;
-  if (Array.isArray(p.ask) && p.ask.some((x) => String(x?.text || x || "").trim())) {
+  for (const p of actPayloads(actual)) {
+    if (Array.isArray(p.ask) && p.ask.some((x) => String(x?.question || x?.text || x || "").trim())) {
+      return true;
+    }
+    if (p.status === "confirm") return true;
+    if (Array.isArray(p.confirm) && p.confirm.length) return true;
+    if (p.needConfirm) return true;
+    const reply = String(p.reply || p.message || p.lead || "");
+    if (/吗\？|\?|哪|哪个|确认/.test(reply)) return true;
+  }
+  return false;
+}
+
+function hasPresentInventory(act) {
+  const present = act?.present;
+  if (!present || typeof present !== "object") return false;
+  if (present.type === "table" || present.type === "list") return true;
+  if (Array.isArray(present.rows) && present.rows.length) return true;
+  if (Array.isArray(present.items) && present.items.length) return true;
+  return false;
+}
+
+function payloadHasProbe(p) {
+  if (!p || typeof p !== "object") return false;
+  if (hasPresentInventory(p)) return true;
+  if (Array.isArray(p.calls) && p.calls.some((c) => c && (c.ref || c.itemId || /item\.(search|stats|listExpiring)/.test(c.use || "")))) {
     return true;
   }
-  if (p.needConfirm || p.confirm) return true;
-  const reply = String(p.reply || p.message || "");
-  return /吗\？|\?|哪|哪个|确认/.test(reply);
+  const askText = (Array.isArray(p.ask) ? p.ask : [])
+    .map((a) => String(a?.question || a?.text || a || ""))
+    .join(" ");
+  if (/台账|找到|查到|哪边|哪一|哪条|不止一|好几处|加到|并进|临期|过期|还有没有/.test(askText)) {
+    return true;
+  }
+  const opts = [];
+  for (const a of p.ask || []) {
+    for (const o of a?.options || []) opts.push(String(o?.value || o?.label || ""));
+  }
+  if (opts.some((v) => /加到|并进|新开|查家里|看看快过期|还有没有|整条删|确认删除/.test(v))) {
+    return true;
+  }
+  const lead = String(p.lead || p.report?.lead || "");
+  if (/查到|台账|还有|剩|没找到|没有|临期|到期|过期/.test(lead)) return true;
+  if (/临期|到期|过期/.test(askText)) return true;
+  return false;
 }
 
 function hasProbeSignal(actual) {
@@ -156,7 +216,27 @@ function hasProbeSignal(actual) {
     );
   }
   const tools = actual?.tools || [];
-  return tools.some((t) => t === "item.search" || t === "item.stats" || t === "item.listExpiring");
+  if (tools.some((t) => t === "item.search" || t === "item.stats" || t === "item.listExpiring")) {
+    return true;
+  }
+  return actPayloads(actual).some(payloadHasProbe);
+}
+
+function enrichActTools(data, tools, actual) {
+  const out = [...(tools || [])];
+  if (hasPresentInventory(data) && !out.includes("item.search")) {
+    out.push("item.search");
+  }
+  // ask that already lists 临期/到期 facts implies listExpiring/search happened server-side
+  for (const p of actual ? actPayloads(actual) : [data]) {
+    const askText = (Array.isArray(p?.ask) ? p.ask : [])
+      .map((a) => String(a?.question || a?.text || a || ""))
+      .join(" ");
+    if (/临期|到期|过期/.test(askText)) {
+      if (!out.includes("item.listExpiring")) out.push("item.listExpiring");
+    }
+  }
+  return [...new Set(out)];
 }
 
 function judgeExpected(caze, actual, mode) {
@@ -223,16 +303,302 @@ function judgeExpected(caze, actual, mode) {
   };
 }
 
-async function callAct(actUrl, token, text, history) {
+async function apiPost(apiBase, token, pathName, body = {}) {
   const headers = { "Content-Type": "application/json" };
   if (token) headers["X-HS-Token"] = token;
-  const res = await fetch(actUrl, {
+  const res = await fetch(`${apiBase}${pathName}`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ text, history }),
+    body: JSON.stringify(body ?? {}),
   });
-  const body = await res.json().catch(() => ({}));
-  return { httpStatus: res.status, body };
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json?.ok === false) {
+    const code = json?.error?.code || json?.code || res.status;
+    const msg = json?.error?.message || json?.message || res.statusText;
+    throw new Error(`${pathName} failed: ${code} ${msg}`);
+  }
+  return json?.data ?? json;
+}
+
+function resolveRelativeDate(raw) {
+  const s = String(raw || "").trim();
+  const m = s.match(/^([+-])(\d+)d$/i);
+  if (!m) return s;
+  const days = Number(m[2]) * (m[1] === "-" ? -1 : 1);
+  const d = new Date();
+  d.setHours(12, 0, 0, 0);
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function loadFixture(id) {
+  const file = path.join(FIXTURES, `${id}.json`);
+  if (!fs.existsSync(file)) throw new Error(`fixture not found: ${file}`);
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+async function applyFixture(apiBase, token, fixtureId) {
+  const fx = loadFixture(fixtureId);
+  const spaces = await apiPost(apiBase, token, "/api/space/list", {});
+  const spaceList = spaces?.list || spaces?.spaces || [];
+  const spaceByName = new Map(spaceList.map((s) => [s.name, s]));
+
+  for (const sp of fx.spaces || []) {
+    if (!spaceByName.has(sp.name)) {
+      const created = await apiPost(apiBase, token, "/api/space/create", { name: sp.name });
+      spaceByName.set(sp.name, created);
+    }
+    const space = spaceByName.get(sp.name);
+    const locs = await apiPost(apiBase, token, "/api/space/listLocations", {
+      spaceId: space._id || space.id,
+    });
+    const locByName = new Map((locs?.list || []).map((l) => [l.name, l]));
+    for (const locName of sp.locations || []) {
+      if (!locByName.has(locName)) {
+        const created = await apiPost(apiBase, token, "/api/space/createLocation", {
+          spaceId: space._id || space.id,
+          name: locName,
+        });
+        locByName.set(locName, created);
+      }
+    }
+    space._locByName = locByName;
+  }
+
+  // refresh spaces with locations
+  for (const [name, space] of spaceByName) {
+    if (space._locByName) continue;
+    const locs = await apiPost(apiBase, token, "/api/space/listLocations", {
+      spaceId: space._id || space.id,
+    });
+    space._locByName = new Map((locs?.list || []).map((l) => [l.name, l]));
+    spaceByName.set(name, space);
+  }
+
+  const tags = await apiPost(apiBase, token, "/api/tag/list", {});
+  const tagByName = new Map((tags?.list || []).map((t) => [t.name, t]));
+  for (const tagName of fx.tags || []) {
+    if (!tagByName.has(tagName)) {
+      const created = await apiPost(apiBase, token, "/api/tag/create", { name: tagName });
+      tagByName.set(tagName, created);
+    }
+  }
+
+  const items = await apiPost(apiBase, token, "/api/item/list", {});
+  const itemList = items?.list || [];
+  const keyOf = (name, spaceId, locationId) =>
+    `${name}\0${spaceId || ""}\0${locationId || ""}`;
+  const itemByKey = new Map(
+    itemList.map((it) => [keyOf(it.name, it.spaceId, it.locationId || ""), it]),
+  );
+
+  let created = 0;
+  let updated = 0;
+  for (const row of fx.items || []) {
+    const space = spaceByName.get(row.spaceName);
+    if (!space) throw new Error(`fixture space missing after ensure: ${row.spaceName}`);
+    const spaceId = space._id || space.id;
+    let locationId = "";
+    if (row.locationName) {
+      const loc = space._locByName?.get(row.locationName);
+      if (!loc) throw new Error(`fixture location missing: ${row.spaceName}/${row.locationName}`);
+      locationId = loc._id || loc.id;
+    }
+    const tagIds = [];
+    for (const tn of row.tagNames || []) {
+      const t = tagByName.get(tn);
+      if (t) tagIds.push(t._id || t.id);
+    }
+    const payload = {
+      name: row.name,
+      quantity: row.quantity,
+      unit: row.unit || "",
+      note: row.note || "",
+      spaceId,
+      locationId: locationId || undefined,
+      tagIds,
+    };
+    if (row.expireDate) payload.expireDate = resolveRelativeDate(row.expireDate);
+    if (row.productionDate) payload.productionDate = resolveRelativeDate(row.productionDate);
+
+    const key = keyOf(row.name, spaceId, locationId);
+    const existing = itemByKey.get(key);
+    if (existing) {
+      await apiPost(apiBase, token, "/api/item/update", {
+        itemId: existing._id || existing.id,
+        quantity: payload.quantity,
+        unit: payload.unit,
+        note: payload.note,
+        spaceId,
+        locationId: locationId || null,
+        tagIds,
+        expireDate: payload.expireDate || null,
+      });
+      updated++;
+    } else {
+      const createdItem = await apiPost(apiBase, token, "/api/item/create", payload);
+      itemByKey.set(key, createdItem?.item || createdItem);
+      created++;
+    }
+  }
+  return { fixtureId, created, updated, spaces: spaceByName.size };
+}
+
+function pickAskAffirm(askList, userText = "", optsCfg = {}) {
+  const forbidden = new Set(optsCfg.forbiddenTools || []);
+  const opts = [];
+  for (const a of askList || []) {
+    for (const o of a?.options || []) {
+      const v = String(o?.value || o?.label || "").trim();
+      if (v) opts.push(v);
+    }
+  }
+  const text = String(userText || "");
+  const deplete = /用完|没了|去掉|删掉|整条删/.test(text);
+  const declineCreate = forbidden.has("item.create") || /没有就算了|先不用记|不用记/.test(text);
+  const softNo = /不用|取消|错了|只是问问|先不改/;
+  // keep "先不记/先不删" only when not depleting; depleting may need "先不记，只看看"
+  const usable = opts.filter((v) => {
+    if (declineCreate && /新记|记一笔|记一条|记到|记 \d/.test(v) && !/先不|不用|算了/.test(v)) {
+      return false;
+    }
+    if (softNo.test(v) && !/看看|还有没有|查/.test(v) && !declineCreate) return false;
+    if (/先不删/.test(v)) return false;
+    return true;
+  });
+  if (declineCreate) {
+    const decline = opts.find((v) => /不用|算了|先不记|先不用|没有就算/.test(v));
+    if (decline) return decline;
+  }
+
+  // delete confirm / undo
+  const del =
+    usable.find((v) => /确认删除|整条删掉|删掉这行/.test(v)) ||
+    usable.find((v) => /撤销|改回/.test(v));
+  if (del) return del;
+
+  if (deplete) {
+    const see = usable.find((v) => /还有没有|看看家里|查/.test(v));
+    if (see) return see;
+    const rm = usable.find((v) => /删|去掉|销账|用完了，记 0/.test(v));
+    if (rm) return rm;
+  }
+
+  const affirm = usable.find((v) => /确认|好的|对，|是的|就这样/.test(v) && !/先不/.test(v));
+  if (affirm) return affirm;
+
+  // expire / probe chips
+  const probeChip = usable.find((v) => /看看快过期|查家里|查冰箱|临期|过期情况|库存和到期/.test(v));
+  if (probeChip) return probeChip;
+
+  // place hints from user utterance
+  if (/冰箱/.test(text)) {
+    const hit =
+      usable.find((v) => /厨房/.test(v) && /冰箱/.test(v) && /加到|新记/.test(v)) ||
+      usable.find((v) => /冰箱/.test(v) && /加到|新记/.test(v));
+    if (hit) return hit;
+  }
+  if (/厨房/.test(text)) {
+    const hit = usable.find((v) => /厨房/.test(v) && /加到|新记|记到/.test(v));
+    if (hit) return hit;
+  }
+
+  // shopping / add ambiguity: prefer merge-into-existing, then create (not when depleting)
+  if (!deplete) {
+    const add = usable.find((v) => /加到|并进/.test(v));
+    if (add) return add;
+    const create = usable.find((v) => /新记|新开|记到|记一笔/.test(v));
+    if (create) return create;
+  }
+
+  return usable[0] || null;
+}
+
+function sleep(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+async function callAct(actUrl, token, text, history, opts = {}) {
+  const headers = { "Content-Type": "application/json" };
+  if (token) headers["X-HS-Token"] = token;
+  const post = async (body) => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await fetch(actUrl, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => ({}));
+      const code = json?.error?.code || json?.code || "";
+      if (code === "RATE_LIMITED" && attempt < 3) {
+        const wait = 15000 * (attempt + 1);
+        console.warn(`rate limited, retry in ${wait}ms…`);
+        await sleep(wait);
+        continue;
+      }
+      return { httpStatus: res.status, body: json };
+    }
+    return { httpStatus: 429, body: { ok: false, error: { code: "RATE_LIMITED" } } };
+  };
+
+  let { httpStatus, body } = await post({ text, history });
+  let data = body?.data ?? body;
+  const turns = [{ httpStatus, body }];
+
+  // confirm gate: execute once
+  if (data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
+    const again = await post({
+      text,
+      history,
+      confirmed: true,
+      calls: data.calls,
+    });
+    turns.push(again);
+    httpStatus = again.httpStatus;
+    body = again.body;
+    data = body?.data ?? body;
+  }
+
+  // ask chip follow (eval harness only); up to 3 clarifying rounds
+  let hist = Array.isArray(history) ? [...history] : [];
+  let currentText = text;
+  for (let round = 0; opts.followAsk && round < 3; round++) {
+    data = body?.data ?? body;
+    if (data?.status !== "ask" || !Array.isArray(data.ask) || !data.ask.length) break;
+    const pick = pickAskAffirm(data.ask, text, opts);
+    if (!pick) break;
+    hist = [
+      ...hist,
+      { role: "user", text: currentText },
+      {
+        role: "assistant",
+        text: String(data.ask[0]?.question || data.lead || "请确认"),
+      },
+    ];
+    currentText = pick;
+    const again = await post({ text: pick, history: hist });
+    turns.push(again);
+    httpStatus = again.httpStatus;
+    body = again.body;
+    data = body?.data ?? body;
+    if (data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
+      const done = await post({
+        text: pick,
+        history: hist,
+        confirmed: true,
+        calls: data.calls,
+      });
+      turns.push(done);
+      httpStatus = done.httpStatus;
+      body = done.body;
+      break;
+    }
+  }
+
+  return { httpStatus, body, turns };
 }
 
 function writeSummary(runDir, meta, results) {
@@ -312,8 +678,34 @@ async function main() {
     copiedAt: new Date().toISOString(),
     mode,
     actUrl: mode === "act" ? args.actUrl : undefined,
+    apiBase: mode === "act" ? args.apiBase : undefined,
   };
   fs.writeFileSync(path.join(runDir, "plan.json"), JSON.stringify(planSnap, null, 2) + "\n");
+
+  if (mode === "act" && args.token && !args.skipFixture) {
+    const fixtureIds = new Set();
+    for (const id of caseIds) {
+      const fx = bank.get(id)?.case?.setup?.fixture;
+      if (fx) fixtureIds.add(fx);
+    }
+    const fixtureLog = [];
+    for (const fxId of fixtureIds) {
+      try {
+        const info = await applyFixture(args.apiBase, args.token, fxId);
+        fixtureLog.push(info);
+        console.log(
+          `fixture ${fxId}: created=${info.created} updated=${info.updated} spaces=${info.spaces}`,
+        );
+      } catch (e) {
+        console.error(`fixture ${fxId} failed:`, e?.message || e);
+        throw e;
+      }
+    }
+    fs.writeFileSync(
+      path.join(runDir, "fixture.json"),
+      JSON.stringify({ applied: fixtureLog, at: new Date().toISOString() }, null, 2) + "\n",
+    );
+  }
 
   const results = [];
   for (const id of caseIds) {
@@ -348,20 +740,50 @@ async function main() {
         };
       } else {
         try {
-          const { httpStatus, body } = await callAct(
+          const toolNeed = [
+            ...(caze.expected?.requiredTools || []),
+            ...(caze.expected?.requiredToolsAny || []),
+          ];
+          const forbidden = caze.expected?.forbiddenTools || [];
+          const asksOnly =
+            caze.expected?.mustAsk &&
+            !caze.expected?.mustProbe &&
+            toolNeed.length === 0 &&
+            forbidden.some((t) => /^(item)\.(create|update|remove)/.test(t));
+          const followAsk =
+            !asksOnly &&
+            Boolean(
+              caze.expected?.mustProbe ||
+                toolNeed.some((t) =>
+                  /^(item|space|tag|habit)\.(create|update|remove|upsert|search|listExpiring|stats)/.test(
+                    t,
+                  ),
+                ),
+            );
+          const { httpStatus, body, turns } = await callAct(
             args.actUrl,
             args.token,
             dialogue.text,
             dialogue.history,
+            {
+              followAsk,
+              forbiddenTools: caze.expected?.forbiddenTools || [],
+            },
           );
           const data = body?.data ?? body;
-          const tools = collectToolsFromActPayload(data);
-          const actual = { dialogue, httpStatus, act: data, tools, envelope: body };
+          let tools = collectToolsFromActPayload(data);
+          for (const t of turns || []) {
+            tools.push(...collectToolsFromActPayload(t?.body?.data ?? t?.body));
+          }
+          const actual = { dialogue, httpStatus, act: data, tools: [], envelope: body, turns };
+          tools = enrichActTools(data, [...new Set(tools)], actual);
+          actual.tools = tools;
           result = judgeExpected(caze, actual, "act");
           if (httpStatus >= 400 || body?.ok === false) {
             result.status = "fail";
             result.notes = `act HTTP ${httpStatus} code=${body?.error?.code || body?.code || ""}`;
           }
+          await sleep(Number(process.env.HS_EVAL_GAP_MS || 1200));
         } catch (e) {
           result = {
             id,

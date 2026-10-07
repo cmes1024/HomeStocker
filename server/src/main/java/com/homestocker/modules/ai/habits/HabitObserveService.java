@@ -185,15 +185,13 @@ public class HabitObserveService {
   private static List<Map<String, Object>> topNamePlaces(List<Map<String, Object>> rows) {
     Map<String, Counter> map = new HashMap<>();
     for (Map<String, Object> row : rows) {
-      String name = str(row.get("itemName"));
-      if (name.isEmpty()) {
-        name = str(row.get("name"));
-      }
-      String space = str(row.get("spaceName"));
+      String rawName = str(row.get("itemName"));
+      final String name = rawName.isEmpty() ? str(row.get("name")) : rawName;
+      final String space = str(row.get("spaceName"));
       if (name.isEmpty() || space.isEmpty()) {
         continue;
       }
-      String loc = str(row.get("locationName"));
+      final String loc = str(row.get("locationName"));
       String key = name + "\0" + space + "\0" + loc;
       Counter c = map.computeIfAbsent(key, k -> new Counter(name, space, loc));
       c.count++;
@@ -223,11 +221,9 @@ public class HabitObserveService {
   private static List<Map<String, Object>> topUnits(List<Map<String, Object>> rows) {
     Map<String, UnitCounter> map = new HashMap<>();
     for (Map<String, Object> row : rows) {
-      String name = str(row.get("itemName"));
-      if (name.isEmpty()) {
-        name = str(row.get("name"));
-      }
-      String unit = str(row.get("unit"));
+      String rawName = str(row.get("itemName"));
+      final String name = rawName.isEmpty() ? str(row.get("name")) : rawName;
+      final String unit = str(row.get("unit"));
       if (name.isEmpty() || unit.isEmpty()) {
         continue;
       }

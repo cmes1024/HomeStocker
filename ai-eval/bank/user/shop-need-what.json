@@ -12,6 +12,10 @@
   "prompt": "家里缺啥",
   "expected": {
     "outcome": "「缺啥」很宽：可先问指哪类，或结合临期/少货提示；别空口列购物清单装全知",
-    "mustAsk": true
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.stats",
+      "item.search"
+    ]
   }
 }
