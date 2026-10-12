@@ -1,18 +1,10 @@
 <view class="composer {{keyboardOpen ? 'keyboard-open' : ''}}">
   <view class="mode {{loading ? 'is-disabled' : ''}}" hover-class="mode-hover" bind:tap="onToggleVoice">
-    <view wx:if="{{voiceMode}}" class="ico-kb">
-      <view class="ico-kb-keys">
-        <view class="ico-kb-key"></view>
-        <view class="ico-kb-key"></view>
-        <view class="ico-kb-key"></view>
-      </view>
-      <view class="ico-kb-space"></view>
-    </view>
-    <view wx:else class="ico-mic">
-      <view class="ico-mic-head"></view>
-      <view class="ico-mic-arc"></view>
-      <view class="ico-mic-stem"></view>
-    </view>
+    <image
+      class="mode-icon"
+      src="{{voiceMode ? keyboardIcon : voiceIcon}}"
+      mode="aspectFit"
+    />
   </view>
   <view
     wx:if="{{voiceMode}}"

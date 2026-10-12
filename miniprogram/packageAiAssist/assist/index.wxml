@@ -272,6 +272,7 @@
 
     <ChatComposer
       value="{{text}}"
+      theme-color="{{theme.themeColor}}"
       loading="{{loading}}"
       placeholder="{{copy.placeholder}}"
       send-label="{{copy.send}}"

@@ -1,5 +1,25 @@
 const copy = require('../../../utils/copy')
+const { getAppTheme } = require('../../../utils/theme')
 const { getManager } = require('../../utils/speech')
+const icons = require('./icons')
+
+function resolveThemeColor(color) {
+  const raw = String(color || '').trim()
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(raw)) return raw
+  const theme = getAppTheme()
+  const fromTheme = theme && (theme.themeColor || theme.primary)
+  if (/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(String(fromTheme || ''))) {
+    return fromTheme
+  }
+  return '#C4A484'
+}
+
+function tintSvg(svg, color) {
+  const fill = resolveThemeColor(color)
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
+    svg.replace(/fill="#[0-9A-Fa-f]+"/g, `fill="${fill}"`)
+  )}`
+}
 
 Component({
   properties: {
@@ -26,11 +46,17 @@ Component({
     sendingLabel: {
       type: String,
       value: '…'
+    },
+    themeColor: {
+      type: String,
+      value: ''
     }
   },
 
   data: {
     copy: copy.assist,
+    voiceIcon: '',
+    keyboardIcon: '',
     voiceMode: false,
     recording: false,
     voiceCancel: false,
@@ -46,6 +72,7 @@ Component({
       this._draft = ''
       this._seenValue = ''
       this.setData({ inputHeight: this._minH })
+      this.syncModeIcons()
       this._onKeyboardHeight = (res) => {
         this.emitKeyboard(Math.max(0, Number((res && res.height) || 0)))
       }
@@ -67,6 +94,9 @@ Component({
   },
 
   observers: {
+    themeColor() {
+      this.syncModeIcons()
+    },
     value(next) {
       const text = String(next || '')
       const fromInput = this._fromInput
@@ -86,6 +116,14 @@ Component({
   },
 
   methods: {
+    syncModeIcons() {
+      const color = this.data.themeColor
+      const voiceIcon = tintSvg(icons.yuyin, color)
+      const keyboardIcon = tintSvg(icons.jianpan, color)
+      if (voiceIcon === this.data.voiceIcon && keyboardIcon === this.data.keyboardIcon) return
+      this.setData({ voiceIcon, keyboardIcon })
+    },
+
     isDevtools() {
       if (this._devtools != null) return this._devtools
       let platform = ''

@@ -31,68 +31,9 @@
   opacity: 0.55;
 }
 
-.ico-mic {
-  width: 40rpx;
-  height: 44rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.ico-mic-head {
-  width: 16rpx;
-  height: 22rpx;
-  border: 3rpx solid #1a1a1a;
-  border-radius: 10rpx;
-  box-sizing: border-box;
-}
-
-.ico-mic-arc {
-  width: 26rpx;
-  height: 14rpx;
-  margin-top: -6rpx;
-  border: 3rpx solid #1a1a1a;
-  border-top: none;
-  border-radius: 0 0 16rpx 16rpx;
-  box-sizing: border-box;
-}
-
-.ico-mic-stem {
-  width: 3rpx;
-  height: 8rpx;
-  background: #1a1a1a;
-}
-
-.ico-kb {
-  width: 40rpx;
-  height: 30rpx;
-  border: 3rpx solid #1a1a1a;
-  border-radius: 6rpx;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4rpx;
-}
-
-.ico-kb-keys {
-  display: flex;
-  gap: 4rpx;
-}
-
-.ico-kb-key {
-  width: 6rpx;
-  height: 4rpx;
-  border-radius: 1rpx;
-  background: #1a1a1a;
-}
-
-.ico-kb-space {
-  width: 18rpx;
-  height: 4rpx;
-  border-radius: 1rpx;
-  background: #1a1a1a;
+.mode-icon {
+  width: 48rpx;
+  height: 48rpx;
 }
 
 .hold {
