@@ -3,8 +3,8 @@
 # 同步 server/ 源码，只重建并重启 api。数据库、Redis、图片都留在原数据卷里。
 # 新的 Flyway 脚本会在接口启动时自动执行。
 #
+# 会用本机 server/.env 覆盖服务器上的同名文件（微信登录、额度、图片地址等）。
 # 不会覆盖服务器上已改过的这些文件：
-#   .env                  微信密钥、公开图片地址
 #   docker-compose.yml    端口只绑 127.0.0.1，Redis 宿主机端口 6380
 #   Dockerfile.minio      MinIO 安装包走国内镜像
 #
@@ -20,7 +20,6 @@ HEALTH_URL="${HOMESTOCKER_HEALTH_URL:-https://hs.zfqwjs.com/api/health}"
 echo "同步源码到 ${HOST}:${REMOTE_DIR}"
 rsync -av \
   --exclude 'target' \
-  --exclude '.env' \
   --exclude 'docker-compose.yml' \
   --exclude 'Dockerfile.minio' \
   "${ROOT}/server/" "${HOST}:${REMOTE_DIR}/"
@@ -31,7 +30,7 @@ set -euo pipefail
 REMOTE_DIR="$1"
 HEALTH_URL="$2"
 cd "$REMOTE_DIR"
-docker compose up -d --build --no-deps --pull never api
+docker compose up -d --build --no-deps --force-recreate --pull never api
 for _ in $(seq 1 24); do
   if curl -fsS "$HEALTH_URL"; then
     echo

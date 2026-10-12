@@ -9,10 +9,10 @@
  */
 module.exports = {
   /** 产品名（导航栏 / 分享 / 首页标题） */
-  appName: '存哪儿',
+  appName: '物资仓库',
 
   /** 与 project.config.json → appid 保持一致 */
-  appId: 'wx599f764a8cc49d9d',
+  appId: 'wxb540e86bda9179c5',
 
   /** 默认分享 */
   share: {

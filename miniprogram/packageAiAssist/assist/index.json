@@ -3,6 +3,7 @@
   "disableScroll": true,
   "usingComponents": {
     "AppShell": "/components/AppShell/index",
-    "loading": "/components/loading/index"
+    "loading": "/components/loading/index",
+    "ChatComposer": "../components/ChatComposer/index"
   }
 }

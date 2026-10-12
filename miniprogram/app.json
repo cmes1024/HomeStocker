@@ -67,7 +67,7 @@
   },
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "存哪儿",
+    "navigationBarTitleText": "物资仓库",
     "navigationBarBackgroundColor": "#ffffff",
     "navigationStyle": "custom"
   },
@@ -79,5 +79,16 @@
   "workers": "workers",
   "useExtendedLib": {
     "weui": true
+  },
+  "permission": {
+    "scope.record": {
+      "desc": "用语音告诉管家家里有什么"
+    }
+  },
+  "plugins": {
+    "WechatSI": {
+      "version": "0.3.1",
+      "provider": "wx069ba97219f66d99"
+    }
   }
 }

@@ -1,0 +1,65 @@
+<view class="composer {{keyboardOpen ? 'keyboard-open' : ''}}">
+  <view class="mode {{loading ? 'is-disabled' : ''}}" hover-class="mode-hover" bind:tap="onToggleVoice">
+    <view wx:if="{{voiceMode}}" class="ico-kb">
+      <view class="ico-kb-keys">
+        <view class="ico-kb-key"></view>
+        <view class="ico-kb-key"></view>
+        <view class="ico-kb-key"></view>
+      </view>
+      <view class="ico-kb-space"></view>
+    </view>
+    <view wx:else class="ico-mic">
+      <view class="ico-mic-head"></view>
+      <view class="ico-mic-arc"></view>
+      <view class="ico-mic-stem"></view>
+    </view>
+  </view>
+  <view
+    wx:if="{{voiceMode}}"
+    class="hold {{loading ? 'is-disabled' : ''}}"
+    hover-class="none"
+    catchtouchstart="onHoldStart"
+    catchtouchmove="onHoldMove"
+    catchtouchend="onHoldEnd"
+    catchtouchcancel="onHoldCancel"
+  >{{copy.voiceHold}}</view>
+  <textarea
+    wx:elif="{{fieldOn}}"
+    class="input"
+    style="height: {{inputHeight}}px;"
+    value="{{value}}"
+    placeholder="{{placeholder}}"
+    placeholder-class="input-placeholder"
+    maxlength="{{maxlength}}"
+    confirm-type="send"
+    show-confirm-bar="{{false}}"
+    hold-keyboard="{{true}}"
+    adjust-position="{{false}}"
+    cursor-spacing="24"
+    disable-default-padding="{{true}}"
+    disabled="{{loading}}"
+    bindinput="onTextInput"
+    bindlinechange="onInputLineChange"
+    bindconfirm="onConfirm"
+    bindblur="onBlur"
+    bindkeyboardheightchange="onKeyboardHeightChange"
+  />
+  <view
+    wx:if="{{!voiceMode && value}}"
+    class="send theme-btn {{loading ? 'is-disabled' : ''}}"
+    bind:tap="onSendTap"
+  >{{loading ? sendingLabel : sendLabel}}</view>
+  <view class="voice-pop {{recording ? 'is-show' : ''}}">
+    <view class="voice-panel {{voiceCancel ? 'is-cancel' : ''}}">
+      <view class="voice-bars">
+        <view
+          wx:for="{{voiceBars}}"
+          wx:key="*this"
+          class="voice-bar"
+          style="animation-delay: {{item * 0.12}}s;"
+        ></view>
+      </view>
+      <view class="voice-hint">{{voiceCancel ? copy.voiceSlideCancel : copy.voiceSlideHint}}</view>
+    </view>
+  </view>
+</view>

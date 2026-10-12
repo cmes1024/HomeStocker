@@ -23,7 +23,7 @@
   </view>
 
   <view
-    class="chat {{keyboardHeight ? 'keyboard-open' : ''}}"
+    class="chat"
     style="padding-bottom: {{keyboardHeight}}px;"
     wx:elif="{{!booting}}"
   >
@@ -270,32 +270,16 @@
       <view id="msg-bottom" class="msg-tail"></view>
     </scroll-view>
 
-    <view class="composer">
-      <textarea
-        wx:if="{{composerOn}}"
-        class="input"
-        style="height: {{inputHeight}}px;"
-        value="{{text}}"
-        placeholder="{{copy.placeholder}}"
-        placeholder-class="input-placeholder"
-        maxlength="500"
-        confirm-type="send"
-        show-confirm-bar="{{false}}"
-        hold-keyboard="{{true}}"
-        adjust-position="{{false}}"
-        cursor-spacing="24"
-        disable-default-padding="{{true}}"
-        disabled="{{loading}}"
-        bindinput="onTextInput"
-        bindlinechange="onInputLineChange"
-        bindconfirm="onSend"
-        bindblur="onComposerBlur"
-        bindkeyboardheightchange="onKeyboardHeightChange"
-      />
-      <view
-        class="send theme-btn {{loading || !text ? 'is-disabled' : ''}}"
-        bind:tap="onSend"
-      >{{loading ? copy.sendingShort : copy.send}}</view>
-    </view>
+    <ChatComposer
+      value="{{text}}"
+      loading="{{loading}}"
+      placeholder="{{copy.placeholder}}"
+      send-label="{{copy.send}}"
+      sending-label="{{copy.sendingShort}}"
+      bind:input="onTextInput"
+      bind:send="onSend"
+      bind:keyboardheight="onKeyboardHeightChange"
+      bind:blur="onComposerBlur"
+    />
   </view>
 </AppShell>

@@ -374,7 +374,6 @@ Page({
     booting: true,
     fatalError: '',
     text: '',
-    inputHeight: 36,
     originalText: '',
     askRound: 0,
     noKey: false,
@@ -384,7 +383,6 @@ Page({
     messages: [],
     pendingCalls: [],
     scrollIntoView: '',
-    composerOn: true,
     keyboardHeight: 0,
     transcriptCapped: false,
     canClear: false,
@@ -399,18 +397,10 @@ Page({
     this._pendingId = ''
     this._submitting = false
     this._familyId = ''
-    this.initComposerMetrics()
-    this._onKeyboardHeight = (res) => {
-      this.applyKeyboardHeight(Math.max(0, Number((res && res.height) || 0)))
-    }
-    if (typeof wx.onKeyboardHeightChange === 'function') {
-      wx.onKeyboardHeightChange(this._onKeyboardHeight)
-    }
     bindThemeToPage(this, {
       headerTitle: copy.assist.pageTitle,
       focusItemId,
-      messages,
-      inputHeight: this._composerMinH
+      messages
     })
   },
 
@@ -444,10 +434,6 @@ Page({
   },
 
   onUnload() {
-    if (this._onKeyboardHeight && typeof wx.offKeyboardHeightChange === 'function') {
-      wx.offKeyboardHeightChange(this._onKeyboardHeight)
-    }
-    this._onKeyboardHeight = null
     this.applyKeyboardHeight(0)
   },
 
@@ -534,7 +520,6 @@ Page({
       draft: null,
       originalText: '',
       text: '',
-      inputHeight: this._composerMinH || this.data.inputHeight,
       scrollIntoView: ''
     })
     wx.showToast({ title: copy.assist.clearedToast, icon: 'none' })
@@ -545,21 +530,6 @@ Page({
     const prev = this.data.loadingColors
     if (prev && prev[0] === color && prev[1] === color) return
     this.setData({ loadingColors: [color, color] })
-  },
-
-  /** 聊天输入框：1 行起、最多约 5 行后内部滚动（对齐微信会话） */
-  initComposerMetrics() {
-    const win =
-      typeof wx.getWindowInfo === 'function'
-        ? wx.getWindowInfo()
-        : wx.getSystemInfoSync()
-    const rpx = (Number(win.windowWidth) || 375) / 750
-    this._composerPadPx = Math.round(32 * rpx)
-    this._composerLinePx = Math.round(40 * rpx)
-    this._composerMaxLines = 5
-    this._composerMinH = this._composerPadPx + this._composerLinePx
-    this._composerMaxH =
-      this._composerPadPx + this._composerLinePx * this._composerMaxLines
   },
 
   nextId() {
@@ -611,24 +581,7 @@ Page({
   },
 
   onTextInput(e) {
-    const text = (e.detail && e.detail.value) || ''
-    const patch = { text }
-    if (!String(text).trim()) {
-      const minH = this._composerMinH
-      if (minH && this.data.inputHeight !== minH) patch.inputHeight = minH
-    }
-    this.setData(patch)
-  },
-
-  onInputLineChange(e) {
-    const lineCount = Math.max(1, Number((e && e.detail && e.detail.lineCount) || 1))
-    const maxLines = this._composerMaxLines || 5
-    const pad = this._composerPadPx || 0
-    const line = this._composerLinePx || 20
-    const lines = Math.min(lineCount, maxLines)
-    const next = pad + line * lines
-    if (next === this.data.inputHeight) return
-    this.setData({ inputHeight: next })
+    this.setData({ text: (e.detail && e.detail.value) || '' })
   },
 
   onRetry() {
@@ -644,8 +597,13 @@ Page({
   },
 
   onSend(e) {
-    const typed = e && e.detail && typeof e.detail.value === 'string' ? e.detail.value : undefined
-    this.submit({ resetRound: true, text: typed })
+    const detail = (e && e.detail) || {}
+    const typed = typeof detail.text === 'string' ? detail.text : undefined
+    this.submit({
+      resetRound: true,
+      text: typed,
+      keepDraft: detail.source === 'voice'
+    })
   },
 
   onPickChip(e) {
@@ -842,15 +800,11 @@ Page({
           loading: true,
           fatalError: '',
           noKey: false,
-          text: '',
-          inputHeight: this._composerMinH || this.data.inputHeight,
-          composerOn: false,
+          text: options.keepDraft ? String(this.data.text || '') : '',
           originalText: resetRound ? actText : this.data.originalText || actText,
           messages
         },
-        () => {
-          this.setData({ composerOn: true }, resolve)
-        }
+        resolve
       )
     })
     this.persistTranscript()

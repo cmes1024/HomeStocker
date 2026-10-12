@@ -430,59 +430,6 @@
   height: 8rpx;
 }
 
-.composer {
-  display: flex;
-  align-items: flex-end;
-  gap: 12rpx;
-  flex-shrink: 0;
-  margin: 0 -32rpx;
-  padding: 16rpx 32rpx calc(16rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.96);
-  box-sizing: border-box;
-}
-
-/* 键盘弹出时由 chat 的 padding-bottom 顶起输入栏，去掉底部安全区避免空隙过大 */
-.chat.keyboard-open .composer {
-  padding-bottom: 16rpx;
-}
-
-.input {
-  flex: 1;
-  min-width: 0;
-  min-height: 72rpx;
-  max-height: 232rpx;
-  padding: 16rpx 24rpx;
-  border-radius: 16rpx;
-  background: rgba(26, 26, 26, 0.04);
-  font-size: 28rpx;
-  line-height: 40rpx;
-  color: #1a1a1a;
-  box-sizing: border-box;
-  overflow-y: auto;
-}
-
-.input-placeholder {
-  color: rgba(26, 26, 26, 0.35);
-  font-size: 28rpx;
-  line-height: 40rpx;
-}
-
-.send {
-  flex-shrink: 0;
-  min-width: 120rpx;
-  text-align: center;
-  padding: 16rpx 28rpx;
-  margin-bottom: 4rpx;
-  border-radius: 999rpx;
-  color: #fff;
-  font-size: 26rpx;
-  font-weight: 600;
-}
-
-.send.is-disabled {
-  opacity: 0.45;
-}
-
 .state {
   text-align: center;
   padding: 96rpx 32rpx;
