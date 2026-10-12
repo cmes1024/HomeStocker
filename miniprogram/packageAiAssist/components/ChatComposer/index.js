@@ -21,6 +21,38 @@ function tintSvg(svg, color) {
   )}`
 }
 
+function fract(n) {
+  return n - Math.floor(n)
+}
+
+const WAVE_BARS = 56
+
+function prepareWaveSeeds(count) {
+  const seeds = []
+  for (let i = 0; i < count; i++) {
+    const x = count <= 1 ? 0.5 : i / (count - 1)
+    seeds.push({
+      x,
+      u1: fract(Math.sin(i * 12.9898 + 78.233) * 43758.5453),
+      u2: fract(Math.sin(i * 93.989 + 11.13) * 24634.6345)
+    })
+  }
+  return seeds
+}
+
+function sampleVoiceBars(phase, seeds) {
+  const bars = new Array(seeds.length)
+  for (let i = 0; i < seeds.length; i++) {
+    const s = seeds[i]
+    const pulse = Math.pow(Math.abs(Math.sin(phase * (0.9 + s.u1 * 1.8) + s.u2 * 6.28318)), 0.72)
+    const drift = 0.28 + 0.72 * (0.5 + 0.5 * Math.sin(s.x * 9.5 + phase * 0.85 + s.u1))
+    const edge = 0.7 + 0.3 * Math.sin(Math.PI * s.x)
+    const level = edge * drift * (0.06 + 0.94 * pulse)
+    bars[i] = Math.round(6 + level * 100)
+  }
+  return bars
+}
+
 Component({
   properties: {
     value: {
@@ -60,7 +92,7 @@ Component({
     voiceMode: false,
     recording: false,
     voiceCancel: false,
-    voiceBars: [0, 1, 2, 3, 4, 5, 6],
+    voiceBars: [],
     fieldOn: true,
     inputHeight: 36,
     keyboardOpen: false
@@ -68,10 +100,12 @@ Component({
 
   lifetimes: {
     attached() {
+      this._alive = true
       this.initMetrics()
+      this.prepareWave()
       this._draft = ''
       this._seenValue = ''
-      this.setData({ inputHeight: this._minH })
+      this.setData({ inputHeight: this._minH, voiceBars: sampleVoiceBars(0, this._waveSeeds) })
       this.syncModeIcons()
       this._onKeyboardHeight = (res) => {
         this.emitKeyboard(Math.max(0, Number((res && res.height) || 0)))
@@ -81,6 +115,8 @@ Component({
       }
     },
     detached() {
+      this._alive = false
+      this.stopWave()
       this.stopSpeech()
       this.unbindKeyboard()
     }
@@ -96,6 +132,10 @@ Component({
   observers: {
     themeColor() {
       this.syncModeIcons()
+    },
+    recording(active) {
+      if (active) this.startWave()
+      else this.stopWave()
     },
     value(next) {
       const text = String(next || '')
@@ -136,6 +176,31 @@ Component({
       }
       this._devtools = platform === 'devtools'
       return this._devtools
+    },
+
+    prepareWave() {
+      this._waveSeeds = prepareWaveSeeds(WAVE_BARS)
+    },
+
+    startWave() {
+      this.stopWave()
+      if (!this._waveSeeds || !this._waveSeeds.length) this.prepareWave()
+      let phase = 0
+      const tick = () => {
+        if (!this._alive || !this.data.recording) {
+          this.stopWave()
+          return
+        }
+        phase += 0.24
+        this.setData({ voiceBars: sampleVoiceBars(phase, this._waveSeeds) })
+      }
+      this._waveTimer = setInterval(tick, 100)
+    },
+
+    stopWave() {
+      if (!this._waveTimer) return
+      clearInterval(this._waveTimer)
+      this._waveTimer = null
     },
 
     initMetrics() {
