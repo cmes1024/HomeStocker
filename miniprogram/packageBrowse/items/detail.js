@@ -9,6 +9,11 @@ const {
   resolveDisplayUrls,
   previewEntityImages
 } = require('../../utils/cloudImage')
+const {
+  FALLBACK_HEIGHT_RPX,
+  PORTRAIT_HEIGHT_RPX,
+  photoStageHeightForSet
+} = require('../../utils/photoStage')
 const copy = require('../../utils/copy')
 
 const ITEM_COMPARE_KEYS = [
@@ -72,6 +77,38 @@ function imageIdsKey(item) {
   return itemImageFileIDs(item).join(',')
 }
 
+function orientedSize(res) {
+  let width = Number(res && res.width) || 0
+  let height = Number(res && res.height) || 0
+  const orientation = String((res && res.orientation) || '')
+  if (
+    orientation === 'left' ||
+    orientation === 'right' ||
+    orientation === 'left-mirrored' ||
+    orientation === 'right-mirrored'
+  ) {
+    const swap = width
+    width = height
+    height = swap
+  }
+  if (!width || !height) return null
+  return { width, height }
+}
+
+function readImageSize(src) {
+  return new Promise((resolve) => {
+    if (!src) {
+      resolve(null)
+      return
+    }
+    wx.getImageInfo({
+      src,
+      success: (res) => resolve(orientedSize(res)),
+      fail: () => resolve(null)
+    })
+  })
+}
+
 function itemCoreEqual(a, b) {
   if (!a || !b) return false
   for (let i = 0; i < ITEM_COMPARE_KEYS.length; i++) {
@@ -117,7 +154,8 @@ Page({
     loadingColors: ['#C4A484', '#8B6914'],
     imageSrc: '',
     imageSrcs: [],
-    imageCurrent: 0
+    imageCurrent: 0,
+    photoHeight: FALLBACK_HEIGHT_RPX
   },
 
   onLoad(options) {
@@ -221,6 +259,13 @@ Page({
     patch.imageSrc = fileIDs[0] || ''
     patch.imageSrcs = fileIDs
     patch.imageCurrent = 0
+    if (imageIdsKey(item) !== imageIdsKey(this.data.item)) {
+      const photoHeight = fileIDs.length ? PORTRAIT_HEIGHT_RPX : FALLBACK_HEIGHT_RPX
+      this._photoSizes = []
+      this._appliedPhotoHeight = photoHeight
+      this._photoMeasureSeq = (this._photoMeasureSeq || 0) + 1
+      patch.photoHeight = photoHeight
+    }
     this.setData(patch)
     this.syncLoadingColors()
     this.hydrateImageSrcs(fileIDs)
@@ -236,14 +281,36 @@ Page({
       next.imageCurrent = 0
     }
     this.setData(next)
+    this.measurePhotoStage(urls)
+  },
+
+  async measurePhotoStage(urls) {
+    if (!urls || !urls.length) return
+    const seq = (this._photoMeasureSeq || 0) + 1
+    this._photoMeasureSeq = seq
+    const sizes = await Promise.all(urls.map((src) => readImageSize(src)))
+    if (seq !== this._photoMeasureSeq) return
+    const prev = this._photoSizes || []
+    this._photoSizes = sizes.map((size, index) => size || prev[index] || null)
+    this.applyPhotoStage()
+  },
+
+  applyPhotoStage() {
+    const photoHeight = photoStageHeightForSet(this._photoSizes)
+    const current =
+      this._appliedPhotoHeight == null ? this.data.photoHeight : this._appliedPhotoHeight
+    if (photoHeight === current) return
+    this._appliedPhotoHeight = photoHeight
+    this.setData({ photoHeight })
   },
 
   onSwiperChange(e) {
     const current = Number(e.detail && e.detail.current) || 0
     const src = (this.data.imageSrcs || [])[current] || ''
-    if (current === this.data.imageCurrent && src === this.data.imageSrc) return
-    const patch = { imageCurrent: current }
-    if (src) patch.imageSrc = src
+    const patch = {}
+    if (current !== this.data.imageCurrent) patch.imageCurrent = current
+    if (src && src !== this.data.imageSrc) patch.imageSrc = src
+    if (!Object.keys(patch).length) return
     this.setData(patch)
   },
 

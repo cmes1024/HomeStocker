@@ -31,6 +31,7 @@
         <swiper
           wx:if="{{imageSrcs.length}}"
           class="detail-photo-wrap"
+          style="height: {{photoHeight}}rpx;"
           current="{{imageCurrent}}"
           indicator-dots="{{imageSrcs.length > 1}}"
           indicator-color="rgba(26, 26, 26, 0.25)"
@@ -42,12 +43,11 @@
           bindchange="onSwiperChange"
         >
           <swiper-item wx:for="{{imageSrcs}}" wx:for-item="src" wx:key="*this">
-            <image
-              class="detail-photo"
-              src="{{src}}"
-              mode="aspectFit"
-              bind:tap="onPreviewImage"
-            />
+            <view class="detail-photo-frame" bind:tap="onPreviewImage">
+              <image class="detail-photo-blur" src="{{src}}" mode="aspectFill" />
+              <view class="detail-photo-dim"></view>
+              <image class="detail-photo" src="{{src}}" mode="aspectFit" />
+            </view>
           </swiper-item>
         </swiper>
         <view class="field">
