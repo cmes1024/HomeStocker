@@ -24,6 +24,8 @@ public class ActPrompt {
   private static final Logger log = LoggerFactory.getLogger(ActPrompt.class);
   private static final int HISTORY_LIMIT = 20;
   private static final int HISTORY_TEXT_MAX = 800;
+  /** 相邻发言超过此时长，视为上一场，仍保留原文，只在中间插入时间间隔。 */
+  static final long SESSION_GAP_MS = 60L * 60L * 1000L;
 
   private final DeepSeekClient deepSeekClient;
   private final ObjectMapper objectMapper;
@@ -83,6 +85,58 @@ public class ActPrompt {
       out.add(turn);
     }
     return truncatePreferReceipts(out, HISTORY_LIMIT);
+  }
+
+  /**
+   * 送模型的消息。间隔超过 {@link #SESSION_GAP_MS} 时插入一条 system 事实，上一场原文仍保留。
+   * 家人这次若接着上一场说，模型还能看见；没接着，则不要把上方当成刚刚发生。
+   */
+  static List<Map<String, String>> historyForModel(List<Map<String, String>> history, long nowMs) {
+    List<Map<String, String>> out = new ArrayList<>();
+    Long prevAt = null;
+    for (Map<String, String> row : history != null ? history : List.<Map<String, String>>of()) {
+      if (row == null) {
+        continue;
+      }
+      Long at = parseAtMs(row.get("at"));
+      if (prevAt != null && at != null && at - prevAt > SESSION_GAP_MS) {
+        out.add(gapNote(prevAt));
+      }
+      out.add(row);
+      if (at != null) {
+        prevAt = at;
+      }
+    }
+    if (prevAt != null && nowMs - prevAt > SESSION_GAP_MS) {
+      out.add(gapNote(prevAt));
+    }
+    return out;
+  }
+
+  private static Map<String, String> gapNote(long previousAtMs) {
+    String when = ShanghaiDates.formatDateTimeMs(previousAtMs);
+    String text =
+        when.isEmpty()
+            ? "时间间隔：此条之前的对话距下一条已超过 1 小时。上方内容不是刚刚发生的；家人这次若接着上一场说，仍以那些内容为准。"
+            : "时间间隔：此条之前的对话结束于 "
+                + when
+                + "，距下一条已超过 1 小时。上方内容不是刚刚发生的；家人这次若接着上一场说，仍以那些内容为准。";
+    Map<String, String> note = new LinkedHashMap<>();
+    note.put("role", "system");
+    note.put("text", text);
+    return note;
+  }
+
+  private static Long parseAtMs(String at) {
+    if (at == null || at.isBlank()) {
+      return null;
+    }
+    try {
+      long ms = Long.parseLong(at.trim());
+      return ms > 0 ? ms : null;
+    } catch (NumberFormatException e) {
+      return null;
+    }
   }
 
   /** 保留合法 epoch ms 字符串，供模型侧打时间前缀；非法则丢弃 */
@@ -262,7 +316,7 @@ public class ActPrompt {
                 key.model(),
                 system,
                 userText,
-                opts.history(),
+                historyForModel(opts.history(), System.currentTimeMillis()),
                 opts.timeoutMs(),
                 opts.maxTokens());
         lastContent = result.content();
@@ -318,7 +372,7 @@ public class ActPrompt {
               key.model(),
               system,
               repairUser,
-              opts.history(),
+              historyForModel(opts.history(), System.currentTimeMillis()),
               opts.timeoutMs(),
               opts.maxTokens());
       String retryContent = retry.content();

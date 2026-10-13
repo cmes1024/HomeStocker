@@ -40,12 +40,23 @@ public final class PresentResolver {
     String source = str(raw.get("source")).trim().toLowerCase(Locale.ROOT);
     List<Map<String, Object>> rowsFromSource = rowsFromSource(source, probeRows, inventoryReport);
     String title = str(raw.get("title")).trim();
+    String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
 
     return switch (type) {
       case "table" -> resolveTable(raw, rowsFromSource, title);
-      case "stats", "stat" -> resolveStatsOrBars("stats", raw, rowsFromSource, inventoryReport, title);
-      case "bars", "bar" -> resolveStatsOrBars("bars", raw, rowsFromSource, inventoryReport, title);
-      case "pie", "donut" -> resolveStatsOrBars("pie", raw, rowsFromSource, inventoryReport, title);
+      case "stats", "stat", "bars", "bar", "pie", "donut" -> {
+        boolean chart =
+            "bars".equals(type) || "bar".equals(type) || "pie".equals(type) || "donut".equals(type);
+        // 没指定分组、也没自带格子时，不把物资行收成空间。已查到的行按清单展示。
+        if (!chart && groupBy.isEmpty() && itemList(raw.get("items")).isEmpty() && !rowsFromSource.isEmpty()) {
+          yield resolveTable(Map.of(), rowsFromSource, title);
+        }
+        String view =
+            "bars".equals(type) || "bar".equals(type)
+                ? "bars"
+                : "pie".equals(type) || "donut".equals(type) ? "pie" : "stats";
+        yield resolveStatsOrBars(view, raw, rowsFromSource, inventoryReport, title);
+      }
       default -> null;
     };
   }
@@ -102,14 +113,11 @@ public final class PresentResolver {
       String title) {
     List<Map<String, Object>> items = itemList(raw.get("items"));
     String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
-    if (groupBy.isEmpty()) {
-      groupBy = "space";
-    }
-    if (items.isEmpty() && !sourceRows.isEmpty()) {
+    if (!groupBy.isEmpty() && items.isEmpty() && !sourceRows.isEmpty()) {
       items = aggregate(sourceRows, groupBy);
     }
-    // item.stats 回执在 stats.buckets，没有 inventory 行；source=inventory 时仍要能画出分布卡
-    if (items.isEmpty()) {
+    // 只取与 groupBy 一致的 stats 桶。未写分组时不从空间桶补格子。
+    if (items.isEmpty() && !groupBy.isEmpty()) {
       items = itemsFromStatsReport(inventoryReport, groupBy);
     }
     if (items.isEmpty()) {
@@ -230,7 +238,6 @@ public final class PresentResolver {
     if (report == null || !(report.get("executed") instanceof List<?> executed)) {
       return List.of();
     }
-    List<Map<String, Object>> best = List.of();
     for (Object rowObj : executed) {
       if (!(rowObj instanceof Map<?, ?> row)) {
         continue;
@@ -268,15 +275,11 @@ public final class PresentResolver {
       if (items.isEmpty()) {
         continue;
       }
-      if (!preferredGroupBy.isEmpty() && preferredGroupBy.equals(groupBy)) {
+      if (preferredGroupBy.equals(groupBy)) {
         return items;
       }
-      if ("space".equals(groupBy) || "tag".equals(groupBy)) {
-        return items;
-      }
-      best = items;
     }
-    return best;
+    return List.of();
   }
 
   private static List<Map<String, Object>> aggregate(

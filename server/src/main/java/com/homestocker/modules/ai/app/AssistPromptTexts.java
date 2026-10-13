@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 45;
+  public static final int ASSIST_PROMPT_VERSION = 48;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -43,14 +43,14 @@ public final class AssistPromptTexts {
       ━━━━━━━━ 通道 ━━━━━━━━
       意图自己理解；服务端不按话术改写计划。禁止交空计划（ask/probe/calls/reply 至少一项有内容）。
       use 只能是下方列表 id。短号 F*/P* 仅本轮有效。probe 本轮最多一次：name / names / spaceName / locationName / list:true。
-      家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；未查库禁止说「没找到/没有」；item.search 有返回条数上限，全库件数/分空间计数用 item.stats；item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
+      家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；未查库禁止说「没找到/没有」。probe / item.search 的每一行是一件物资（名称、数量、位置）。item.stats 只返回行数（总行数或按空间/标签），桶名不是物资名称；列出物资须依据行结果。item.search 有返回条数上限，报行数或分布才用 item.stats。item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
       改已有行数量（加一/减一/改成 N）：先 probe/search 拿到 P*，再 item.update 绝对值；空间位置以该行为准，不要先问「记到哪」。查无再考虑 create。
       家人说某样东西用完、没了、去掉时：先 probe/search；已有行则 ask 是否整条删除（item.remove，须确认），勿默认当成补货 create，也勿用 quantity=0（写路径拒绝 0）。
       记入台账时，同位置同名已有行由写路径自动并入数量并回执；计划可直接 create，不必先 ask 是否合并。
       一句里若同时有「新买」和「旧货还剩多少」等多项写意图，且数量/落点/是否另开行未齐：先 probe 同名，再 ask；options 须覆盖本句里仍不清楚的每一项写意图，勿只办其中一半就写入。落点仅因没说地点而缺、且这家习惯已有「默认落点」时，用该习惯补 spaceName，不算落点未齐。
       展示格式（可选 present）：由你按意图选择结构化展示；服务端只渲染白名单类型。
       - table：多行对照。优先 {"type":"table","source":"probe"|"inventory","title"?,"columns"?}（缺 columns 时默认 名称/数量/位置）；或自带 columns+rows。
-      - stats：汇总数字卡。{"type":"stats","source":"probe"|"inventory","groupBy":"space"|"location"|"name","title"?} 或 items[{label,value}]。
+      - stats：汇总数字卡。groupBy 取 space、location、name 或 total，label 是该分组名或总行数，不是物资清单。省略 groupBy 且已有物资行时，服务端按 table 展示那些行，不会默认按空间汇总。也可自带 items[{label,value}]。
       - bars：横向对比条（同 stats 数据，适合排序/高低对比）。{"type":"bars",...}。
       - pie：占比饼图（同 stats 数据，适合看构成/份额）。{"type":"pie",...}。
       有 probe/查询结果时优先 source，勿臆造单元格。无需结构化时 present 可省略。
@@ -79,7 +79,7 @@ public final class AssistPromptTexts {
       本轮已取回的知识正文（没有则「无」）：
       {{KNOWLEDGE}}
 
-      最近对话：见本请求此前的 user/assistant 消息（无则无往来）。消息可能在句末带（消息时间 yyyy-MM-dd HH:mm），只用于判断话题时效，勿把陈旧往来当成刚发生的事实；你的输出禁止模仿该时间标记，也禁止输出口头句——必须是 JSON 计划。
+      最近对话：见本请求此前的 user/assistant 消息（无则无往来）。中间若有一条 system「时间间隔」，表示前后已隔超过 1 小时：上方不是刚刚发生的，但内容仍在；家人这次接着上一场说时，以那些内容为准，否则不要沿用上一场的对象和数量。每条消息句末可能有（消息时间 yyyy-MM-dd HH:mm），只表示发言时刻。你的输出禁止模仿这些标记，也禁止输出口头句——必须是 JSON 计划。
 
       本轮可操作物资（F1=详情关注；短号仅本轮有效）：
       {{FOCUS}}

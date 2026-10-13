@@ -49,4 +49,22 @@ class PresentResolverStatsTest {
     assertTrue(items.size() >= 3);
     assertEquals("客厅", items.get(0).get("label"));
   }
+
+  @Test
+  void statsWithoutGroupByUsesItemRowsInsteadOfSpaces() {
+    List<Map<String, Object>> rows =
+        List.of(
+            Map.of("name", "牛奶", "quantity", 2, "unit", "瓶", "spaceName", "冰箱"),
+            Map.of("name", "大米", "quantity", 1, "unit", "袋", "spaceName", "仓库"));
+    Map<String, Object> raw = Map.of("type", "stats", "source", "probe", "title", "家里台账");
+
+    Map<String, Object> present = PresentResolver.resolve(raw, rows, Map.of());
+
+    assertNotNull(present);
+    assertEquals("table", present.get("type"));
+    @SuppressWarnings("unchecked")
+    List<List<String>> tableRows = (List<List<String>>) present.get("rows");
+    assertEquals("牛奶", tableRows.get(0).get(0));
+    assertEquals("大米", tableRows.get(1).get(0));
+  }
 }

@@ -64,6 +64,10 @@ public class DeepSeekClient {
       if (content == null || content.isBlank()) {
         continue;
       }
+      if ("system".equals(role)) {
+        messages.addObject().put("role", "system").put("content", text);
+        continue;
+      }
       if (!"user".equals(role) && !"assistant".equals(role)) {
         continue;
       }
