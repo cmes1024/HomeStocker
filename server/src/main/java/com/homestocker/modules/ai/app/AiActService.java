@@ -174,7 +174,7 @@ public class AiActService {
               modelOpts,
               actCtx.system(),
               actCtx.userText()
-                  + "\n（系统：本轮尚无台账事实。查不改数据。禁止问要不要查，禁止编造数量、单位和地点。请先 probe 相关物资；查完再 reply，或只问是否写入。）");
+                  + "\n（系统：本轮尚无台账事实。查不改数据。禁止问要不要查，禁止编造数量、单位和地点。请先 probe 相关物资；查完后对象和要写的内容已经清楚就直接 calls，只有仍不清楚才 ask。）");
       if (askBeforeAnyInventoryFacts(plan, turnRows)) {
         log.warn("act: still asking before facts; list inventory");
         plan = new ActPlan(List.of(), Map.of(), List.of(), "", null);
@@ -207,7 +207,7 @@ public class AiActService {
           actCtx.userText()
               + "\n"
               + probeNote
-              + "\n（系统：上面就是本轮查库结果。禁止再问要不要查，禁止编造数量、单位和地点。reply 说出查到或没查到；若要问，只问是否写入。item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
+              + "\n（系统：上面就是本轮查库结果。禁止再问要不要查，禁止编造数量、单位和地点。纯查询用 reply 说出查到或没查到。要写入且对象、数量、落点已对准：直接 calls，不要再问是否写入；须确认的接口由服务端出确认卡。只有仍对不准才 ask。item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
@@ -378,6 +378,18 @@ public class AiActService {
       bindUnresolvedWritesToProbe(plan, refs, probedRows);
     }
 
+    if (hasUnresolvedItemWrites(plan, actCtx.refs())) {
+      return buildAskResponse(
+          List.of(
+              Map.of(
+                  "question",
+                  "还没法对准要改的那几条，请点一条或说下名称和现在数量～",
+                  "options",
+                  List.of())),
+          actCtx.focus(),
+          probedRows.isEmpty() ? turnRows : probedRows);
+    }
+
     List<Map<String, Object>> confirmCalls =
         Guardrails.needsConfirm(plan.calls(), actCtx.catalogMap());
     if (!confirmCalls.isEmpty() && !confirmed) {
@@ -409,18 +421,6 @@ public class AiActService {
             probedRows.isEmpty() ? turnRows : probedRows);
       }
       return buildConfirmPayload(plan.calls(), confirmCalls, actCtx.refs(), actCtx.focus(), turnRows);
-    }
-
-    if (hasUnresolvedItemWrites(plan, actCtx.refs())) {
-      return buildAskResponse(
-          List.of(
-              Map.of(
-                  "question",
-                  "还没法对准要改的那几条，请点一条或说下名称和现在数量～",
-                  "options",
-                  List.of())),
-          actCtx.focus(),
-          probedRows.isEmpty() ? turnRows : probedRows);
     }
 
     Map<String, Object> report =
@@ -1021,6 +1021,25 @@ public class AiActService {
 
   private static void bindUnresolvedWritesToProbe(
       ActPlan plan, Map<String, Map<String, Object>> refs, List<Map<String, Object>> probedRows) {
+    Map<String, Map<String, Object>> pool = new LinkedHashMap<>();
+    if (refs != null) {
+      pool.putAll(refs);
+    }
+    if (probedRows != null) {
+      for (Map<String, Object> row : probedRows) {
+        if (row == null) {
+          continue;
+        }
+        String ref = str(row.get("ref")).trim();
+        if (!ref.isEmpty()) {
+          pool.putIfAbsent(ref, row);
+        }
+        String id = str(row.get("itemId")).trim();
+        if (!id.isEmpty()) {
+          pool.putIfAbsent("ID:" + id, row);
+        }
+      }
+    }
     for (Map<String, Object> call : plan.calls()) {
       if (call == null) {
         continue;
@@ -1029,25 +1048,21 @@ public class AiActService {
       if (!"item.update".equals(use) && !"item.remove".equals(use)) {
         continue;
       }
-      if (ActRefs.lookupRef(call, refs) != null) {
-        continue;
-      }
-      String name = String.valueOf(call.get("name")).trim();
-      Map<String, Object> hit = null;
-      if (!name.isEmpty()) {
-        List<Map<String, Object>> matches =
-            probedRows.stream().filter(r -> name.equals(String.valueOf(r.get("name")))).toList();
-        if (matches.size() == 1) {
-          hit = matches.get(0);
-        }
-      } else if (probedRows.size() == 1) {
+      Map<String, Object> hit = ActRefs.lookupRef(call, pool);
+      if (hit == null && str(call.get("name")).isBlank() && probedRows != null && probedRows.size() == 1) {
         hit = probedRows.get(0);
       }
-      if (hit != null) {
+      if (hit == null) {
+        continue;
+      }
+      if (str(call.get("ref")).isBlank() && hit.get("ref") != null) {
         call.put("ref", hit.get("ref"));
-        if (!call.containsKey("name")) {
-          call.put("name", hit.get("name"));
-        }
+      }
+      if (!call.containsKey("name") || str(call.get("name")).isBlank()) {
+        call.put("name", hit.get("name"));
+      }
+      if (refs != null && hit.get("ref") != null && !str(hit.get("ref")).isBlank()) {
+        refs.putIfAbsent(str(hit.get("ref")), hit);
       }
     }
   }

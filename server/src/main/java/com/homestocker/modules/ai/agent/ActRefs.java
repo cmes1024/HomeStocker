@@ -150,36 +150,107 @@ public final class ActRefs {
     if (name.isEmpty() || refs == null) {
       return null;
     }
-    List<Map<String, Object>> hits = new ArrayList<>();
-    for (Map<String, Object> row : refs.values()) {
-      if (row != null && name.equals(str(row.get("name")))) {
-        hits.add(row);
-      }
-    }
+    List<Map<String, Object>> hits = namedHits(name, refs);
+    String fromSpace = firstNonEmpty(str(call.get("fromSpaceName")), str(call.get("sourceSpaceName")));
+    String fromLoc = firstNonEmpty(str(call.get("fromLocationName")), str(call.get("sourceLocationName")));
+    String place = placeInParens(name);
     if (hits.size() == 1) {
-      return hits.get(0);
+      return sourceAgrees(hits.get(0), fromSpace, fromLoc, place) ? hits.get(0) : null;
     }
-    String fromSpace = str(call.get("fromSpaceName"));
-    if (fromSpace.isEmpty()) {
-      fromSpace = str(call.get("sourceSpaceName"));
-    }
-    String fromLoc = str(call.get("fromLocationName"));
-    if (fromLoc.isEmpty()) {
-      fromLoc = str(call.get("sourceLocationName"));
-    }
-    if (fromSpace.isEmpty() && fromLoc.isEmpty()) {
-      return null;
-    }
-    for (Map<String, Object> row : hits) {
-      if (!fromSpace.isEmpty() && !fromSpace.equals(str(row.get("spaceName")))) {
-        continue;
+    if (hits.size() > 1 && (!fromSpace.isEmpty() || !fromLoc.isEmpty() || !place.isEmpty())) {
+      List<Map<String, Object>> narrowed = new ArrayList<>();
+      for (Map<String, Object> row : hits) {
+        if (sourceAgrees(row, fromSpace, fromLoc, place)) {
+          narrowed.add(row);
+        }
       }
-      if (!fromLoc.isEmpty() && !fromLoc.equals(str(row.get("locationName")))) {
-        continue;
+      if (narrowed.size() == 1) {
+        return narrowed.get(0);
       }
-      return row;
     }
     return null;
+  }
+
+  /** 名称后的数量、单位、括号地点剥掉再比对。只在结果唯一时采用。 */
+  static List<Map<String, Object>> namedHits(String callName, Map<String, Map<String, Object>> refs) {
+    String want = str(callName).trim();
+    LinkedHashMap<String, Map<String, Object>> byId = new LinkedHashMap<>();
+    if (want.isEmpty() || refs == null) {
+      return List.of();
+    }
+    collectNameHits(want, refs, byId);
+    if (byId.isEmpty()) {
+      String core = itemNameCore(want);
+      if (!core.isEmpty() && !core.equals(want)) {
+        collectNameHits(core, refs, byId);
+      }
+    }
+    return new ArrayList<>(byId.values());
+  }
+
+  private static void collectNameHits(
+      String want,
+      Map<String, Map<String, Object>> refs,
+      LinkedHashMap<String, Map<String, Object>> byId) {
+    for (Map<String, Object> row : refs.values()) {
+      if (row == null) {
+        continue;
+      }
+      String have = str(row.get("name")).trim();
+      if (have.isEmpty() || !want.equals(have)) {
+        continue;
+      }
+      String id = str(row.get("itemId"));
+      if (id.isEmpty()) {
+        continue;
+      }
+      byId.putIfAbsent(id, row);
+    }
+  }
+
+  static String itemNameCore(String callName) {
+    String s = str(callName).trim();
+    String prev;
+    do {
+      prev = s;
+      s = s.replaceFirst("\\s*[（(][^（）()]{1,16}[）)]\\s*$", "").trim();
+      s =
+          s.replaceFirst(
+                  "(?:\\s+|(?<=\\p{IsHan}))\\d+(?:\\.\\d+)?(?:\\s*[\\p{IsHan}A-Za-z]{1,4})?\\s*$",
+                  "")
+              .trim();
+    } while (!s.equals(prev) && !s.isEmpty());
+    return s;
+  }
+
+  private static String placeInParens(String callName) {
+    java.util.regex.Matcher m =
+        java.util.regex.Pattern.compile("[（(]([^（）()]{1,16})[）)]").matcher(str(callName));
+    String last = "";
+    while (m.find()) {
+      last = m.group(1).trim();
+    }
+    return last;
+  }
+
+  private static boolean sourceAgrees(
+      Map<String, Object> row, String fromSpace, String fromLoc, String place) {
+    if (!fromSpace.isEmpty() && !fromSpace.equals(str(row.get("spaceName")))) {
+      return false;
+    }
+    if (!fromLoc.isEmpty() && !fromLoc.equals(str(row.get("locationName")))) {
+      return false;
+    }
+    if (!place.isEmpty()
+        && !place.equals(str(row.get("spaceName")))
+        && !place.equals(str(row.get("locationName")))) {
+      return false;
+    }
+    return true;
+  }
+
+  private static String firstNonEmpty(String a, String b) {
+    return a == null || a.isBlank() ? (b == null ? "" : b.trim()) : a.trim();
   }
 
   public static List<Map<String, Object>> bindCallIds(

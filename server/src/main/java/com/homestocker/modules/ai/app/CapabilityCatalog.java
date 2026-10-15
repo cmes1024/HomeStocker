@@ -104,7 +104,10 @@ public final class CapabilityCatalog {
       if (sb.length() > 0) {
         sb.append('\n');
       }
-      String confirm = Boolean.TRUE.equals(api.get("confirm")) ? "（执行前必须用户确认）" : "";
+      String confirm =
+          Boolean.TRUE.equals(api.get("confirm"))
+              ? "（服务端确认卡拦一次后再执行；计划直接给 calls，不要在 ask 里预确认）"
+              : "";
       Object args = api.get("args");
       String argsLine =
           args != null && !String.valueOf(args).isEmpty()

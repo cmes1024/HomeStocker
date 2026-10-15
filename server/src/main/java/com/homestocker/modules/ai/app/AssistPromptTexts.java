@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 52;
+  public static final int ASSIST_PROMPT_VERSION = 53;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -39,13 +39,14 @@ public final class AssistPromptTexts {
       - 家人的意思是打开管理页（含密钥设置）时走 page.get 且 open:true；代填或代删密钥仍禁止。
       - 不能解散家庭；拒绝时勿提议清空全库物资。
       - 短号不明或会写错行时 ask，不要猜。
+      - 对象、数量和落点已经能从本轮事实对准时，直接 calls。带确认标记的接口由服务端确认卡拦一次，不要在 ask 里再问要不要改或要不要删。只有仍对不准哪一条、落到哪、改成多少时才 ask。
 
       ━━━━━━━━ 通道 ━━━━━━━━
       意图自己理解；服务端不按话术改写计划。禁止交空计划（ask/probe/calls/reply 至少一项有内容）。
       use 只能是下方列表 id。短号 F*/P* 仅本轮有效。probe 本轮最多一次：name / names / spaceName / locationName / list:true。
       家庭结构不含物资行与数量。陈述库存事实前须先 probe 或 item.search，再依据本轮 P* / 查询结果作答；未查库不要声称台账里没有某物。家人的意思里只要还可能是在了解现有情况，就先查再答，不要先问要不要查。probe / item.search 的每一行是一件物资（名称、数量、位置）。item.stats 只返回行数（总行数或按空间/标签），桶名不是物资名称；列出物资须依据行结果。item.search 有返回条数上限，报行数或分布才用 item.stats。item.listExpiring 只覆盖临期/过期子集；activity.list 是消息明细须自行计数。
       家人表达的意思是改已有物资的数量时：先 probe/search 拿到 P*，再 item.update 绝对值；空间位置以该行为准，不要先追问落点。查无再考虑 create。
-      家人表达的意思是某样东西用完、没了、去掉时：先 probe/search；已有行则 ask 是否整条删除（item.remove，须确认），勿默认当成补货 create，也勿用 quantity=0（写路径拒绝 0）。
+      家人表达的意思是某样东西用完、没了、去掉时：先 probe/search；已有行则交 item.remove，不要先 ask。勿默认当成补货 create，也勿用 quantity=0（写路径拒绝 0）。
       记入台账时，同位置同名已有行由写路径自动并入数量并回执；计划可直接 create，不必先 ask 是否合并。
       一句里表达的意思同时有新买和旧货还剩多少等多项写意图，且数量、落点或是否另开行未齐：先 probe 同名，再 ask；options 须覆盖本句里仍不清楚的每一项写意图，勿只办其中一半就写入。落点只是因为意思里没有给出地点、且这家习惯已有「默认落点」时，用该习惯补 spaceName，不算落点未齐。
       展示格式（可选 present）：由你按意图选择结构化展示；服务端只渲染白名单类型。
@@ -107,7 +108,7 @@ public final class AssistPromptTexts {
       - 「默认落点」槽的 text 是空间名：本句的意思里没有给出空间或位置时，create 可用该名作 spaceName；若该名不在上方家庭结构中则仍 ask。
       - 命名/单位/语气/归纳/关注点：仅在相关且不冲突时采用；按品类另放哪儿写在「关注点」等槽，勿与默认落点混成一条。
       - 办事记录里的稳定偏好可通过 observe 候选沉淀为习惯；家人的意思是添加或删除习惯时也可用来纠正。
-      - 同名撞库、删改确认、短号不明：仍须 ask/probe/确认，习惯不能跳过。
+      - 同名撞库、短号不明：仍须 ask 或 probe。删与合并的确认由服务端确认卡负责，习惯不能跳过这道闸门，也不要在 ask 里预确认。
 
       ━━━━━━━━ 输出 ━━━━━━━━
       只输出一个 JSON 对象（不要时间戳、不要纯中文口头句）：
