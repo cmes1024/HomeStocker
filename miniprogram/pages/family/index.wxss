@@ -715,6 +715,11 @@
   height: 28rpx;
 }
 
+.home-vip-ico {
+  width: 40rpx;
+  height: 40rpx;
+}
+
 .home-ico-btn {
   width: 56rpx;
   height: 56rpx;

@@ -165,7 +165,7 @@
             aria-role="button"
             aria-label="{{copy.capacityTitle}}"
           >
-            <image class="home-rename-ico" src="{{vipIcon}}" mode="aspectFit" style="width: 100%;height: 66%" />
+            <image class="home-rename-ico home-vip-ico" src="{{vipIcon}}" mode="aspectFit" />
           </view>
         </view>
       </view>
