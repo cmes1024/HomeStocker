@@ -162,7 +162,8 @@
   white-space: nowrap;
 }
 
-.picker-text.placeholder {
+.picker-text.placeholder,
+.input-placeholder {
   color: rgba(26, 26, 26, 0.35);
 }
 

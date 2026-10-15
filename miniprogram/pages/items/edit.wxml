@@ -45,6 +45,8 @@
           <input
             class="input"
             placeholder="{{copy.namePlaceholder}}"
+            placeholder-class="input-placeholder"
+            placeholder-style="color: rgba(26, 26, 26, 0.35);"
             value="{{name}}"
             bindinput="onName"
             maxlength="40"
@@ -58,12 +60,16 @@
               class="input qty-num"
               type="digit"
               placeholder="{{copy.qtyPlaceholder}}"
+              placeholder-class="input-placeholder"
+              placeholder-style="color: rgba(26, 26, 26, 0.35);"
               value="{{quantity}}"
               bindinput="onQuantity"
             />
             <input
               class="input qty-unit"
               placeholder="{{copy.unitPlaceholder}}"
+              placeholder-class="input-placeholder"
+              placeholder-style="color: rgba(26, 26, 26, 0.35);"
               value="{{unit}}"
               bindinput="onUnit"
               maxlength="10"
@@ -75,7 +81,7 @@
           <view class="label">{{copy.labelSpace}}</view>
           <picker mode="selector" range="{{spaceNames}}" value="{{spaceIndex}}" bindchange="onSpaceChange">
             <view class="input picker">
-              <text class="picker-text">{{spaceNames[spaceIndex] || copy.spacePlaceholder}}</text>
+              <text class="picker-text {{spaceNames[spaceIndex] ? '' : 'placeholder'}}">{{spaceNames[spaceIndex] || copy.spacePlaceholder}}</text>
               <view class="picker-chevron" aria-hidden="true"></view>
             </view>
           </picker>
@@ -151,6 +157,8 @@
           <input
             class="input"
             placeholder="{{copy.notePlaceholder}}"
+            placeholder-class="input-placeholder"
+            placeholder-style="color: rgba(26, 26, 26, 0.35);"
             value="{{note}}"
             bindinput="onNote"
             maxlength="100"
