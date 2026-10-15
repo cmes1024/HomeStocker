@@ -45,12 +45,12 @@ import org.springframework.stereotype.Service;
 public class AiActService {
 
   private static final Logger log = LoggerFactory.getLogger(AiActService.class);
-  private static final int ACT_HTTP_TIMEOUT_MS = 20_000;
+  private static final int ACT_HTTP_TIMEOUT_MS = 12_000;
   private static final int ACT_MAX_TOKENS = 800;
 
   private final UserRepository userRepository;
   private final MembershipRepository membershipRepository;
-  private final AiKeyService aiKeyService;
+  private final ActKeyResolver actKeyResolver;
   private final AiSeedService aiSeedService;
   private final AiRateLimitService aiRateLimitService;
   private final ActContextBuilder actContextBuilder;
@@ -67,7 +67,7 @@ public class AiActService {
   public AiActService(
       UserRepository userRepository,
       MembershipRepository membershipRepository,
-      AiKeyService aiKeyService,
+      ActKeyResolver actKeyResolver,
       AiSeedService aiSeedService,
       AiRateLimitService aiRateLimitService,
       ActContextBuilder actContextBuilder,
@@ -82,7 +82,7 @@ public class AiActService {
       HabitObserveService habitObserveService) {
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
-    this.aiKeyService = aiKeyService;
+    this.actKeyResolver = actKeyResolver;
     this.aiSeedService = aiSeedService;
     this.aiRateLimitService = aiRateLimitService;
     this.actContextBuilder = actContextBuilder;
@@ -134,14 +134,16 @@ public class AiActService {
       throw ApiException.of(ErrorCodes.INVALID_TEXT, "请输入一句话");
     }
 
-    List<KeyRow> keys = aiKeyService.listOrderedRawKeys();
-    if (keys.isEmpty()) {
+    ActKeyResolver.Selection selection = actKeyResolver.select(familyId);
+    if (selection.blocked()) {
       throw ApiException.of(ErrorCodes.NO_AI_KEY, "请先配置家庭 AI 密钥");
     }
+    List<KeyRow> keys = selection.keys();
 
     ActContext actCtx = actContextBuilder.build(openid, event, familyId);
     ModelOpts modelOpts =
-        new ModelOpts(keys, ACT_HTTP_TIMEOUT_MS, ACT_MAX_TOKENS, actCtx.history());
+        new ModelOpts(
+            keys, ACT_HTTP_TIMEOUT_MS, ACT_MAX_TOKENS, actCtx.history(), selection.hostedPool());
 
     ActPlan plan;
     try {
@@ -164,8 +166,23 @@ public class AiActService {
                   + "\n（系统：本轮尚无探查/查询结果。禁止声称台账没有某物；请先 probe 或 item.search，再依据本轮结果 ask / reply / calls。）");
     }
 
+    // 还没看见台账就提问：丢掉，让模型先查。再问一遍仍不查，就直接列出本轮台账。不读用户原话。
+    if (askBeforeAnyInventoryFacts(plan, turnRows)) {
+      log.warn("act: ask before inventory facts; replan to probe/search first");
+      plan =
+          askPlan(
+              modelOpts,
+              actCtx.system(),
+              actCtx.userText()
+                  + "\n（系统：本轮尚无台账事实。查不改数据。禁止问要不要查，禁止编造数量、单位和地点。请先 probe 相关物资；查完再 reply，或只问是否写入。）");
+      if (askBeforeAnyInventoryFacts(plan, turnRows)) {
+        log.warn("act: still asking before facts; list inventory");
+        plan = new ActPlan(List.of(), Map.of(), List.of(), "", null);
+      }
+    }
+
     if (!plan.ask().isEmpty() && plan.probe() == null && plan.calls().isEmpty()) {
-      return buildAskResponse(plan.ask(), actCtx.focus(), List.of());
+      return buildAskResponse(plan.ask(), actCtx.focus(), List.of(), plan.reply());
     }
 
     plan = ensureProbeForUnresolvedWrites(plan, actCtx.refs());
@@ -173,7 +190,8 @@ public class AiActService {
     plan = ensurePresentHasFacts(plan, turnRows);
 
     if (plan.probe() != null) {
-      probedRows = itemsProbe.runProbe(familyId, actCtx.tree(), plan.probe(), actCtx.refs());
+      Map<String, Object> probeSpec = plan.probe();
+      probedRows = itemsProbe.runProbe(familyId, actCtx.tree(), probeSpec, actCtx.refs());
       turnRows.addAll(probedRows);
       Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
       vars.put("probe", ActPrompt.renderProbeRows(probedRows));
@@ -189,20 +207,24 @@ public class AiActService {
           actCtx.userText()
               + "\n"
               + probeNote
-              + "\n（系统：item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
+              + "\n（系统：上面就是本轮查库结果。禁止再问要不要查，禁止编造数量、单位和地点。reply 说出查到或没查到；若要问，只问是否写入。item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
       Map<String, Object> presentAfter =
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
       bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
       if (!plan.ask().isEmpty()) {
-        return buildAskResponse(plan.ask(), actCtx.focus(), probedRows);
+        return buildAskResponse(
+            plan.ask(),
+            actCtx.focus(),
+            probedRows,
+            withProbeFact(plan.reply(), probeSpec, probedRows));
       }
     }
 
     if (isIdlePlan(plan)) {
       plan = recoverIdlePlan(modelOpts, actCtx, probedRows, turnRows, familyId);
       if (!plan.ask().isEmpty()) {
-        return buildAskResponse(plan.ask(), actCtx.focus(), probedRows);
+        return buildAskResponse(plan.ask(), actCtx.focus(), probedRows, plan.reply());
       }
     }
 
@@ -269,7 +291,7 @@ public class AiActService {
           plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
       plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
       if (!plan.ask().isEmpty()) {
-        return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
+        return buildAskResponse(plan.ask(), actCtx.focus(), invRows, plan.reply());
       }
       if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
           && plan.calls().isEmpty()) {
@@ -304,7 +326,7 @@ public class AiActService {
             plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
         plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
         if (!plan.ask().isEmpty()) {
-          return buildAskResponse(plan.ask(), actCtx.focus(), invRows);
+          return buildAskResponse(plan.ask(), actCtx.focus(), invRows, plan.reply());
         }
         if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
             && plan.calls().isEmpty()) {
@@ -596,10 +618,83 @@ public class AiActService {
     return plan.reply().isEmpty();
   }
 
+  /** 提问气泡里带上本轮查库事实。模型已经说出查到或没查到时不重复。 */
+  private static String withProbeFact(
+      String reply, Map<String, Object> probe, List<Map<String, Object>> rows) {
+    String fact = replyOrProbeFact("", probe, rows);
+    String spoken = reply == null ? "" : reply.trim();
+    if (fact.isEmpty()) {
+      return spoken;
+    }
+    if (spoken.isEmpty()) {
+      return fact;
+    }
+    if (spoken.contains("没查到") || spoken.contains("查到")) {
+      return spoken;
+    }
+    return fact + "\n" + spoken;
+  }
+
   /**
-   * 模型未拿到本轮库存事实却在 ask/reply 里声称「没找到」——常见于照抄历史口头句。
-   * 这不是用户话术路由，只拦「无事实却报无货」的空口断言。
+   * 模型查完仍只提问、却没写 reply 时，用本轮查库事实补一句。不读用户原话。
    */
+  private static String replyOrProbeFact(
+      String reply, Map<String, Object> probe, List<Map<String, Object>> rows) {
+    if (reply != null && !reply.isBlank()) {
+      return reply;
+    }
+    if (rows != null && !rows.isEmpty()) {
+      StringBuilder sb = new StringBuilder("查到了：");
+      int n = 0;
+      for (Map<String, Object> row : rows) {
+        String label = PlanParser.probeOptionLabel(row);
+        if (label.isEmpty()) {
+          continue;
+        }
+        if (n > 0) {
+          sb.append('，');
+        }
+        sb.append(label);
+        n++;
+        if (n >= 5) {
+          break;
+        }
+      }
+      return n == 0 ? "" : sb.toString();
+    }
+    if (probe == null) {
+      return "";
+    }
+    String name = str(probe.get("name")).trim();
+    if (name.isEmpty() && probe.get("names") instanceof List<?> names) {
+      StringBuilder sb = new StringBuilder();
+      for (Object item : names) {
+        String one = str(item).trim();
+        if (one.isEmpty()) {
+          continue;
+        }
+        if (sb.length() > 0) {
+          sb.append('、');
+        }
+        sb.append(one);
+      }
+      name = sb.toString();
+    }
+    if (!name.isEmpty()) {
+      return "家里没查到" + name + "。";
+    }
+    return "家里没查到匹配的物资。";
+  }
+
+  /** 纯提问、且本轮还没有任何库存事实。模型仍自己决定查什么。 */
+  private static boolean askBeforeAnyInventoryFacts(
+      ActPlan plan, List<Map<String, Object>> turnRows) {
+    if (plan == null || plan.probe() != null || !plan.calls().isEmpty() || plan.ask().isEmpty()) {
+      return false;
+    }
+    return turnRows == null || turnRows.isEmpty();
+  }
+
   private static boolean claimsInventoryAbsenceWithoutFacts(
       ActPlan plan, List<Map<String, Object>> turnRows) {
     if (plan == null) {
@@ -1026,9 +1121,22 @@ public class AiActService {
 
   private Map<String, Object> buildAskResponse(
       List<Map<String, Object>> ask, Map<String, Object> focus, List<Map<String, Object>> probedRows) {
+    return buildAskResponse(ask, focus, probedRows, "");
+  }
+
+  private Map<String, Object> buildAskResponse(
+      List<Map<String, Object>> ask,
+      Map<String, Object> focus,
+      List<Map<String, Object>> probedRows,
+      String reply) {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("status", "ask");
-    payload.put("ask", PlanParser.enrichAskOptionsFromProbe(ask, probedRows));
+    payload.put(
+        "ask",
+        PlanParser.enrichAskOptionsFromProbe(PlanParser.presentChoiceAsks(ask), probedRows));
+    if (reply != null && !reply.isBlank()) {
+      payload.put("reply", reply.trim());
+    }
     payload.put("probe", null);
     payload.put("calls", List.of());
     payload.put("draft", PlanParser.draftFromCalls(List.of()));
@@ -1774,6 +1882,9 @@ public class AiActService {
         Map<String, Object> askPayload = new LinkedHashMap<>();
         askPayload.put("status", "ask");
         askPayload.put("ask", nextPlan.ask());
+        if (!nextPlan.reply().isBlank()) {
+          askPayload.put("reply", nextPlan.reply().trim());
+        }
         askPayload.put("calls", List.of());
         askPayload.put("draft", PlanParser.draftFromCalls(nextPlan.calls()));
         askPayload.put("focus", focusPublic(actCtx.focus()));
@@ -1877,7 +1988,7 @@ public class AiActService {
               replanSystem(actCtx, vars),
               actCtx.userText() + "\n（系统已取回产品页说明。禁止臆造 path。）\n页面说明：\n" + pageText);
       if (!nextPlan.ask().isEmpty()) {
-        return buildAskResponse(nextPlan.ask(), actCtx.focus(), probedRows);
+        return buildAskResponse(nextPlan.ask(), actCtx.focus(), probedRows, nextPlan.reply());
       }
       List<Map<String, Object>> nextCalls =
           nextPlan.calls().stream().filter(c -> "page.get".equals(String.valueOf(c.get("use")))).toList();

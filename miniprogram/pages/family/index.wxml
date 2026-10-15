@@ -165,7 +165,7 @@
             aria-role="button"
             aria-label="{{copy.capacityTitle}}"
           >
-            <image class="home-rename-ico" src="{{vipIcon}}" mode="aspectFit" />
+            <image class="home-rename-ico" src="{{vipIcon}}" mode="aspectFit" style="width: 100%;height: 66%" />
           </view>
         </view>
       </view>
@@ -195,6 +195,19 @@
       <view class="capacity-main">
         <text class="ai-row-name">{{copy.issueTitle}}</text>
         <text class="capacity-sub">{{copy.issueSub}}</text>
+      </view>
+      <text class="ai-row-chevron">›</text>
+    </view>
+
+    <view
+      wx:if="{{family.isAdmin}}"
+      class="ai-row capacity-row"
+      hover-class="tool-hover"
+      bind:tap="openPlatformKeys"
+    >
+      <view class="capacity-main">
+        <text class="ai-row-name">{{copy.platformTitle}}</text>
+        <text class="capacity-sub">{{copy.platformSub}}</text>
       </view>
       <text class="ai-row-chevron">›</text>
     </view>
@@ -265,6 +278,9 @@
       </view>
     </view>
     <view class="issue-error" wx:if="{{issueFormError}}">{{issueFormError}}</view>
+    <view class="issue-check {{issueHostedModel ? 'on' : ''}}" bind:tap="onToggleIssueHosted">
+      {{copy.issueHostedLabel}}
+    </view>
     <view class="issue-actions">
       <view class="issue-btn issue-btn-ghost" bind:tap="closeIssueForm">{{copy.issueCancel}}</view>
       <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onIssueCodes">{{copy.issueSubmit}}</view>
@@ -283,6 +299,50 @@
     <view class="issue-days" wx:if="{{issuedDaysText}}">{{issuedDaysText}}</view>
     <view class="issue-code" wx:for="{{issuedCodes}}" wx:key="*this">{{item}}</view>
     <view class="issue-copy theme-btn" bind:tap="copyIssued">{{copy.issueCopyAll}}</view>
+  </view>
+</view>
+
+<view
+  class="issue-mask"
+  wx:if="{{showPlatformPanel}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closePlatformPanel"
+>
+  <view class="issue-card platform-card" catch:tap="noop">
+    <view class="issue-title">{{copy.platformModalTitle}}</view>
+    <picker mode="selector" range="{{platformProviderNames}}" value="{{platformProviderIndex}}" bindchange="onPlatformProviderChange">
+      <view class="issue-input picker">{{platformProviderNames[platformProviderIndex] || '选择平台'}}</view>
+    </picker>
+    <picker
+      wx:if="{{platformModelNames.length > 1}}"
+      mode="selector"
+      range="{{platformModelNames}}"
+      value="{{platformModelIndex}}"
+      bindchange="onPlatformModelChange"
+    >
+      <view class="issue-input picker">{{platformModelNames[platformModelIndex]}}</view>
+    </picker>
+    <view class="issue-input model-line" wx:else>{{platformModelNames[platformModelIndex] || ''}}</view>
+    <input class="issue-input" password placeholder="{{copy.platformKeyPlaceholder}}" value="{{platformApiKey}}" bindinput="onPlatformKeyInput" />
+    <input class="issue-input" placeholder="{{copy.platformLabelPlaceholder}}" value="{{platformLabel}}" maxlength="20" bindinput="onPlatformLabelInput" />
+    <view class="issue-error" wx:if="{{platformError}}">{{platformError}}</view>
+    <view class="issue-actions">
+      <view class="issue-btn issue-btn-ghost" bind:tap="closePlatformPanel">{{copy.issueCancel}}</view>
+      <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onAddPlatformKey">{{copy.platformAdd}}</view>
+    </view>
+    <view class="platform-empty" wx:if="{{!platformKeys.length}}">{{copy.platformEmpty}}</view>
+    <view class="platform-row" wx:for="{{platformKeys}}" wx:key="_id">
+      <view class="platform-main">
+        <view class="platform-name">{{item.label}}<text wx:if="{{!item.enabled}}"> · 已停用</text></view>
+        <view class="platform-hint">{{item.providerLabel}} · {{item.model}} · {{item.apiKeyMasked}}</view>
+      </view>
+      <view class="platform-actions">
+        <view class="text-link" data-id="{{item._id}}" data-direction="up" bind:tap="onMovePlatformKey">{{copy.platformUp}}</view>
+        <view class="text-link" data-id="{{item._id}}" data-direction="down" bind:tap="onMovePlatformKey">{{copy.platformDown}}</view>
+        <view class="text-link" data-id="{{item._id}}" data-enabled="{{item.enabled}}" bind:tap="onTogglePlatformKey">{{item.enabled ? copy.platformDisable : copy.platformEnable}}</view>
+        <view class="text-link danger" data-id="{{item._id}}" bind:tap="onRemovePlatformKey">{{copy.platformRemove}}</view>
+      </view>
+    </view>
   </view>
 </view>
 

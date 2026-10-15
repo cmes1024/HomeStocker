@@ -17,7 +17,9 @@ public class SubscriptionRepository {
               rs.getString("product"),
               rs.getString("source"),
               rs.getTimestamp("expires_at"),
-              rs.getString("limits_override"));
+              rs.getString("limits_override"),
+              rs.getTimestamp("hosted_model_until"),
+              rs.getString("model_source"));
 
   private final JdbcTemplate jdbc;
 
@@ -62,5 +64,28 @@ public class SubscriptionRepository {
 
   public void delete(String familyId) {
     jdbc.update("DELETE FROM family_subscriptions WHERE family_id = ?", familyId);
+  }
+
+  /** Does not touch capacity expiry. No-op when the family has no subscription row. */
+  public void updateHostedModelUntil(String familyId, Timestamp until) {
+    jdbc.update(
+        """
+        UPDATE family_subscriptions
+        SET hosted_model_until = ?, updated_at = now()
+        WHERE family_id = ?
+        """,
+        until,
+        familyId);
+  }
+
+  public void updateModelSource(String familyId, String modelSource) {
+    jdbc.update(
+        """
+        UPDATE family_subscriptions
+        SET model_source = ?, updated_at = now()
+        WHERE family_id = ?
+        """,
+        modelSource,
+        familyId);
   }
 }

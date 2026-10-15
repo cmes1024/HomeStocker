@@ -222,6 +222,102 @@ public final class PlanParser {
     return out;
   }
 
+  private static final java.util.regex.Pattern INVENTED_QTY =
+      java.util.regex.Pattern.compile(
+          "(?:\\d+(?:\\.\\d+)?|[一二两三四五六七八九十半]+)\\s*(?:盒|瓶|个|只|斤|公斤|千克|袋|包|箱|件|台|支|条|罐|桶|升|毫升|克|两)(?:\\s*/\\s*(?:盒|瓶|个|只|斤|袋|包|箱|件|台|支|条|罐|桶))?");
+
+  private static final java.util.regex.Pattern WRITE_VERB =
+      java.util.regex.Pattern.compile("记|加|减|买|补|入|放|进");
+
+  /**
+   * 提问还没有写入字段时，按钮不保留模型随口写的数量。多行选择收成选项，不铺成正文。
+   */
+  public static List<Map<String, Object>> presentChoiceAsks(List<Map<String, Object>> ask) {
+    if (ask == null || ask.isEmpty()) {
+      return ask == null ? List.of() : ask;
+    }
+    List<Map<String, Object>> rows = new ArrayList<>();
+    boolean onlyChoices = true;
+    for (Map<String, Object> item : ask) {
+      if (item == null) {
+        continue;
+      }
+      Map<String, Object> copy = new LinkedHashMap<>(item);
+      @SuppressWarnings("unchecked")
+      List<Map<String, Object>> options =
+          item.get("options") instanceof List<?> list ? (List<Map<String, Object>>) list : List.of();
+      List<Map<String, Object>> scrubbed = new ArrayList<>();
+      for (Map<String, Object> opt : options) {
+        if (opt == null) {
+          continue;
+        }
+        String label = stripInventedQuantity(str(opt.get("label")));
+        String value = stripInventedQuantity(str(opt.get("value")));
+        if (label.isEmpty() && value.isEmpty()) {
+          continue;
+        }
+        Map<String, Object> one = new LinkedHashMap<>();
+        one.put("label", label.isEmpty() ? value : label);
+        one.put("value", value.isEmpty() ? label : value);
+        scrubbed.add(one);
+      }
+      String question = str(item.get("question")).trim();
+      if (!options.isEmpty() || looksLikeQuestion(question)) {
+        onlyChoices = false;
+      } else {
+        question = stripInventedQuantity(question);
+      }
+      copy.put("question", question);
+      copy.put("options", scrubbed);
+      if (!question.isEmpty() || !scrubbed.isEmpty()) {
+        rows.add(copy);
+      }
+    }
+    if (!onlyChoices || rows.size() < 2) {
+      return rows;
+    }
+    List<Map<String, Object>> options = new ArrayList<>();
+    for (Map<String, Object> row : rows) {
+      String label = str(row.get("question")).trim();
+      if (label.isEmpty()) {
+        continue;
+      }
+      Map<String, Object> one = new LinkedHashMap<>();
+      one.put("label", label);
+      one.put("value", label);
+      options.add(one);
+    }
+    if (options.size() < 2) {
+      return rows;
+    }
+    Map<String, Object> choice = new LinkedHashMap<>();
+    choice.put("question", "");
+    choice.put("options", options);
+    return List.of(choice);
+  }
+
+  static String stripInventedQuantity(String raw) {
+    String text = raw == null ? "" : raw.trim();
+    if (text.isEmpty() || !WRITE_VERB.matcher(text).find()) {
+      return text;
+    }
+    String stripped = INVENTED_QTY.matcher(text).replaceAll("");
+    stripped = stripped.replaceAll("^[，,、/\\s]+|[，,、/\\s]+$", "");
+    stripped = stripped.replaceAll("([，,、]){2,}", "，");
+    stripped = stripped.replaceAll("^记[，,、\\s]+", "");
+    return stripped.trim();
+  }
+
+  private static boolean looksLikeQuestion(String question) {
+    return question.contains("？")
+        || question.contains("?")
+        || question.contains("吗")
+        || question.contains("多少")
+        || question.contains("哪儿")
+        || question.contains("哪里")
+        || question.contains("哪");
+  }
+
   private static Map<String, Object> optionChoice(JsonNode opt) {
     if (opt == null || opt.isNull()) {
       return null;

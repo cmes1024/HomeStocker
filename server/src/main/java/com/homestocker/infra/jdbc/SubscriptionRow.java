@@ -8,4 +8,6 @@ public record SubscriptionRow(
     String product,
     String source,
     Timestamp expiresAt,
-    String limitsOverrideJson) {}
+    String limitsOverrideJson,
+    Timestamp hostedModelUntil,
+    String modelSource) {}

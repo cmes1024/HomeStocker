@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 public class RedeemCodeRepository {
 
   public record RedeemCodeRow(
-      String codeHash, String product, int days, String planId, String status) {}
+      String codeHash, String product, int days, String planId, String status, boolean hostedModel) {}
 
   private final JdbcTemplate jdbc;
 
@@ -21,7 +21,7 @@ public class RedeemCodeRepository {
     var list =
         jdbc.query(
             """
-            SELECT code_hash, product, days, plan_id, status
+            SELECT code_hash, product, days, plan_id, status, hosted_model
             FROM redeem_codes WHERE code_hash = ?
             """,
             (rs, i) ->
@@ -30,24 +30,31 @@ public class RedeemCodeRepository {
                     rs.getString("product"),
                     rs.getInt("days"),
                     rs.getString("plan_id"),
-                    rs.getString("status")),
+                    rs.getString("status"),
+                    rs.getBoolean("hosted_model")),
             codeHash);
     return list.stream().findFirst();
   }
 
   public void insert(
-      String codeHash, String product, int days, String planId, String note) {
+      String codeHash,
+      String product,
+      int days,
+      String planId,
+      boolean hostedModel,
+      String note) {
     jdbc.update(
         """
         INSERT INTO redeem_codes (
-          code_hash, product, days, plan_id, status, created_at, note
-        ) VALUES (?, ?, ?, ?, 'unused', now(), ?)
+          code_hash, product, days, plan_id, status, created_at, note, hosted_model
+        ) VALUES (?, ?, ?, ?, 'unused', now(), ?, ?)
         """,
         codeHash,
         product,
         days,
         planId,
-        note == null ? "" : note);
+        note == null ? "" : note,
+        hostedModel);
   }
 
   /** CAS unused → used. Returns true if this call consumed the code. */

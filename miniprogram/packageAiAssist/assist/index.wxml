@@ -1,6 +1,7 @@
 <AppShell
   wx:if="{{theme}}"
   title="{{headerTitle}}"
+  subtitle="{{modelSubtitle}}"
   back="{{true}}"
   plainBack="{{true}}"
   flushBottom="{{true}}"
@@ -60,7 +61,15 @@
         id="msg-{{item.id}}"
         class="msg msg-{{item.role}}"
       >
-        <view class="bubble" wx:if="{{item.bubbleText}}">{{item.bubbleText}}</view>
+        <view class="bubble bubble-pending" wx:if="{{item.kind === 'pending'}}">
+          <text class="pending-label">{{copy.sendingLabel}}</text>
+          <view class="pending-dots">
+            <view class="pending-dot"></view>
+            <view class="pending-dot"></view>
+            <view class="pending-dot"></view>
+          </view>
+        </view>
+        <view class="bubble" wx:elif="{{item.bubbleText}}">{{item.bubbleText}}</view>
         <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
         <view class="habit-applied" wx:if="{{item.habitAppliedText}}">{{item.habitAppliedText}}</view>
 

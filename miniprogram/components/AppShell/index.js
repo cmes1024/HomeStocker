@@ -47,6 +47,10 @@ Component({
     plainBack: {
       type: Boolean,
       value: false
+    },
+    subtitle: {
+      type: String,
+      value: ''
     }
   },
 
@@ -55,6 +59,7 @@ Component({
     navContentTop: 20,
     navContentHeight: 32,
     navSideWidth: 88,
+    subtitleExtra: 0,
     layerA: {
       primary: DEFAULT_THEME.primary,
       secondary: DEFAULT_THEME.secondary,
@@ -91,6 +96,9 @@ Component({
   },
 
   observers: {
+    subtitle: function () {
+      this.initNavMetrics()
+    },
     'primary, secondary, shadow, bgImage, lightHeader': function () {
       if (!this.data.ready) {
         this.bootstrapLayers()
@@ -105,11 +113,13 @@ Component({
       try {
         const menu = wx.getMenuButtonBoundingClientRect()
         const windowInfo = wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()
+        const subtitleExtra = String(this.properties.subtitle || '').trim() ? 18 : 0
         this.setData({
-          headerHeight: menu.top + menu.height + 8,
+          headerHeight: menu.top + menu.height + 8 + subtitleExtra,
           navContentTop: menu.top,
           navContentHeight: menu.height,
-          navSideWidth: Math.max(windowInfo.windowWidth - menu.left, 88)
+          navSideWidth: Math.max(windowInfo.windowWidth - menu.left, 88),
+          subtitleExtra
         })
       } catch (e) {
         // keep defaults

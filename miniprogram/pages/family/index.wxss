@@ -492,6 +492,68 @@
   background: var(--theme-primary-30, rgba(196, 164, 132, 0.28));
 }
 
+.issue-check {
+  margin-top: 8rpx;
+  padding: 18rpx 20rpx;
+  border-radius: 14rpx;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.55);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.issue-check.on {
+  color: var(--theme-primary);
+  background: var(--theme-primary-30);
+}
+
+.platform-card {
+  max-height: 80vh;
+  overflow: auto;
+}
+
+.platform-card .issue-input {
+  margin-top: 16rpx;
+}
+
+.platform-empty {
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.platform-row {
+  margin-top: 20rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
+}
+
+.platform-name {
+  font-size: 28rpx;
+  color: #1a1a1a;
+}
+
+.platform-hint {
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.45);
+}
+
+.platform-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 8rpx;
+}
+
+.text-link {
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.62);
+}
+
+.text-link.danger {
+  color: rgba(250, 81, 81, 0.9);
+}
+
 .issue-error {
   font-size: 24rpx;
   color: #c45c4a;

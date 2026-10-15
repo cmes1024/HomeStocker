@@ -72,6 +72,36 @@ public class ItemsProbe {
     return rows;
   }
 
+  /** 开场事实：最近更新的物资，不分配短号。 */
+  public String renderOpeningSnapshot(String familyId, Map<String, Object> tree) {
+    List<ItemRow> list = listItemsCompact(familyId, null, null, List.of(), FETCH_FAMILY);
+    if (list.isEmpty()) {
+      return "无";
+    }
+    StringBuilder sb = new StringBuilder();
+    int shown = 0;
+    int cap = Math.min(CAP_FAMILY, list.size());
+    for (int i = 0; i < cap; i++) {
+      Map<String, Object> row = ActRefs.compactItem(toItemMap(list.get(i)), "", tree);
+      String label = PlanParser.probeOptionLabel(row);
+      if (label.isEmpty()) {
+        continue;
+      }
+      if (shown > 0) {
+        sb.append('\n');
+      }
+      sb.append(label);
+      shown++;
+    }
+    if (shown == 0) {
+      return "无";
+    }
+    if (list.size() > shown) {
+      sb.append("\n（仅最近若干行，未列全）");
+    }
+    return sb.toString();
+  }
+
   public List<Map<String, Object>> runProbe(
       String familyId,
       Map<String, Object> tree,

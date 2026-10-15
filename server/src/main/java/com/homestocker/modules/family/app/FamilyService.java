@@ -14,6 +14,7 @@ import com.homestocker.infra.jdbc.StructureRepository;
 import com.homestocker.infra.jdbc.SubscriptionRepository;
 import com.homestocker.infra.jdbc.UserRepository;
 import com.homestocker.infra.jdbc.UserRow;
+import com.homestocker.modules.family.domain.HostedModelRules;
 import com.homestocker.modules.family.domain.CapacityPlans;
 import com.homestocker.modules.family.domain.CapacityPlans.EffectiveEntitlement;
 import com.homestocker.modules.family.domain.CapacityPlans.ProductDef;
@@ -519,10 +520,18 @@ public class FamilyService {
         base = exp;
       }
     }
+    Long previousHosted =
+        existing
+            .map(row -> row.hostedModelUntil() == null ? null : row.hostedModelUntil().getTime())
+            .orElse(null);
     long expiresAtMs = base + TimeUnit.DAYS.toMillis(codeRow.days());
     Timestamp expiresAt = new Timestamp(expiresAtMs);
     subscriptionRepository.upsert(
         familyId, codeRow.planId(), codeRow.product(), "redeem", expiresAt, hash);
+    if (codeRow.hostedModel()) {
+      long hostedUntilMs = HostedModelRules.extendUntil(previousHosted, now.getTime(), codeRow.days());
+      subscriptionRepository.updateHostedModelUntil(familyId, new Timestamp(hostedUntilMs));
+    }
 
     EffectiveEntitlement e = entitlementService.resolveForFamily(familyId);
     familyRepository.updateEntitlementJson(familyId, toJson(CapacityPlans.toEntitlementMap(e)));
@@ -582,17 +591,19 @@ public class FamilyService {
       throw ApiException.of(ErrorCodes.BAD_REQUEST, "数量须在 1–50");
     }
     String note = str(body.get("note"));
+    boolean hostedModel = HostedModelRules.flag(body.get("hostedModel"));
     List<String> codes = new ArrayList<>();
     for (int i = 0; i < count; i++) {
       String plain = generatePlainCode();
       redeemCodeRepository.insert(
-          CapacityPlans.hashCode(plain), productId, days, product.planId(), note);
+          CapacityPlans.hashCode(plain), productId, days, product.planId(), hostedModel, note);
       codes.add(formatPlainCode(plain));
     }
     Map<String, Object> out = new LinkedHashMap<>();
     out.put("product", productId);
     out.put("days", days);
     out.put("planId", product.planId());
+    out.put("hostedModel", hostedModel);
     out.put("count", count);
     out.put("codes", codes);
     return out;

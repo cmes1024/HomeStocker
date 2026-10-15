@@ -91,6 +91,7 @@ public class ActContextBuilder {
         "focus",
         ActRefs.renderFocusList(focus != null ? List.of(focus) : List.of()));
     vars.put("probe", "无");
+    vars.put("snapshot", itemsProbe.renderOpeningSnapshot(familyId, tree));
     vars.put("exec", "无");
     vars.put("knowledgeIndex", knowledgeService.renderIndex());
     vars.put("knowledge", "无");

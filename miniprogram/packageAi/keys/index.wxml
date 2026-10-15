@@ -21,42 +21,39 @@
   </view>
 
   <view class="page" wx:elif="{{!loading}}">
-    <view class="hero">
-      <view class="kicker">{{copy.keysKicker}}</view>
-      <view class="title">{{copy.keysTitle}}</view>
-      <view class="sub">{{copy.keysHint}}</view>
-    </view>
+    <view class="list">
+      <view class="list-hd">
+        <view class="list-hd-text">
+          <view class="list-title">模型</view>
+          <view class="list-sub">{{copy.keysHint}}</view>
+        </view>
+        <view class="text-btn theme-text add-btn" hover-class="press" bind:tap="onOpenAdd">{{copy.addKey}}</view>
+      </view>
 
-    <view class="form">
-      <input
-        class="input"
-        password
-        placeholder="{{copy.keyPlaceholder}}"
-        value="{{apiKey}}"
-        bindinput="onKeyInput"
-      />
-      <input
-        class="input"
-        placeholder="{{copy.keyLabelPlaceholder}}"
-        value="{{label}}"
-        maxlength="20"
-        bindinput="onLabelInput"
-      />
-      <view class="pill-btn theme-btn" bind:tap="onAdd">{{copy.addKey}}</view>
-    </view>
+      <view class="empty" wx:if="{{keys.length === 0 && !hosted}}">
+        <view class="empty-title">{{copy.noKeys}}</view>
+      </view>
 
-    <view class="empty" wx:if="{{keys.length === 0}}">
-      <view class="empty-title">{{copy.noKeys}}</view>
-    </view>
-
-    <view class="list" wx:else>
+      <view class="row {{hosted.expired ? 'expired' : ''}}" wx:if="{{hosted}}">
+        <view class="row-body">
+          <view class="row-name">
+            {{copy.hostedName}}
+            <text class="badge" wx:if="{{hosted.defaulted}}">{{copy.defaultBadge}}</text>
+          </view>
+          <view class="row-hint">{{hosted.hint}}</view>
+        </view>
+        <view class="row-actions" wx:if="{{hosted.active && !hosted.defaulted}}">
+          <view class="text-btn theme-text" bind:tap="onSetHostedDefault">{{copy.setDefault}}</view>
+        </view>
+      </view>
+      <block wx:if="{{keys.length}}">
       <view class="row" wx:for="{{keys}}" wx:key="_id">
         <view class="row-body">
           <view class="row-name">
             {{item.label}}
             <text class="badge" wx:if="{{item.isDefault}}">{{copy.defaultBadge}}</text>
           </view>
-          <view class="row-hint">{{item.keyHint}}</view>
+          <view class="row-hint">{{item.providerLabel}} · {{item.model}} · {{item.apiKeyMasked}}</view>
         </view>
         <view class="row-actions">
           <view
@@ -68,6 +65,7 @@
           <view class="text-btn danger" data-id="{{item._id}}" bind:tap="onRemove">{{copy.removeKey}}</view>
         </view>
       </view>
+      </block>
     </view>
 
     <view class="faq">
@@ -100,3 +98,51 @@
     </view>
   </view>
 </AppShell>
+
+<view
+  class="dialog-mask"
+  wx:if="{{showAdd}}"
+  style="{{theme.cssVarStyle}}"
+  catch:touchmove="onNoop"
+  catch:tap="onCloseAdd"
+>
+  <view class="dialog-panel" catch:tap="onNoop">
+    <view class="dialog-title">{{copy.addKeyTitle}}</view>
+    <picker
+      mode="selector"
+      range="{{providerNames}}"
+      value="{{providerIndex}}"
+      bindchange="onProviderChange"
+    >
+      <view class="input picker">{{providerNames[providerIndex] || '选择平台'}}</view>
+    </picker>
+    <picker
+      wx:if="{{modelNames.length > 1}}"
+      mode="selector"
+      range="{{modelNames}}"
+      value="{{modelIndex}}"
+      bindchange="onModelChange"
+    >
+      <view class="input picker">{{modelNames[modelIndex]}}</view>
+    </picker>
+    <view class="model-line" wx:else>{{modelNames[modelIndex] || ''}}</view>
+    <input
+      class="input"
+      password
+      placeholder="{{copy.keyPlaceholder}}"
+      value="{{apiKey}}"
+      bindinput="onKeyInput"
+    />
+    <input
+      class="input last"
+      placeholder="{{copy.keyLabelPlaceholder}}"
+      value="{{label}}"
+      maxlength="20"
+      bindinput="onLabelInput"
+    />
+    <view class="dialog-actions">
+      <view class="dialog-btn ghost" catch:tap="onCloseAdd">{{common.cancel}}</view>
+      <view class="dialog-btn primary theme-btn" catch:tap="onAdd">{{copy.addKey}}</view>
+    </view>
+  </view>
+</view>

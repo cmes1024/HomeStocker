@@ -370,6 +370,7 @@ Page({
     common: copy.common,
     theme: null,
     headerTitle: copy.assist.pageTitle,
+    modelSubtitle: '',
     loading: false,
     booting: true,
     fatalError: '',
@@ -419,6 +420,7 @@ Page({
       this.hydrateTranscript(familyId)
       bindThemeToPage(this, { headerTitle: copy.assist.pageTitle, booting: false })
       this.syncLoadingColors()
+      this.loadModelSubtitle()
       if (this.data.focusItemId) this.loadFocusLabel(this.data.focusItemId)
       this.scrollToBottom()
     } catch (e) {
@@ -426,6 +428,34 @@ Page({
         booting: false,
         fatalError: e.message || copy.common.loadFailed
       })
+    }
+  },
+
+  async loadModelSubtitle() {
+    try {
+      const data = await callAi('listKeys')
+      const hosted = data && data.hosted
+      if (hosted && hosted.isDefault && hosted.active) {
+        this.setData({ modelSubtitle: copy.ai.hostedName })
+        return
+      }
+      const list = (data && data.list) || []
+      const key = list.find((row) => row && row.isDefault) || list[0]
+      if (!key) {
+        this.setData({ modelSubtitle: '' })
+        return
+      }
+      const presets = (data && data.presets) || []
+      const provider = presets.find((row) => row && row.id === key.provider)
+      const model =
+        provider && (provider.models || []).find((row) => row && row.id === key.model)
+      const platform = (provider && provider.label) || key.providerLabel || key.provider || ''
+      const modelName = (model && model.label) || key.model || ''
+      const modelSubtitle =
+        platform && modelName ? platform + ' · ' + modelName : platform || modelName
+      this.setData({ modelSubtitle })
+    } catch (e) {
+      this.setData({ modelSubtitle: '' })
     }
   },
 
@@ -931,8 +961,12 @@ Page({
     if (status === 'ask') {
       const nextRound = askRound + 1
       const askList = asArray(data && data.ask)
+      const reply = String((data && data.reply) || '').trim()
+      const questions = askList.map((row) => row.question).filter(Boolean)
       const text =
-        askList.map((row) => row.question).filter(Boolean).join('\n') || copy.assist.askTitle
+        [reply, questions.filter((q) => q !== reply).join('\n')]
+          .filter(Boolean)
+          .join('\n') || copy.assist.askTitle
       const hasChips = askList.some((row) => row && row.options && row.options.length)
       const goSpaces = !hasChips && /不能删除房间|不能删除空间|不能新建空间|不能新建房间/.test(text)
       this.replacePending(

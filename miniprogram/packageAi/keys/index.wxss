@@ -2,37 +2,44 @@
   padding-bottom: 48rpx;
 }
 
-.hero {
-  margin: 8rpx 0 24rpx;
-  padding: 28rpx;
-  border-radius: 28rpx;
-  background: rgba(255, 255, 255, 0.9);
+.list {
+  border-radius: 24rpx;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.94);
 }
 
-.kicker {
-  font-size: 22rpx;
-  color: rgba(26, 26, 26, 0.5);
-  margin-bottom: 8rpx;
+.list-hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24rpx;
+  padding: 28rpx 24rpx 8rpx;
 }
 
-.title {
-  font-size: 44rpx;
+.list-hd-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-title {
+  font-size: 34rpx;
   font-weight: 600;
   color: #1a1a1a;
-  margin-bottom: 10rpx;
+  line-height: 1.3;
 }
 
-.sub {
-  font-size: 24rpx;
-  color: rgba(26, 26, 26, 0.55);
+.list-sub {
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.38);
   line-height: 1.45;
 }
 
-.form {
-  padding: 24rpx;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.94);
-  margin-bottom: 24rpx;
+.add-btn {
+  flex-shrink: 0;
+  padding-top: 4rpx;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 
 .input {
@@ -42,12 +49,23 @@
   border-radius: 16rpx;
   background: rgba(26, 26, 26, 0.04);
   font-size: 28rpx;
+  box-sizing: border-box;
 }
 
-.list {
-  border-radius: 24rpx;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.94);
+.input.last {
+  margin-bottom: 0;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.model-line {
+  margin: -4rpx 4rpx 16rpx;
+  font-size: 24rpx;
+  color: rgba(26, 26, 26, 0.45);
 }
 
 .row {
@@ -97,11 +115,14 @@
   color: rgba(250, 81, 81, 0.9);
 }
 
+.row.expired .row-name,
+.row.expired .row-hint {
+  color: rgba(26, 26, 26, 0.38);
+}
+
 .empty {
-  padding: 48rpx 28rpx;
+  padding: 36rpx 28rpx 48rpx;
   text-align: center;
-  border-radius: 24rpx;
-  background: rgba(255, 255, 255, 0.85);
 }
 
 .empty-title {
@@ -188,6 +209,75 @@
   box-sizing: border-box;
 }
 
+.press {
+  opacity: 0.6;
+}
+
+.dialog-mask {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48rpx;
+  box-sizing: border-box;
+}
+
+.dialog-panel {
+  width: 100%;
+  max-width: 620rpx;
+  max-height: 80vh;
+  overflow: auto;
+  padding: 48rpx 40rpx 36rpx;
+  border-radius: 32rpx;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.dialog-title {
+  margin-bottom: 32rpx;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
+  margin-top: 40rpx;
+}
+
+.dialog-btn {
+  flex: 1;
+  min-width: 0;
+  height: 80rpx;
+  border-radius: 999rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30rpx;
+  font-weight: 500;
+  box-sizing: border-box;
+}
+
+.dialog-btn.ghost {
+  color: var(--theme-primary);
+  background: #ffffff;
+  border: 2rpx solid var(--theme-primary);
+}
+
+.state {
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
 .pill-btn {
   height: 80rpx;
   padding: 0 40rpx;
@@ -196,11 +286,6 @@
   font-size: 30rpx;
   font-weight: 600;
   line-height: 80rpx;
-  text-align: center;
-}
-
-.state {
-  padding: 80rpx 40rpx;
   text-align: center;
 }
 

@@ -41,9 +41,12 @@
     <view
       wx:if="{{centerTitle || plainBack}}"
       class="nav-title-float {{plainBack ? 'plain' : ''}}"
-      style="top: {{navContentTop}}px; height: {{navContentHeight}}px;{{plainBack ? 'padding-left:' + navSideWidth + 'px;padding-right:' + navSideWidth + 'px;' : ''}}"
+      style="top: {{navContentTop}}px; height: {{navContentHeight + subtitleExtra}}px;{{plainBack ? 'padding-left:' + navSideWidth + 'px;padding-right:' + navSideWidth + 'px;' : ''}}"
     >
-      <text class="nav-title-text">{{title}}</text>
+      <view class="nav-title-stack">
+        <text class="nav-title-text">{{title}}</text>
+        <text wx:if="{{subtitle}}" class="nav-subtitle">{{subtitle}}</text>
+      </view>
     </view>
   </view>
 

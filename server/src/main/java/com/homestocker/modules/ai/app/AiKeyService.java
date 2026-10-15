@@ -5,8 +5,12 @@ import com.homestocker.common.ApiException;
 import com.homestocker.common.ErrorCodes;
 import com.homestocker.common.TimeJson;
 import com.homestocker.infra.jdbc.MembershipRepository;
+import com.homestocker.infra.jdbc.SubscriptionRepository;
+import com.homestocker.infra.jdbc.SubscriptionRow;
 import com.homestocker.infra.jdbc.UserRepository;
 import com.homestocker.infra.jdbc.UserRow;
+import com.homestocker.modules.family.domain.HostedModelRules;
+import com.homestocker.modules.family.domain.HostedModelRules.Decision;
 import java.sql.Timestamp;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -49,14 +53,17 @@ public class AiKeyService {
   private final JdbcTemplate jdbc;
   private final UserRepository userRepository;
   private final MembershipRepository membershipRepository;
+  private final SubscriptionRepository subscriptionRepository;
 
   public AiKeyService(
       JdbcTemplate jdbc,
       UserRepository userRepository,
-      MembershipRepository membershipRepository) {
+      MembershipRepository membershipRepository,
+      SubscriptionRepository subscriptionRepository) {
     this.jdbc = jdbc;
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
+    this.subscriptionRepository = subscriptionRepository;
   }
 
   private record Ctx(String openid, String familyId) {}
@@ -80,42 +87,59 @@ public class AiKeyService {
     return apiKey.substring(0, 3) + "****" + apiKey.substring(apiKey.length() - 4);
   }
 
-  private Map<String, Object> view(KeyRow k) {
+  private Map<String, Object> view(KeyRow k, boolean isDefault) {
     Map<String, Object> m = new LinkedHashMap<>();
     m.put("_id", k.id());
     m.put("provider", k.provider());
+    m.put("providerLabel", ModelCatalog.providerLabel(k.provider()));
     m.put("label", k.label());
     m.put("baseUrl", k.baseUrl());
-    m.put("model", k.model());
+    m.put("model", ModelCatalog.callModel(k.provider(), k.model()));
     m.put("apiKeyMasked", mask(k.apiKey()));
-    m.put("isDefault", k.isDefault());
+    m.put("isDefault", isDefault);
     m.put("createdAt", TimeJson.toEpochMs(k.createdAt()));
     return m;
   }
 
   /** Ordered for act: default first, then created_at asc. Includes raw apiKey (server only). */
   public List<KeyRow> listOrderedRawKeys() {
-    Ctx ctx = requireFamily();
+    return listForFamily(requireFamily().familyId());
+  }
+
+  public List<KeyRow> listForFamily(String familyId) {
     return jdbc.query(
         """
         SELECT * FROM family_ai_keys WHERE family_id = ?
         ORDER BY is_default DESC, created_at ASC
         """,
         ROW,
-        ctx.familyId());
+        familyId);
   }
 
   public Map<String, Object> listKeys() {
     Ctx ctx = requireFamily();
-    List<KeyRow> keys =
-        jdbc.query(
-            """
-            SELECT * FROM family_ai_keys WHERE family_id = ?
-            ORDER BY is_default DESC, created_at ASC
-            """,
-            ROW,
-            ctx.familyId());
-    return Map.of("list", keys.stream().map(this::view).toList());
+    List<KeyRow> keys = listForFamily(ctx.familyId());
+    SubscriptionRow sub = subscriptionRepository.findByFamilyId(ctx.familyId()).orElse(null);
+    long now = System.currentTimeMillis();
+    Long until = ActKeyResolver.hostedUntilMs(sub);
+    Decision decision =
+        HostedModelRules.decide(
+            sub == null ? null : sub.modelSource(), until, now, !keys.isEmpty());
+    boolean hostedDefault = decision.hostedIsDefault();
+    Map<String, Object> out = new LinkedHashMap<>();
+    out.put(
+        "list",
+        keys.stream().map(k -> view(k, !hostedDefault && k.isDefault())).toList());
+    out.put("presets", ModelCatalog.clientPresets());
+    if (decision.visible()) {
+      Map<String, Object> hosted = new LinkedHashMap<>();
+      hosted.put("active", decision.active());
+      hosted.put("expired", !decision.active());
+      hosted.put("expiresAt", until);
+      hosted.put("isDefault", hostedDefault);
+      out.put("hosted", hosted);
+    }
+    return out;
   }
 
   @Transactional
@@ -133,16 +157,12 @@ public class AiKeyService {
     if (apiKey.isEmpty()) {
       throw ApiException.of(ErrorCodes.BAD_REQUEST, "请填写 API Key");
     }
-    String provider =
-        str(body.get("provider")).trim().isEmpty() ? "deepseek" : str(body.get("provider")).trim();
-    String label =
-        str(body.get("label")).trim().isEmpty() ? "DeepSeek" : str(body.get("label")).trim();
-    String baseUrl =
-        str(body.get("baseUrl")).trim().isEmpty()
-            ? "https://api.deepseek.com"
-            : str(body.get("baseUrl")).trim();
-    String model =
-        str(body.get("model")).trim().isEmpty() ? "deepseek-chat" : str(body.get("model")).trim();
+    ModelCatalog.Resolved preset =
+        ModelCatalog.resolve(str(body.get("provider")), str(body.get("model")));
+    String provider = preset.provider();
+    String label = str(body.get("label")).trim().isEmpty() ? preset.providerLabel() : str(body.get("label")).trim();
+    String baseUrl = preset.baseUrl();
+    String model = preset.model();
     boolean makeDefault = count == null || count == 0 || Boolean.TRUE.equals(body.get("isDefault"));
     if (makeDefault) {
       jdbc.update(
@@ -169,7 +189,7 @@ public class AiKeyService {
         jdbc.query("SELECT * FROM family_ai_keys WHERE id = ?", ROW, id).stream()
             .findFirst()
             .orElseThrow();
-    return view(row);
+    return view(row, row.isDefault());
   }
 
   @Transactional
@@ -190,16 +210,24 @@ public class AiKeyService {
             .findFirst()
             .orElseThrow(() -> ApiException.of(ErrorCodes.NOT_FOUND, "密钥不存在"));
     jdbc.update("DELETE FROM family_ai_keys WHERE id = ?", keyId);
-    if (row.isDefault()) {
-      List<KeyRow> rest =
-          jdbc.query(
-              "SELECT * FROM family_ai_keys WHERE family_id = ? ORDER BY created_at ASC LIMIT 1",
-              ROW,
-              ctx.familyId());
-      if (!rest.isEmpty()) {
-        jdbc.update(
-            "UPDATE family_ai_keys SET is_default = TRUE WHERE id = ?", rest.get(0).id());
-      }
+    List<KeyRow> rest =
+        jdbc.query(
+            "SELECT * FROM family_ai_keys WHERE family_id = ? ORDER BY created_at ASC",
+            ROW,
+            ctx.familyId());
+    if (row.isDefault() && !rest.isEmpty()) {
+      jdbc.update("UPDATE family_ai_keys SET is_default = TRUE WHERE id = ?", rest.get(0).id());
+    }
+    SubscriptionRow sub = subscriptionRepository.findByFamilyId(ctx.familyId()).orElse(null);
+    long now = System.currentTimeMillis();
+    Long until = ActKeyResolver.hostedUntilMs(sub);
+    boolean hostedActive = until != null && until > now;
+    String currentSource = sub == null ? null : sub.modelSource();
+    String source =
+        HostedModelRules.sourceAfterRemoval(
+            !rest.isEmpty(), hostedActive, row.isDefault(), currentSource);
+    if (source != null) {
+      subscriptionRepository.updateModelSource(ctx.familyId(), source);
     }
     return Map.of("removed", true, "keyId", keyId);
   }
@@ -223,7 +251,25 @@ public class AiKeyService {
     jdbc.update("UPDATE family_ai_keys SET is_default = FALSE WHERE family_id = ?", ctx.familyId());
     jdbc.update(
         "UPDATE family_ai_keys SET is_default = TRUE, updated_at = now() WHERE id = ?", keyId);
+    subscriptionRepository.updateModelSource(ctx.familyId(), "family");
     return Map.of("ok", true, "keyId", keyId);
+  }
+
+  @Transactional
+  public Map<String, Object> setHostedDefault() {
+    Ctx ctx = requireFamily();
+    SubscriptionRow sub =
+        subscriptionRepository
+            .findByFamilyId(ctx.familyId())
+            .orElseThrow(() -> ApiException.of(ErrorCodes.BAD_REQUEST, "会员模型已到期"));
+    long now = System.currentTimeMillis();
+    Long until = ActKeyResolver.hostedUntilMs(sub);
+    Decision decision = HostedModelRules.decide("hosted", until, now, true);
+    if (!decision.active()) {
+      throw ApiException.of(ErrorCodes.BAD_REQUEST, "会员模型已到期");
+    }
+    subscriptionRepository.updateModelSource(ctx.familyId(), "hosted");
+    return Map.of("ok", true, "source", "hosted");
   }
 
   private static String str(Object v) {

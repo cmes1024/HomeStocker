@@ -5,6 +5,9 @@ import com.homestocker.common.ErrorCodes;
 import com.homestocker.common.ShanghaiDates;
 import com.homestocker.modules.ai.app.AiKeyService;
 import com.homestocker.modules.ai.app.AssistPromptTexts;
+import com.homestocker.modules.ai.app.ModelCatalog;
+import com.homestocker.modules.ai.app.PlatformKeyCooldown;
+import com.homestocker.modules.ai.app.PlatformKeyFailover;
 import com.homestocker.modules.ai.infra.DeepSeekClient;
 import com.homestocker.modules.ai.infra.DeepSeekClient.DeepSeekException;
 import java.util.ArrayList;
@@ -29,10 +32,15 @@ public class ActPrompt {
 
   private final DeepSeekClient deepSeekClient;
   private final ObjectMapper objectMapper;
+  private final PlatformKeyCooldown platformKeyCooldown;
 
-  public ActPrompt(DeepSeekClient deepSeekClient, ObjectMapper objectMapper) {
+  public ActPrompt(
+      DeepSeekClient deepSeekClient,
+      ObjectMapper objectMapper,
+      PlatformKeyCooldown platformKeyCooldown) {
     this.deepSeekClient = deepSeekClient;
     this.objectMapper = objectMapper;
+    this.platformKeyCooldown = platformKeyCooldown;
   }
 
   public record AskResult(PlanParser.ActPlan plan, Map<String, String> turn) {}
@@ -41,7 +49,8 @@ public class ActPrompt {
       List<AiKeyService.KeyRow> keys,
       int timeoutMs,
       int maxTokens,
-      List<Map<String, String>> history) {}
+      List<Map<String, String>> history,
+      boolean hostedPool) {}
 
   public static boolean isQtyReceiptText(String text) {
     String t = str(text);
@@ -231,6 +240,7 @@ public class ActPrompt {
         .replace("{{TREE}}", vars.getOrDefault("tree", ""))
         .replace("{{FOCUS}}", vars.getOrDefault("focus", "无"))
         .replace("{{PROBE}}", vars.getOrDefault("probe", "无"))
+        .replace("{{SNAPSHOT}}", vars.getOrDefault("snapshot", "无"))
         .replace("{{HISTORY}}", vars.getOrDefault("history", "无"))
         .replace("{{EXEC}}", vars.getOrDefault("exec", "无"))
         .replace("{{KNOWLEDGE_INDEX}}", vars.getOrDefault("knowledgeIndex", "无"))
@@ -301,50 +311,76 @@ public class ActPrompt {
   public AskResult askModel(ModelOpts opts, String system, String userText) throws ActModelException {
     List<AiKeyService.KeyRow> tryKeys =
         opts.keys().size() > 2 ? opts.keys().subList(0, 2) : opts.keys();
+    if (opts.hostedPool() && tryKeys.isEmpty()) {
+      throw new ActModelException(ErrorCodes.ACT_FAILED, PlatformKeyFailover.UNAVAILABLE);
+    }
     String lastCode = ErrorCodes.ACT_FAILED;
-    String lastMessage = "助手暂时不可用，请稍后重试";
+    String lastMessage = PlatformKeyFailover.UNAVAILABLE;
+    int lastStatus = 0;
     boolean sawQuota = false;
     String lastContent = "";
     log.info("[ai.act] >>> system\n{}", system);
     log.info("[ai.act] >>> user\n{}", userText);
     for (AiKeyService.KeyRow key : tryKeys) {
       try {
+        String model = ModelCatalog.callModel(key.provider(), key.model());
         DeepSeekClient.ChatResult result =
             deepSeekClient.chatCompletions(
                 key.apiKey(),
                 key.baseUrl(),
-                key.model(),
+                model,
                 system,
                 userText,
                 historyForModel(opts.history(), System.currentTimeMillis()),
                 opts.timeoutMs(),
-                opts.maxTokens());
+                opts.maxTokens(),
+                ModelCatalog.jsonObjectFor(key.provider(), model));
         lastContent = result.content();
         log.info("[ai.act] <<< model\n{}", lastContent);
         return acceptOrRepairPlan(opts, key, system, userText, lastContent);
       } catch (DeepSeekException e) {
         lastCode = e.code();
         lastMessage = e.getMessage();
+        lastStatus = e.httpStatus();
         if (ErrorCodes.AI_QUOTA.equals(e.code())) {
           sawQuota = true;
         }
-        if (!e.retryable()) {
-          throw new ActModelException(lastCode, lastMessage);
+        boolean switchKey = PlatformKeyFailover.switches(e.code(), e.retryable(), opts.hostedPool());
+        if (opts.hostedPool() && switchKey) {
+          platformKeyCooldown.cool(key.id(), System.currentTimeMillis());
+        }
+        if (!switchKey) {
+          throw new ActModelException(
+              lastCode, terminalFailureMessage(opts.hostedPool(), sawQuota, lastStatus, lastMessage));
         }
       }
     }
-    if (!lastContent.isEmpty()) {
+    if (!opts.hostedPool() && !lastContent.isEmpty()) {
       AskResult recovered = recoverFromBadPlan(system, userText, lastContent);
       if (recovered != null) {
         return recovered;
       }
       return degradeAskResult(system, userText, lastContent);
     }
-    if (sawQuota) {
-      throw new ActModelException(
-          ErrorCodes.AI_QUOTA, "家庭 AI 额度可能已用完，请检查密钥余额或更换密钥");
+    throw new ActModelException(
+        opts.hostedPool() ? ErrorCodes.ACT_FAILED : lastCode,
+        terminalFailureMessage(opts.hostedPool(), sawQuota, lastStatus, lastMessage));
+  }
+
+  public static String terminalFailureMessage(
+      boolean hostedPool, boolean sawQuota, int lastStatus, String lastMessage) {
+    if (hostedPool) {
+      return PlatformKeyFailover.UNAVAILABLE;
     }
-    throw new ActModelException(lastCode, lastMessage);
+    if (sawQuota) {
+      return "家庭 AI 额度可能已用完，请检查密钥余额或更换密钥";
+    }
+    if (lastStatus == 401) {
+      return "密钥无效，请到 AI 配置页检查";
+    }
+    return lastMessage == null || lastMessage.isBlank()
+        ? PlatformKeyFailover.UNAVAILABLE
+        : lastMessage;
   }
 
   private AskResult acceptOrRepairPlan(
@@ -365,16 +401,18 @@ public class ActPrompt {
           userText
               + "\n"
               + (trimmed.isEmpty() ? JSON_EMPTY_NOTE : JSON_REPAIR_NOTE);
+      String model = ModelCatalog.callModel(key.provider(), key.model());
       DeepSeekClient.ChatResult retry =
           deepSeekClient.chatCompletions(
               key.apiKey(),
               key.baseUrl(),
-              key.model(),
+              model,
               system,
               repairUser,
               historyForModel(opts.history(), System.currentTimeMillis()),
               opts.timeoutMs(),
-              opts.maxTokens());
+              opts.maxTokens(),
+              ModelCatalog.jsonObjectFor(key.provider(), model));
       String retryContent = retry.content();
       log.info("[ai.act] <<< model (json repair)\n{}", retryContent);
       try {

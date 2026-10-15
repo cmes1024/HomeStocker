@@ -315,6 +315,22 @@ const copy = {
     issueDurationInvalid: '请填写有效时长',
     issueResultTitle: '请立刻复制保存，关掉后明文不再显示',
     issueResultDays: (n) => `每张 ${n} 天加强版`,
+    issueResultHosted: '含平台模型',
+    issueHostedLabel: '包含平台模型',
+    platformTitle: '平台模型',
+    platformSub: '仅管理员 · 会员家庭可用',
+    platformModalTitle: '平台模型',
+    platformEmpty: '还没有平台密钥',
+    platformAdd: '添加',
+    platformKeyPlaceholder: '粘贴平台 API Key',
+    platformLabelPlaceholder: '名称（可空）',
+    platformDisable: '停用',
+    platformEnable: '启用',
+    platformUp: '上移',
+    platformDown: '下移',
+    platformRemove: '删除',
+    platformAdded: '已添加',
+    platformRemoved: '已删除',
     issueCopyAll: '复制全部',
     issueCopied: '已复制',
     membersTitle: '家里的人',
@@ -354,6 +370,7 @@ const copy = {
     voiceDeniedConfirm: '去设置',
     send: '发送',
     sending: '稍等，管家正在操作…',
+    sendingLabel: '稍等，管家正在操作',
     sendingShort: '…',
     emptyText: '先写一句话',
     noKey: '还没有配置家庭 AI 密钥',
@@ -405,16 +422,21 @@ const copy = {
     loading: '打开 AI 配置…',
     keysKicker: '全家共用额度',
     keysHint:
-      '这是全家共用的 DeepSeek 密钥，加入家庭的人都能用、也能删。不要把完整密钥发给模型以外的人。',
-    keyPlaceholder: '粘贴 DeepSeek API Key',
+      '选一个平台，贴上该平台的 API Key。全家共用，加入的人都能用、也能删。不要把完整密钥发给别人。',
+    keyPlaceholder: '粘贴该平台的 API Key',
     keyLabelPlaceholder: '名称（可空）',
     addKey: '添加',
+    addKeyTitle: '添加密钥',
     setDefault: '设为默认',
     defaultBadge: '默认',
     removeKey: '删除',
     maxKeys: '每家最多 3 把密钥',
     keyRequired: '先粘贴密钥',
     noKeys: '还没有密钥',
+    hostedName: '会员模型',
+    hostedUntil: (ymd) => `平台提供 · 有效至 ${ymd}`,
+    hostedEnded: (ymd) => `已于 ${ymd} 到期`,
+    hostedExpired: '会员模型已到期',
     needFamily: '请先加入家庭',
     faqTitle: '常见问题',
     faqHint: '不知道密钥从哪来、配了还不能用，先看这里',
@@ -425,19 +447,19 @@ const copy = {
         id: 'where',
         q: 'API Key 在哪里获取？',
         a:
-          '本产品只用 DeepSeek。用浏览器打开 platform.deepseek.com → 注册/登录 →「API keys」→ 创建密钥 → 复制整串（一般以 sk- 开头）。小程序里打不开该网站时，可点下方按钮复制链接，到手机浏览器打开。'
+          '点「添加」，在弹框里选平台。用浏览器打开该平台控制台，创建 API Key，复制整串。小程序里打不开网站时，点下方按钮复制当前平台的链接，到手机浏览器打开。'
       },
       {
         id: 'how',
         q: '怎么配到家里？',
         a:
-          '把密钥粘贴到上方输入框，名称可空，点「添加」。第一把会自动设为默认。密钥保存在当前家庭，全家成员共用，每个人不必各配一把。'
+          '点「添加」，在弹框里选平台并粘贴密钥，名称可空。模型已按平台选好，不用再填地址。第一把会自动设为默认。一家忙碌时会自动试下一把已保存的密钥。'
       },
       {
         id: 'still',
         q: '配置了还是不能用？',
         a:
-          '常见原因：① DeepSeek 账户余额不足或未充值（控制台看用量/账单）；② 密钥复制少了字符或含空格；③ 删掉了默认密钥且没有设新的默认；④ 当前不在已加入的家庭里。家庭管家走这把家庭密钥，与「加强版/VIP」无关。'
+          '常见原因：① 该平台余额不足或服务繁忙，可再加另一家的密钥；② 密钥复制少了字符或含空格；③ 删掉了默认密钥且没有设新的默认；④ 当前不在已加入的家庭里。家庭管家走这些家庭密钥，与「加强版/VIP」无关。'
       },
       {
         id: 'safe',

@@ -5,6 +5,7 @@ import com.homestocker.common.ApiResponse;
 import com.homestocker.common.ErrorCodes;
 import com.homestocker.modules.ai.app.AiActService;
 import com.homestocker.modules.ai.app.AiKeyService;
+import com.homestocker.modules.ai.app.PlatformKeyService;
 import java.util.Map;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,10 +18,13 @@ public class AiController {
 
   private final AiKeyService aiKeyService;
   private final AiActService aiActService;
+  private final PlatformKeyService platformKeyService;
 
-  public AiController(AiKeyService aiKeyService, AiActService aiActService) {
+  public AiController(
+      AiKeyService aiKeyService, AiActService aiActService, PlatformKeyService platformKeyService) {
     this.aiKeyService = aiKeyService;
     this.aiActService = aiActService;
+    this.platformKeyService = platformKeyService;
   }
 
   private static Map<String, Object> body(Map<String, Object> body) {
@@ -45,6 +49,36 @@ public class AiController {
   @PostMapping("/setDefaultKey")
   public ApiResponse<?> setDefaultKey(@RequestBody(required = false) Map<String, Object> body) {
     return ApiResponse.success(aiKeyService.setDefaultKey(body(body)));
+  }
+
+  @PostMapping("/setHostedDefault")
+  public ApiResponse<?> setHostedDefault() {
+    return ApiResponse.success(aiKeyService.setHostedDefault());
+  }
+
+  @PostMapping("/listPlatformKeys")
+  public ApiResponse<?> listPlatformKeys() {
+    return ApiResponse.success(platformKeyService.listKeys());
+  }
+
+  @PostMapping("/addPlatformKey")
+  public ApiResponse<?> addPlatformKey(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(platformKeyService.addKey(body(body)));
+  }
+
+  @PostMapping("/removePlatformKey")
+  public ApiResponse<?> removePlatformKey(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(platformKeyService.removeKey(body(body)));
+  }
+
+  @PostMapping("/setPlatformKeyEnabled")
+  public ApiResponse<?> setPlatformKeyEnabled(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(platformKeyService.setEnabled(body(body)));
+  }
+
+  @PostMapping("/movePlatformKey")
+  public ApiResponse<?> movePlatformKey(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(platformKeyService.moveKey(body(body)));
   }
 
   @PostMapping("/act")
