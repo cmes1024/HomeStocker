@@ -23,8 +23,8 @@ module.exports = {
   /**
    * Java API Base（模拟器 127.0.0.1；真机改成电脑局域网 IP，如 http://192.168.1.8:8080）
    */
-  javaBaseUrl: 'http://127.0.0.1:8080',
-  // javaBaseUrl: 'https://hs.zfqwjs.com',
+  // javaBaseUrl: 'http://127.0.0.1:8080',
+  javaBaseUrl: 'https://hs.zfqwjs.com',
 
   /**
    * false：真实 wx.login → 服务端 code2session（须配 server/.env 的 APP_ID/SECRET）

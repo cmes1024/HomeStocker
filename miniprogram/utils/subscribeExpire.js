@@ -3,7 +3,7 @@
  * 与云函数 expireNotify 默认 tmplId 保持一致。
  */
 const EXPIRE_SUBSCRIBE_TMPL_ID =
-  '_oheW_DGsoqUxKsFIQrWSYIuoo4stYvsJv-JNf_uAiQ'
+  'X4rf9mfFUtUksbg6hHM1fYS3Cu1nzMX5m9IWbktlj9g'
 
 /**
  * 请求过期提醒订阅授权；拒绝不抛错。接受则 recordSubscribeExpire。
