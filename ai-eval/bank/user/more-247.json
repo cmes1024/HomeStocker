@@ -1,0 +1,31 @@
+{
+  "id": "more-247",
+  "perspective": "user",
+  "title": "买了四听可乐，放零食柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "买了四听可乐，放零食柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "可乐",
+        "quantity": 4,
+        "locationName": "零食柜"
+      }
+    ]
+  }
+}

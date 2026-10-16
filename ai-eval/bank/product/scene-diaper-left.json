@@ -1,0 +1,31 @@
+{
+  "id": "scene-diaper-left",
+  "perspective": "product",
+  "title": "纸尿裤还剩多少",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤还剩多少",
+  "expected": {
+    "outcome": "查出纸尿裤再回答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

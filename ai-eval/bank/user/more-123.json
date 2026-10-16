@@ -1,0 +1,24 @@
+{
+  "id": "more-123",
+  "perspective": "user",
+  "title": "钥匙放到玄关那个挂钩上",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙放到玄关那个挂钩上",
+  "expected": {
+    "outcome": "没有玄关，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

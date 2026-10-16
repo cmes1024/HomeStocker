@@ -1,0 +1,23 @@
+{
+  "id": "more-312",
+  "perspective": "user",
+  "title": "我忘了是盐还是糖",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我忘了是盐还是糖",
+  "expected": {
+    "outcome": "家里有盐、没有糖，直接说，先不改账",
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

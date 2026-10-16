@@ -1,0 +1,27 @@
+{
+  "id": "more-205",
+  "perspective": "user",
+  "title": "薯片今晚电影夜还够不够两个人",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片今晚电影夜还够不够两个人",
+  "expected": {
+    "outcome": "看薯片",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

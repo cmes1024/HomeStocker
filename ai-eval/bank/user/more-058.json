@@ -1,0 +1,24 @@
+{
+  "id": "more-058",
+  "perspective": "user",
+  "title": "客人放下的东西先记一下",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "客人放下的东西先记一下",
+  "expected": {
+    "outcome": "没说是什么、放哪，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "id": "more-115",
+  "perspective": "user",
+  "title": "厕纸先别删",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "厕纸没了"
+    },
+    {
+      "role": "assistant",
+      "text": "要删掉卫生间那卷厕纸吗？"
+    },
+    {
+      "role": "user",
+      "text": "先别删，我再找找床底"
+    }
+  ],
+  "expected": {
+    "outcome": "先留着厕纸",
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.update",
+      "item.create"
+    ]
+  }
+}

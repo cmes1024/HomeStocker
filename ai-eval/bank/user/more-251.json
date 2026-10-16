@@ -1,0 +1,31 @@
+{
+  "id": "more-251",
+  "perspective": "user",
+  "title": "卷纸六卷，放卫生间",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "卷纸六卷，放卫生间",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "卷纸",
+        "quantity": 6,
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

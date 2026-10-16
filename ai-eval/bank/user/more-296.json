@@ -1,0 +1,27 @@
+{
+  "id": "more-296",
+  "perspective": "user",
+  "title": "冰箱门一开酸奶牛奶鸡蛋都在吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱门一开酸奶牛奶鸡蛋都在吗",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

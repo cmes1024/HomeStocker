@@ -1,0 +1,24 @@
+{
+  "id": "chat-steam-rice",
+  "perspective": "user",
+  "title": "蒸饭别把小袋米算进去",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚上蒸饭，大米还有吧？那小袋米别算进去",
+  "expected": {
+    "outcome": "看大米还剩多少，不改、不删那袋米",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany"
+    ]
+  }
+}

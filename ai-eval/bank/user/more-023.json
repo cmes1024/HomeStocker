@@ -1,0 +1,32 @@
+{
+  "id": "more-023",
+  "perspective": "user",
+  "title": "盐炒菜用掉一点，还剩一袋半",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐炒菜用掉一点，还剩一袋半",
+  "expected": {
+    "outcome": "盐改成 1.5 袋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "盐",
+        "quantity": 1.5
+      }
+    ]
+  }
+}

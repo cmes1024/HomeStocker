@@ -1,0 +1,30 @@
+{
+  "id": "life-cooked-noodle",
+  "perspective": "product",
+  "title": "挂面煮了一把",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "挂面煮了一把",
+  "expected": {
+    "outcome": "挂面从 3 把改成 2 把，不删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "挂面",
+        "quantity": 2
+      }
+    ]
+  }
+}

@@ -107,8 +107,8 @@ public final class PlanParser {
   /** 去掉模型模仿历史消息时加的时间戳外壳。 */
   static String stripImitatedStamp(String text) {
     String t = str(text).trim();
-    t = t.replaceFirst("^\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\\]\\s*", "");
-    t = t.replaceFirst("（消息时间 \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）\\s*$", "");
+    t = t.replaceAll("\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}\\]", "");
+    t = t.replaceAll("（消息时间 \\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}）", "");
     return t.trim();
   }
 

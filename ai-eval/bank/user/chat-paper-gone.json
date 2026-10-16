@@ -1,0 +1,23 @@
+{
+  "id": "chat-paper-gone",
+  "perspective": "user",
+  "title": "纸没了没说哪种",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸没了",
+  "expected": {
+    "outcome": "纸巾、厕纸、纸尿裤都像，先问是哪一种，先别删",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.update",
+      "item.create"
+    ]
+  }
+}

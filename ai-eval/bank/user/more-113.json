@@ -1,0 +1,43 @@
+{
+  "id": "more-113",
+  "perspective": "user",
+  "title": "薯片别删还剩一袋",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "薯片吃完了"
+    },
+    {
+      "role": "assistant",
+      "text": "要我把薯片删掉吗？"
+    },
+    {
+      "role": "user",
+      "text": "别删，还剩一袋，在零食柜底下"
+    }
+  ],
+  "expected": {
+    "outcome": "不删薯片，改成还剩 1 袋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片",
+        "quantity": 1
+      }
+    ]
+  }
+}

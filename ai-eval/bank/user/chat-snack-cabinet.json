@@ -1,0 +1,27 @@
+{
+  "id": "chat-snack-cabinet",
+  "perspective": "user",
+  "title": "零食柜孩子老翻",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "零食柜里还有啥，孩子老去翻",
+  "expected": {
+    "outcome": "列出零食柜里的，不改",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

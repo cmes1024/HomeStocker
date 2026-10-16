@@ -1,0 +1,24 @@
+{
+  "id": "more-104",
+  "perspective": "user",
+  "title": "奶喝完了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "奶喝完了",
+  "expected": {
+    "outcome": "两处牛奶，先问喝完的是哪盒",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

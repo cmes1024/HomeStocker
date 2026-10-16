@@ -1,0 +1,27 @@
+{
+  "id": "more-211",
+  "perspective": "user",
+  "title": "大米够不够煮两顿粥",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "大米够不够煮两顿粥",
+  "expected": {
+    "outcome": "看大米",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

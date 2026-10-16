@@ -1,0 +1,27 @@
+{
+  "id": "more-289",
+  "perspective": "user",
+  "title": "纸尿裤出门一天够不够",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤出门一天够不够",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

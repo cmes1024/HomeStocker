@@ -1,0 +1,27 @@
+{
+  "id": "more-298",
+  "perspective": "user",
+  "title": "零食柜孩子放学之前还有薯片吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "零食柜孩子放学之前还有薯片吗",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

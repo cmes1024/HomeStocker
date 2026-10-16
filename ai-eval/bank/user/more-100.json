@@ -1,0 +1,32 @@
+{
+  "id": "more-100",
+  "perspective": "user",
+  "title": "鸡蛋煮了四个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "鸡蛋煮了四个",
+  "expected": {
+    "outcome": "鸡蛋少四个，还剩 4 个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 4
+      }
+    ]
+  }
+}

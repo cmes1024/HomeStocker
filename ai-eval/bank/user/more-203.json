@@ -1,0 +1,27 @@
+{
+  "id": "more-203",
+  "perspective": "user",
+  "title": "酸奶当早餐，两盒都在吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酸奶当早餐，两盒都在吗",
+  "expected": {
+    "outcome": "看酸奶",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

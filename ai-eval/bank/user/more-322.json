@@ -1,0 +1,32 @@
+{
+  "id": "more-322",
+  "perspective": "user",
+  "title": "绿茶两盒，放厨房橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "绿茶两盒，放厨房橱柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "绿茶",
+        "quantity": 2,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

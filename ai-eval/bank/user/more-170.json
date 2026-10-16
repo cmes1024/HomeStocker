@@ -1,0 +1,29 @@
+{
+  "id": "more-170",
+  "perspective": "user",
+  "title": "牛奶和酸奶各喝一盒",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牛奶和酸奶各喝一盒",
+  "expected": {
+    "outcome": "酸奶少一盒；牛奶有两处，先问是哪盒",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callExcludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶"
+      }
+    ]
+  }
+}

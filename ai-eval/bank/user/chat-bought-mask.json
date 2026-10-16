@@ -1,0 +1,31 @@
+{
+  "id": "chat-bought-mask",
+  "perspective": "user",
+  "title": "下班买了盒口罩放客厅",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "下班顺手买了盒口罩，先搁客厅",
+  "expected": {
+    "outcome": "客厅记下口罩 1 盒",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "name": "口罩",
+        "quantity": 1,
+        "spaceName": "客厅"
+      }
+    ]
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "id": "chat-greens-fridge",
+  "perspective": "user",
+  "title": "青菜豆腐放冰箱",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "我买了点菜"
+    },
+    {
+      "role": "assistant",
+      "text": "要记的话告诉我是什么、放哪。"
+    },
+    {
+      "role": "user",
+      "text": "青菜两把、豆腐一块，都放冰箱"
+    }
+  ],
+  "expected": {
+    "outcome": "冰箱记下青菜和豆腐",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "name": "青菜",
+        "spaceName": "厨房",
+        "locationName": "冰箱"
+      },
+      {
+        "name": "豆腐",
+        "spaceName": "厨房",
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

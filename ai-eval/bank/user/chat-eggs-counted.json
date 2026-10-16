@@ -1,0 +1,30 @@
+{
+  "id": "chat-eggs-counted",
+  "perspective": "user",
+  "title": "我数过鸡蛋就6个",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我刚数了下，鸡蛋就剩6个",
+  "expected": {
+    "outcome": "鸡蛋改成 6 个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      }
+    ]
+  }
+}

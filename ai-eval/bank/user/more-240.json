@@ -1,0 +1,24 @@
+{
+  "id": "more-240",
+  "perspective": "user",
+  "title": "你先记住我心情不好，账别动",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "你先记住我心情不好，账别动",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

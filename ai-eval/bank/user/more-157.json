@@ -1,0 +1,24 @@
+{
+  "id": "more-157",
+  "perspective": "user",
+  "title": "这个家我有点烦，但先什么都别删",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "这个家我有点烦，但先什么都别删",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

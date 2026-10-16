@@ -1,0 +1,27 @@
+{
+  "id": "more-219",
+  "perspective": "user",
+  "title": "客厅地上那些，纸巾钥匙电脑都还在账上",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "客厅地上那些，纸巾钥匙电脑都还在账上吗",
+  "expected": {
+    "outcome": "看客厅",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

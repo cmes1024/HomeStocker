@@ -1,0 +1,30 @@
+{
+  "id": "chat-chips-kid",
+  "perspective": "user",
+  "title": "娃又偷吃薯片",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片又被娃偷吃了一袋",
+  "expected": {
+    "outcome": "薯片少一袋，还剩 1 袋，不整袋删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片",
+        "quantity": 1
+      }
+    ]
+  }
+}

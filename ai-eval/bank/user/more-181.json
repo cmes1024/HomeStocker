@@ -1,0 +1,41 @@
+{
+  "id": "more-181",
+  "perspective": "user",
+  "title": "喝掉的是常温那盒",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "奶喝掉一盒"
+    },
+    {
+      "role": "assistant",
+      "text": "常温 1 盒，冰箱 2 盒，喝的是哪盒？"
+    },
+    {
+      "role": "user",
+      "text": "常温那盒，没开封那盒"
+    }
+  ],
+  "expected": {
+    "outcome": "常温那盒喝掉就没了，删掉或问清；不要改冰箱那两盒",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "牛奶"
+      }
+    ]
+  }
+}

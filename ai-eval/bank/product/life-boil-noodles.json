@@ -1,0 +1,29 @@
+{
+  "id": "life-boil-noodles",
+  "perspective": "product",
+  "title": "今晚煮面挂面够不够",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "今晚想煮面，挂面还够吗",
+  "expected": {
+    "outcome": "先看挂面还剩多少再回答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "more-256",
+  "perspective": "user",
+  "title": "孩子的画笔一盒，放宝宝房",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子的画笔一盒，放宝宝房",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "画笔",
+        "quantity": 1,
+        "spaceName": "宝宝房"
+      }
+    ]
+  }
+}

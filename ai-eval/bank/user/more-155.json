@@ -1,0 +1,24 @@
+{
+  "id": "more-155",
+  "perspective": "user",
+  "title": "孩子不爱喝奶怎么办，账先别动",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子不爱喝奶怎么办，账先别动",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

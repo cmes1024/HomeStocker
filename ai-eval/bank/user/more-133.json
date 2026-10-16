@@ -1,0 +1,28 @@
+{
+  "id": "more-133",
+  "perspective": "user",
+  "title": "酸奶是不是快过期了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酸奶是不是快过期了",
+  "expected": {
+    "outcome": "看酸奶到期，不改",
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

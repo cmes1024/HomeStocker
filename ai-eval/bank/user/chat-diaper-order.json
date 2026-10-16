@@ -1,0 +1,25 @@
+{
+  "id": "chat-diaper-order",
+  "perspective": "user",
+  "title": "纸尿裤要不要下单",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤就一包了，今晚够换不，不够我得下单",
+  "expected": {
+    "outcome": "告诉还剩多少，不下单、不新记一包",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

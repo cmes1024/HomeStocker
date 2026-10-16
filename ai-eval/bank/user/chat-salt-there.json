@@ -1,0 +1,27 @@
+{
+  "id": "chat-salt-there",
+  "perspective": "user",
+  "title": "盐呢",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐呢",
+  "expected": {
+    "outcome": "告诉盐在哪、还有多少，不改",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

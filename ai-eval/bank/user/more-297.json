@@ -1,0 +1,27 @@
+{
+  "id": "more-297",
+  "perspective": "user",
+  "title": "橱柜门后挂面还挂着吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "橱柜门后挂面还挂着吗",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "more-265",
+  "perspective": "user",
+  "title": "苹果下午又吃了一个，应该还剩 1 个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果下午又吃了一个，应该还剩 1 个",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "more-103",
+  "perspective": "user",
+  "title": "这袋薯片受潮了，扔了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "这袋薯片受潮了，扔了",
+  "expected": {
+    "outcome": "删掉薯片",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "薯片"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "more-095",
+  "perspective": "user",
+  "title": "牛奶我从冰箱拿了一盒喝了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牛奶我从冰箱拿了一盒喝了",
+  "expected": {
+    "outcome": "冰箱牛奶少一盒",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶",
+        "quantity": 1
+      }
+    ]
+  }
+}

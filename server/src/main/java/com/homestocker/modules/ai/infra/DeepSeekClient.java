@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.ArrayList;
 import com.homestocker.common.ErrorCodes;
 import com.homestocker.common.ShanghaiDates;
 import com.homestocker.modules.ai.app.ModelCatalog;
@@ -26,7 +27,13 @@ public class DeepSeekClient {
   private static final int DEFAULT_TIMEOUT_MS = 12_000;
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);
 
-  public record ChatResult(String content, int status, long ms) {}
+  public record ToolCall(String id, String name, String arguments) {}
+
+  public record ChatResult(String content, List<ToolCall> toolCalls, int status, long ms) {
+    public ChatResult(String content, int status, long ms) {
+      this(content, List.of(), status, ms);
+    }
+  }
 
   public record ModelError(String code, String message, boolean retryable) {}
 
@@ -95,10 +102,7 @@ public class DeepSeekClient {
         throw new DeepSeekException(err.code(), err.message(), err.retryable(), exchange.status);
       }
       JsonNode rootNode = objectMapper.readTree(exchange.body == null ? "{}" : exchange.body);
-      String content =
-          rootNode.path("choices").path(0).path("message").path("content").asText("");
-      log.info("model ok ms={}", ms);
-      return new ChatResult(content, exchange.status, ms);
+      return toChatResult(rootNode, exchange.status, ms);
     } catch (DeepSeekException e) {
       throw e;
     } catch (Exception e) {
@@ -113,6 +117,77 @@ public class DeepSeekClient {
       throw new DeepSeekException(
           err.code(), err.message(), retryable, 0, e);
     }
+  }
+
+  /**
+   * 带原生 tools 的一轮补全。不强制 json_object，否则模型无法发出 tool_calls。
+   */
+  public ChatResult complete(
+      String apiKey,
+      String baseUrl,
+      String model,
+      ArrayNode messages,
+      ArrayNode tools,
+      int timeoutMs,
+      int maxTokens)
+      throws DeepSeekException {
+    long started = System.currentTimeMillis();
+    String url = ModelCatalog.completionsUrl(baseUrl);
+    ObjectNode body = objectMapper.createObjectNode();
+    body.put("model", model != null && !model.isBlank() ? model : "deepseek-chat");
+    body.put("stream", false);
+    writeSampling(body, model);
+    writeLimits(body, model, maxTokens);
+    body.set("messages", messages == null ? objectMapper.createArrayNode() : messages);
+    if (tools != null && !tools.isEmpty()) {
+      body.set("tools", tools);
+    }
+    try {
+      Exchange exchange = postJson(url, apiKey, body.toString(), timeoutMs);
+      long ms = System.currentTimeMillis() - started;
+      if (exchange.status >= 400) {
+        ModelError err = classifyError(exchange.status, exchange.body, "");
+        log.info(
+            "model fail status={} ms={} retryable={} body={}",
+            exchange.status,
+            ms,
+            err.retryable(),
+            abbreviate(exchange.body));
+        throw new DeepSeekException(err.code(), err.message(), err.retryable(), exchange.status);
+      }
+      JsonNode rootNode = objectMapper.readTree(exchange.body == null ? "{}" : exchange.body);
+      return toChatResult(rootNode, exchange.status, ms);
+    } catch (DeepSeekException e) {
+      throw e;
+    } catch (Exception e) {
+      long ms = System.currentTimeMillis() - started;
+      ModelError err = classifyError(0, "", e.getMessage());
+      boolean retryable = isRetryableNetwork(e);
+      log.info("model error ms={} retryable={} ex={}", ms, retryable, rootSummary(e));
+      throw new DeepSeekException(err.code(), err.message(), retryable, 0, e);
+    }
+  }
+
+  private ChatResult toChatResult(JsonNode rootNode, int status, long ms) {
+    JsonNode message = rootNode.path("choices").path(0).path("message");
+    String content = message.path("content").isNull() ? "" : message.path("content").asText("");
+    List<ToolCall> calls = new ArrayList<>();
+    JsonNode rawCalls = message.path("tool_calls");
+    if (rawCalls.isArray()) {
+      for (JsonNode call : rawCalls) {
+        String id = call.path("id").asText("");
+        JsonNode fn = call.path("function");
+        String name = fn.path("name").asText("");
+        String arguments = fn.path("arguments").isTextual()
+            ? fn.path("arguments").asText("")
+            : fn.path("arguments").toString();
+        if (!name.isBlank()) {
+          calls.add(new ToolCall(id.isBlank() ? "call_" + calls.size() : id, name, arguments));
+        }
+      }
+    }
+    log.info("model ok ms={} tools={}", ms, calls.size());
+    return new ChatResult(content, calls, status, ms);
   }
 
   /** Kimi K2.6 的温度是固定的，传 0 会直接 400。不传则由对方使用非思考模式的 0.6。 */

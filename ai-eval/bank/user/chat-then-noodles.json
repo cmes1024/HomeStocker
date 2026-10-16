@@ -1,0 +1,40 @@
+{
+  "id": "chat-then-noodles",
+  "perspective": "user",
+  "title": "那就煮面够不够",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "晚上吃啥好"
+    },
+    {
+      "role": "assistant",
+      "text": "橱柜里还有挂面。"
+    },
+    {
+      "role": "user",
+      "text": "那就煮面吧，够不够"
+    }
+  ],
+  "expected": {
+    "outcome": "接着上一句看挂面还剩多少，不改数量",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

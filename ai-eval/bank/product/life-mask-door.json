@@ -1,0 +1,23 @@
+{
+  "id": "life-mask-door",
+  "perspective": "product",
+  "title": "门口放一包口罩",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "门口放一包口罩",
+  "expected": {
+    "outcome": "门口不是家里的空间，先问放哪，先不记",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

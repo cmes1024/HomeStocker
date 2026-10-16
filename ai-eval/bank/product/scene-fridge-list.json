@@ -1,0 +1,31 @@
+{
+  "id": "scene-fridge-list",
+  "perspective": "product",
+  "title": "冰箱里有什么",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱里都有什么",
+  "expected": {
+    "outcome": "按冰箱列出物资，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

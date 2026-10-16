@@ -1,0 +1,24 @@
+{
+  "id": "more-237",
+  "perspective": "user",
+  "title": "先别动任何东西，我只是打开看看你在不",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "先别动任何东西，我只是打开看看你在不在",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

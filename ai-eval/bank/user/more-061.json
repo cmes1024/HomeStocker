@@ -1,0 +1,30 @@
+{
+  "id": "more-061",
+  "perspective": "user",
+  "title": "爸妈说酸奶放坏了，扔了吧",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "爸妈说酸奶放坏了，扔了吧",
+  "expected": {
+    "outcome": "酸奶坏了就删掉",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "酸奶"
+      }
+    ]
+  }
+}

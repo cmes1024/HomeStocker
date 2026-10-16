@@ -1,0 +1,27 @@
+{
+  "id": "more-014",
+  "perspective": "user",
+  "title": "电脑还在客厅吗，我要回个消息",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑还在客厅吗，我要回个消息",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

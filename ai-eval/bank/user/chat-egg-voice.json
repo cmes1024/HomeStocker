@@ -1,0 +1,24 @@
+{
+  "id": "chat-egg-voice",
+  "perspective": "user",
+  "title": "几蛋还有几个",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "几蛋还有几个",
+  "expected": {
+    "outcome": "听成鸡蛋也行，问一句也行，别乱改别的东西",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "more-050",
+  "perspective": "user",
+  "title": "我爸喝茶不喝奶，牛奶还是先告诉我有几",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我爸喝茶不喝奶，牛奶还是先告诉我有几盒",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

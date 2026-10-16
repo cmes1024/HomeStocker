@@ -1,0 +1,32 @@
+{
+  "id": "more-021",
+  "perspective": "user",
+  "title": "鸡蛋打了两个进汤里",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "鸡蛋打了两个进汤里",
+  "expected": {
+    "outcome": "鸡蛋少两个，还剩 6 个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      }
+    ]
+  }
+}

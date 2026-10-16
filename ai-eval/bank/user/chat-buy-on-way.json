@@ -1,0 +1,26 @@
+{
+  "id": "chat-buy-on-way",
+  "perspective": "user",
+  "title": "下班顺路买啥",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里啥快没了，我下班好顺路买，你先别帮我记新的",
+  "expected": {
+    "outcome": "看哪些快用完，只给建议，不新记一笔采购",
+    "requiredToolsAny": [
+      "item.search",
+      "item.stats",
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove"
+    ]
+  }
+}

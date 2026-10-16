@@ -1,0 +1,43 @@
+{
+  "id": "chat-fridge-milk",
+  "perspective": "user",
+  "title": "就是冰箱那盒",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "奶喝掉一盒"
+    },
+    {
+      "role": "assistant",
+      "text": "厨房常温 1 盒，冰箱还有 2 盒。喝的是哪盒？"
+    },
+    {
+      "role": "user",
+      "text": "冰箱那个"
+    }
+  ],
+  "expected": {
+    "outcome": "只把冰箱那盒从 2 改成 1，常温那盒不动",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶",
+        "quantity": 1
+      }
+    ]
+  }
+}

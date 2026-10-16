@@ -1,0 +1,27 @@
+{
+  "id": "more-132",
+  "perspective": "user",
+  "title": "冰箱里哪个要先吃，我懒得翻日期",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱里哪个要先吃，我懒得翻日期",
+  "expected": {
+    "outcome": "看临期，不改账",
+    "requiredToolsAny": [
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

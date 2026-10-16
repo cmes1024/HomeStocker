@@ -1,0 +1,27 @@
+{
+  "id": "more-282",
+  "perspective": "user",
+  "title": "明天早起煮挂面，今晚先问你还剩几把",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "明天早起煮挂面，今晚先问你还剩几把",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

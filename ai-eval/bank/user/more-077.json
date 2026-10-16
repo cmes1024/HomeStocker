@@ -1,0 +1,31 @@
+{
+  "id": "more-077",
+  "perspective": "user",
+  "title": "牙膏一支，卫生间",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牙膏一支，卫生间",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "牙膏",
+        "quantity": 1,
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

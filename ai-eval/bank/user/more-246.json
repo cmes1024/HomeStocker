@@ -1,0 +1,24 @@
+{
+  "id": "more-246",
+  "perspective": "user",
+  "title": "家里这些先冻结，一件都别改",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里这些先冻结，一件都别改",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

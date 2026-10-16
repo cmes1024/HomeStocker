@@ -1,0 +1,27 @@
+{
+  "id": "more-019",
+  "perspective": "user",
+  "title": "蒸米饭，大米那袋还剩多少，小袋米别算",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "蒸米饭，大米那袋还剩多少，小袋米别算",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

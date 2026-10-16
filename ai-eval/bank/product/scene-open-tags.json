@@ -1,0 +1,24 @@
+{
+  "id": "scene-open-tags",
+  "perspective": "product",
+  "title": "打开标签管理",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "打开标签管理",
+  "expected": {
+    "outcome": "打开标签管理页，不改账",
+    "requiredTools": [
+      "page.get"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

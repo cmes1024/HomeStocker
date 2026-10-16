@@ -1,0 +1,25 @@
+{
+  "id": "life-trash-bags",
+  "perspective": "product",
+  "title": "家里有没有垃圾袋",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里有垃圾袋吗",
+  "expected": {
+    "outcome": "先查。没有就说没有，不要自己记一包",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

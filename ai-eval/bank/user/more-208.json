@@ -1,0 +1,24 @@
+{
+  "id": "more-208",
+  "perspective": "user",
+  "title": "布洛芬我不敢乱吃，先告诉我在哪",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬我不敢乱吃，先告诉我在哪",
+  "expected": {
+    "outcome": "看布洛芬",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "more-092",
+  "perspective": "user",
+  "title": "药呢",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "药呢",
+  "expected": {
+    "outcome": "没点名哪一种药，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

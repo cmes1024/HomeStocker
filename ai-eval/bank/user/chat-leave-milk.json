@@ -1,0 +1,24 @@
+{
+  "id": "chat-leave-milk",
+  "perspective": "user",
+  "title": "牛奶先别动",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牛奶先别动，我还没喝",
+  "expected": {
+    "outcome": "什么都不改",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

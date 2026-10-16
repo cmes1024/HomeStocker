@@ -1,0 +1,37 @@
+{
+  "id": "more-179",
+  "perspective": "user",
+  "title": "那就煮面，你看挂面够不够，先别减",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "晚上吃啥"
+    },
+    {
+      "role": "assistant",
+      "text": "有挂面，也有鸡蛋。"
+    },
+    {
+      "role": "user",
+      "text": "那就煮面，你看挂面够不够，先别减"
+    }
+  ],
+  "expected": {
+    "outcome": "看挂面还剩多少，不改",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

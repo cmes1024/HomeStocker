@@ -1,0 +1,27 @@
+{
+  "id": "more-214",
+  "perspective": "user",
+  "title": "冰箱除了牛奶酸奶鸡蛋苹果还有啥",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱除了牛奶酸奶鸡蛋苹果还有啥",
+  "expected": {
+    "outcome": "看冰箱",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

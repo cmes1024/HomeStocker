@@ -1,0 +1,43 @@
+{
+  "id": "chat-ate-two-apples",
+  "perspective": "user",
+  "title": "说错了是吃了两个",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "刚吃了一个苹果"
+    },
+    {
+      "role": "assistant",
+      "text": "苹果改成还剩 1 个了。"
+    },
+    {
+      "role": "user",
+      "text": "不对不对，是吃了两个，一个不剩了"
+    }
+  ],
+  "expected": {
+    "outcome": "苹果吃光了就删掉这一条，不要再记成还有",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "苹果"
+      }
+    ]
+  }
+}

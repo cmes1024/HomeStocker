@@ -1,0 +1,30 @@
+{
+  "id": "scene-tag-tissue",
+  "perspective": "product",
+  "title": "纸巾加上日用标签",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "给纸巾加上日用标签",
+  "expected": {
+    "outcome": "给现有纸巾加上已有的日用标签，不新建纸巾",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "纸巾"
+      }
+    ]
+  }
+}

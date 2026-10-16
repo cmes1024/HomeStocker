@@ -1,0 +1,27 @@
+{
+  "id": "chat-who-today",
+  "perspective": "user",
+  "title": "今天有人动过吗",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "今天有人动过家里东西吗",
+  "expected": {
+    "outcome": "看今天的记录，不用物资列表冒充",
+    "requiredTools": [
+      "activity.list"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

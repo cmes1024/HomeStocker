@@ -1,0 +1,30 @@
+{
+  "id": "chat-eat-expiring",
+  "perspective": "user",
+  "title": "晚饭吃快过期的",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚饭就吃快过期的那个，吃完帮我减一盒",
+  "expected": {
+    "outcome": "先分清哪盒快过期。酸奶明天到期，喝掉一盒后剩 1 盒",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酸奶",
+        "quantity": 1
+      }
+    ]
+  }
+}

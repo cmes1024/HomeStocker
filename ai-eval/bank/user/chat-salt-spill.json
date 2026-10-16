@@ -1,0 +1,30 @@
+{
+  "id": "chat-salt-spill",
+  "perspective": "user",
+  "title": "盐打翻了还剩小半",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐刚才打翻了，还剩小半袋",
+  "expected": {
+    "outcome": "盐改成小半袋，不删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "盐",
+        "quantity": 0.5
+      }
+    ]
+  }
+}

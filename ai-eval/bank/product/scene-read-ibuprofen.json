@@ -1,0 +1,31 @@
+{
+  "id": "scene-read-ibuprofen",
+  "perspective": "product",
+  "title": "布洛芬还有多少",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬还有多少",
+  "expected": {
+    "outcome": "查到再回答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

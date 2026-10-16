@@ -1,0 +1,31 @@
+{
+  "id": "more-255",
+  "perspective": "user",
+  "title": "雨伞一把，放客厅",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "雨伞一把，放客厅",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "雨伞",
+        "quantity": 1,
+        "spaceName": "客厅"
+      }
+    ]
+  }
+}

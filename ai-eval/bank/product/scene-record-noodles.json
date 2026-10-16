@@ -1,0 +1,32 @@
+{
+  "id": "scene-record-noodles",
+  "perspective": "product",
+  "title": "橱柜记两包泡面",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厨房橱柜记两包泡面",
+  "expected": {
+    "outcome": "在厨房橱柜新建泡面 2 包",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "name": "泡面",
+        "quantity": 2,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

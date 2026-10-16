@@ -1,0 +1,27 @@
+{
+  "id": "more-040",
+  "perspective": "user",
+  "title": "宝宝房还有什么，我晚上过去看一眼之前",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "宝宝房还有什么，我晚上过去看一眼之前先问你",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

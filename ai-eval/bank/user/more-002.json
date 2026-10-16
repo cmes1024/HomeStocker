@@ -1,0 +1,27 @@
+{
+  "id": "more-002",
+  "perspective": "user",
+  "title": "牛奶早上喝的话，冰箱里还有几盒",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牛奶早上喝的话，冰箱里还有几盒",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

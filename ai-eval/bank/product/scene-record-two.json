@@ -1,0 +1,35 @@
+{
+  "id": "scene-record-two",
+  "perspective": "product",
+  "title": "牙膏和牙刷一起记",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "卫生间记一支牙膏和一把牙刷",
+  "expected": {
+    "outcome": "卫生间同时记下牙膏和牙刷，不删现有的东西",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "name": "牙膏",
+        "spaceName": "卫生间"
+      },
+      {
+        "name": "牙刷",
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

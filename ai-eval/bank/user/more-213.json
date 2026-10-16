@@ -1,0 +1,27 @@
+{
+  "id": "more-213",
+  "perspective": "user",
+  "title": "保鲜膜还能封今晚的剩菜吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "保鲜膜还能封今晚的剩菜吗",
+  "expected": {
+    "outcome": "看保鲜膜",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

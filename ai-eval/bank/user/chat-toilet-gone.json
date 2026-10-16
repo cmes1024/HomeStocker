@@ -1,0 +1,30 @@
+{
+  "id": "chat-toilet-gone",
+  "perspective": "user",
+  "title": "厕纸没啦",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厕纸没啦",
+  "expected": {
+    "outcome": "删掉厕纸，不要再记一卷新的",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "厕纸"
+      }
+    ]
+  }
+}

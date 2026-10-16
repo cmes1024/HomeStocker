@@ -1,0 +1,28 @@
+{
+  "id": "more-196",
+  "perspective": "user",
+  "title": "每个房间大概多少东西，有个数就行",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "每个房间大概多少东西，有个数就行",
+  "expected": {
+    "outcome": "按空间说件数，不改账",
+    "requiredToolsAny": [
+      "item.stats",
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

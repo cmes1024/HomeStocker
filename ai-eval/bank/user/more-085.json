@@ -1,0 +1,27 @@
+{
+  "id": "more-085",
+  "perspective": "user",
+  "title": "那串钥匙是不是还在客厅茶几附近",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "那串钥匙是不是还在客厅茶几附近",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

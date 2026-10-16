@@ -1,0 +1,32 @@
+{
+  "id": "more-039",
+  "perspective": "user",
+  "title": "小朋友吃了一个苹果",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "小朋友吃了一个苹果",
+  "expected": {
+    "outcome": "苹果少一个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 1
+      }
+    ]
+  }
+}

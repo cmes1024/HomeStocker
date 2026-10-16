@@ -1,0 +1,27 @@
+{
+  "id": "more-209",
+  "perspective": "user",
+  "title": "钥匙是不是被我扔沙发上了，账上怎么写",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙是不是被我扔沙发上了，账上怎么写",
+  "expected": {
+    "outcome": "看钥匙",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

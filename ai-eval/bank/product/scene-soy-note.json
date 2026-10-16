@@ -1,0 +1,30 @@
+{
+  "id": "scene-soy-note",
+  "perspective": "product",
+  "title": "酱油写备注",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酱油备注写成快见底",
+  "expected": {
+    "outcome": "给酱油写上备注，不改数量、不删除",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酱油",
+        "note": "快见底"
+      }
+    ]
+  }
+}

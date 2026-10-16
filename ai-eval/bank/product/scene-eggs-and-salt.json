@@ -1,0 +1,36 @@
+{
+  "id": "scene-eggs-and-salt",
+  "perspective": "product",
+  "title": "鸡蛋和盐一起改数量",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "鸡蛋改成6个，盐改成1袋",
+  "expected": {
+    "outcome": "鸡蛋改为 6，盐改为 1，两件都改到，不删除",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      },
+      {
+        "use": "item.update",
+        "name": "盐",
+        "quantity": 1
+      }
+    ]
+  }
+}

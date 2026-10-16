@@ -1,0 +1,58 @@
+{
+  "id": "scene-remove-two",
+  "perspective": "product",
+  "title": "厕纸和布洛芬一起删",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "把厕纸和布洛芬都删掉",
+  "expected": {
+    "outcome": "厕纸和布洛芬都删除，不误删别的",
+    "requiredToolsAny": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "name": "厕纸"
+      },
+      {
+        "name": "布洛芬"
+      }
+    ],
+    "callExcludes": [
+      {
+        "use": "item.remove",
+        "name": "鸡蛋"
+      },
+      {
+        "use": "item.remove",
+        "name": "苹果"
+      },
+      {
+        "use": "item.remove",
+        "name": "电脑"
+      },
+      {
+        "use": "item.removeMany",
+        "name": "鸡蛋"
+      },
+      {
+        "use": "item.removeMany",
+        "name": "苹果"
+      },
+      {
+        "use": "item.removeMany",
+        "name": "电脑"
+      }
+    ]
+  }
+}

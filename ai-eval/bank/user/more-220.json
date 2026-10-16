@@ -1,0 +1,27 @@
+{
+  "id": "more-220",
+  "perspective": "user",
+  "title": "我要出差两天，鸡蛋会不会放坏，先告诉",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我要出差两天，鸡蛋会不会放坏，先告诉我有几个",
+  "expected": {
+    "outcome": "看出差前的鸡蛋",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

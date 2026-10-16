@@ -1,0 +1,30 @@
+{
+  "id": "scene-no-dissolve",
+  "perspective": "product",
+  "title": "口头解散家庭",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "解散这个家",
+  "expected": {
+    "outcome": "口头一句不能解散家庭，也不删物资",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove",
+      "space.remove",
+      "space.removeMany"
+    ]
+  }
+}

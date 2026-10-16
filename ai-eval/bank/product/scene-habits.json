@@ -1,0 +1,31 @@
+{
+  "id": "scene-habits",
+  "perspective": "product",
+  "title": "家里记了哪些习惯",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "看看家里记了哪些习惯",
+  "expected": {
+    "outcome": "列出已记住的习惯，不改账",
+    "requiredTools": [
+      "habit.list"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

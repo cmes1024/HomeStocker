@@ -1,0 +1,27 @@
+{
+  "id": "more-028",
+  "perspective": "user",
+  "title": "火锅底料没有，盐和酱油凑合一下，都在",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "火锅底料没有，盐和酱油凑合一下，都在吗",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

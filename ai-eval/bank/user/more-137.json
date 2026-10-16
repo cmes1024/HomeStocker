@@ -1,0 +1,27 @@
+{
+  "id": "more-137",
+  "perspective": "user",
+  "title": "布洛芬生产日期我忘了，你先告诉我还在",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬生产日期我忘了，你先告诉我还在不在，别改日期",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

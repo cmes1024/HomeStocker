@@ -1,0 +1,41 @@
+{
+  "id": "more-180",
+  "perspective": "user",
+  "title": "厨房橱柜，就一瓶",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "记一瓶醋"
+    },
+    {
+      "role": "assistant",
+      "text": "放哪儿？"
+    },
+    {
+      "role": "user",
+      "text": "厨房橱柜，就一瓶"
+    }
+  ],
+  "expected": {
+    "outcome": "醋记在厨房橱柜",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "醋",
+        "quantity": 1,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

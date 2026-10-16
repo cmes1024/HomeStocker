@@ -1,0 +1,32 @@
+{
+  "id": "more-168",
+  "perspective": "user",
+  "title": "厕纸和布洛芬都过期了，都扔掉",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厕纸和布洛芬都过期了，都扔掉",
+  "expected": {
+    "outcome": "厕纸和布洛芬都删",
+    "requiredToolsAny": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "name": "厕纸"
+      },
+      {
+        "name": "布洛芬"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "more-249",
+  "perspective": "user",
+  "title": "洋葱三个，放厨房橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "洋葱三个，放厨房橱柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "洋葱",
+        "quantity": 3,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

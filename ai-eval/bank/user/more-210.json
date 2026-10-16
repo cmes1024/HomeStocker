@@ -1,0 +1,27 @@
+{
+  "id": "more-210",
+  "perspective": "user",
+  "title": "电脑孩子要写作业，还在客厅吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑孩子要写作业，还在客厅吗",
+  "expected": {
+    "outcome": "看电脑",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

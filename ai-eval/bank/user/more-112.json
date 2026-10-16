@@ -1,0 +1,43 @@
+{
+  "id": "more-112",
+  "perspective": "user",
+  "title": "鸡蛋改口是三个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "鸡蛋我吃了两个"
+    },
+    {
+      "role": "assistant",
+      "text": "鸡蛋改成还剩 6 个了。"
+    },
+    {
+      "role": "user",
+      "text": "不对，是三个，我记错了"
+    }
+  ],
+  "expected": {
+    "outcome": "按改口把鸡蛋改成 5 个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 5
+      }
+    ]
+  }
+}

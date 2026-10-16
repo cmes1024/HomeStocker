@@ -1,0 +1,27 @@
+{
+  "id": "more-193",
+  "perspective": "user",
+  "title": "咱家现在一共多少件",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "咱家现在一共多少件",
+  "expected": {
+    "outcome": "用统计说件数",
+    "requiredTools": [
+      "item.stats"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "more-043",
+  "perspective": "user",
+  "title": "奶孩子喝了一盒",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "奶孩子喝了一盒",
+  "expected": {
+    "outcome": "两处牛奶，先问是哪一盒",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

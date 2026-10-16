@@ -1,0 +1,24 @@
+{
+  "id": "more-320",
+  "perspective": "user",
+  "title": "先这样吧，所有东西保持原样",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "先这样吧，所有东西保持原样",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

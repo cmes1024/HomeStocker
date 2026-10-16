@@ -1,0 +1,25 @@
+{
+  "id": "scene-rename-chips",
+  "perspective": "product",
+  "title": "薯片改名",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片改名叫原味薯片",
+  "expected": {
+    "outcome": "改现有薯片的名字，不另记一条，也不删除",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove",
+      "item.removeMany"
+    ]
+  }
+}

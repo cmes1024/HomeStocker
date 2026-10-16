@@ -1,0 +1,23 @@
+{
+  "id": "scene-apple-to-study",
+  "perspective": "product",
+  "title": "书房还不存在",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "把苹果放到书房",
+  "expected": {
+    "outcome": "书房不在家里时先问，不新建空间，也不把苹果删掉或另记一条",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "space.create",
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ]
+  }
+}

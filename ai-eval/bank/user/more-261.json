@@ -1,0 +1,31 @@
+{
+  "id": "more-261",
+  "perspective": "user",
+  "title": "啤酒六听，放冰箱",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "啤酒六听，放冰箱",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "啤酒",
+        "quantity": 6,
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

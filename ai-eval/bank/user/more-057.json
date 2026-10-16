@@ -1,0 +1,30 @@
+{
+  "id": "more-057",
+  "perspective": "user",
+  "title": "我妈带了两把挂面，放橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我妈带了两把挂面，放橱柜",
+  "expected": {
+    "outcome": "橱柜的挂面加上这两把",
+    "requiredToolsAny": [
+      "item.update",
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "挂面"
+      }
+    ]
+  }
+}

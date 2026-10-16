@@ -1,0 +1,32 @@
+{
+  "id": "more-188",
+  "perspective": "user",
+  "title": "纸巾从今天起就当剩 2 包",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸巾从今天起就当剩 2 包",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "纸巾",
+        "quantity": 2
+      }
+    ]
+  }
+}

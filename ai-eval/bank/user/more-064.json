@@ -1,0 +1,27 @@
+{
+  "id": "more-064",
+  "perspective": "user",
+  "title": "纸巾要不要顺手买，客厅还剩几包",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸巾要不要顺手买，客厅还剩几包",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "more-076",
+  "perspective": "user",
+  "title": "牙刷两支，放卫生间",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牙刷两支，放卫生间",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "牙刷",
+        "quantity": 2,
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

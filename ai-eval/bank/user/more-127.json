@@ -1,0 +1,28 @@
+{
+  "id": "more-127",
+  "perspective": "user",
+  "title": "大米太重，还是放橱柜最下面，别和那袋",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "大米太重，还是放橱柜最下面，别和那袋米混",
+  "expected": {
+    "outcome": "大米留在橱柜，不要动那袋米",
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callExcludes": [
+      {
+        "use": "item.update",
+        "name": "米"
+      }
+    ]
+  }
+}

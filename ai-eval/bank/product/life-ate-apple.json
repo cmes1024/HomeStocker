@@ -1,0 +1,31 @@
+{
+  "id": "life-ate-apple",
+  "perspective": "product",
+  "title": "刚吃了一个苹果",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "刚吃了一个苹果",
+  "expected": {
+    "outcome": "苹果从 2 个改成 1 个，不整条删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 1
+      }
+    ]
+  }
+}

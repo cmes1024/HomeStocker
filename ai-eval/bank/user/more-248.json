@@ -1,0 +1,31 @@
+{
+  "id": "more-248",
+  "perspective": "user",
+  "title": "面包两袋，放橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "面包两袋，放橱柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "面包",
+        "quantity": 2,
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "more-015",
+  "perspective": "user",
+  "title": "薯片不是早餐，我就想知道还剩几袋",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片不是早餐，我就想知道还剩几袋",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

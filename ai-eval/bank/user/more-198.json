@@ -1,0 +1,27 @@
+{
+  "id": "more-198",
+  "perspective": "user",
+  "title": "明天便当带鸡蛋，今晚先告诉我还剩几个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "明天便当带鸡蛋，今晚先告诉我还剩几个",
+  "expected": {
+    "outcome": "看鸡蛋",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

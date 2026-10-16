@@ -1,0 +1,29 @@
+{
+  "id": "life-eat-first",
+  "perspective": "product",
+  "title": "冰箱里哪样要先吃",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱里哪样要先吃",
+  "expected": {
+    "outcome": "看临期再答，不改账",
+    "requiredTools": [
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

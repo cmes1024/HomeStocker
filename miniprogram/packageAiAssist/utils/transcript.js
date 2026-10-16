@@ -323,15 +323,40 @@ function habitAppliedToLine(habitApplied) {
   return labels.length ? '根据习惯：' + labels.join('、') : ''
 }
 
+/** 去掉空格和收尾套话，用来判断一句话是不是在复述卡片。 */
+function receiptCore(s) {
+  return String(s || '')
+    .replace(/\s+/g, '')
+    .replace(/[，。,.！!？?：:；;（）()、/／「」"'“”]/g, '')
+    .replace(
+      /记好了|已记上|已记下|已记好|已经记下|已经记上|已添加|已经添加|已新建|已改好|已经改好|已删除|已经删除|已删掉|已去掉|已修改|已改|放在|放到|放|在/g,
+      ''
+    )
+}
+
+/** 卡片已经写出同一件事时，气泡里那句复述就不再画。 */
+function lineRestatesCards(line, cardBlob) {
+  const core = receiptCore(line)
+  const blob = receiptCore(cardBlob)
+  if (!core) return true
+  if (!blob) return false
+  if (blob.indexOf(core) >= 0) return true
+  if (core.indexOf(blob) < 0) return false
+  const rest = core.replace(blob, '').replace(/[了吧呢啊呀的得地]/g, '')
+  return !rest
+}
+
 /** 展示用：去掉已被结果卡覆盖的正文行，避免「同文案气泡 + 卡片」各画一遍。 */
 function bubbleTextWithoutBlockDup(text, blocks) {
   const list = Array.isArray(blocks) ? blocks : []
   if (!list.length) return String(text || '').trim()
   const covered = {}
+  const cardPieces = []
   function mark(s) {
     const raw = String(s || '').trim()
     if (!raw) return
     covered[raw] = true
+    cardPieces.push(raw)
     // 卡片 title 可能是多行；正文按行过滤，须逐行标记
     raw.split('\n').forEach((line) => {
       const t = String(line || '').trim()
@@ -352,11 +377,30 @@ function bubbleTextWithoutBlockDup(text, blocks) {
       ;(Array.isArray(card && card.facts) ? card.facts : []).forEach(mark)
     })
   })
-  return String(text || '')
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l && !covered[l])
+  const cardBlob = cardPieces.join('')
+  return splitClauses(text)
+    .filter((l) => l && !covered[l] && !lineRestatesCards(l, cardBlob))
     .join('\n')
+}
+
+function splitClauses(text) {
+  const out = []
+  String(text || '')
+    .split('\n')
+    .forEach((line) => {
+      let buf = ''
+      line.split(/([。！？!?])/).forEach((part) => {
+        if (/^[。！？!?]$/.test(part)) {
+          buf += part
+          if (buf.trim()) out.push(buf.trim())
+          buf = ''
+          return
+        }
+        buf += part
+      })
+      if (buf.trim()) out.push(buf.trim())
+    })
+  return out
 }
 
 /** 可持久化轮次（排除问候与 pending）；含助手 blocks 快照 */

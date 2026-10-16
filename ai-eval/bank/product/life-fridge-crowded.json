@@ -1,0 +1,30 @@
+{
+  "id": "life-fridge-crowded",
+  "perspective": "product",
+  "title": "常温牛奶挪到橱柜",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱太挤了，常温那盒牛奶放到橱柜",
+  "expected": {
+    "outcome": "只把常温那盒挪到橱柜，冰箱里那盒别动",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

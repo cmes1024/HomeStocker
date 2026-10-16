@@ -1,0 +1,24 @@
+{
+  "id": "more-314",
+  "perspective": "user",
+  "title": "你先别记，我还在超市货架前犹豫",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "你先别记，我还在超市货架前犹豫",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

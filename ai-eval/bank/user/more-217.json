@@ -1,0 +1,27 @@
+{
+  "id": "more-217",
+  "perspective": "user",
+  "title": "卫生间除了厕纸和布洛芬还有别的吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "卫生间除了厕纸和布洛芬还有别的吗",
+  "expected": {
+    "outcome": "看卫生间",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

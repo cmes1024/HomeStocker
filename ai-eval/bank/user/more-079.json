@@ -1,0 +1,27 @@
+{
+  "id": "more-079",
+  "perspective": "user",
+  "title": "垃圾袋有没有，没有我就现在拿",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "垃圾袋有没有，没有我就现在拿",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

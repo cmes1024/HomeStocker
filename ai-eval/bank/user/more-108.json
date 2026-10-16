@@ -1,0 +1,32 @@
+{
+  "id": "more-108",
+  "perspective": "user",
+  "title": "盐腌了个菜，还剩一袋",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐腌了个菜，还剩一袋",
+  "expected": {
+    "outcome": "盐改成 1 袋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "盐",
+        "quantity": 1
+      }
+    ]
+  }
+}

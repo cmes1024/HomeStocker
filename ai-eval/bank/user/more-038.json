@@ -1,0 +1,32 @@
+{
+  "id": "more-038",
+  "perspective": "user",
+  "title": "娃偷偷开了一袋薯片",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "娃偷偷开了一袋薯片",
+  "expected": {
+    "outcome": "薯片少一袋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片",
+        "quantity": 1
+      }
+    ]
+  }
+}

@@ -7,9 +7,11 @@ import com.homestocker.common.ShanghaiDates;
 import com.homestocker.infra.jdbc.MembershipRepository;
 import com.homestocker.infra.jdbc.UserRepository;
 import com.homestocker.infra.jdbc.UserRow;
+import com.homestocker.modules.ai.agent.ActBudget;
 import com.homestocker.modules.ai.agent.ActContextBuilder;
 import com.homestocker.modules.ai.agent.ActContextBuilder.ActContext;
 import com.homestocker.modules.ai.agent.ActPrompt;
+import com.homestocker.modules.ai.agent.ActToolLoop;
 import com.homestocker.modules.ai.agent.ActPrompt.ActModelException;
 import com.homestocker.modules.ai.agent.ActPrompt.AskResult;
 import com.homestocker.modules.ai.agent.ActPrompt.ModelOpts;
@@ -55,6 +57,7 @@ public class AiActService {
   private final AiRateLimitService aiRateLimitService;
   private final ActContextBuilder actContextBuilder;
   private final ActPrompt actPrompt;
+  private final ActToolLoop actToolLoop;
   private final ItemsProbe itemsProbe;
   private final ToolRegistry toolRegistry;
   private final ItemService itemService;
@@ -63,6 +66,7 @@ public class AiActService {
   private final FamilyTreeService familyTreeService;
   private final FamilyHabitService familyHabitService;
   private final HabitObserveService habitObserveService;
+  private final ActTurnReplay actTurnReplay;
 
   public AiActService(
       UserRepository userRepository,
@@ -72,6 +76,7 @@ public class AiActService {
       AiRateLimitService aiRateLimitService,
       ActContextBuilder actContextBuilder,
       ActPrompt actPrompt,
+      ActToolLoop actToolLoop,
       ItemsProbe itemsProbe,
       ToolRegistry toolRegistry,
       ItemService itemService,
@@ -79,7 +84,8 @@ public class AiActService {
       TagService tagService,
       FamilyTreeService familyTreeService,
       FamilyHabitService familyHabitService,
-      HabitObserveService habitObserveService) {
+      HabitObserveService habitObserveService,
+      ActTurnReplay actTurnReplay) {
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
     this.actKeyResolver = actKeyResolver;
@@ -87,6 +93,7 @@ public class AiActService {
     this.aiRateLimitService = aiRateLimitService;
     this.actContextBuilder = actContextBuilder;
     this.actPrompt = actPrompt;
+    this.actToolLoop = actToolLoop;
     this.itemsProbe = itemsProbe;
     this.toolRegistry = toolRegistry;
     this.itemService = itemService;
@@ -95,9 +102,30 @@ public class AiActService {
     this.familyTreeService = familyTreeService;
     this.familyHabitService = familyHabitService;
     this.habitObserveService = habitObserveService;
+    this.actTurnReplay = actTurnReplay;
   }
 
   public Map<String, Object> act(Map<String, Object> event) {
+    String openid = RequestContext.require().openid();
+    String turnId = ActTurnReplay.sanitize(event == null ? null : event.get("turnId"));
+    ActTurnReplay.Claim claim = actTurnReplay.begin(openid, turnId);
+    if (claim.kind() == ActTurnReplay.Kind.REPLAY) {
+      return claim.payload();
+    }
+    if (claim.kind() == ActTurnReplay.Kind.BUSY) {
+      return busyTurnPayload();
+    }
+    try {
+      Map<String, Object> payload = performAct(event);
+      actTurnReplay.succeed(openid, turnId, payload);
+      return payload;
+    } catch (RuntimeException ex) {
+      actTurnReplay.fail(openid, turnId);
+      throw ex;
+    }
+  }
+
+  private Map<String, Object> performAct(Map<String, Object> event) {
     String openid = RequestContext.require().openid();
     aiRateLimitService.checkAct(openid);
     UserRow user = userRepository.ensureUser(openid);
@@ -143,346 +171,103 @@ public class AiActService {
     ActContext actCtx = actContextBuilder.build(openid, event, familyId);
     ModelOpts modelOpts =
         new ModelOpts(
-            keys, ACT_HTTP_TIMEOUT_MS, ACT_MAX_TOKENS, actCtx.history(), selection.hostedPool());
+            keys,
+            ACT_HTTP_TIMEOUT_MS,
+            ACT_MAX_TOKENS,
+            actCtx.history(),
+            selection.hostedPool(),
+            new ActBudget(System.currentTimeMillis()));
 
-    ActPlan plan;
+    ActToolLoop.Outcome outcome;
     try {
-      plan = actPrompt.askModel(modelOpts, actCtx.system(), actCtx.userText()).plan();
+      outcome =
+          actToolLoop.run(
+              actCtx,
+              modelOpts,
+              calls ->
+                  execute(
+                      familyId,
+                      openid,
+                      actCtx.tree(),
+                      calls,
+                      actCtx.refs(),
+                      actCtx.catalogMap(),
+                      actCtx.today().get("ymd")));
     } catch (ActModelException e) {
       throw ApiException.of(e.code(), e.getMessage());
     }
-
-    List<Map<String, Object>> probedRows = new ArrayList<>();
-    List<Map<String, Object>> turnRows = new ArrayList<>(actCtx.turnRows());
-
-    // 未查库就声称「没找到」：丢掉这手，逼模型先 probe / item.search（类型 1：事实未到）
-    if (claimsInventoryAbsenceWithoutFacts(plan, turnRows)) {
-      log.warn("act: premature inventory-absence claim; replan to probe/search first");
-      plan =
-          askPlan(
-              modelOpts,
-              actCtx.system(),
-              actCtx.userText()
-                  + "\n（系统：本轮尚无探查/查询结果。禁止声称台账没有某物；请先 probe 或 item.search，再依据本轮结果 ask / reply / calls。）");
-    }
-
-    // 还没看见台账就提问：丢掉，让模型先查。再问一遍仍不查，就直接列出本轮台账。不读用户原话。
-    if (askBeforeAnyInventoryFacts(plan, turnRows)) {
-      log.warn("act: ask before inventory facts; replan to probe/search first");
-      plan =
-          askPlan(
-              modelOpts,
-              actCtx.system(),
-              actCtx.userText()
-                  + "\n（系统：本轮尚无台账事实。查不改数据。禁止问要不要查，禁止编造数量、单位和地点。请先 probe 相关物资；查完后对象和要写的内容已经清楚就直接 calls，只有仍不清楚才 ask。）");
-      if (askBeforeAnyInventoryFacts(plan, turnRows)) {
-        log.warn("act: still asking before facts; list inventory");
-        plan = new ActPlan(List.of(), Map.of(), List.of(), "", null);
+    List<Map<String, Object>> rows = outcome.rows() == null ? List.of() : outcome.rows();
+    return switch (outcome.kind()) {
+      case ASK -> {
+        Map<String, Object> askPayload =
+            buildAskResponse(outcome.ask(), actCtx.focus(), rows, outcome.reply());
+        attachExecutedReceipt(askPayload, outcome.report(), outcome.calls());
+        yield sanitizeUserPayload(askPayload, actCtx.focus(), rows);
       }
-    }
-
-    if (!plan.ask().isEmpty() && plan.probe() == null && plan.calls().isEmpty()) {
-      return buildAskResponse(plan.ask(), actCtx.focus(), List.of(), plan.reply());
-    }
-
-    plan = ensureProbeForUnresolvedWrites(plan, actCtx.refs());
-    plan = ensureProbeForNamedCreates(plan);
-    plan = ensurePresentHasFacts(plan, turnRows);
-
-    if (plan.probe() != null) {
-      Map<String, Object> probeSpec = plan.probe();
-      probedRows = itemsProbe.runProbe(familyId, actCtx.tree(), probeSpec, actCtx.refs());
-      turnRows.addAll(probedRows);
-      Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-      vars.put("probe", ActPrompt.renderProbeRows(probedRows));
-      String system = replanSystem(actCtx, vars);
-      String probeNote =
-          probedRows.isEmpty()
-              ? "探查结果：无匹配物资"
-              : "探查结果：\n" + ActPrompt.renderProbeRows(probedRows);
-      Map<String, Object> presentBefore = plan.present();
-      plan = askPlan(
-          modelOpts,
-          system,
-          actCtx.userText()
-              + "\n"
-              + probeNote
-              + "\n（系统：上面就是本轮查库结果。禁止再问要不要查，禁止编造数量、单位和地点。纯查询用 reply 说出查到或没查到。要写入且对象、数量、落点已对准：直接 calls，不要再问是否写入；须确认的接口由服务端出确认卡。只有仍对不准才 ask。item.create 是新开行，仅同位置同名才并入；改本轮 P*/F* 已有行的位置或数量用 item.update。）");
-      Map<String, Object> presentAfter =
-          plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
-      bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
-      if (!plan.ask().isEmpty()) {
-        return buildAskResponse(
-            plan.ask(),
-            actCtx.focus(),
-            probedRows,
-            withProbeFact(plan.reply(), probeSpec, probedRows));
+      case CONFIRM -> {
+        Map<String, Object> confirmPayload =
+            buildConfirmPayload(outcome.calls(), outcome.calls(), actCtx.refs(), actCtx.focus(), rows);
+        attachExecutedReceipt(confirmPayload, outcome.report(), List.of());
+        yield confirmPayload;
       }
-    }
-
-    if (isIdlePlan(plan)) {
-      plan = recoverIdlePlan(modelOpts, actCtx, probedRows, turnRows, familyId);
-      if (!plan.ask().isEmpty()) {
-        return buildAskResponse(plan.ask(), actCtx.focus(), probedRows, plan.reply());
-      }
-    }
-
-    if (isIdlePlan(plan)) {
-      List<Map<String, Object>> rowsForAsk = probedRows.isEmpty() ? turnRows : probedRows;
-      if (!rowsForAsk.isEmpty()) {
-        String question =
-            rowsForAsk.size() == 1
-                ? "要对「" + PlanParser.probeOptionLabel(rowsForAsk.get(0)) + "」做什么？"
-                : "要对下面哪几条操作？点选后说要做什么。";
-        return buildAskResponse(
-            List.of(Map.of("question", question, "options", PlanParser.optionsFromProbeRows(rowsForAsk))),
-            actCtx.focus(),
-            rowsForAsk);
-      }
-      return buildAskResponse(
-          List.of(Map.of("question", AssistPromptTexts.DEGRADE_ASK, "options", List.of())),
-          actCtx.focus(),
-          List.of());
-    }
-
-    if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
-        && plan.calls().isEmpty()) {
-      Guardrails.inventoryAuthorityForReply(Map.of());
-      return sanitizeUserPayload(
-          attachDoneReply(plan.reply(), actCtx.focus(), plan.present(), turnRows, null),
-          actCtx.focus(),
-          turnRows);
-    }
-
-    if (Guardrails.planNeedsUnavailableCapability(plan.calls(), actCtx.catalogMap())) {
-      return buildAskResponse(Guardrails.capabilityLimitAsk(), actCtx.focus(), List.of());
-    }
-
-    Map<String, Object> inventoryReadReport = null;
-    List<Map<String, Object>> readCalls = plan.calls();
-    if (isInventoryReadOnlyCalls(readCalls)) {
-      inventoryReadReport =
-          execute(
-              familyId,
-              openid,
-              actCtx.tree(),
-              readCalls,
-              actCtx.refs(),
-              actCtx.catalogMap(),
-              actCtx.today().get("ymd"));
-      List<Map<String, Object>> invRows =
-          ingestInventoryToProbeRefs(inventoryReadReport, actCtx.tree(), actCtx.refs());
-      turnRows.addAll(invRows);
-      Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-      vars.put("probe", ActPrompt.renderProbeRows(invRows));
-      String system = replanSystem(actCtx, vars);
-      String invNote = buildReadOnlyResultNote(inventoryReadReport, invRows);
-      Map<String, Object> presentBefore = plan.present();
-      plan =
-          askPlan(
-              modelOpts,
-              system,
-              actCtx.userText()
-                  + "\n"
-                  + invNote
-                  + "\n（系统：已有上述查询结果。请用 reply / ask / present 作答；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list / habit.observe。）");
-      Map<String, Object> presentAfter =
-          plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
-      if (!plan.ask().isEmpty()) {
-        return buildAskResponse(plan.ask(), actCtx.focus(), invRows, plan.reply());
-      }
-      if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
-          && plan.calls().isEmpty()) {
-        Map<String, Object> presentRaw = plan.present();
-        Map<String, Object> payload =
-            attachDoneReply(
-                plan.reply(), actCtx.focus(), presentRaw, invRows, inventoryReadReport);
-        // 模型交了 present 但解析空（常见：stats+source=inventory 只有 buckets）→ 用 stats 结构化兜底，勿降级
-        if (needsUserDegrade(payload)) {
-          Map<String, Object> autoPresent = presentFromStatsReport(inventoryReadReport);
-          if (autoPresent != null) {
-            payload =
-                attachDoneReply("", actCtx.focus(), autoPresent, invRows, inventoryReadReport);
-          }
-        }
-        payload.put("calls", readCalls);
-        attachHabitApplied(payload, plan.appliedHabits(), familyId, List.of());
-        return sanitizeUserPayload(payload, actCtx.focus(), invRows);
-      }
-      // 模型又甩只读或交空：再催一轮；仍空则用结构化 stats present，再不编散文、不泄机器 summary
-      if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
-        presentBefore = plan.present();
-        plan =
-            askPlan(
-                modelOpts,
-                system,
-                actCtx.userText()
-                    + "\n"
-                    + invNote
-                    + "\n（系统：禁止空计划与再次只读查询。必须用 reply 和/或 present 作答，或 ask 澄清；勿再调用 item.search / item.listExpiring / activity.list / item.stats / habit.list / habit.observe。）");
-        presentAfter =
-            plan.present() != null && !plan.present().isEmpty() ? plan.present() : presentBefore;
-        plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), presentAfter, plan.appliedHabits());
-        if (!plan.ask().isEmpty()) {
-          return buildAskResponse(plan.ask(), actCtx.focus(), invRows, plan.reply());
-        }
-        if ((!plan.reply().isEmpty() || (plan.present() != null && !plan.present().isEmpty()))
-            && plan.calls().isEmpty()) {
-          Map<String, Object> payload =
-              attachDoneReply(
-                  plan.reply(), actCtx.focus(), plan.present(), invRows, inventoryReadReport);
-          payload.put("calls", readCalls);
-          return sanitizeUserPayload(payload, actCtx.focus(), invRows);
-        }
-        if (isIdlePlan(plan) || isInventoryReadOnlyCalls(plan.calls())) {
-          Map<String, Object> autoPresent = presentFromStatsReport(inventoryReadReport);
-          if (autoPresent != null) {
-            Map<String, Object> payload =
-                attachDoneReply("", actCtx.focus(), autoPresent, invRows, inventoryReadReport);
-            payload.put("calls", readCalls);
-            return sanitizeUserPayload(payload, actCtx.focus(), invRows);
-          }
-          if (hasUserFacingInventory(inventoryReadReport)) {
-            return sanitizeUserPayload(
-                buildDonePayload(readCalls, inventoryReadReport, actCtx.focus()),
-                actCtx.focus(),
-                invRows);
-          }
-          return buildDegradeAsk(actCtx.focus(), invRows);
-        }
-      }
-      if (Guardrails.planNeedsUnavailableCapability(plan.calls(), actCtx.catalogMap())) {
-        return buildAskResponse(Guardrails.capabilityLimitAsk(), actCtx.focus(), List.of());
-      }
-    }
-
-    var receipts = Receipts.parseLatestQtyChangeReceipts(actCtx.history());
-    if (receipts.size() >= 2 && !plan.calls().isEmpty()) {
-      final var planCalls = plan.calls();
-      final var refs = actCtx.refs();
-      boolean needProbe =
-          probedRows.isEmpty()
-              && receipts.stream()
-                  .anyMatch(r -> planCalls.stream().anyMatch(c -> Receipts.callCoversReceipt(c, r, refs)));
-      if (needProbe) {
-        probedRows =
-            itemsProbe.runProbe(
-                familyId, actCtx.tree(), Receipts.probeFromReceipts(receipts), refs);
-        turnRows.addAll(probedRows);
-      }
-      plan =
-          Receipts.completePartialReceiptRollbacks(
-              plan, receipts, refs, probedRows, actCtx.text());
-      bindUnresolvedWritesToProbe(plan, refs, probedRows);
-    }
-
-    if (hasUnresolvedItemWrites(plan, actCtx.refs())) {
-      return buildAskResponse(
-          List.of(
-              Map.of(
-                  "question",
-                  "还没法对准要改的那几条，请点一条或说下名称和现在数量～",
-                  "options",
-                  List.of())),
-          actCtx.focus(),
-          probedRows.isEmpty() ? turnRows : probedRows);
-    }
-
-    List<Map<String, Object>> confirmCalls =
-        Guardrails.needsConfirm(plan.calls(), actCtx.catalogMap());
-    if (!confirmCalls.isEmpty() && !confirmed) {
-      List<Map<String, Object>> boundPreview = ActRefs.bindCallIds(plan.calls(), actCtx.refs());
-      boolean unresolvedMulti =
-          boundPreview.stream()
-              .anyMatch(
-                  c -> {
-                    if (c == null) {
-                      return false;
-                    }
-                    String use = String.valueOf(c.get("use"));
-                    if (!"item.removeMany".equals(use) && !"item.merge".equals(use)) {
-                      return false;
-                    }
-                    @SuppressWarnings("unchecked")
-                    List<String> ids = (List<String>) c.get("itemIds");
-                    return ids == null || ids.stream().filter(id -> id != null && !id.isBlank()).count() < 2;
-                  });
-      if (unresolvedMulti) {
-        return buildAskResponse(
-            List.of(
-                Map.of(
-                    "question",
-                    "还没法对准要处理的那几条，请再说一下具体是哪几件（或先让我查一下）",
-                    "options",
-                    List.of())),
-            actCtx.focus(),
-            probedRows.isEmpty() ? turnRows : probedRows);
-      }
-      return buildConfirmPayload(plan.calls(), confirmCalls, actCtx.refs(), actCtx.focus(), turnRows);
-    }
-
-    Map<String, Object> report =
-        execute(
-            familyId,
-            openid,
-            actCtx.tree(),
-            plan.calls(),
-            actCtx.refs(),
-            actCtx.catalogMap(),
-            actCtx.today().get("ymd"));
-
-    Map<String, Object> finalReport = report;
-    List<Map<String, Object>> finalCalls = new ArrayList<>(plan.calls());
-    if (Boolean.TRUE.equals(report.get("createClassFailed")) && !Boolean.TRUE.equals(report.get("subscribeUi"))) {
-      finalReport = tryReplanCreateFailure(modelOpts, actCtx, plan, report, familyId, openid, confirmed, turnRows);
-      if (finalReport.containsKey("__askPayload")) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> askPayload = (Map<String, Object>) finalReport.get("__askPayload");
-        return askPayload;
-      }
-      if (finalReport.containsKey("__confirmPayload")) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> confirmPayload = (Map<String, Object>) finalReport.get("__confirmPayload");
-        return confirmPayload;
-      }
-      if (finalReport.get("mergedCalls") instanceof List<?> mc) {
-        finalCalls = new ArrayList<>();
-        for (Object o : mc) {
-          if (o instanceof Map<?, ?> m) {
-            finalCalls.add((Map<String, Object>) m);
-          }
-        }
-      }
-    }
-
-    Map<String, Object> knowledgeDone = tryKnowledgeOnlyFollowUp(modelOpts, actCtx, finalCalls, finalReport);
-    if (knowledgeDone != null) {
-      return knowledgeDone;
-    }
-    Map<String, Object> pageDone = tryPageDocFollowUp(modelOpts, actCtx, finalCalls, finalReport, familyId, openid, probedRows);
-    if (pageDone != null) {
-      return pageDone;
-    }
-
-    if (Boolean.TRUE.equals(finalReport.get("subscribeUi"))) {
-      return buildSubscribePayload(finalCalls, finalReport, actCtx.focus());
-    }
-
-    Map<String, Object> habitFollow =
-        tryHabitObserveFollowUp(
-            modelOpts, actCtx, finalCalls, finalReport, familyId, openid, plan, turnRows);
-    if (habitFollow != null) {
-      return habitFollow;
-    }
-
-    Map<String, Object> done =
-        buildDonePayload(finalCalls, finalReport, actCtx.focus());
-    attachHabitApplied(
-        done, plan.appliedHabits(), familyId, itemWriteFactsFromCalls(finalCalls));
-    return sanitizeUserPayload(done, actCtx.focus(), turnRows);
+      case SUBSCRIBE ->
+          buildSubscribePayload(
+              outcome.calls(),
+              outcome.report() == null ? Map.of() : outcome.report(),
+              actCtx.focus());
+      case DONE -> sanitizeUserPayload(finishToolDone(outcome, actCtx), actCtx.focus(), rows);
+    };
   }
+
+  private static Map<String, Object> busyTurnPayload() {
+    String text = "上一句还在处理，请稍等再看家里的账。";
+    Map<String, Object> payload = new LinkedHashMap<>();
+    payload.put("status", "done");
+    payload.put("lead", text);
+    payload.put("reply", text);
+    payload.put("ask", List.of());
+    payload.put("confirm", List.of());
+    payload.put("calls", List.of());
+    payload.put("wrote", false);
+    Map<String, Object> report = new LinkedHashMap<>();
+    report.put("lead", text);
+    report.put("lines", List.of(text));
+    report.put("wrote", false);
+    payload.put("report", report);
+    return payload;
+  }
+
+  private Map<String, Object> finishToolDone(ActToolLoop.Outcome outcome, ActContext actCtx) {
+    List<Map<String, Object>> calls = outcome.calls() == null ? List.of() : outcome.calls();
+    List<Map<String, Object>> rows = outcome.rows() == null ? List.of() : outcome.rows();
+    Map<String, Object> report = outcome.report();
+    String reply = outcome.reply() == null ? "" : outcome.reply().trim();
+    boolean wrote = report != null && Boolean.TRUE.equals(report.get("wrote"));
+    Map<String, Object> present = outcome.present();
+    Map<String, Object> payload;
+    if (wrote || (report != null && report.get("navLinks") instanceof List<?> links && !links.isEmpty())) {
+      payload = buildDonePayload(calls, report, actCtx.focus());
+      if (!reply.isEmpty()) {
+        payload.put("lead", reply);
+      }
+      if (present != null) {
+        Map<String, Object> resolved = PresentResolver.resolve(present, rows, report);
+        if (resolved != null) {
+          payload.put("present", resolved);
+        }
+      }
+    } else {
+      if (present == null && rows.size() >= 2) {
+        present = new LinkedHashMap<>();
+        present.put("type", "table");
+        present.put("source", "probe");
+      }
+      payload = attachDoneReply(reply, actCtx.focus(), present, rows, report);
+      payload.put("calls", calls);
+    }
+    return payload;
+  }
+
 
   private ActPlan askPlan(ModelOpts opts, String system, String user) {
     try {
@@ -1170,7 +955,9 @@ public class AiActService {
     Map<String, Object> removeWarn = removeConfirmWarnForUpdates(boundCalls, turnTouched);
     List<Map<String, Object>> confirmView = new ArrayList<>();
     for (Map<String, Object> call : confirmCalls) {
-      confirmView.add(confirmCallView(call, refs));
+      Map<String, Object> view = new LinkedHashMap<>(confirmCallView(call, refs));
+      view.put("label", confirmActionLabel(call, view));
+      confirmView.add(view);
     }
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("status", "confirm");
@@ -1179,6 +966,10 @@ public class AiActService {
       payload.put("confirmKind", "removeUpdated");
       payload.put("confirmTitle", removeWarn.get("title"));
       payload.put("confirmHint", removeWarn.get("hint"));
+    } else if (boundCalls.stream().anyMatch(AiActService::isNonRemoveWrite)) {
+      payload.put("confirmKind", "batch");
+      payload.put("confirmTitle", "确认这些改动吗？");
+      payload.put("confirmHint", "点确认才会写入。先不算了，这些都不会改。");
     }
     payload.put("confirm", confirmView);
     payload.put("calls", boundCalls);
@@ -1186,6 +977,53 @@ public class AiActService {
     payload.put("focus", focusPublic(focus));
     payload.put("wrote", false);
     return payload;
+  }
+
+  private static boolean isNonRemoveWrite(Map<String, Object> call) {
+    if (call == null) {
+      return false;
+    }
+    String use = String.valueOf(call.get("use") == null ? "" : call.get("use")).trim();
+    return !use.isEmpty() && !use.contains("remove") && !"item.merge".equals(use);
+  }
+
+  /** 确认卡上的一行：写出模型这次调用要做的事，避免只剩物资名。 */
+  private static String confirmActionLabel(Map<String, Object> call, Map<String, Object> view) {
+    String use = String.valueOf(call.get("use") == null ? "" : call.get("use")).trim();
+    String name = firstNonBlank(view.get("name"), call.get("name"), "这项");
+    if ("item.update".equals(use) && call.get("quantity") != null) {
+      return name + " 数量改成 " + call.get("quantity");
+    }
+    if ("item.create".equals(use) || "item.createMany".equals(use)) {
+      return "记入 " + name;
+    }
+    if ("item.merge".equals(use)) {
+      return "合并 " + name;
+    }
+    if (use.contains("remove")) {
+      return "删除 " + name;
+    }
+    if (use.startsWith("space.create") || use.startsWith("tag.create") || "habit.upsert".equals(use)) {
+      return "记下 " + name;
+    }
+    return name;
+  }
+
+  private static void attachExecutedReceipt(
+      Map<String, Object> payload, Map<String, Object> report, List<Map<String, Object>> executedCalls) {
+    if (payload == null || report == null || !Boolean.TRUE.equals(report.get("wrote"))) {
+      return;
+    }
+    payload.put("wrote", true);
+    if (report.get("blocks") != null) {
+      payload.put("blocks", report.get("blocks"));
+    }
+    if (report.get("lead") != null) {
+      payload.put("lead", report.get("lead"));
+    }
+    if (executedCalls != null && !executedCalls.isEmpty() && payload.get("calls") instanceof List<?> existing && existing.isEmpty()) {
+      payload.put("calls", executedCalls);
+    }
   }
 
   private static Map<String, Object> removeConfirmWarnForUpdates(
@@ -1671,11 +1509,12 @@ public class AiActService {
     if (inventoryReadReport != null) {
       Map<String, Object> report = new LinkedHashMap<>(slimReport(inventoryReadReport));
       if (present != null) {
+        String kept = replyText.isEmpty() ? str(inventoryReadReport.get("lead")) : replyText;
         report.put("blocks", List.of());
-        report.put("lines", List.of());
-        report.put("lead", replyText);
+        report.put("lines", kept.isEmpty() ? List.of() : List.of(kept));
+        report.put("lead", kept);
         payload.put("blocks", List.of());
-        payload.put("lead", replyText);
+        payload.put("lead", kept);
       }
       payload.put("report", report);
     } else {

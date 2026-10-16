@@ -1,0 +1,14 @@
+{
+  "id": "edge-chart",
+  "perspective": "product",
+  "title": "按空间画柱状图",
+  "tags": ["edge", "present"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "家里各空间分别有多少件，用柱状图给我看",
+  "expected": {
+    "outcome": "按空间给出件数，并画出柱状图",
+    "requiredToolsAny": ["item.stats", "item.search"],
+    "mustPresent": "bars",
+    "forbiddenTools": ["item.create", "item.update", "item.remove"]
+  }
+}

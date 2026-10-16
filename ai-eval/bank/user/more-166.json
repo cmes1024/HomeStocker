@@ -1,0 +1,34 @@
+{
+  "id": "more-166",
+  "perspective": "user",
+  "title": "卫生间补一支牙膏、一把牙刷",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "卫生间补一支牙膏、一把牙刷",
+  "expected": {
+    "outcome": "卫生间记下牙膏和牙刷",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "牙膏",
+        "spaceName": "卫生间"
+      },
+      {
+        "name": "牙刷",
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

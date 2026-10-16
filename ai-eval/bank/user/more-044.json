@@ -1,0 +1,27 @@
+{
+  "id": "more-044",
+  "perspective": "user",
+  "title": "零食柜里还剩啥，放学他肯定去翻",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "零食柜里还剩啥，放学他肯定去翻",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

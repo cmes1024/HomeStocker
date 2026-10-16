@@ -1,0 +1,27 @@
+{
+  "id": "more-078",
+  "perspective": "user",
+  "title": "洗衣液家里有没有，我在超市货架前",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "洗衣液家里有没有，我在超市货架前",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

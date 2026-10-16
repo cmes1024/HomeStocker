@@ -1,0 +1,30 @@
+{
+  "id": "chat-boiled-noodle",
+  "perspective": "user",
+  "title": "面煮了一把",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "面煮了一把",
+  "expected": {
+    "outcome": "挂面少一把，还剩 2 把",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "挂面",
+        "quantity": 2
+      }
+    ]
+  }
+}

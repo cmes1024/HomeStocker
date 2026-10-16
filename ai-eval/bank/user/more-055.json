@@ -1,0 +1,27 @@
+{
+  "id": "more-055",
+  "perspective": "user",
+  "title": "邻居借酱油，咱家还有瓶吗，先别拿去改",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "邻居借酱油，咱家还有瓶吗，先别拿去改账",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

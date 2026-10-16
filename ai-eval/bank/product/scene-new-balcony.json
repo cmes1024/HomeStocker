@@ -1,0 +1,37 @@
+{
+  "id": "scene-new-balcony",
+  "perspective": "product",
+  "title": "新建阳台并放洗衣液",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "新建一个空间叫阳台，放两瓶洗衣液",
+  "expected": {
+    "outcome": "先有阳台这个空间，再把洗衣液记在阳台上",
+    "requiredTools": [
+      "space.create"
+    ],
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "space.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "space.create",
+        "name": "阳台"
+      },
+      {
+        "name": "洗衣液",
+        "quantity": 2
+      }
+    ]
+  }
+}

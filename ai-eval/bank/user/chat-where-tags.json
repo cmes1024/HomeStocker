@@ -1,0 +1,27 @@
+{
+  "id": "chat-where-tags",
+  "perspective": "user",
+  "title": "分类在哪改",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我想自己加个分类，在哪弄",
+  "expected": {
+    "outcome": "能打开标签那一页，不顺便改物资",
+    "requiredTools": [
+      "page.get"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

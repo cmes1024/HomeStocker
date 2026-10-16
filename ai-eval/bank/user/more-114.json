@@ -1,0 +1,37 @@
+{
+  "id": "more-114",
+  "perspective": "user",
+  "title": "酱油算了先别动",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "酱油见底了"
+    },
+    {
+      "role": "assistant",
+      "text": "要改成半瓶吗？"
+    },
+    {
+      "role": "user",
+      "text": "算了先别动，我再看看瓶"
+    }
+  ],
+  "expected": {
+    "outcome": "酱油保持原样",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

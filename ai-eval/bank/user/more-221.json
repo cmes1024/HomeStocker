@@ -1,0 +1,27 @@
+{
+  "id": "more-221",
+  "perspective": "user",
+  "title": "下雨天不想出门，挂面够不够吃到明天",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "下雨天不想出门，挂面够不够吃到明天",
+  "expected": {
+    "outcome": "看挂面够不够",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

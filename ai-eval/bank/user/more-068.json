@@ -1,0 +1,28 @@
+{
+  "id": "more-068",
+  "perspective": "user",
+  "title": "家里哪样快见底了，我好顺便买，别帮我",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里哪样快见底了，我好顺便买，别帮我记采购",
+  "expected": {
+    "outcome": "看哪些快没了，不新记",
+    "requiredToolsAny": [
+      "item.search",
+      "item.stats"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

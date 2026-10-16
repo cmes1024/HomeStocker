@@ -1,0 +1,37 @@
+{
+  "id": "chat-nevermind",
+  "perspective": "user",
+  "title": "算了先别动",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "酱油好像不多了"
+    },
+    {
+      "role": "assistant",
+      "text": "要不要改成还剩半瓶？"
+    },
+    {
+      "role": "user",
+      "text": "算了先别动"
+    }
+  ],
+  "expected": {
+    "outcome": "听人的，酱油保持原样",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

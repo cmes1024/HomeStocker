@@ -1,0 +1,31 @@
+{
+  "id": "scene-eggs-left-six",
+  "perspective": "product",
+  "title": "鸡蛋是剩6个不是再加",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "鸡蛋不是再加，是一共还剩6个",
+  "expected": {
+    "outcome": "把鸡蛋数量改成 6，不另记一条鸡蛋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      }
+    ]
+  }
+}

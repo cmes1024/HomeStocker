@@ -1,0 +1,29 @@
+{
+  "id": "life-diaper",
+  "perspective": "product",
+  "title": "纸尿裤今晚还够换吗",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤今晚还够换吗",
+  "expected": {
+    "outcome": "先看纸尿裤还剩多少，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

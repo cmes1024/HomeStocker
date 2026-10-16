@@ -1,0 +1,31 @@
+{
+  "id": "scene-new-location",
+  "perspective": "product",
+  "title": "厨房加调料架",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厨房加一个位置叫调料架",
+  "expected": {
+    "outcome": "在厨房下新建位置调料架，不删物资",
+    "requiredTools": [
+      "space.createLocation"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.update",
+      "space.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "space.createLocation",
+        "spaceName": "厨房",
+        "locationName": "调料架"
+      }
+    ]
+  }
+}

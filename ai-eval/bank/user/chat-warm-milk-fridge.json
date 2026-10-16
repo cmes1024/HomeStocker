@@ -1,0 +1,30 @@
+{
+  "id": "chat-warm-milk-fridge",
+  "perspective": "user",
+  "title": "常温牛奶也塞冰箱",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "常温那盒牛奶也塞冰箱吧，橱柜太热了",
+  "expected": {
+    "outcome": "把常温那盒放进冰箱，别去改已经在冰箱里的那盒数量",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶",
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

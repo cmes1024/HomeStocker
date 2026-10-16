@@ -1,0 +1,27 @@
+{
+  "id": "chat-lazy-fridge",
+  "perspective": "user",
+  "title": "懒得翻冰箱",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱里哪个要先吃啊，我懒得翻",
+  "expected": {
+    "outcome": "按快过期来说，不改账",
+    "requiredTools": [
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

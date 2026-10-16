@@ -1,0 +1,29 @@
+{
+  "id": "life-shop-eggs",
+  "perspective": "product",
+  "title": "路过超市鸡蛋要不要买",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "路过超市，鸡蛋还用买吗",
+  "expected": {
+    "outcome": "先看家里还有多少鸡蛋再答，不改账，也不记一笔采购",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

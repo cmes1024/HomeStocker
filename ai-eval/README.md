@@ -19,6 +19,7 @@
 | `bank/product` | 口语问法补缺 + 我会踩的坑 |
 | `bank/eng` | 红线（仍用白话 prompt） |
 | `fixtures/home-daily.json` | 共享假家里库存 |
+| `fixtures/home-wide.json` | 更密的一套：含苹果/电脑、大米/米，给 `scenes-wide` 用 |
 | `plans/` | 开跑计划 |
 | `runner.mjs` | 誊抄 / mock 结构检查 / `--mode act` 打真接口 |
 
@@ -30,10 +31,16 @@ node ai-eval/runner.mjs --plan daily-use
 node ai-eval/runner.mjs --plan pitfalls
 node ai-eval/runner.mjs --plan day-flow
 node ai-eval/runner.mjs --plan all-butler
+node ai-eval/runner.mjs --plan curriculum-core
+node ai-eval/runner.mjs --plan coverage-act
+node ai-eval/runner.mjs --plan scenes-wide
+node ai-eval/runner.mjs --plan scenes-life
+node ai-eval/runner.mjs --plan scenes-chat
+node ai-eval/runner.mjs --plan scenes-more
 
 # 真打管家（会按 case.setup.fixture 灌库存；确认闸/澄清芯片由 runner 代点）
 HS_TOKEN=xxx node ai-eval/runner.mjs --plan core-smoke --mode act
 HS_TOKEN=xxx AI_ACT_RATE_PER_MINUTE=200 node ai-eval/runner.mjs --plan daily-use --mode act
 ```
 
-`mock`：无 `mockPlan` 时标 `pending`（等实跑）。`act`：请求 `/api/ai/act` 后按约束判定；本地建议把 `AI_ACT_RATE_PER_MINUTE` 调高，避免长套件撞限流。
+`mock`：无 `mockPlan` 时标 `pending`（等实跑）。`act`：请求 `/api/ai/act` 后按约束判定；每题开跑前按 `setup.fixture` 铺库存，并删掉这份清单里没有的物资，避免前一题删改带到后一题。本地建议把 `AI_ACT_RATE_PER_MINUTE` 调高。`expected.callIncludes` / `callExcludes` 核对改到哪一件、数量是多少。

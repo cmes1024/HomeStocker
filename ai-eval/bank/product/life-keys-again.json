@@ -1,0 +1,29 @@
+{
+  "id": "life-keys-again",
+  "perspective": "product",
+  "title": "钥匙又找不着",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙又找不着了，上次记在哪",
+  "expected": {
+    "outcome": "查出钥匙在客厅，不删这串钥匙",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

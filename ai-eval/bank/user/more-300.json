@@ -1,0 +1,24 @@
+{
+  "id": "more-300",
+  "perspective": "user",
+  "title": "宝宝房纸尿裤我怕忘了带",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "宝宝房纸尿裤我怕忘了带",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "id": "more-161",
+  "perspective": "user",
+  "title": "讲个笑话也行，别拿家里东西开玩笑去改",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "讲个笑话也行，别拿家里东西开玩笑去改数",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

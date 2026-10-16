@@ -1,0 +1,25 @@
+{
+  "id": "life-rice-separate",
+  "perspective": "product",
+  "title": "蒸米饭别把米算进大米",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "今晚蒸米饭，看看大米还剩多少，别把那袋米算进去",
+  "expected": {
+    "outcome": "大米和名叫米的那条分开看，不改、不删",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ]
+  }
+}

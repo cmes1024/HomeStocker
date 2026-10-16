@@ -1,0 +1,31 @@
+{
+  "id": "scene-wrap-left",
+  "perspective": "product",
+  "title": "保鲜膜还有吗",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "保鲜膜还有吗",
+  "expected": {
+    "outcome": "查出保鲜膜再回答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

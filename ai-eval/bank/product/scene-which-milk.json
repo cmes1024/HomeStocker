@@ -1,0 +1,24 @@
+{
+  "id": "scene-which-milk",
+  "perspective": "product",
+  "title": "两盒牛奶喝掉一盒先问",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "牛奶喝掉一盒",
+  "expected": {
+    "outcome": "家里有两处牛奶，先问是哪一处，先不改、不删",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

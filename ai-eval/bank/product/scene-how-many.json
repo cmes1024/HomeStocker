@@ -1,0 +1,31 @@
+{
+  "id": "scene-how-many",
+  "perspective": "product",
+  "title": "家里一共多少件",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里一共多少件",
+  "expected": {
+    "outcome": "用统计报件数，不用截断后的搜索条数当总数",
+    "requiredTools": [
+      "item.stats"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

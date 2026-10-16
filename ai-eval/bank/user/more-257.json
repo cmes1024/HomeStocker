@@ -1,0 +1,31 @@
+{
+  "id": "more-257",
+  "perspective": "user",
+  "title": "体温计一支，放卫生间",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "体温计一支，放卫生间",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "体温计",
+        "quantity": 1,
+        "spaceName": "卫生间"
+      }
+    ]
+  }
+}

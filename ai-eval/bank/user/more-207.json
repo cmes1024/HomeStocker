@@ -1,0 +1,27 @@
+{
+  "id": "more-207",
+  "perspective": "user",
+  "title": "纸尿裤出门要带，还在宝宝房吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤出门要带，还在宝宝房吗",
+  "expected": {
+    "outcome": "看纸尿裤",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

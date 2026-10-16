@@ -1,0 +1,29 @@
+{
+  "id": "chat-soy-sediment",
+  "perspective": "user",
+  "title": "酱油有沉淀",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酱油瓶底有沉淀，备注一下",
+  "expected": {
+    "outcome": "给酱油写备注，不改数量",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酱油"
+      }
+    ]
+  }
+}

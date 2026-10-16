@@ -1,0 +1,28 @@
+{
+  "id": "more-280",
+  "perspective": "user",
+  "title": "厨房和客厅哪个东西更多",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厨房和客厅哪个东西更多",
+  "expected": {
+    "outcome": "先查再答，不改账",
+    "requiredToolsAny": [
+      "item.stats",
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

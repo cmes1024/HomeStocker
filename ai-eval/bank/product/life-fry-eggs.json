@@ -1,0 +1,30 @@
+{
+  "id": "life-fry-eggs",
+  "perspective": "product",
+  "title": "早上煎了两个鸡蛋",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "早上煎了两个鸡蛋",
+  "expected": {
+    "outcome": "鸡蛋从 8 个改成 6 个，不删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      }
+    ]
+  }
+}

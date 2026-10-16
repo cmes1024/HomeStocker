@@ -1,0 +1,43 @@
+{
+  "id": "more-183",
+  "perspective": "user",
+  "title": "西红柿四个，黄瓜三根，都放冰箱",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "我想记今天买的菜"
+    },
+    {
+      "role": "assistant",
+      "text": "什么菜，放哪？"
+    },
+    {
+      "role": "user",
+      "text": "西红柿四个，黄瓜三根，都放冰箱"
+    }
+  ],
+  "expected": {
+    "outcome": "冰箱记下西红柿和黄瓜",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "西红柿",
+        "locationName": "冰箱"
+      },
+      {
+        "name": "黄瓜",
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

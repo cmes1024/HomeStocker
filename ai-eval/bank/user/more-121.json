@@ -1,0 +1,32 @@
+{
+  "id": "more-121",
+  "perspective": "user",
+  "title": "常温那盒牛奶也塞进冰箱",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "常温那盒牛奶也塞进冰箱",
+  "expected": {
+    "outcome": "常温牛奶放进冰箱",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶",
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

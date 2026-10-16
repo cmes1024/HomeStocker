@@ -1,0 +1,24 @@
+{
+  "id": "more-075",
+  "perspective": "user",
+  "title": "顺手买了袋米",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "顺手买了袋米",
+  "expected": {
+    "outcome": "家里已经有大米和米，又没说放哪，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

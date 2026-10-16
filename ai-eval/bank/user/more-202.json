@@ -1,0 +1,27 @@
+{
+  "id": "more-202",
+  "perspective": "user",
+  "title": "苹果想做果酱，够不够两个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果想做果酱，够不够两个",
+  "expected": {
+    "outcome": "看苹果",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

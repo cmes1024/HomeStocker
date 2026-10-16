@@ -1,0 +1,24 @@
+{
+  "id": "more-241",
+  "perspective": "user",
+  "title": "晚饭还没想好，库存保持这样",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚饭还没想好，库存保持这样",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

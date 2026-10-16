@@ -1,0 +1,24 @@
+{
+  "id": "more-148",
+  "perspective": "user",
+  "title": "家里那些吃的，你看着减",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "家里那些吃的，你看着减",
+  "expected": {
+    "outcome": "没说清就先问，先不改账",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

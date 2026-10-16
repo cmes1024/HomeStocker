@@ -144,6 +144,143 @@ function collectToolsFromActPayload(payload) {
   return [...new Set(tools)];
 }
 
+function collectActCalls(actual) {
+  const found = [];
+  const seen = new Map();
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (typeof node.use === "string") {
+      const key = JSON.stringify({
+        use: node.use,
+        name: node.name || "",
+        names: node.names || [],
+        quantity: node.quantity ?? "",
+        spaceName: node.spaceName || "",
+      });
+      const prev = seen.get(key);
+      if (prev == null || callScore(node) > callScore(found[prev])) {
+        if (prev == null) {
+          seen.set(key, found.length);
+          found.push(node);
+        } else {
+          found[prev] = node;
+        }
+      }
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === "object") visit(value);
+    }
+  };
+  for (const payload of actPayloads(actual)) visit(payload);
+  return found;
+}
+
+function callScore(node) {
+  let score = 0;
+  for (const key of [
+    "name",
+    "names",
+    "items",
+    "quantity",
+    "unit",
+    "note",
+    "spaceName",
+    "locationName",
+    "ref",
+    "refs",
+    "tagNames",
+  ]) {
+    const value = node?.[key];
+    if (value == null || value === "") continue;
+    if (Array.isArray(value) && value.length === 0) continue;
+    score += 2;
+  }
+  return score;
+}
+
+function callNames(call) {
+  const names = [];
+  if (call?.name) names.push(String(call.name).trim());
+  if (Array.isArray(call?.names)) {
+    for (const name of call.names) {
+      const text = String(name || "").trim();
+      if (text) names.push(text);
+    }
+  }
+  if (Array.isArray(call?.items)) {
+    for (const item of call.items) {
+      const text = String(item?.name || "").trim();
+      if (text) names.push(text);
+    }
+  }
+  return names;
+}
+
+function receiptChunks(actual) {
+  const chunks = [];
+  const visit = (node) => {
+    if (!node || typeof node !== "object") return;
+    if (Array.isArray(node)) {
+      node.forEach(visit);
+      return;
+    }
+    if (typeof node.title === "string" || typeof node.subtitle === "string") {
+      const joined = `${node.title || ""} ${node.subtitle || ""}`.trim();
+      if (joined) chunks.push(joined);
+    }
+    for (const key of ["summary", "lead"]) {
+      if (typeof node[key] === "string" && node[key].trim()) chunks.push(node[key]);
+    }
+    if (Array.isArray(node.lines)) {
+      for (const line of node.lines) {
+        if (typeof line === "string" && line.trim()) chunks.push(line);
+      }
+    }
+    for (const value of Object.values(node)) {
+      if (value && typeof value === "object") visit(value);
+    }
+  };
+  for (const payload of actPayloads(actual)) visit(payload);
+  return chunks;
+}
+
+function nameInChunk(chunk, name) {
+  const escaped = String(name).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "u").test(chunk);
+}
+
+function receiptMatches(chunk, want) {
+  if (want.name && !nameInChunk(chunk, want.name)) return false;
+  if (want.quantity != null) {
+    const q = String(want.quantity).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (!new RegExp(`(?:→|->)\\s*${q}(?!\\d)`).test(chunk)) return false;
+  }
+  if (want.spaceName && !chunk.includes(String(want.spaceName))) return false;
+  if (want.locationName && !chunk.includes(String(want.locationName))) return false;
+  if (want.unit && !chunk.includes(String(want.unit))) return false;
+  if (want.note && !chunk.includes(String(want.note))) return false;
+  if (want.use === "item.update" && !/已改|改成|→|->/.test(chunk)) return false;
+  if (want.use && /remove/.test(want.use) && !/已删|删掉/.test(chunk)) return false;
+  if (want.use && /create/.test(want.use) && !/已记下|记下/.test(chunk)) return false;
+  return Boolean(want.name || want.quantity != null || want.note || want.unit || want.spaceName);
+}
+
+function callMatches(call, want) {
+  if (!want || typeof want !== "object") return false;
+  if (want.use && call.use !== want.use) return false;
+  if (want.name && !callNames(call).includes(String(want.name).trim())) return false;
+  if (want.quantity != null && Number(call.quantity) !== Number(want.quantity)) return false;
+  if (want.spaceName && String(call.spaceName || "") !== String(want.spaceName)) return false;
+  if (want.locationName && String(call.locationName || "") !== String(want.locationName)) return false;
+  if (want.unit && String(call.unit || "") !== String(want.unit)) return false;
+  if (want.note && !String(call.note || "").includes(String(want.note))) return false;
+  return true;
+}
+
 function actPayloads(actual) {
   const out = [];
   if (actual?.act) out.push(actual.act);
@@ -167,9 +304,18 @@ function hasAskSignal(actual) {
     if (Array.isArray(p.confirm) && p.confirm.length) return true;
     if (p.needConfirm) return true;
     const reply = String(p.reply || p.message || p.lead || "");
-    if (/吗\？|\?|哪|哪个|确认/.test(reply)) return true;
+    if (/吗？|吗\?|\?|？|哪|哪个|确认|要不要|要我|是不是/.test(reply)) return true;
   }
   return false;
+}
+
+function presentMatches(present, want) {
+  if (!present || typeof present !== "object") return false;
+  const type = String(present.type || "");
+  if (want === "any") return Boolean(type);
+  if (want === "bars") return type === "bars" || type === "bar";
+  if (want === "pie") return type === "pie" || type === "donut";
+  return type === want;
 }
 
 function hasPresentInventory(act) {
@@ -280,6 +426,46 @@ function judgeExpected(caze, actual, mode) {
       detail: ok ? "probe/search-like" : "no probe signal",
     });
   }
+  if (expected.mustPresent) {
+    const want = String(expected.mustPresent);
+    const hit = actPayloads(actual).find((p) => presentMatches(p?.present, want));
+    checks.push({
+      name: `mustPresent:${want}`,
+      ok: Boolean(hit),
+      detail: hit ? `type=${hit.present?.type || ""}` : "no matching present",
+    });
+  }
+  const seenCalls = collectActCalls(actual);
+  const receipts = receiptChunks(actual);
+  for (const want of expected.callIncludes || []) {
+    const namedWant = want?.name ? { ...want, name: undefined } : null;
+    const ok =
+      seenCalls.some((call) => callMatches(call, want)) ||
+      receipts.some((chunk) => receiptMatches(chunk, want)) ||
+      (namedWant != null &&
+        seenCalls.some((call) => callMatches(call, namedWant)) &&
+        receipts.some(
+          (chunk) =>
+            nameInChunk(chunk, want.name) &&
+            (!want.use ||
+              (want.use === "item.update" && /已改|→|->/.test(chunk)) ||
+              (/remove/.test(want.use) && /已删|删掉/.test(chunk)) ||
+              (/create/.test(want.use) && /已记下|记下/.test(chunk))),
+        ));
+    checks.push({
+      name: `callIncludes:${want.use || "*"}:${want.name || ""}:${want.quantity ?? ""}`,
+      ok,
+      detail: ok ? "matched" : `missing among ${seenCalls.length} calls`,
+    });
+  }
+  for (const want of expected.callExcludes || []) {
+    const hit = seenCalls.some((call) => callMatches(call, want));
+    checks.push({
+      name: `callExcludes:${want.use || "*"}:${want.name || ""}`,
+      ok: !hit,
+      detail: hit ? "unexpected call present" : "absent",
+    });
+  }
 
   const failed = checks.filter((c) => !c.ok);
   let status;
@@ -366,6 +552,14 @@ async function applyFixture(apiBase, token, fixtureId) {
       }
     }
     space._locByName = locByName;
+    const keep = new Set(sp.locations || []);
+    for (const [locName, loc] of locByName) {
+      if (keep.has(locName)) continue;
+      await apiPost(apiBase, token, "/api/space/removeLocation", {
+        locationId: loc._id || loc.id,
+      });
+      locByName.delete(locName);
+    }
   }
 
   // refresh spaces with locations
@@ -391,9 +585,30 @@ async function applyFixture(apiBase, token, fixtureId) {
   const itemList = items?.list || [];
   const keyOf = (name, spaceId, locationId) =>
     `${name}\0${spaceId || ""}\0${locationId || ""}`;
-  const itemByKey = new Map(
-    itemList.map((it) => [keyOf(it.name, it.spaceId, it.locationId || ""), it]),
-  );
+
+  const wantedKeys = new Set();
+  for (const row of fx.items || []) {
+    const space = spaceByName.get(row.spaceName);
+    if (!space) continue;
+    const spaceId = space._id || space.id;
+    let locationId = "";
+    if (row.locationName) {
+      const loc = space._locByName?.get(row.locationName);
+      locationId = loc ? loc._id || loc.id : "";
+    }
+    wantedKeys.add(keyOf(row.name, spaceId, locationId));
+  }
+  const itemByKey = new Map();
+  let removed = 0;
+  for (const it of itemList) {
+    const key = keyOf(it.name, it.spaceId, it.locationId || "");
+    if (!wantedKeys.has(key) || itemByKey.has(key)) {
+      await apiPost(apiBase, token, "/api/item/remove", { itemId: it._id || it.id });
+      removed++;
+      continue;
+    }
+    itemByKey.set(key, it);
+  }
 
   let created = 0;
   let updated = 0;
@@ -444,7 +659,7 @@ async function applyFixture(apiBase, token, fixtureId) {
       created++;
     }
   }
-  return { fixtureId, created, updated, spaces: spaceByName.size };
+  return { fixtureId, created, updated, removed, spaces: spaceByName.size };
 }
 
 function pickAskAffirm(askList, userText = "", optsCfg = {}) {
@@ -694,7 +909,7 @@ async function main() {
         const info = await applyFixture(args.apiBase, args.token, fxId);
         fixtureLog.push(info);
         console.log(
-          `fixture ${fxId}: created=${info.created} updated=${info.updated} spaces=${info.spaces}`,
+          `fixture ${fxId}: created=${info.created} updated=${info.updated} removed=${info.removed} spaces=${info.spaces}`,
         );
       } catch (e) {
         console.error(`fixture ${fxId} failed:`, e?.message || e);
@@ -760,6 +975,10 @@ async function main() {
                   ),
                 ),
             );
+          const fxId = caze.setup?.fixture;
+          if (fxId && !args.skipFixture) {
+            await applyFixture(args.apiBase, args.token, fxId);
+          }
           const { httpStatus, body, turns } = await callAct(
             args.actUrl,
             args.token,

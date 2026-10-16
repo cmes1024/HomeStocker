@@ -1,0 +1,24 @@
+{
+  "id": "more-066",
+  "perspective": "user",
+  "title": "纸尿裤就一包了，要不要我今晚下单，你",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸尿裤就一包了，要不要我今晚下单，你先别记新的",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

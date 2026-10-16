@@ -1,6 +1,7 @@
 package com.homestocker.modules.ai.agent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.homestocker.common.ErrorCodes;
 import com.homestocker.common.ShanghaiDates;
 import com.homestocker.modules.ai.app.AiKeyService;
@@ -50,7 +51,18 @@ public class ActPrompt {
       int timeoutMs,
       int maxTokens,
       List<Map<String, String>> history,
-      boolean hostedPool) {}
+      boolean hostedPool,
+      ActBudget budget) {
+
+    public ModelOpts(
+        List<AiKeyService.KeyRow> keys,
+        int timeoutMs,
+        int maxTokens,
+        List<Map<String, String>> history,
+        boolean hostedPool) {
+      this(keys, timeoutMs, maxTokens, history, hostedPool, null);
+    }
+  }
 
   public static boolean isQtyReceiptText(String text) {
     String t = str(text);
@@ -241,6 +253,7 @@ public class ActPrompt {
         .replace("{{FOCUS}}", vars.getOrDefault("focus", "无"))
         .replace("{{PROBE}}", vars.getOrDefault("probe", "无"))
         .replace("{{SNAPSHOT}}", vars.getOrDefault("snapshot", "无"))
+        .replace("{{RECALL}}", vars.getOrDefault("recall", "无"))
         .replace("{{HISTORY}}", vars.getOrDefault("history", "无"))
         .replace("{{EXEC}}", vars.getOrDefault("exec", "无"))
         .replace("{{KNOWLEDGE_INDEX}}", vars.getOrDefault("knowledgeIndex", "无"))
@@ -307,6 +320,74 @@ public class ActPrompt {
       "（系统：上轮输出不是合法 JSON 计划，已丢弃。请只输出一个 JSON 对象；禁止口头句与时间戳标记。）";
   private static final String JSON_EMPTY_NOTE =
       "（系统：上轮输出为空。请只输出一个 JSON 对象计划。）";
+
+  /** 本轮还能再打一次模型就返回读超时；共享时限用尽则返回 0。 */
+  private static int callTimeout(ModelOpts opts) {
+    if (opts.budget() == null) {
+      return opts.timeoutMs();
+    }
+    return opts.budget().nextCallMs(opts.timeoutMs());
+  }
+
+  /** 工具循环的一轮补全。密钥切换规则与 {@link #askModel} 相同。 */
+  public DeepSeekClient.ChatResult completeTools(
+      ModelOpts opts, ArrayNode messages, ArrayNode tools) throws ActModelException {
+    List<AiKeyService.KeyRow> tryKeys =
+        opts.keys().size() > 2 ? opts.keys().subList(0, 2) : opts.keys();
+    if (opts.hostedPool() && tryKeys.isEmpty()) {
+      throw new ActModelException(ErrorCodes.ACT_FAILED, PlatformKeyFailover.UNAVAILABLE);
+    }
+    String lastCode = ErrorCodes.ACT_FAILED;
+    String lastMessage = PlatformKeyFailover.UNAVAILABLE;
+    int lastStatus = 0;
+    boolean sawQuota = false;
+    boolean attempted = false;
+    for (AiKeyService.KeyRow key : tryKeys) {
+      int timeout = callTimeout(opts);
+      if (timeout <= 0) {
+        break;
+      }
+      attempted = true;
+      try {
+        String model = ModelCatalog.callModel(key.provider(), key.model());
+        DeepSeekClient.ChatResult result =
+            deepSeekClient.complete(
+                key.apiKey(),
+                key.baseUrl(),
+                model,
+                messages,
+                tools,
+                timeout,
+                opts.maxTokens());
+        log.info(
+            "[ai.act] <<< model tools={} content={}",
+            result.toolCalls().size(),
+            result.content());
+        return result;
+      } catch (DeepSeekException e) {
+        lastCode = e.code();
+        lastMessage = e.getMessage();
+        lastStatus = e.httpStatus();
+        if (ErrorCodes.AI_QUOTA.equals(e.code())) {
+          sawQuota = true;
+        }
+        boolean switchKey = PlatformKeyFailover.switches(e.code(), e.retryable(), opts.hostedPool());
+        if (opts.hostedPool() && switchKey) {
+          platformKeyCooldown.cool(key.id(), System.currentTimeMillis());
+        }
+        if (!switchKey) {
+          throw new ActModelException(
+              lastCode, terminalFailureMessage(opts.hostedPool(), sawQuota, lastStatus, lastMessage));
+        }
+      }
+    }
+    if (!attempted) {
+      throw new ActModelException(ErrorCodes.ACT_BUDGET, "助手这次没答完，请再说一次");
+    }
+    throw new ActModelException(
+        opts.hostedPool() ? ErrorCodes.ACT_FAILED : lastCode,
+        terminalFailureMessage(opts.hostedPool(), sawQuota, lastStatus, lastMessage));
+  }
 
   public AskResult askModel(ModelOpts opts, String system, String userText) throws ActModelException {
     List<AiKeyService.KeyRow> tryKeys =

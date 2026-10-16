@@ -1,0 +1,27 @@
+{
+  "id": "more-201",
+  "perspective": "user",
+  "title": "盐打翻之前还有两袋对吧",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐打翻之前还有两袋对吧",
+  "expected": {
+    "outcome": "看盐",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

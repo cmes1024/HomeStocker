@@ -1,0 +1,31 @@
+{
+  "id": "scene-expiring",
+  "perspective": "product",
+  "title": "快过期的有哪些",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "快过期的有哪些",
+  "expected": {
+    "outcome": "走临期列表，不把全家搜索当成临期，不改账",
+    "requiredTools": [
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

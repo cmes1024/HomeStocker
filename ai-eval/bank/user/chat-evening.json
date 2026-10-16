@@ -1,0 +1,24 @@
+{
+  "id": "chat-evening",
+  "perspective": "user",
+  "title": "晚上吃啥",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚上吃啥好",
+  "expected": {
+    "outcome": "可以聊两句家里有什么能做的，但别擅自改账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

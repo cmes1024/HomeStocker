@@ -1,0 +1,30 @@
+{
+  "id": "more-270",
+  "perspective": "user",
+  "title": "这卷厕纸真没了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "这卷厕纸真没了",
+  "expected": {
+    "outcome": "删掉厕纸",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "厕纸"
+      }
+    ]
+  }
+}

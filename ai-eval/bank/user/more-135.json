@@ -1,0 +1,27 @@
+{
+  "id": "more-135",
+  "perspective": "user",
+  "title": "昨天有没有人动牛奶",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "昨天有没有人动牛奶",
+  "expected": {
+    "outcome": "看家庭记录，不改牛奶",
+    "requiredToolsAny": [
+      "activity.list"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

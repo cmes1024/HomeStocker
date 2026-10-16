@@ -1,0 +1,32 @@
+{
+  "id": "more-098",
+  "perspective": "user",
+  "title": "苹果洗了一个吃了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果洗了一个吃了",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 1
+      }
+    ]
+  }
+}

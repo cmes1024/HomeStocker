@@ -1,0 +1,31 @@
+{
+  "id": "scene-salt-unit",
+  "perspective": "product",
+  "title": "盐的单位改成斤",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐的单位改成斤",
+  "expected": {
+    "outcome": "只改盐的单位，不删除、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "盐",
+        "unit": "斤"
+      }
+    ]
+  }
+}

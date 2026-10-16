@@ -1,0 +1,24 @@
+{
+  "id": "more-204",
+  "perspective": "user",
+  "title": "纸巾会不会不够擦一桌子",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸巾会不会不够擦一桌子",
+  "expected": {
+    "outcome": "看纸巾",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

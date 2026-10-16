@@ -1,0 +1,25 @@
+{
+  "id": "life-laundry",
+  "perspective": "product",
+  "title": "洗衣液用完了但账上没有",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "洗衣液用完了",
+  "expected": {
+    "outcome": "账上没有洗衣液就先查清楚再说，不要删别的，也不要凭空记一条",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove",
+      "item.removeMany"
+    ]
+  }
+}

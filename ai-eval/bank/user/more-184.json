@@ -1,0 +1,32 @@
+{
+  "id": "more-184",
+  "perspective": "user",
+  "title": "鸡蛋改成还剩 5 个，我送人了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "鸡蛋改成还剩 5 个，我送人了",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 5
+      }
+    ]
+  }
+}

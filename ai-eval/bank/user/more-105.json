@@ -1,0 +1,24 @@
+{
+  "id": "more-105",
+  "perspective": "user",
+  "title": "纸用完了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸用完了",
+  "expected": {
+    "outcome": "好几种纸，先问哪一种",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

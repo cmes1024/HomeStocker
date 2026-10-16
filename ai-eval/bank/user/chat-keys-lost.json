@@ -1,0 +1,27 @@
+{
+  "id": "chat-keys-lost",
+  "perspective": "user",
+  "title": "钥匙又找不着",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙呢，我又找不着",
+  "expected": {
+    "outcome": "告诉钥匙在哪，别把钥匙删了",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

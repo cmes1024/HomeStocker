@@ -1,0 +1,32 @@
+{
+  "id": "more-109",
+  "perspective": "user",
+  "title": "我蹲下去数了，鸡蛋就是 6 个",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我蹲下去数了，鸡蛋就是 6 个",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "鸡蛋",
+        "quantity": 6
+      }
+    ]
+  }
+}

@@ -90,7 +90,11 @@ public class ActContextBuilder {
     vars.put(
         "focus",
         ActRefs.renderFocusList(focus != null ? List.of(focus) : List.of()));
+    String text = event.get("text") == null ? "" : String.valueOf(event.get("text")).trim();
+    List<Map<String, Object>> recalled = itemsProbe.recallNamedInText(familyId, tree, text, refs);
+
     vars.put("probe", "无");
+    vars.put("recall", ActPrompt.renderProbeRows(recalled));
     vars.put("snapshot", itemsProbe.renderOpeningSnapshot(familyId, tree));
     vars.put("exec", "无");
     vars.put("knowledgeIndex", knowledgeService.renderIndex());
@@ -103,7 +107,6 @@ public class ActContextBuilder {
                 ? promptDoc.get("system")
                 : com.homestocker.modules.ai.app.AssistPromptTexts.ASSIST_PROMPT_V2);
     String system = ActPrompt.fillAssistPrompt(systemText, vars);
-    String text = event.get("text") == null ? "" : String.valueOf(event.get("text")).trim();
     String userText =
         focus != null
             ? text + "\n（当前关注短号 " + focus.get("ref") + "：" + focus.get("name") + "）"
@@ -120,7 +123,7 @@ public class ActContextBuilder {
         refs,
         history,
         focus,
-        new ArrayList<>(),
+        new ArrayList<>(recalled),
         vars,
         system,
         text,

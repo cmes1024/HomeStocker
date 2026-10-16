@@ -1,0 +1,27 @@
+{
+  "id": "more-275",
+  "perspective": "user",
+  "title": "周末前哪些要先吃掉",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "周末前哪些要先吃掉",
+  "expected": {
+    "outcome": "先查再答，不改账",
+    "requiredToolsAny": [
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

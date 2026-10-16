@@ -1,0 +1,27 @@
+{
+  "id": "more-200",
+  "perspective": "user",
+  "title": "酱油瓶是不是还在橱柜第二层",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酱油瓶是不是还在橱柜第二层",
+  "expected": {
+    "outcome": "看酱油",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

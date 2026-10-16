@@ -1,0 +1,26 @@
+{
+  "id": "scene-kitchen-living-bars",
+  "perspective": "product",
+  "title": "厨房和客厅对比",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厨房和客厅比一下多少件，用柱状图",
+  "expected": {
+    "outcome": "比较厨房和客厅的件数，并给出柱状图",
+    "requiredToolsAny": [
+      "item.stats",
+      "item.search"
+    ],
+    "mustPresent": "bars",
+    "forbiddenTools": [
+      "item.create",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

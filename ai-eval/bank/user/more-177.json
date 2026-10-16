@@ -1,0 +1,24 @@
+{
+  "id": "more-177",
+  "perspective": "user",
+  "title": "几张纸没了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "几张纸没了",
+  "expected": {
+    "outcome": "听不清是哪种纸，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

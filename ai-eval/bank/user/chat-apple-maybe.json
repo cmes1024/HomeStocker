@@ -1,0 +1,24 @@
+{
+  "id": "chat-apple-maybe",
+  "perspective": "user",
+  "title": "苹果是不是就剩一个",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果就剩一个了吧，我看看",
+  "expected": {
+    "outcome": "这是在问，先看还剩几个，别直接改成 1",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.create"
+    ]
+  }
+}

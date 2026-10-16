@@ -1,0 +1,27 @@
+{
+  "id": "chat-how-many",
+  "perspective": "user",
+  "title": "大概多少件",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "咱家现在大概多少件东西",
+  "expected": {
+    "outcome": "用统计说件数，不拿翻到的几条当总数",
+    "requiredTools": [
+      "item.stats"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

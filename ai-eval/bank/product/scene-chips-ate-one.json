@@ -1,0 +1,32 @@
+{
+  "id": "scene-chips-ate-one",
+  "perspective": "product",
+  "title": "薯片吃掉一袋",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片吃掉一袋",
+  "expected": {
+    "outcome": "薯片从 2 袋改成 1 袋，不整条删除，也不另记一条",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片",
+        "quantity": 1
+      }
+    ]
+  }
+}

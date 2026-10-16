@@ -1,0 +1,25 @@
+{
+  "id": "life-dumpling",
+  "perspective": "product",
+  "title": "明天包饺子鸡蛋够不够",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "明天我妈来包饺子，鸡蛋还够吗",
+  "expected": {
+    "outcome": "先看鸡蛋还剩多少，不够就说不够，不改成她要的数，也不删",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

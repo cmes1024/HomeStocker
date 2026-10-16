@@ -1,0 +1,25 @@
+{
+  "id": "scene-no-catfood",
+  "perspective": "product",
+  "title": "家里没有猫粮",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "猫粮还有吗",
+  "expected": {
+    "outcome": "查过再说没有，不要自己记一袋猫粮",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

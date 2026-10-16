@@ -1,0 +1,27 @@
+{
+  "id": "more-192",
+  "perspective": "user",
+  "title": "密钥在哪填，我换了个号",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "密钥在哪填，我换了个号",
+  "expected": {
+    "outcome": "打开密钥页，不删家庭",
+    "requiredTools": [
+      "page.get"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

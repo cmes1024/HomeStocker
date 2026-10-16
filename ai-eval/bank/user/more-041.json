@@ -1,0 +1,24 @@
+{
+  "id": "more-041",
+  "perspective": "user",
+  "title": "孩子说纸没了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子说纸没了",
+  "expected": {
+    "outcome": "没说是纸巾、厕纸还是纸尿裤，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

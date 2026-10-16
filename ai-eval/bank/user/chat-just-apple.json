@@ -1,0 +1,22 @@
+{
+  "id": "chat-just-apple",
+  "perspective": "user",
+  "title": "那个苹果",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "那个……苹果",
+  "expected": {
+    "outcome": "没说要查还是要改，先问一句，别改数量也别删",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.create"
+    ]
+  }
+}

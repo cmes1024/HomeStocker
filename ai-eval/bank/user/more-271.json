@@ -1,0 +1,30 @@
+{
+  "id": "more-271",
+  "perspective": "user",
+  "title": "布洛芬吃完了，盒子空了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬吃完了，盒子空了",
+  "expected": {
+    "outcome": "删掉布洛芬",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "布洛芬"
+      }
+    ]
+  }
+}

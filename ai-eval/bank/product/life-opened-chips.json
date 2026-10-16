@@ -1,0 +1,30 @@
+{
+  "id": "life-opened-chips",
+  "perspective": "product",
+  "title": "薯片开封了",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片开了，帮我标一下开封了",
+  "expected": {
+    "outcome": "在现有薯片上记下开封，不另记一条，也不删",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片"
+      }
+    ]
+  }
+}

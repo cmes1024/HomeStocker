@@ -1,0 +1,27 @@
+{
+  "id": "chat-headache",
+  "perspective": "user",
+  "title": "头疼药在哪",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "有点头疼，药在哪来着",
+  "expected": {
+    "outcome": "帮着找药在哪，不改药的数量",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

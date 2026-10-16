@@ -1,0 +1,32 @@
+{
+  "id": "more-022",
+  "perspective": "user",
+  "title": "酱油倒了半瓶进红烧里",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酱油倒了半瓶进红烧里",
+  "expected": {
+    "outcome": "酱油改成半瓶",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酱油",
+        "quantity": 0.5
+      }
+    ]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "life-fever",
+  "perspective": "product",
+  "title": "小朋友不舒服布洛芬在哪",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "小朋友有点不舒服，布洛芬放哪了",
+  "expected": {
+    "outcome": "告诉布洛芬在哪，不改数量，也不另给用药建议去改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

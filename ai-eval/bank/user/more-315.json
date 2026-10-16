@@ -1,0 +1,24 @@
+{
+  "id": "more-315",
+  "perspective": "user",
+  "title": "等孩子睡着再收拾，现在一件别动",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "等孩子睡着再收拾，现在一件别动",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

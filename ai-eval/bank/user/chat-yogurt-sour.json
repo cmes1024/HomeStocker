@@ -1,0 +1,29 @@
+{
+  "id": "chat-yogurt-sour",
+  "perspective": "user",
+  "title": "酸奶酸了扔掉",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酸奶有点酸了，扔了吧",
+  "expected": {
+    "outcome": "删掉酸奶",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "酸奶"
+      }
+    ]
+  }
+}

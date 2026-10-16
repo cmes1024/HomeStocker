@@ -1,0 +1,29 @@
+{
+  "id": "life-guest-bath",
+  "perspective": "product",
+  "title": "有人来住卫生间还剩什么",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚上有人来住，卫生间还剩什么",
+  "expected": {
+    "outcome": "列出卫生间现有的，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

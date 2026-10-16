@@ -1,0 +1,31 @@
+{
+  "id": "more-260",
+  "perspective": "user",
+  "title": "冷冻饺子一袋，放冰箱",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冷冻饺子一袋，放冰箱",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "冷冻饺子",
+        "quantity": 1,
+        "locationName": "冰箱"
+      }
+    ]
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "id": "more-073",
+  "perspective": "user",
+  "title": "买了瓶陈醋，放厨房橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "买了瓶陈醋，放厨房橱柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "陈醋",
+        "quantity": 1,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

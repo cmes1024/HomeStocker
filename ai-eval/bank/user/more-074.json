@@ -1,0 +1,24 @@
+{
+  "id": "more-074",
+  "perspective": "user",
+  "title": "我买了点东西回来了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我买了点东西回来了",
+  "expected": {
+    "outcome": "没说买了什么、放哪，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

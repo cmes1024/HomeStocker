@@ -1,0 +1,43 @@
+{
+  "id": "chat-soy-half-ok",
+  "perspective": "user",
+  "title": "那就当半瓶",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "酱油好像不多了"
+    },
+    {
+      "role": "assistant",
+      "text": "橱柜还有 1 瓶。"
+    },
+    {
+      "role": "user",
+      "text": "那就当还剩半瓶吧"
+    }
+  ],
+  "expected": {
+    "outcome": "把酱油改成半瓶",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酱油",
+        "quantity": 0.5
+      }
+    ]
+  }
+}

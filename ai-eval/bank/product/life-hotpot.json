@@ -1,0 +1,29 @@
+{
+  "id": "life-hotpot",
+  "perspective": "product",
+  "title": "火锅盐和酱油都在吗",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚上吃火锅，盐和酱油都在吗",
+  "expected": {
+    "outcome": "盐和酱油都查过再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

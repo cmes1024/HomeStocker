@@ -1,0 +1,24 @@
+{
+  "id": "chat-soy-panic",
+  "perspective": "user",
+  "title": "酱油是不是没了",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "完蛋，酱油是不是没了",
+  "expected": {
+    "outcome": "先看酱油还在不在，没有用完就别删",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ]
+  }
+}

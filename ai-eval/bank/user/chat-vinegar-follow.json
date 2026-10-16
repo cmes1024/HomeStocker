@@ -1,0 +1,44 @@
+{
+  "id": "chat-vinegar-follow",
+  "perspective": "user",
+  "title": "醋就放橱柜",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "记一瓶醋"
+    },
+    {
+      "role": "assistant",
+      "text": "放哪儿呢？"
+    },
+    {
+      "role": "user",
+      "text": "就厨房橱柜吧"
+    }
+  ],
+  "expected": {
+    "outcome": "听第二句，把醋记在厨房橱柜",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "name": "醋",
+        "quantity": 1,
+        "spaceName": "厨房",
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "more-083",
+  "perspective": "user",
+  "title": "布洛芬我记得在卫生间，你帮我确认",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬我记得在卫生间，你帮我确认",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

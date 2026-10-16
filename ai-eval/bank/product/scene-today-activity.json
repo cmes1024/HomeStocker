@@ -1,0 +1,31 @@
+{
+  "id": "scene-today-activity",
+  "perspective": "product",
+  "title": "今天谁动过",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "今天谁动过家里的东西",
+  "expected": {
+    "outcome": "看今天的家庭消息，不用物资列表冒充",
+    "requiredTools": [
+      "activity.list"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

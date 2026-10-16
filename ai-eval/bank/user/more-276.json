@@ -1,0 +1,28 @@
+{
+  "id": "more-276",
+  "perspective": "user",
+  "title": "冰箱里有没有已经过期的",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "冰箱里有没有已经过期的",
+  "expected": {
+    "outcome": "先查再答，不改账",
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

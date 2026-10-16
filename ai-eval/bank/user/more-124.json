@@ -1,0 +1,23 @@
+{
+  "id": "more-124",
+  "perspective": "user",
+  "title": "电脑搬卧室了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑搬卧室了",
+  "expected": {
+    "outcome": "没有卧室，先问，别删电脑",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "more-272",
+  "perspective": "user",
+  "title": "那一小袋米我煮粥用完了",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "那一小袋米我煮粥用完了",
+  "expected": {
+    "outcome": "删掉米",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "米"
+      }
+    ]
+  }
+}

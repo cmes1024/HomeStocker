@@ -1,0 +1,13 @@
+{
+  "id": "edge-unnamed",
+  "perspective": "product",
+  "title": "不说原名先查",
+  "tags": ["edge", "search"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "冰箱里那个白的还有吗",
+  "expected": {
+    "outcome": "原名没出现时先查冰箱，不编库存，也不改台账",
+    "requiredToolsAny": ["item.search"],
+    "forbiddenTools": ["item.create", "item.update", "item.remove", "item.removeMany"]
+  }
+}

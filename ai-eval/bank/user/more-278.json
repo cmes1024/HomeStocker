@@ -1,0 +1,27 @@
+{
+  "id": "more-278",
+  "perspective": "user",
+  "title": "帮我看看这周动过的记录",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "帮我看看这周动过的记录",
+  "expected": {
+    "outcome": "先查再答，不改账",
+    "requiredToolsAny": [
+      "activity.list"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

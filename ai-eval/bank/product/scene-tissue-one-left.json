@@ -1,0 +1,31 @@
+{
+  "id": "scene-tissue-one-left",
+  "perspective": "product",
+  "title": "纸巾只剩1包",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸巾快没了，只剩1包",
+  "expected": {
+    "outcome": "纸巾数量改成 1，不记成新的一条，也不删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "纸巾",
+        "quantity": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "scene-bathroom-list",
+  "perspective": "product",
+  "title": "卫生间还有什么",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "卫生间还有什么",
+  "expected": {
+    "outcome": "列出卫生间的物资，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

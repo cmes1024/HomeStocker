@@ -1,0 +1,32 @@
+{
+  "id": "scene-move-computer",
+  "perspective": "product",
+  "title": "电脑搬到厨房",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "把电脑搬到厨房",
+  "expected": {
+    "outcome": "把现有电脑改到厨房，不新建一条电脑，也不新建厨房",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.remove",
+      "space.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "电脑",
+        "spaceName": "厨房"
+      }
+    ]
+  }
+}

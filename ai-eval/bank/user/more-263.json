@@ -1,0 +1,32 @@
+{
+  "id": "more-263",
+  "perspective": "user",
+  "title": "挂面晚饭两个人，用了两把",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "挂面晚饭两个人，用了两把",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "挂面",
+        "quantity": 1
+      }
+    ]
+  }
+}

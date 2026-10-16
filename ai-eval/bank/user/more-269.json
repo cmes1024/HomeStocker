@@ -1,0 +1,22 @@
+{
+  "id": "more-269",
+  "perspective": "user",
+  "title": "盐还剩两袋，一袋都没拆",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "盐还剩两袋，一袋都没拆",
+  "expected": {
+    "outcome": "盐本来就是两袋，核对即可，别另记",
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

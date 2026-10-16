@@ -1,0 +1,22 @@
+{
+  "id": "chat-computer-room",
+  "perspective": "user",
+  "title": "电脑搬房间了",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑我搬房间去了",
+  "expected": {
+    "outcome": "家里没有叫房间的地方，先问，别把电脑删了",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "space.create"
+    ]
+  }
+}

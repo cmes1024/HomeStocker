@@ -1,0 +1,24 @@
+{
+  "id": "more-026",
+  "perspective": "user",
+  "title": "面好像不够了，你看着办",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "面好像不够了，你看着办",
+  "expected": {
+    "outcome": "没说是挂面还是那袋米，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

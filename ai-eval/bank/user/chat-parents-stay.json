@@ -1,0 +1,27 @@
+{
+  "id": "chat-parents-stay",
+  "perspective": "user",
+  "title": "爸妈来住卫生间纸够不够",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "周末我爸妈来住一晚，卫生间的纸还够不",
+  "expected": {
+    "outcome": "看卫生间的厕纸，不把客厅纸巾算成已经用掉",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

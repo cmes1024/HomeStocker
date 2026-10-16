@@ -1,0 +1,27 @@
+{
+  "id": "chat-mom-jiaozi",
+  "perspective": "user",
+  "title": "我妈要来包饺子",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我妈说明天来包饺子，你帮我看眼鸡蛋和盐够不够，不够告诉我得买啥，先别改账",
+  "expected": {
+    "outcome": "看鸡蛋和盐还剩多少，给买不买的建议，不动账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

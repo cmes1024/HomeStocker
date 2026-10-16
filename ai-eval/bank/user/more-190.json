@@ -1,0 +1,23 @@
+{
+  "id": "more-190",
+  "perspective": "user",
+  "title": "苹果两个都还在，别减，我就确认一下数",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果两个都还在，别减，我就确认一下数量还是 2",
+  "expected": {
+    "outcome": "苹果仍是 2 个，别减",
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

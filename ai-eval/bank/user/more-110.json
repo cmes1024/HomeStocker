@@ -1,0 +1,32 @@
+{
+  "id": "more-110",
+  "perspective": "user",
+  "title": "苹果就剩一个了，我亲眼看见的",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果就剩一个了，我亲眼看见的",
+  "expected": {
+    "outcome": "按说的改现有那一件，不删、不另记",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 1
+      }
+    ]
+  }
+}

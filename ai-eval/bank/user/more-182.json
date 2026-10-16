@@ -1,0 +1,42 @@
+{
+  "id": "more-182",
+  "perspective": "user",
+  "title": "帮我备注：出门前看一眼门后",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "钥匙呢"
+    },
+    {
+      "role": "assistant",
+      "text": "在客厅。"
+    },
+    {
+      "role": "user",
+      "text": "帮我备注：出门前看一眼门后"
+    }
+  ],
+  "expected": {
+    "outcome": "给钥匙写备注",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "钥匙"
+      }
+    ]
+  }
+}

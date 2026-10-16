@@ -1,0 +1,30 @@
+{
+  "id": "life-snack-note",
+  "perspective": "product",
+  "title": "薯片备注少吃",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片给孩子吃的，备注上少吃",
+  "expected": {
+    "outcome": "给现有薯片写备注，不另记，也不删",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "薯片",
+        "note": "少吃"
+      }
+    ]
+  }
+}

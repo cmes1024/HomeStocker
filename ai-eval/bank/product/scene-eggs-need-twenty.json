@@ -1,0 +1,23 @@
+{
+  "id": "scene-eggs-need-twenty",
+  "perspective": "product",
+  "title": "要用20个鸡蛋先问",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "今晚要用20个鸡蛋",
+  "expected": {
+    "outcome": "手里只有 8 个，不够就问，不改成 20，也不删掉",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create"
+    ]
+  }
+}

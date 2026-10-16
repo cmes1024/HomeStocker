@@ -1,0 +1,24 @@
+{
+  "id": "more-154",
+  "perspective": "user",
+  "title": "帮我想个不浪费酸奶的吃法，先别改数量",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "帮我想个不浪费酸奶的吃法，先别改数量",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

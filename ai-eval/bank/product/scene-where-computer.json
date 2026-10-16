@@ -1,0 +1,28 @@
+{
+  "id": "scene-where-computer",
+  "perspective": "product",
+  "title": "电脑在哪",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑在哪",
+  "expected": {
+    "outcome": "告诉家人电脑在客厅，不搬、不删。短号里已经有这一行时，不必再查一次",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

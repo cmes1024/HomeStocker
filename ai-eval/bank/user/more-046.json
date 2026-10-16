@@ -1,0 +1,27 @@
+{
+  "id": "more-046",
+  "perspective": "user",
+  "title": "酸奶给孩子留着，先告诉我还有几盒别减",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酸奶给孩子留着，先告诉我还有几盒别减",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

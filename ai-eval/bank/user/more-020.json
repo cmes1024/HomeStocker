@@ -1,0 +1,32 @@
+{
+  "id": "more-020",
+  "perspective": "user",
+  "title": "挂面下了一把",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "挂面下了一把",
+  "expected": {
+    "outcome": "挂面少一把，还剩 2 把",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "挂面",
+        "quantity": 2
+      }
+    ]
+  }
+}

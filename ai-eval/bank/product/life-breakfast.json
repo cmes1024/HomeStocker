@@ -1,0 +1,29 @@
+{
+  "id": "life-breakfast",
+  "perspective": "product",
+  "title": "明天早饭煎蛋鸡蛋和盐都有吧",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "明天早饭煎蛋，鸡蛋和盐都有吧",
+  "expected": {
+    "outcome": "鸡蛋和盐都看过再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

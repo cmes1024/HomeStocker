@@ -1,0 +1,29 @@
+{
+  "id": "life-wrap-leftover",
+  "perspective": "product",
+  "title": "剩菜要封保鲜膜还有吗",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "剩菜要封一下，保鲜膜还有吗",
+  "expected": {
+    "outcome": "先看保鲜膜还在不在，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

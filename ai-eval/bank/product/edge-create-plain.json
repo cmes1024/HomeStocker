@@ -1,0 +1,13 @@
+{
+  "id": "edge-create-plain",
+  "perspective": "product",
+  "title": "记一笔不挂位置",
+  "tags": ["edge", "create"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "厨房记 2 袋泡面，不挂位置",
+  "expected": {
+    "outcome": "泡面写入厨房，不因为没指定位置就只口头说已经记下",
+    "requiredTools": ["item.create"],
+    "forbiddenTools": ["item.remove", "item.removeMany"]
+  }
+}

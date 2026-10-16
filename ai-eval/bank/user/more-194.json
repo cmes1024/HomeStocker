@@ -1,0 +1,27 @@
+{
+  "id": "more-194",
+  "perspective": "user",
+  "title": "免费的话能记多少件来着",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "免费的话能记多少件来着",
+  "expected": {
+    "outcome": "用说明回答容量，不改账",
+    "requiredTools": [
+      "knowledge.get"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

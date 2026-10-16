@@ -1,0 +1,29 @@
+{
+  "id": "scene-yogurt-expired",
+  "perspective": "product",
+  "title": "过期酸奶删掉",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "酸奶过期了，删掉",
+  "expected": {
+    "outcome": "删除酸奶这一条",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "酸奶"
+      }
+    ]
+  }
+}

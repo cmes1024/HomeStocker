@@ -1,0 +1,27 @@
+{
+  "id": "more-030",
+  "perspective": "user",
+  "title": "红烧要酱油，清炒要盐，两样都看一下",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "红烧要酱油，清炒要盐，两样都看一下",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

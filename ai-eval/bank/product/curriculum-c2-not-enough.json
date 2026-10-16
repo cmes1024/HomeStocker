@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c2-not-enough",
+  "perspective": "product",
+  "title": "C2 减量不够",
+  "tags": ["curriculum", "update"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "把酱油删掉 5 瓶",
+  "expected": {
+    "outcome": "酱油只有 1 瓶时说明不够或先问，不整条删除，也不写成负数",
+    "mustAsk": true,
+    "forbiddenTools": ["item.remove", "item.removeMany", "item.update"]
+  }
+}

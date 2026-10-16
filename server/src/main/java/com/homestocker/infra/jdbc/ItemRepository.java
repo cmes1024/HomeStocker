@@ -411,6 +411,17 @@ public class ItemRepository {
             name));
   }
 
+  /** Distinct item names in the family, for name-overlap recall. */
+  public List<String> listNames(String familyId) {
+    return jdbc.query(
+        """
+        SELECT DISTINCT name FROM items
+        WHERE family_id = ? AND name IS NOT NULL AND btrim(name) <> ''
+        """,
+        (rs, i) -> rs.getString(1),
+        familyId);
+  }
+
   /** Exact name across the family (for unit inheritance / collide awareness). */
   public List<ItemRow> findByFamilyAndExactName(String familyId, String name, int limit) {
     int lim = Math.min(Math.max(limit, 1), 40);

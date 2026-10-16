@@ -1,0 +1,25 @@
+{
+  "id": "life-charger",
+  "perspective": "product",
+  "title": "电脑充电器不在账上",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑充电器找到了吗",
+  "expected": {
+    "outcome": "先查再答。账上没有就说没有，不要自己记一条充电器",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

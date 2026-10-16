@@ -1,0 +1,13 @@
+{
+  "id": "edge-ambiguous-update",
+  "perspective": "product",
+  "title": "同名改数量先问",
+  "tags": ["edge", "update"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "把牛奶改成 1",
+  "expected": {
+    "outcome": "两行牛奶时先问改哪一条，不直接改",
+    "mustAsk": true,
+    "forbiddenTools": ["item.update", "item.remove", "item.removeMany", "item.create"]
+  }
+}

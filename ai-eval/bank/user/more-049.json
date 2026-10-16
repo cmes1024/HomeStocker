@@ -1,0 +1,27 @@
+{
+  "id": "more-049",
+  "perspective": "user",
+  "title": "我妈明天来，鸡蛋够不够她包饺子",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我妈明天来，鸡蛋够不够她包饺子",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

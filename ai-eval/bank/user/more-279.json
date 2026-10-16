@@ -1,0 +1,27 @@
+{
+  "id": "more-279",
+  "perspective": "user",
+  "title": "一共多少件，我心里没数",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "一共多少件，我心里没数",
+  "expected": {
+    "outcome": "先查再答，不改账",
+    "requiredToolsAny": [
+      "item.stats"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

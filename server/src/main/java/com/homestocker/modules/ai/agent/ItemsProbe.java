@@ -20,6 +20,7 @@ public class ItemsProbe {
   private static final int CAP_NAMED = 24;
   private static final int CAP_SCOPED = 12;
   private static final int CAP_FAMILY = 40;
+  static final int RECALL_MAX_ROWS = 12;
 
   private final ItemRepository itemRepository;
 
@@ -149,12 +150,74 @@ public class ItemsProbe {
         listItemsCompact(familyId, spaceId, locationId, null, null, keywords, fetchLimit);
     int cap = resultCapFor(spaceId, locationId, keywords);
     List<Map<String, Object>> rows = new ArrayList<>();
+    int base = nextProbeNumber(refs);
     for (int i = 0; i < Math.min(cap, list.size()); i++) {
-      Map<String, Object> row = ActRefs.compactItem(toItemMap(list.get(i)), "P" + (i + 1), tree);
-      refs.put(str(row.get("ref")), row);
+      String ref = "P" + (base + i);
+      Map<String, Object> row = ActRefs.compactItem(toItemMap(list.get(i)), ref, tree);
+      refs.put(ref, row);
       rows.add(row);
     }
     return rows;
+  }
+
+  /**
+   * 本句里出现的台账物资名 → 现有行。不决定写哪个接口。短号从已占用的 P* 之后继续。
+   */
+  public List<Map<String, Object>> recallNamedInText(
+      String familyId,
+      Map<String, Object> tree,
+      String text,
+      Map<String, Map<String, Object>> refs) {
+    List<String> matched = NameRecall.match(text, itemRepository.listNames(familyId));
+    List<Map<String, Object>> rows = new ArrayList<>();
+    int n = nextProbeNumber(refs);
+    for (String name : matched) {
+      if (rows.size() >= RECALL_MAX_ROWS) {
+        break;
+      }
+      for (ItemRow doc : itemRepository.findByFamilyAndExactName(familyId, name, 4)) {
+        if (rows.size() >= RECALL_MAX_ROWS) {
+          break;
+        }
+        if (!familyId.equals(doc.familyId())) {
+          continue;
+        }
+        if (alreadyReferenced(refs, doc.id())) {
+          continue;
+        }
+        String ref = "P" + n;
+        Map<String, Object> row = ActRefs.compactItem(toItemMap(doc), ref, tree);
+        refs.put(ref, row);
+        rows.add(row);
+        n++;
+      }
+    }
+    return rows;
+  }
+
+  private static boolean alreadyReferenced(
+      Map<String, Map<String, Object>> refs, String itemId) {
+    if (refs == null || itemId == null || itemId.isBlank()) {
+      return false;
+    }
+    for (Map<String, Object> row : refs.values()) {
+      if (row != null && itemId.equals(str(row.get("itemId")))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  static int nextProbeNumber(Map<String, Map<String, Object>> refs) {
+    int max = 0;
+    if (refs != null) {
+      for (String key : refs.keySet()) {
+        if (key != null && key.matches("(?i)P\\d+")) {
+          max = Math.max(max, Integer.parseInt(key.substring(1)));
+        }
+      }
+    }
+    return max + 1;
   }
 
   public List<ItemRow> listItemsCompact(
@@ -182,10 +245,7 @@ public class ItemsProbe {
       list = list.stream().filter(i -> locationId.equals(i.locationId())).toList();
     }
     if (!keywords.isEmpty()) {
-      list =
-          list.stream()
-              .filter(i -> nameMatchesKeywords(i.name(), keywords))
-              .toList();
+      list = filterByName(list, keywords);
     }
     return list;
   }
@@ -204,16 +264,52 @@ public class ItemsProbe {
     return out;
   }
 
-  private static boolean nameMatchesKeywords(String itemName, List<String> keywords) {
-    if (keywords == null || keywords.isEmpty()) {
-      return true;
+  /**
+   * 查到与关键字同名的行时，只留这些行。「米」不再把「大米」算进来。
+   * 没有任何同名行时，仍按名称包含匹配，方便「奶」找到「牛奶」。
+   */
+  static List<ItemRow> filterByName(List<ItemRow> list, List<String> keywords) {
+    if (list == null || list.isEmpty() || keywords == null || keywords.isEmpty()) {
+      return list == null ? List.of() : list;
     }
+    List<ItemRow> exact = new ArrayList<>();
+    for (ItemRow row : list) {
+      if (nameEqualsKeyword(row.name(), keywords)) {
+        exact.add(row);
+      }
+    }
+    if (!exact.isEmpty()) {
+      return exact;
+    }
+    List<ItemRow> fuzzy = new ArrayList<>();
+    for (ItemRow row : list) {
+      if (nameContainsKeyword(row.name(), keywords)) {
+        fuzzy.add(row);
+      }
+    }
+    return fuzzy;
+  }
+
+  private static boolean nameEqualsKeyword(String itemName, List<String> keywords) {
+    String n = itemName == null ? "" : itemName.trim().toLowerCase(Locale.ROOT);
+    if (n.isEmpty()) {
+      return false;
+    }
+    for (String kw : keywords) {
+      if (kw != null && n.equals(kw.trim().toLowerCase(Locale.ROOT))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean nameContainsKeyword(String itemName, List<String> keywords) {
     String n = itemName == null ? "" : itemName.toLowerCase(Locale.ROOT);
     if (n.isEmpty()) {
       return false;
     }
     for (String kw : keywords) {
-      if (n.contains(kw)) {
+      if (kw != null && !kw.isBlank() && n.contains(kw.trim().toLowerCase(Locale.ROOT))) {
         return true;
       }
     }

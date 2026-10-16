@@ -1,0 +1,24 @@
+{
+  "id": "more-149",
+  "perspective": "user",
+  "title": "调料用了一些",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "调料用了一些",
+  "expected": {
+    "outcome": "没说盐还是酱油、用了多少，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

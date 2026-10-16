@@ -1,0 +1,25 @@
+{
+  "id": "more-167",
+  "perspective": "user",
+  "title": "薯片和过期酸奶都扔掉",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "薯片和过期酸奶都扔掉",
+  "expected": {
+    "outcome": "薯片和过期酸奶都扔掉",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "requiredToolsAny": [
+      "item.remove",
+      "item.removeMany"
+    ]
+  }
+}

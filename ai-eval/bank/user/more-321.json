@@ -1,0 +1,31 @@
+{
+  "id": "more-321",
+  "perspective": "user",
+  "title": "红枣一袋，放橱柜",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "红枣一袋，放橱柜",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "红枣",
+        "quantity": 1,
+        "locationName": "橱柜"
+      }
+    ]
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "id": "scene-keys-where",
+  "perspective": "product",
+  "title": "钥匙在不在客厅",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙在客厅吗",
+  "expected": {
+    "outcome": "查出钥匙的位置再回答，不删除这串钥匙",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

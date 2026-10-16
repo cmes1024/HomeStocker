@@ -1,0 +1,27 @@
+{
+  "id": "chat-kid-tissue",
+  "perspective": "user",
+  "title": "孩子学校要带纸巾",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子说明天学校要带纸巾，咱家够吗",
+  "expected": {
+    "outcome": "先看纸巾还剩几包，不改数量",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

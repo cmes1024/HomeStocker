@@ -1,0 +1,27 @@
+{
+  "id": "more-218",
+  "perspective": "user",
+  "title": "宝宝房我怕空了，你看看还记着什么",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "宝宝房我怕空了，你看看还记着什么",
+  "expected": {
+    "outcome": "看宝宝房",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

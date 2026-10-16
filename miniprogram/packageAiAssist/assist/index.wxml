@@ -232,6 +232,7 @@
 
         <view class="confirm-block" wx:if="{{item.confirmList && item.confirmList.length}}">
           <view class="confirm-hint" wx:if="{{item.confirmHint}}">{{item.confirmHint}}</view>
+          <view class="confirm-hint" wx:elif="{{item.confirmKind === 'batch'}}">{{copy.confirmBatchHint}}</view>
           <view class="confirm-hint" wx:elif="{{item.confirmKind === 'merge'}}">{{copy.confirmMergeHint}}</view>
           <view class="confirm-hint" wx:elif="{{item.confirmKind === 'removeUpdated'}}">{{copy.confirmHintUpdated}}</view>
           <view class="confirm-hint" wx:else>{{copy.confirmHint}}</view>
@@ -240,7 +241,7 @@
           </view>
           <view class="confirm-actions">
             <view class="ghost-btn" bind:tap="onCancelConfirm">{{copy.confirmNo}}</view>
-            <view class="pill-btn theme-btn" bind:tap="onConfirmRemove">{{item.confirmKind === 'merge' ? copy.confirmMergeYes : copy.confirmYes}}</view>
+            <view class="pill-btn theme-btn" bind:tap="onConfirmRemove">{{item.confirmKind === 'merge' ? copy.confirmMergeYes : (item.confirmKind === 'batch' ? copy.confirmBatchYes : copy.confirmYes)}}</view>
           </view>
         </view>
 

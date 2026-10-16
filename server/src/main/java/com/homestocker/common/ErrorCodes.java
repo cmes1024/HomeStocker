@@ -51,6 +51,7 @@ public final class ErrorCodes {
   public static final String NO_AI_KEY = "NO_AI_KEY";
   public static final String INVALID_TEXT = "INVALID_TEXT";
   public static final String ACT_FAILED = "ACT_FAILED";
+  public static final String ACT_BUDGET = "ACT_BUDGET";
   public static final String AI_QUOTA = "AI_QUOTA";
   public static final String RATE_LIMITED = "RATE_LIMITED";
   public static final String HABIT_LIMIT_REACHED = "HABIT_LIMIT_REACHED";

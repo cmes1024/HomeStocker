@@ -36,7 +36,7 @@ public class KnowledgeService {
     List<String> lines = new ArrayList<>();
     for (KnowledgePack p : KnowledgePacks.all()) {
       if (p.enabled()) {
-        lines.add("- " + p.topicId() + "：" + (p.summary() != null ? p.summary() : p.title()));
+        lines.add("- " + p.topicId() + "：" + p.title());
       }
     }
     return lines.isEmpty() ? "无" : String.join("\n", lines);

@@ -1,0 +1,24 @@
+{
+  "id": "more-054",
+  "perspective": "user",
+  "title": "客人要喝奶，倒一盒",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "客人要喝奶，倒一盒",
+  "expected": {
+    "outcome": "两处牛奶，先问倒哪盒",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

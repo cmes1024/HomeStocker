@@ -1,0 +1,24 @@
+{
+  "id": "more-316",
+  "perspective": "user",
+  "title": "开玩笑说扔电脑，你别当真",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "开玩笑说扔电脑，你别当真",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

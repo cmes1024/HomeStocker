@@ -1,0 +1,24 @@
+{
+  "id": "more-295",
+  "perspective": "user",
+  "title": "保鲜膜还能不能封住一碗剩饭",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "保鲜膜还能不能封住一碗剩饭",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

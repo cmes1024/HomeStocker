@@ -1,0 +1,24 @@
+{
+  "id": "more-244",
+  "perspective": "user",
+  "title": "钥匙别从账上拿掉，我就是抱怨找不到",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙别从账上拿掉，我就是抱怨找不到",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

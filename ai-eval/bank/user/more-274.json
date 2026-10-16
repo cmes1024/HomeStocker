@@ -1,0 +1,30 @@
+{
+  "id": "more-274",
+  "perspective": "user",
+  "title": "钥匙那串不是丢了，是旧的不要了，删掉",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "钥匙那串不是丢了，是旧的不要了，删掉吧",
+  "expected": {
+    "outcome": "删掉钥匙",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "钥匙"
+      }
+    ]
+  }
+}

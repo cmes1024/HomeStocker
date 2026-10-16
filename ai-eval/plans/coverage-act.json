@@ -1,0 +1,21 @@
+{
+  "id": "coverage-act",
+  "title": "课表加边角",
+  "description": "C1–C8 加上直接改数量、同名改量、不说原名、记一笔、多步、柱状图。不断言人话原文。",
+  "cases": [
+    "edge-unnamed",
+    "edge-ambiguous-update",
+    "edge-chart",
+    "curriculum-c7-knowledge",
+    "curriculum-c2-not-enough",
+    "curriculum-c3-same-name",
+    "curriculum-c8-dissolve",
+    "edge-update-qty",
+    "edge-create-plain",
+    "edge-multi-step",
+    "curriculum-c1-undo",
+    "curriculum-c4-record-existing",
+    "curriculum-c5-add-existing",
+    "curriculum-c6-open-page"
+  ]
+}

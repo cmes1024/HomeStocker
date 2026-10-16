@@ -1,0 +1,14 @@
+{
+  "id": "edge-multi-step",
+  "perspective": "product",
+  "title": "改完再报厨房",
+  "tags": ["edge", "steps"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "把酱油改成 1 瓶，再告诉我厨房里还有什么",
+  "expected": {
+    "outcome": "同一轮里改好酱油，并依据查到的行说明厨房里有什么",
+    "requiredTools": ["item.update"],
+    "requiredToolsAny": ["item.search"],
+    "forbiddenTools": ["item.remove", "item.removeMany"]
+  }
+}

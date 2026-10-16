@@ -1,0 +1,27 @@
+{
+  "id": "more-199",
+  "perspective": "user",
+  "title": "挂面会不会生虫，你先说还剩几把",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "挂面会不会生虫，你先说还剩几把",
+  "expected": {
+    "outcome": "看挂面",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

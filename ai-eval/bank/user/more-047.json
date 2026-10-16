@@ -1,0 +1,24 @@
+{
+  "id": "more-047",
+  "perspective": "user",
+  "title": "孩子的纸尿裤先别改，我自己数",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子的纸尿裤先别改，我自己数",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

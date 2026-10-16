@@ -1,0 +1,29 @@
+{
+  "id": "life-salt-bag",
+  "perspective": "product",
+  "title": "奶奶问盐是不是袋装",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "奶奶问家里的盐是袋装的吗",
+  "expected": {
+    "outcome": "先看盐的单位再答，不改单位、不删",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove"
+    ]
+  }
+}

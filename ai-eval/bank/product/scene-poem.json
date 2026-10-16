@@ -1,0 +1,28 @@
+{
+  "id": "scene-poem",
+  "perspective": "product",
+  "title": "写诗不改账",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "帮我写一首关于秋天的诗",
+  "expected": {
+    "outcome": "这不是记账，不查库也可以，但不能改家里的账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge",
+      "space.create",
+      "space.remove",
+      "tag.create",
+      "tag.remove"
+    ]
+  }
+}

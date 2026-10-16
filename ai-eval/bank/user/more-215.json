@@ -1,0 +1,27 @@
+{
+  "id": "more-215",
+  "perspective": "user",
+  "title": "橱柜调料就盐和酱油吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "橱柜调料就盐和酱油吗",
+  "expected": {
+    "outcome": "看橱柜",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

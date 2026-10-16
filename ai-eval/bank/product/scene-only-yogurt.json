@@ -1,0 +1,36 @@
+{
+  "id": "scene-only-yogurt",
+  "perspective": "product",
+  "title": "只改酸奶别动牛奶",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "只把酸奶改成1盒，牛奶别动",
+  "expected": {
+    "outcome": "只改酸奶为 1 盒，两处牛奶数量都不动",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酸奶",
+        "quantity": 1
+      }
+    ],
+    "callExcludes": [
+      {
+        "use": "item.update",
+        "name": "牛奶"
+      }
+    ]
+  }
+}

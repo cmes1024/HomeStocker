@@ -1,0 +1,32 @@
+{
+  "id": "more-119",
+  "perspective": "user",
+  "title": "电脑太挡道，搬到厨房去",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "电脑太挡道，搬到厨房去",
+  "expected": {
+    "outcome": "电脑挪到厨房",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "电脑",
+        "spaceName": "厨房"
+      }
+    ]
+  }
+}

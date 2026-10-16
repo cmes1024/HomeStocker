@@ -1,0 +1,27 @@
+{
+  "id": "more-060",
+  "perspective": "user",
+  "title": "爸妈不吃辣，酱油还能不能炒个家常，先",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "爸妈不吃辣，酱油还能不能炒个家常，先看有没有",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

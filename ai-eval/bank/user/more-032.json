@@ -1,0 +1,27 @@
+{
+  "id": "more-032",
+  "perspective": "user",
+  "title": "橱柜里能做晚饭的还有啥，我懒得蹲下去",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "橱柜里能做晚饭的还有啥，我懒得蹲下去看",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

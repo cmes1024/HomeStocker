@@ -1,0 +1,24 @@
+{
+  "id": "more-231",
+  "perspective": "user",
+  "title": "跟上次一样",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "跟上次一样",
+  "expected": {
+    "outcome": "没说清就先问，先不改账",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

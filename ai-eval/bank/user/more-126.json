@@ -1,0 +1,27 @@
+{
+  "id": "more-126",
+  "perspective": "user",
+  "title": "搬完我想知道电脑现在记在哪，先别再挪",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "搬完我想知道电脑现在记在哪，先别再挪",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

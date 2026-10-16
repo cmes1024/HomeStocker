@@ -1,0 +1,22 @@
+{
+  "id": "chat-milk-vague",
+  "perspective": "user",
+  "title": "奶喝掉一盒没说哪盒",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "奶喝掉一盒",
+  "expected": {
+    "outcome": "两处牛奶都在，先问喝的是哪一盒",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.create"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "more-029",
+  "perspective": "user",
+  "title": "晚上煮面加蛋，挂面和鸡蛋分别还有多少",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "晚上煮面加蛋，挂面和鸡蛋分别还有多少",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

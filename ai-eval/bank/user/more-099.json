@@ -1,0 +1,32 @@
+{
+  "id": "more-099",
+  "perspective": "user",
+  "title": "纸巾擦了桌子，用掉一包",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "纸巾擦了桌子，用掉一包",
+  "expected": {
+    "outcome": "纸巾少一包，还剩 2 包",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "纸巾",
+        "quantity": 2
+      }
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "more-191",
+  "perspective": "user",
+  "title": "我想自己加个分类，页面在哪开",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我想自己加个分类，页面在哪开",
+  "expected": {
+    "outcome": "打开标签页，不改物资",
+    "requiredTools": [
+      "page.get"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

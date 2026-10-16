@@ -1,0 +1,31 @@
+{
+  "id": "more-250",
+  "perspective": "user",
+  "title": "土豆五斤，放厨房",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "土豆五斤，放厨房",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "土豆",
+        "quantity": 5,
+        "spaceName": "厨房"
+      }
+    ]
+  }
+}

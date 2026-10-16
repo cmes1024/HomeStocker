@@ -1,0 +1,24 @@
+{
+  "id": "more-027",
+  "perspective": "user",
+  "title": "调料没了你看着补",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "调料没了你看着补",
+  "expected": {
+    "outcome": "没说是盐还是酱油，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "scene-rice-then-grain",
+  "perspective": "product",
+  "title": "大米和米不是同一件",
+  "tags": [
+    "scene",
+    "wide",
+    "order"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "先把大米改成2袋，再把米删掉",
+  "expected": {
+    "outcome": "大米改为 2 袋，名叫「米」的那条删除，不能把大米删掉或把米改成 2",
+    "requiredTools": [
+      "item.update",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "大米",
+        "quantity": 2
+      },
+      {
+        "use": "item.remove",
+        "name": "米"
+      }
+    ],
+    "callExcludes": [
+      {
+        "use": "item.update",
+        "name": "米"
+      },
+      {
+        "use": "item.remove",
+        "name": "大米"
+      }
+    ]
+  }
+}

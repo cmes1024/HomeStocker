@@ -1,0 +1,32 @@
+{
+  "id": "more-186",
+  "perspective": "user",
+  "title": "大米还是那一袋，没拆",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "大米还是那一袋，没拆",
+  "expected": {
+    "outcome": "大米还是 1 袋",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "大米",
+        "quantity": 1
+      }
+    ]
+  }
+}

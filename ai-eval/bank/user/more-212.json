@@ -1,0 +1,27 @@
+{
+  "id": "more-212",
+  "perspective": "user",
+  "title": "那一小袋米还在吗，我做甜品可能用",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "那一小袋米还在吗，我做甜品可能用",
+  "expected": {
+    "outcome": "看那袋米",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

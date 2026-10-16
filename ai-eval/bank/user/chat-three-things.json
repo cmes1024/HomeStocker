@@ -1,0 +1,28 @@
+{
+  "id": "chat-three-things",
+  "perspective": "user",
+  "title": "三件事一起问",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "帮我看看三件事：鸡蛋够不够、酸奶过不过期、钥匙在不在客厅",
+  "expected": {
+    "outcome": "三件都看过再答，一件都不改",
+    "requiredToolsAny": [
+      "item.search",
+      "item.listExpiring"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

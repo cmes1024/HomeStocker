@@ -1,0 +1,27 @@
+{
+  "id": "more-035",
+  "perspective": "user",
+  "title": "孩子说明天手工课要带纸巾，咱家够不够",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "孩子说明天手工课要带纸巾，咱家够不够",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

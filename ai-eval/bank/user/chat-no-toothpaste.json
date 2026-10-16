@@ -1,0 +1,25 @@
+{
+  "id": "chat-no-toothpaste",
+  "perspective": "user",
+  "title": "客人要刷牙有牙膏吗",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "客人要刷牙，咱家有牙膏吗",
+  "expected": {
+    "outcome": "先查。没有就说没有，别临时记一支",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

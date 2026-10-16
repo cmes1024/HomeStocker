@@ -1,0 +1,30 @@
+{
+  "id": "life-soy-half",
+  "perspective": "product",
+  "title": "做菜倒了半瓶酱油",
+  "tags": [
+    "scene",
+    "life"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "做菜倒了半瓶酱油",
+  "expected": {
+    "outcome": "酱油从 1 瓶改成 0.5，不删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.create"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "酱油",
+        "quantity": 0.5
+      }
+    ]
+  }
+}

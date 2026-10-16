@@ -31,10 +31,12 @@ function normalizeConfirmList(raw) {
     const names = Array.isArray(row && row.names)
       ? row.names.map((n) => String(n || '').trim()).filter(Boolean)
       : []
+    const labeled = String((row && row.label) || '').trim()
     const displayName =
-      names.length > 0
+      labeled ||
+      (names.length > 0
         ? names.join('、')
-        : String((row && row.name) || '').trim() || '物资'
+        : String((row && row.name) || '').trim() || '物资')
     const key =
       String((row && row.ref) || '') ||
       (Array.isArray(row && row.refs) && row.refs.length
@@ -671,13 +673,20 @@ Page({
   onCancelConfirm() {
     const pending = this.data.pendingCalls || []
     const isMerge = pending.some((c) => c && c.use === 'item.merge')
+    const heldWrite = pending.some(
+      (c) => c && c.use && !String(c.use).includes('remove') && c.use !== 'item.merge'
+    )
     const messages = clearConfirmCards(this._messages || this.data.messages || [])
     messages.push(
       stampMessage({
         id: this.nextId(),
         role: 'assistant',
         kind: 'result',
-        text: isMerge ? copy.assist.confirmMergeCancelled : copy.assist.confirmCancelled,
+        text: isMerge
+          ? copy.assist.confirmMergeCancelled
+          : heldWrite
+            ? copy.assist.confirmBatchCancelled
+            : copy.assist.confirmCancelled,
         askList: [],
         confirmList: [],
         subscribeItems: []
@@ -785,6 +794,15 @@ Page({
     }
 
     this._submitting = true
+    let turnId = options.turnId
+    if (!turnId) {
+      if (options.skipUserBubble && this._turnId) {
+        turnId = this._turnId
+      } else {
+        turnId = `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+      }
+    }
+    this._turnId = turnId
     const resetRound = options.resetRound !== false
     const askRound = resetRound ? 0 : this.data.askRound
     const actText = String(options.actText || text).trim()
@@ -846,7 +864,8 @@ Page({
         focusItemId: this.data.focusItemId || '',
         confirmed: !!options.confirmed,
         history,
-        calls: options.calls || undefined
+        calls: options.calls || undefined,
+        turnId
       })
       if (data && data.wrote) {
         invalidateItemDomain()
@@ -963,6 +982,7 @@ Page({
       const askList = asArray(data && data.ask)
       const reply = String((data && data.reply) || '').trim()
       const questions = askList.map((row) => row.question).filter(Boolean)
+      const { blocks, present } = pickPresentation(data)
       const text =
         [reply, questions.filter((q) => q !== reply).join('\n')]
           .filter(Boolean)
@@ -972,6 +992,8 @@ Page({
       this.replacePending(
         {
           text,
+          blocks,
+          present,
           askList,
           hasChips,
           goSpaces,
@@ -992,14 +1014,18 @@ Page({
         ? 'merge'
         : data && data.confirmKind === 'removeUpdated'
           ? 'removeUpdated'
-          : 'remove'
+          : data && data.confirmKind === 'batch'
+            ? 'batch'
+            : 'remove'
       const title =
         (data && data.confirmTitle) ||
         (confirmKind === 'merge'
           ? copy.assist.confirmMergeTitle
-          : confirmKind === 'removeUpdated'
-            ? copy.assist.confirmTitleUpdated
-            : copy.assist.confirmTitle)
+          : confirmKind === 'batch'
+            ? copy.assist.confirmBatchTitle
+            : confirmKind === 'removeUpdated'
+              ? copy.assist.confirmTitleUpdated
+              : copy.assist.confirmTitle)
       const confirmHint =
         (data && data.confirmHint) ||
         (confirmKind === 'removeUpdated' ? copy.assist.confirmHintUpdated : '')

@@ -1,0 +1,24 @@
+{
+  "id": "more-158",
+  "perspective": "user",
+  "title": "帮我算算明天早饭吃鸡蛋还是挂面，先看",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "帮我算算明天早饭吃鸡蛋还是挂面，先看就行别改",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

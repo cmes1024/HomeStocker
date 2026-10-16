@@ -1,0 +1,31 @@
+{
+  "id": "more-069",
+  "perspective": "user",
+  "title": "超市买了盒口罩，搁客厅",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "超市买了盒口罩，搁客厅",
+  "expected": {
+    "outcome": "按说的地方记下新的",
+    "requiredToolsAny": [
+      "item.create",
+      "item.createMany"
+    ],
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany"
+    ],
+    "callIncludes": [
+      {
+        "name": "口罩",
+        "quantity": 1,
+        "spaceName": "客厅"
+      }
+    ]
+  }
+}

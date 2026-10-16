@@ -1,0 +1,23 @@
+{
+  "id": "more-125",
+  "perspective": "user",
+  "title": "布洛芬拿到主卧床头",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬拿到主卧床头",
+  "expected": {
+    "outcome": "没有主卧，先问",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.create",
+      "item.createMany"
+    ]
+  }
+}

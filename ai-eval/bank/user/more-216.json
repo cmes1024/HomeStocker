@@ -1,0 +1,27 @@
+{
+  "id": "more-216",
+  "perspective": "user",
+  "title": "零食柜是不是只剩薯片",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "零食柜是不是只剩薯片",
+  "expected": {
+    "outcome": "看零食柜",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

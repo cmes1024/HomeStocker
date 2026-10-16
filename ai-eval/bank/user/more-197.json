@@ -1,0 +1,27 @@
+{
+  "id": "more-197",
+  "perspective": "user",
+  "title": "半夜起来找水，牛奶在冰箱还有吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "半夜起来找水，牛奶在冰箱还有吗",
+  "expected": {
+    "outcome": "看冰箱牛奶",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

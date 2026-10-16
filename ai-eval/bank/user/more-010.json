@@ -1,0 +1,27 @@
+{
+  "id": "more-010",
+  "perspective": "user",
+  "title": "布洛芬还在卫生间吧，我有点不舒服但先",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "布洛芬还在卫生间吧，我有点不舒服但先找药",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

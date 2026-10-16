@@ -1,0 +1,24 @@
+{
+  "id": "more-106",
+  "perspective": "user",
+  "title": "苹果先别减，我还没吃呢，刚才是说说",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "苹果先别减，我还没吃呢，刚才是说说",
+  "expected": {
+    "outcome": "听人的，不动账",
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}

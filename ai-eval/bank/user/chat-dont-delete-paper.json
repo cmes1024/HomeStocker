@@ -1,0 +1,35 @@
+{
+  "id": "chat-dont-delete-paper",
+  "perspective": "user",
+  "title": "厕纸先别删",
+  "tags": [
+    "chat",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "厕纸用完了"
+    },
+    {
+      "role": "assistant",
+      "text": "要我把厕纸删掉吗？"
+    },
+    {
+      "role": "user",
+      "text": "先别删，我再找找"
+    }
+  ],
+  "expected": {
+    "outcome": "先留着厕纸",
+    "forbiddenTools": [
+      "item.remove",
+      "item.removeMany",
+      "item.update",
+      "item.create"
+    ]
+  }
+}

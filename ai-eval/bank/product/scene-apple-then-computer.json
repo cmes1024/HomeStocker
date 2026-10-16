@@ -1,0 +1,42 @@
+{
+  "id": "scene-apple-then-computer",
+  "perspective": "product",
+  "title": "先改苹果再删电脑",
+  "tags": [
+    "scene",
+    "wide",
+    "order"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "先把苹果改成3，再把电脑删掉",
+  "expected": {
+    "outcome": "苹果数量改为 3，电脑整条删除；两件都先停在同一张确认上，不能改到对方头上",
+    "requiredTools": [
+      "item.update",
+      "item.remove"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.update",
+        "name": "苹果",
+        "quantity": 3
+      },
+      {
+        "use": "item.remove",
+        "name": "电脑"
+      }
+    ],
+    "callExcludes": [
+      {
+        "use": "item.update",
+        "name": "电脑"
+      },
+      {
+        "use": "item.remove",
+        "name": "苹果"
+      }
+    ]
+  }
+}

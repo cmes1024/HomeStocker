@@ -1,0 +1,27 @@
+{
+  "id": "more-012",
+  "perspective": "user",
+  "title": "保鲜膜煎蛋怕溅油，还有吗",
+  "tags": [
+    "more",
+    "daily"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "保鲜膜煎蛋怕溅油，还有吗",
+  "expected": {
+    "outcome": "先看再答，不改账",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove",
+      "item.removeMany",
+      "item.merge"
+    ]
+  }
+}
