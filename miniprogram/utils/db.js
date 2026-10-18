@@ -45,7 +45,7 @@ async function listExpiringItems(options = {}) {
  */
 async function loadHomeBoard(options = {}) {
   const data = await callItem('home', {
-    limit: options.limit || 100,
+    limit: options.limit || 500,
     spaceId: options.spaceId || undefined
   })
   return {
@@ -63,7 +63,7 @@ async function loadHomeBoard(options = {}) {
  */
 async function loadHomeBootstrap(options = {}) {
   const data = await callBootstrap('home', {
-    limit: options.limit || 100,
+    limit: options.limit || 500,
     spaceId: options.spaceId || undefined
   })
   return {

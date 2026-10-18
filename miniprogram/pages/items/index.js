@@ -321,8 +321,12 @@ Page({
    */
   async bootFromBootstrap(spaceIdHint) {
     let bundle
+    // 已有内容时（如从详情页返回触发的 onShow 刷新）不切 bootLoading：
+    // page-col 是 wx:elif="{{!bootLoading}}"，卸载重挂会把 scroll-view 的滚动位置重置到顶部。
+    // 保持列表挂载做后台静默刷新，请求时机不变。
+    const preserveContent = (this.data.items || []).length > 0
     try {
-      this.setData({ bootLoading: true, bootError: '' })
+      if (!preserveContent) this.setData({ bootLoading: true, bootError: '' })
       bundle = await loadHomeBootstrap({ spaceId: spaceIdHint || undefined })
     } catch (e) {
       if (e && e.code === 'NO_FAMILY') {

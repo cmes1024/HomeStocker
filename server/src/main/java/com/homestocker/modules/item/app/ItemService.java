@@ -1116,7 +1116,8 @@ public class ItemService {
 
   public Map<String, Object> home(Map<String, Object> body) {
     FamilyCtx ctx = requireFamily();
-    int limit = clamp(body.get("limit"), 100, 1, 100);
+    // 上限 500：排序为「临期优先 + created_at 正序」，若截断会丢最新添加的物品；单家超 500 件再上分页
+    int limit = clamp(body.get("limit"), 100, 1, 500);
     String spaceId = str(body.get("spaceId")).trim();
     String today = ShanghaiDates.todayYmd();
     String end = ShanghaiDates.addDaysYmd(today, 3);

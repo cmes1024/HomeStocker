@@ -1,5 +1,6 @@
 package com.homestocker.infra.jdbc;
 
+import com.homestocker.common.ShanghaiDates;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -38,6 +39,9 @@ public class ItemRepository {
               List.of(),
               List.of());
 
+  /** 「快过期」窗口（天），与到期提醒 / 首页临期横幅一致 */
+  private static final int EXPIRE_SOON_WINDOW_DAYS = 3;
+
   private final JdbcTemplate jdbc;
 
   public ItemRepository(JdbcTemplate jdbc) {
@@ -65,6 +69,8 @@ public class ItemRepository {
 
   public List<ItemRow> list(
       String familyId, String spaceId, String tagId, BigDecimal maxQuantity, int limit) {
+    String today = ShanghaiDates.todayYmd();
+    String soonEnd = ShanghaiDates.addDaysYmd(today, EXPIRE_SOON_WINDOW_DAYS);
     StringBuilder sql =
         new StringBuilder(
             """
@@ -86,7 +92,22 @@ public class ItemRepository {
       sql.append(" AND i.quantity <= ?");
       args.add(maxQuantity);
     }
-    sql.append(" ORDER BY i.updated_at DESC LIMIT ?");
+    // 排序：已过期(0) > 快过期(1) > 其余(2)；组内按添加时间正序，id 兜底保证稳定
+    sql.append(
+        """
+        ORDER BY
+          CASE
+            WHEN i.expire_date IS NULL THEN 2
+            WHEN i.expire_date < CAST(? AS date) THEN 0
+            WHEN i.expire_date <= CAST(? AS date) THEN 1
+            ELSE 2
+          END,
+          i.created_at ASC,
+          i.id ASC
+        LIMIT ?
+        """);
+    args.add(today);
+    args.add(soonEnd);
     args.add(limit);
     return hydrateAll(jdbc.query(sql.toString(), BASE_ROW, args.toArray()));
   }
