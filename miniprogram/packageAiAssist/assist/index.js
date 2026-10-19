@@ -8,6 +8,7 @@ const {
   historyFromMessages,
   extractTurns,
   bubbleTextWithoutBlockDup,
+  bubbleTextWithoutPresentDup,
   stampMessage
 } = require('../utils/transcript')
 const { ensureSession } = require('../../utils/session')
@@ -958,22 +959,9 @@ Page({
       }
     }
     if (next.present) {
-      const covered = {
-        [copy.assist.doneEmpty]: true,
-        没有需要执行的操作: true
-      }
-      String(presentToHistoryText(next.present) || '')
-        .split('\n')
-        .map((l) => l.trim())
-        .filter(Boolean)
-        .forEach((l) => {
-          covered[l] = true
-        })
-      next.bubbleText = String(next.text || '')
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => l && !covered[l])
-        .join('\n')
+      next.bubbleText = bubbleTextWithoutPresentDup(next.text, next.present, [
+        copy.assist.doneEmpty
+      ])
     } else if (next.bubbleText == null) {
       next.bubbleText = bubbleTextWithoutBlockDup(next.text, next.blocks)
     }

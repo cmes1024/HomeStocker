@@ -220,16 +220,87 @@ function presentHistoryLines(present) {
   return parts.filter(Boolean)
 }
 
-function bubbleTextWithoutPresentDup(text, present) {
+/** 列表符（- * · • / 1. 1、）；只去一层，避免把 1.5 当成有序列表 */
+const LIST_MARK_RE = /^(?:[-*·•]\s*|\d{1,2}[.)、]\s+)/
+
+/** 数量尾串白名单：数字 + 可选单位 + 可选括号（位置/占比），出现其他汉字就保留 */
+const PRESENT_QTY_UNITS =
+  '个|件|瓶|袋|盒|只|斤|公斤|千克|克|升|毫升|ml|ML|L|包|箱|台|支|条|罐|桶|两|卷|张|块|片|把|套|双|副|组'
+const PRESENT_QTY_TAIL_RE = new RegExp(
+  '^[:：\\-—、\\s]*(?:[x×*]\\s*)?[0-9０-９]+(?:\\.[0-9]+)?\\s*(?:' +
+    PRESENT_QTY_UNITS +
+    ')?\\s*(?:[（(][^（）()]{0,24}[）)])?\\s*$'
+)
+
+/** 表格「名称」列 / 图表 label：正文按行复述同一批条目时，这些名字开头即视为重复。 */
+function presentRowHeads(present) {
+  if (!present) return []
+  // 表格被截断（footer「另有 N 行未展开」）时正文可能是完整清单，不做行级删除
+  if (/未展开/.test(String(present.footer || ''))) return []
+  const heads = []
+  const push = (value) => {
+    const name = String(value || '').trim()
+    if (name.length < 2 || heads.indexOf(name) >= 0) return
+    heads.push(name)
+  }
+  if (present.type === 'table') {
+    const cols = (present.columns || []).map((c) => String(c || '').trim())
+    let nameIdx = -1
+    cols.some((col, i) => {
+      if (/名|name|item/i.test(col)) {
+        nameIdx = i
+        return true
+      }
+      return false
+    })
+    if (nameIdx < 0) nameIdx = 0
+    ;(present.rows || []).forEach((row) => {
+      const cells = Array.isArray(row)
+        ? row
+        : row && Array.isArray(row.cells)
+          ? row.cells
+          : []
+      push(cells[nameIdx])
+    })
+  } else if (present.type === 'stats' || present.type === 'bars' || present.type === 'pie') {
+    ;(present.items || []).forEach((item) => push(item && item.label))
+  }
+  return heads
+}
+
+/** 结构图已画出的明细行：只有「名称 + 数量」这种短语才算复述，带评论的句子保留。 */
+function lineRestatesPresentRow(line, heads) {
+  if (!heads.length) return false
+  const body = String(line || '').trim().replace(LIST_MARK_RE, '')
+  if (!body) return false
+  return heads.some((head) => {
+    if (body.indexOf(head) !== 0) return false
+    return PRESENT_QTY_TAIL_RE.test(body.slice(head.length))
+  })
+}
+
+/** extraDrop：调用方额外要丢的占位行（如 doneEmpty 兜底话术） */
+function bubbleTextWithoutPresentDup(text, present, extraDrop) {
   const covered = {}
   presentHistoryLines(present).forEach((l) => {
     covered[l] = true
   })
   covered['没有需要执行的操作'] = true
+  ;(Array.isArray(extraDrop) ? extraDrop : []).forEach((l) => {
+    const t = String(l || '').trim()
+    if (t) covered[t] = true
+  })
+  const heads = presentRowHeads(present)
   return String(text || '')
     .split('\n')
     .map((l) => l.trim())
-    .filter((l) => l && !covered[l])
+    .filter((l) => {
+      if (!l) return false
+      if (covered[l]) return false
+      const body = l.replace(LIST_MARK_RE, '')
+      if (covered[body]) return false
+      return !lineRestatesPresentRow(l, heads)
+    })
     .join('\n')
 }
 
@@ -540,6 +611,7 @@ module.exports = {
   turnsToMessages,
   historyFromMessages,
   bubbleTextWithoutBlockDup,
+  bubbleTextWithoutPresentDup,
   truncatePreferReceipts,
   isQtyReceiptText,
   formatBubbleTime,
