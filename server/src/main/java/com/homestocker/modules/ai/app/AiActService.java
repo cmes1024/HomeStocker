@@ -66,6 +66,7 @@ public class AiActService {
   private final FamilyHabitService familyHabitService;
   private final HabitObserveService habitObserveService;
   private final ActTurnReplay actTurnReplay;
+  private final ActPendingPlan actPendingPlan;
 
   public AiActService(
       UserRepository userRepository,
@@ -84,7 +85,8 @@ public class AiActService {
       FamilyTreeService familyTreeService,
       FamilyHabitService familyHabitService,
       HabitObserveService habitObserveService,
-      ActTurnReplay actTurnReplay) {
+      ActTurnReplay actTurnReplay,
+      ActPendingPlan actPendingPlan) {
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
     this.actKeyResolver = actKeyResolver;
@@ -102,6 +104,7 @@ public class AiActService {
     this.familyHabitService = familyHabitService;
     this.habitObserveService = habitObserveService;
     this.actTurnReplay = actTurnReplay;
+    this.actPendingPlan = actPendingPlan;
   }
 
   public Map<String, Object> act(Map<String, Object> event) {
@@ -116,11 +119,32 @@ public class AiActService {
     }
     try {
       Map<String, Object> payload = performAct(event);
+      attachConfirmPlan(openid, payload);
       actTurnReplay.succeed(openid, turnId, payload);
       return payload;
     } catch (RuntimeException ex) {
       actTurnReplay.fail(openid, turnId);
       throw ex;
+    }
+  }
+
+  /** 确认卡返回前把 calls 存起来，客户端确认时带 planId 回来比对。 */
+  @SuppressWarnings("unchecked")
+  private void attachConfirmPlan(String openid, Map<String, Object> payload) {
+    if (payload == null || !"confirm".equals(payload.get("status"))) {
+      return;
+    }
+    if (!(payload.get("calls") instanceof List<?> raw)) {
+      return;
+    }
+    List<Map<String, Object>> calls =
+        raw.stream()
+            .filter(o -> o instanceof Map)
+            .map(o -> (Map<String, Object>) o)
+            .toList();
+    String planId = actPendingPlan.save(openid, calls);
+    if (!planId.isEmpty()) {
+      payload.put("planId", planId);
     }
   }
 
@@ -145,6 +169,20 @@ public class AiActService {
             : List.of();
 
     if (confirmed && !replayCalls.isEmpty()) {
+      String planId = ActPendingPlan.sanitize(event.get("planId"));
+      if (!planId.isEmpty()) {
+        List<Map<String, Object>> expected = actPendingPlan.peek(openid, planId);
+        if (expected == null) {
+          throw ApiException.of(ErrorCodes.BAD_REQUEST, "确认已过期，请重新发起");
+        }
+        if (!expected.equals(replayCalls)) {
+          log.warn("act confirm calls mismatch: openid={}", openid);
+          throw ApiException.of(ErrorCodes.BAD_REQUEST, "确认内容与提示不一致，请重新发起");
+        }
+      } else {
+        // 灰度兼容：老客户端不带 planId，先放行并留日志；客户端覆盖率上来后改为拒绝
+        log.warn("act confirm without planId: openid={}", openid);
+      }
       aiSeedService.ensureCapabilities();
       Map<String, Object> tree = familyTreeService.getOrRebuild(familyId);
       Map<String, Map<String, Object>> catalogMap = catalogMapFromDb();
@@ -153,6 +191,10 @@ public class AiActService {
       itemsProbe.loadItemsByIds(familyId, tree, ids, refs, null);
       Map<String, Object> report =
           execute(familyId, openid, tree, replayCalls, refs, catalogMap, ShanghaiDates.todayYmd());
+      // 执行成功才作废：失败时保留凭据，允许用同一份 calls 重试
+      if (!planId.isEmpty()) {
+        actPendingPlan.clear(openid, planId);
+      }
       return sanitizeUserPayload(buildDonePayload(replayCalls, report, null), null, List.of());
     }
 

@@ -64,11 +64,47 @@ public class ItemRepository {
   }
 
   public List<ItemRow> list(String familyId, String spaceId, String tagId, int limit) {
-    return list(familyId, spaceId, tagId, null, limit);
+    return query(familyId, spaceId, tagId, null, null, limit);
   }
 
   public List<ItemRow> list(
       String familyId, String spaceId, String tagId, BigDecimal maxQuantity, int limit) {
+    return query(familyId, spaceId, tagId, maxQuantity, null, limit);
+  }
+
+  /**
+   * 按名称模糊搜索。关键字过滤下推到数据库后再 LIMIT：先在内存里取 100 行再过滤，
+   * 家庭超过 100 件时会把新加的物资整批漏掉（管家「有没有牛奶」查不到）。
+   */
+  public List<ItemRow> search(
+      String familyId, String spaceId, String tagId, String keyword, int limit) {
+    return query(familyId, spaceId, tagId, null, keyword == null ? List.of() : List.of(keyword), limit);
+  }
+
+  /** 多个名称关键字（OR）下推，管家 probe 一次问「牛奶」「鸡蛋」时用。 */
+  public List<ItemRow> searchAny(
+      String familyId,
+      String spaceId,
+      String tagId,
+      BigDecimal maxQuantity,
+      List<String> keywords,
+      int limit) {
+    return query(familyId, spaceId, tagId, maxQuantity, keywords, limit);
+  }
+
+  /** LIKE 模式串：转义用户输入里的 % / _ / \，按字面量匹配（ESCAPE '\'）。 */
+  static String likePattern(String keyword) {
+    String k = keyword == null ? "" : keyword.trim();
+    return "%" + k.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+  }
+
+  private List<ItemRow> query(
+      String familyId,
+      String spaceId,
+      String tagId,
+      BigDecimal maxQuantity,
+      List<String> keywords,
+      int limit) {
     String today = ShanghaiDates.todayYmd();
     String soonEnd = ShanghaiDates.addDaysYmd(today, EXPIRE_SOON_WINDOW_DAYS);
     StringBuilder sql =
@@ -91,6 +127,25 @@ public class ItemRepository {
     if (maxQuantity != null) {
       sql.append(" AND i.quantity <= ?");
       args.add(maxQuantity);
+    }
+    if (keywords != null && !keywords.isEmpty()) {
+      List<String> clean = new ArrayList<>();
+      for (String k : keywords) {
+        if (k != null && !k.isBlank()) {
+          clean.add(k);
+        }
+      }
+      if (!clean.isEmpty()) {
+        sql.append(" AND (");
+        for (int i = 0; i < clean.size(); i++) {
+          if (i > 0) {
+            sql.append(" OR ");
+          }
+          sql.append("i.name ILIKE ? ESCAPE '\\'");
+          args.add(likePattern(clean.get(i)));
+        }
+        sql.append(")");
+      }
     }
     // 排序：已过期(0) > 快过期(1) > 其余(2)；组内按添加时间正序，id 兜底保证稳定
     // 注意：ORDER BY 行刻意多缩进一个空格。文本块起始换行会被编译器删除，少了这个空格，

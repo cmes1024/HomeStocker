@@ -67,12 +67,18 @@ class AiCaptureParseTest {
   }
 
   @Test
-  void fractionalQuantityRoundsToLong() {
+  void fractionalQuantityKeepsTwoDecimals() {
+    // 提示词明确允许 0.5（如半袋米）；items.quantity 也是 NUMERIC，不能悄悄取整
     Map<String, Object> fields =
         AiCaptureService.parseFields(OM, "{\"name\":\"大米\",\"quantity\":0.5}");
-    assertEquals(1L, fields.get("quantity"));
+    assertEquals(0.5, ((Number) fields.get("quantity")).doubleValue(), 1e-9);
     Map<String, Object> two = AiCaptureService.parseFields(OM, "{\"quantity\":2.4}");
-    assertEquals(2L, two.get("quantity"));
+    assertEquals(2.4, ((Number) two.get("quantity")).doubleValue(), 1e-9);
+    Map<String, Object> three = AiCaptureService.parseFields(OM, "{\"quantity\":2.456}");
+    assertEquals(2.46, ((Number) three.get("quantity")).doubleValue(), 1e-9);
+    // 整数仍回 long：前端输入框不会出现 3.0
+    Map<String, Object> whole = AiCaptureService.parseFields(OM, "{\"quantity\":3.0}");
+    assertEquals(3L, whole.get("quantity"));
   }
 
   @Test

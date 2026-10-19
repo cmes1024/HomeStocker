@@ -385,6 +385,7 @@ Page({
     draft: null,
     messages: [],
     pendingCalls: [],
+    pendingPlanId: '',
     scrollIntoView: '',
     keyboardHeight: 0,
     transcriptCapped: false,
@@ -489,6 +490,7 @@ Page({
     this.setData({
       messages,
       pendingCalls: [],
+      pendingPlanId: '',
       askRound: 0,
       transcriptCapped: turns.length >= HISTORY_LIMIT,
       canClear: turns.length > 0
@@ -548,6 +550,7 @@ Page({
       canClear: false,
       transcriptCapped: false,
       pendingCalls: [],
+      pendingPlanId: '',
       askRound: 0,
       draft: null,
       originalText: '',
@@ -658,19 +661,28 @@ Page({
       return
     }
     const isMerge = calls.some((c) => c && c.use === 'item.merge')
+    // 同一张确认卡的重复提交必须复用 turnId：服务端按 turnId 回放结果，
+    // 换新 id 会在超时重试时二次写入。新确认卡 / 取消 / 新一轮对话时清空（见 applyResult）。
+    const confirmTurnId =
+      this._confirmTurnId || `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+    this._confirmTurnId = confirmTurnId
     // 先收起确认卡，避免合并项无 ref / WXML join 在列表 diff 时炸 weui
     const cleared = clearConfirmCards(this._messages || this.data.messages || [])
     this.commitMessages(cleared)
     this.submit({
       resetRound: false,
       confirmed: true,
+      turnId: confirmTurnId,
       text: isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes,
       actText: this.data.originalText || (isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes),
-      calls
+      calls,
+      // 服务端据此比对「确认的是不是当初展示的那批」，缺了会被当成老客户端
+      planId: this.data.pendingPlanId || ''
     })
   },
 
   onCancelConfirm() {
+    this._confirmTurnId = ''
     const pending = this.data.pendingCalls || []
     const isMerge = pending.some((c) => c && c.use === 'item.merge')
     const heldWrite = pending.some(
@@ -692,7 +704,7 @@ Page({
         subscribeItems: []
       })
     )
-    this.commitMessages(messages, { pendingCalls: [] })
+    this.commitMessages(messages, { pendingCalls: [], pendingPlanId: '' })
     this.scrollToBottom()
   },
 
@@ -794,6 +806,8 @@ Page({
     }
 
     this._submitting = true
+    // 新起一轮对话（非确认、非重试）：作废上一张确认卡的 turnId
+    if (options.resetRound !== false) this._confirmTurnId = ''
     let turnId = options.turnId
     if (!turnId) {
       if (options.skipUserBubble && this._turnId) {
@@ -865,12 +879,15 @@ Page({
         confirmed: !!options.confirmed,
         history,
         calls: options.calls || undefined,
+        planId: options.planId || undefined,
         turnId
       })
       if (data && data.wrote) {
         invalidateItemDomain()
       }
       this.applyResult(data, askRound)
+      // 确认已落地（done/subscribe）：turnId 到此为止，避免下一次确认复用到旧结果
+      if (options.confirmed && data && data.status !== 'confirm') this._confirmTurnId = ''
     } catch (e) {
       if (e.code === 'NO_AI_KEY') {
         this.replacePending(
@@ -1029,6 +1046,8 @@ Page({
       const confirmHint =
         (data && data.confirmHint) ||
         (confirmKind === 'removeUpdated' ? copy.assist.confirmHintUpdated : '')
+      // 新的确认卡 = 新的确认动作，不能复用上一张卡的 turnId（否则会回放旧结果）
+      this._confirmTurnId = ''
       this.replacePending(
         {
           text: title,
@@ -1040,7 +1059,8 @@ Page({
         },
         {
           draft,
-          pendingCalls: asArray(data && data.calls)
+          pendingCalls: asArray(data && data.calls),
+          pendingPlanId: data && data.planId ? String(data.planId) : ''
         }
       )
       return
@@ -1065,7 +1085,8 @@ Page({
         {
           askRound: 0,
           draft,
-          pendingCalls: []
+          pendingCalls: [],
+          pendingPlanId: ''
         }
       )
       return
@@ -1126,7 +1147,8 @@ Page({
       {
         askRound: 0,
         draft,
-        pendingCalls: []
+        pendingCalls: [],
+        pendingPlanId: ''
       }
     )
   }

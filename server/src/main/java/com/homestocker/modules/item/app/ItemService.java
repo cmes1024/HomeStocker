@@ -1081,20 +1081,16 @@ public class ItemService {
     String spaceId = str(body.get("spaceId")).trim();
     String tagId = str(body.get("tagId")).trim();
     Set<String> subs = itemRepository.subscribedItemIds(ctx.familyId(), ctx.openid());
-    String lower = keyword.toLowerCase();
     List<Map<String, Object>> list = new ArrayList<>();
+    // 关键字交给数据库过滤（ILIKE）后再 LIMIT，避免「先取 100 行、再内存过滤」把新物资漏掉
     for (ItemRow item :
-        itemRepository.list(
+        itemRepository.search(
             ctx.familyId(),
             spaceId.isEmpty() ? null : spaceId,
             tagId.isEmpty() ? null : tagId,
-            100)) {
-      if (item.name() != null && item.name().toLowerCase().contains(lower)) {
-        list.add(toView(item, subs.contains(item.id())));
-        if (list.size() >= limit) {
-          break;
-        }
-      }
+            keyword,
+            limit)) {
+      list.add(toView(item, subs.contains(item.id())));
     }
     return Map.of("list", list);
   }
@@ -1116,8 +1112,9 @@ public class ItemService {
 
   public Map<String, Object> home(Map<String, Object> body) {
     FamilyCtx ctx = requireFamily();
-    // 上限 500：排序为「临期优先 + created_at 正序」，若截断会丢最新添加的物品；单家超 500 件再上分页
-    int limit = clamp(body.get("limit"), 100, 1, 500);
+    // 上限 600：排序为「临期优先 + created_at 正序」，若截断会丢最新添加的物品。
+    // 免费档 50 件、加强版实测也极少过 500；再高收益低而 setData 体积见涨，超 600 件再上分页。
+    int limit = clamp(body.get("limit"), 100, 1, 600);
     String spaceId = str(body.get("spaceId")).trim();
     String today = ShanghaiDates.todayYmd();
     String end = ShanghaiDates.addDaysYmd(today, 3);

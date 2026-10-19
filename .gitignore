@@ -2,6 +2,13 @@
 **/.DS_Store
 node_modules/
 *.log
+
+# 环境变量与密钥（server/.gitignore 另有一份，这里是仓库级兜底）
+.env
+.env.*
+**/.env
+**/.env.*
+!**/.env.example
 **/.ai-keys*
 **/*deepseek*.key
 /docs/promo/*
@@ -10,3 +17,4 @@ server/.idea/
 *.iml
 ai-eval/runs/*
 !ai-eval/runs/.gitkeep
+.codebuddy/

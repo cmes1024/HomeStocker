@@ -234,17 +234,18 @@ public class ItemsProbe {
       List<String> keywords,
       int limit) {
     int fetchLimit = Math.min(Math.max(limit, 1), 100);
+    boolean hasKeywords = keywords != null && !keywords.isEmpty();
+    // 有关键字时把名称条件下推：先取 100 行再内存过滤，家庭超 100 件会把新物资漏掉
     List<ItemRow> list =
-        itemRepository.list(
-            familyId,
-            blankToNull(spaceId),
-            blankToNull(tagId),
-            maxQuantity,
-            fetchLimit);
+        hasKeywords
+            ? itemRepository.searchAny(
+                familyId, blankToNull(spaceId), blankToNull(tagId), maxQuantity, keywords, fetchLimit)
+            : itemRepository.list(
+                familyId, blankToNull(spaceId), blankToNull(tagId), maxQuantity, fetchLimit);
     if (locationId != null && !locationId.isBlank()) {
       list = list.stream().filter(i -> locationId.equals(i.locationId())).toList();
     }
-    if (!keywords.isEmpty()) {
+    if (hasKeywords) {
       list = filterByName(list, keywords);
     }
     return list;

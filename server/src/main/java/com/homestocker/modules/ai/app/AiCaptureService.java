@@ -395,8 +395,14 @@ public class AiCaptureService {
       if (!Double.isFinite(d) || d < 0) {
         return;
       }
-      long rounded = Math.round(d);
-      out.put(key, rounded);
+      // 数量允许小数（items.quantity 是 NUMERIC，提示词也允许 0.5）：统一保留两位，
+      // 整数仍回 long，避免编辑页输入框出现 3.0。
+      double rounded = Math.round(d * 100) / 100.0;
+      if (rounded == Math.rint(rounded) && rounded <= (double) Long.MAX_VALUE) {
+        out.put(key, (long) rounded);
+      } else {
+        out.put(key, rounded);
+      }
     } catch (NumberFormatException e) {
       // 丢字段，不丢整单
     }
