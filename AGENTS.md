@@ -1,5 +1,7 @@
 # HomeStocker — Agent 指南
 
+> **协作规则（每次会话必读）：** `.codebuddy/rules/change-approval.md` — 未经用户明确授权不改代码；改前先说明问题与方案，确认后再动手。
+
 家庭物资管理微信小程序。协同台账 MVP 与 A/B/C 波已在 `reDesign` 落地。  
 **第一阶段收口（现状）：** `docs/plans/2026-09-17-phase1-status.md` — 还剩用户体系、首页搜索；家庭管家（`packageAiAssist` + `ai.act`，V3 控制面已落地）密钥 BYOK 在 `packageAi/keys`。查库/history/prompt 优化见 `docs/plans/2026-09-22-ai-assist-context-retrieval/`。管家素养课表见 `docs/plans/2026-09-23-ai-assist-curriculum/`。**改管家出问题先读** `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md`（按模块排查，禁止「说 xxx 就做 xxx」）。
 
