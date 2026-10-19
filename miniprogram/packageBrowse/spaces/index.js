@@ -8,6 +8,10 @@ const EDIT_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>'
 const DELETE_SVG =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>'
+const UP_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>'
+const DOWN_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>'
 
 function tintSvg(svg, color) {
   const fill = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(String(color || ''))
@@ -23,7 +27,9 @@ function themeIcons() {
   const color = (theme && (theme.themeColor || theme.primary)) || '#FF5D00'
   return {
     editIcon: tintSvg(EDIT_SVG, color),
-    deleteIcon: tintSvg(DELETE_SVG, color)
+    deleteIcon: tintSvg(DELETE_SVG, color),
+    upIcon: tintSvg(UP_SVG, color),
+    downIcon: tintSvg(DOWN_SVG, color)
   }
 }
 
@@ -40,6 +46,9 @@ Page({
     headerTitle: copy.spaces.title,
     editIcon: '',
     deleteIcon: '',
+    upIcon: '',
+    downIcon: '',
+    reordering: false,
     showModal: false,
     modalMode: 'create',
     modalTitle: copy.spaces.createTitle,
@@ -241,5 +250,36 @@ Page({
       ? `id=${encodeURIComponent(id)}&name=${encodeURIComponent(name)}`
       : `id=${encodeURIComponent(id)}`
     wx.navigateTo({ url: `/packageBrowse/spaces/detail?${qs}` })
+  },
+
+  onMoveUp(e) {
+    this.moveSpace(e, -1)
+  },
+
+  onMoveDown(e) {
+    this.moveSpace(e, 1)
+  },
+
+  // 上移/下移：本地换位 → 提交完整顺序 → 失败回滚重新拉取
+  async moveSpace(e, dir) {
+    if (this.data.acting || this.data.reordering) return
+    const index = Number(e.currentTarget.dataset.index)
+    if (!Number.isInteger(index)) return
+    const target = index + dir
+    const spaces = this.data.spaces || []
+    if (target < 0 || target >= spaces.length) return
+    const next = spaces.slice()
+    const moved = next[index]
+    next[index] = next[target]
+    next[target] = moved
+    this.setData({ spaces: next, reordering: true })
+    try {
+      await callSpace('reorder', { spaceIds: next.map((s) => s._id) })
+    } catch (err) {
+      wx.showToast({ title: err.message || copy.common.opFailed, icon: 'none' })
+      await this.load(true)
+    } finally {
+      this.setData({ reordering: false })
+    }
   }
 })

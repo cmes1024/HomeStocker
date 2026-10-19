@@ -45,13 +45,15 @@ public class StructureRepository {
     jdbc.update(
         """
         INSERT INTO spaces (
-          id, family_id, name, floor_id, is_default, cover_key, image_key, created_at, updated_at
-        ) VALUES (?, ?, '仓库', NULL, TRUE, 'default-indoor', '', ?, ?)
+          id, family_id, name, floor_id, is_default, cover_key, image_key, created_at, updated_at, sort_order
+        ) VALUES (?, ?, '仓库', NULL, TRUE, 'default-indoor', '', ?, ?,
+          COALESCE((SELECT MAX(sort_order) FROM spaces WHERE family_id = ?), 0) + 1000)
         """,
         id,
         familyId,
         now,
-        now);
+        now,
+        familyId);
   }
 
   public void insertDefaultTag(String id, String familyId, String name, Timestamp now) {
@@ -71,7 +73,7 @@ public class StructureRepository {
     return jdbc.query(
         """
         SELECT id, name, is_default, created_at FROM spaces
-        WHERE family_id = ? ORDER BY is_default DESC, created_at ASC LIMIT 100
+        WHERE family_id = ? ORDER BY sort_order ASC, created_at ASC LIMIT 100
         """,
         (rs, i) ->
             new SpaceLite(
@@ -359,7 +361,7 @@ public class StructureRepository {
     return jdbc.query(
         """
         SELECT * FROM spaces WHERE family_id = ?
-        ORDER BY is_default DESC, created_at ASC LIMIT 100
+        ORDER BY sort_order ASC, created_at ASC LIMIT 100
         """,
         SPACE_ROW,
         familyId);
@@ -377,8 +379,9 @@ public class StructureRepository {
     jdbc.update(
         """
         INSERT INTO spaces (
-          id, family_id, name, floor_id, is_default, cover_key, image_key, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          id, family_id, name, floor_id, is_default, cover_key, image_key, created_at, updated_at, sort_order
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?,
+          COALESCE((SELECT MAX(sort_order) FROM spaces WHERE family_id = ?), 0) + 1000)
         """,
         id,
         familyId,
@@ -388,7 +391,8 @@ public class StructureRepository {
         coverKey == null ? "default-indoor" : coverKey,
         imageKey == null ? "" : imageKey,
         now,
-        now);
+        now,
+        familyId);
   }
 
   public void updateSpace(
@@ -407,6 +411,20 @@ public class StructureRepository {
 
   public void deleteSpace(String id) {
     jdbc.update("DELETE FROM spaces WHERE id = ?", id);
+  }
+
+  /**
+   * 按给定顺序全量重编号（大间隔 *1000）。调用方负责校验 id 均属于该家庭；
+   * 删除留下的空档无需处理，ORDER BY 会自然跳过。
+   */
+  public void renumberSpaces(String familyId, List<String> orderedIds) {
+    for (int i = 0; i < orderedIds.size(); i++) {
+      jdbc.update(
+          "UPDATE spaces SET sort_order = ? WHERE family_id = ? AND id = ?",
+          (long) i * 1000,
+          familyId,
+          orderedIds.get(i));
+    }
   }
 
   public void deleteLocationsBySpace(String spaceId) {

@@ -93,9 +93,12 @@ public class ItemRepository {
       args.add(maxQuantity);
     }
     // 排序：已过期(0) > 快过期(1) > 其余(2)；组内按添加时间正序，id 兜底保证稳定
+    // 注意：ORDER BY 行刻意多缩进一个空格。文本块起始换行会被编译器删除，少了这个空格，
+    // 动态条件末尾的 "?" 会直接粘成 "?ORDER BY"（pgjdbc 报 trailing junk after parameter
+    // $2ORDER，home 接口 500）。改这段前先读这条注释，勿删这个空格。
     sql.append(
         """
-        ORDER BY
+         ORDER BY
           CASE
             WHEN i.expire_date IS NULL THEN 2
             WHEN i.expire_date < CAST(? AS date) THEN 0

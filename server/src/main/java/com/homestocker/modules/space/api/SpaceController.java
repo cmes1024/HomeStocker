@@ -57,6 +57,11 @@ public class SpaceController {
     return ApiResponse.success(spaceService.removeMany(body(body)));
   }
 
+  @PostMapping("/reorder")
+  public ApiResponse<?> reorder(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(spaceService.reorder(body(body)));
+  }
+
   @PostMapping("/listLocations")
   public ApiResponse<?> listLocations(@RequestBody(required = false) Map<String, Object> body) {
     return ApiResponse.success(spaceService.listLocations(body(body)));

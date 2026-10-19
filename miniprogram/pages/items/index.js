@@ -59,16 +59,13 @@ function emptySelectionState() {
   }
 }
 
-/** 清单筛选 / 分块：非默认在前，isDefault 兜底空间沉底（不看名称） */
+/**
+ * 清单筛选 / 分块：原样沿用服务端空间顺序。
+ * 空间顺序由家庭在空间页自定义（space.reorder，默认空间也参与），
+ * 此处禁止再按 isDefault 重排——那会覆盖用户设置（曾导致首页顺序不跟手）。
+ */
 function spacesForLedgerFilter(spaces) {
-  const normal = []
-  const defaults = []
-  ;(spaces || []).forEach((s) => {
-    if (!s) return
-    if (s.isDefault) defaults.push(s)
-    else normal.push(s)
-  })
-  return normal.concat(defaults)
+  return (spaces || []).filter((s) => !!s)
 }
 
 /**

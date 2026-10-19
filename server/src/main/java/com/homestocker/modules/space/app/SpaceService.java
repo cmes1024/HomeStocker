@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class SpaceService {
 
   private static final int MANY_LIMIT = 20;
+  private static final int REORDER_LIMIT = 100;
   private static final String DEFAULT_COVER = "default-indoor";
 
   private final UserRepository userRepository;
@@ -315,6 +316,42 @@ public class SpaceService {
     out.put("migratedTo", target.id());
     out.put("migratedToName", target.name());
     return out;
+  }
+
+  /**
+   * 重排家庭空间。客户端提交重排后的完整 spaceIds（含默认空间），服务端按索引全量重编号；
+   * 顺序不完整 / 含未知 id 一律拒绝，避免半量提交把排序写乱。
+   */
+  @Transactional
+  public Map<String, Object> reorder(Map<String, Object> body) {
+    Ctx ctx = requireFamily();
+    List<String> ids = parseIds(body.get("spaceIds"));
+    if (ids.isEmpty()) {
+      throw ApiException.of(ErrorCodes.INVALID_IDS, "空间无效");
+    }
+    if (ids.size() > REORDER_LIMIT) {
+      throw ApiException.of(ErrorCodes.INVALID_IDS, "一次最多排序 " + REORDER_LIMIT + " 个空间");
+    }
+    List<SpaceRow> all = structureRepository.listSpaceRows(ctx.familyId());
+    if (all.size() != ids.size()) {
+      throw ApiException.of(ErrorCodes.INVALID_IDS, "请提交完整的空间顺序");
+    }
+    Set<String> existing = new LinkedHashSet<>();
+    for (SpaceRow s : all) {
+      existing.add(s.id());
+    }
+    for (String id : ids) {
+      if (!existing.contains(id)) {
+        throw ApiException.of(ErrorCodes.NOT_FOUND, "空间不存在");
+      }
+    }
+    structureRepository.renumberSpaces(ctx.familyId(), ids);
+    familyTreeService.rebuild(ctx.familyId());
+    List<Map<String, Object>> list = new ArrayList<>();
+    for (SpaceRow s : structureRepository.listSpaceRows(ctx.familyId())) {
+      list.add(spaceView(s));
+    }
+    return Map.of("list", list);
   }
 
   public Map<String, Object> listLocations(Map<String, Object> body) {

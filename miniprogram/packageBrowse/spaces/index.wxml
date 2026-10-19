@@ -46,6 +46,22 @@
               <text class="space-look">{{copy.lookCta}}</text>
               <view class="space-icons">
                 <view
+                  class="ico-btn {{index === 0 ? 'ico-off' : ''}}"
+                  hover-class="press"
+                  data-index="{{index}}"
+                  catch:tap="onMoveUp"
+                >
+                  <image class="ico" src="{{upIcon}}" mode="aspectFit" />
+                </view>
+                <view
+                  class="ico-btn {{index === spaces.length - 1 ? 'ico-off' : ''}}"
+                  hover-class="press"
+                  data-index="{{index}}"
+                  catch:tap="onMoveDown"
+                >
+                  <image class="ico" src="{{downIcon}}" mode="aspectFit" />
+                </view>
+                <view
                   class="ico-btn"
                   hover-class="press"
                   data-id="{{item._id}}"
