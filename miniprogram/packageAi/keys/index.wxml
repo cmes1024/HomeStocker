@@ -30,6 +30,8 @@
         <view class="text-btn theme-text add-btn" hover-class="press" bind:tap="onOpenAdd">{{copy.addKey}}</view>
       </view>
 
+      <view class="vision-hint" wx:if="{{visionAvailable}}">{{copy.visionHint}}</view>
+
       <view class="empty" wx:if="{{keys.length === 0 && !hosted}}">
         <view class="empty-title">{{copy.noKeys}}</view>
       </view>

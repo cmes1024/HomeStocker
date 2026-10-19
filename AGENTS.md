@@ -18,6 +18,7 @@
 - **AI 助手（已落地基线）：** `docs/plans/2026-09-17-ai-assistant-v2/`；`packageAiAssist` + `ai.act`
 - **AI 助手 V3（已落地）：** `docs/plans/2026-09-22-ai-assistant-v3/` + 归档 `openspec/changes/archive/2026-09-23-ai-assistant-v3/` — 主路径 = history + 查库；废 recent/lastOps 会话袋；禁 NL 关键词路由
 - **AI 助手上下文优化（已落地）：** `docs/plans/2026-09-22-ai-assist-context-retrieval/` + 归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/` — 查库召回 / history 保回执 / prompt 瘦身
+- **按图预填（进行中）：** `openspec/changes/ai-photo-prefill/` — 编辑页拍照后 `ai.capture` 一次性视觉抽取（只读、不写账、人核对后照旧 `item.create/update`）；视觉预设在 `ModelCatalog`（vision 标记），密钥复用家庭 BYOK + hosted 池
 - **页面直达（`page.get`，已落地）：** Java `PageRegistry` + 能力 `page.get`；归档 `openspec/changes/archive/2026-09-23-ai-page-nav/`
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 

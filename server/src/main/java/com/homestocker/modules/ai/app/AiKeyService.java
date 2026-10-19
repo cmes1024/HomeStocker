@@ -54,16 +54,19 @@ public class AiKeyService {
   private final UserRepository userRepository;
   private final MembershipRepository membershipRepository;
   private final SubscriptionRepository subscriptionRepository;
+  private final PlatformKeyService platformKeyService;
 
   public AiKeyService(
       JdbcTemplate jdbc,
       UserRepository userRepository,
       MembershipRepository membershipRepository,
-      SubscriptionRepository subscriptionRepository) {
+      SubscriptionRepository subscriptionRepository,
+      PlatformKeyService platformKeyService) {
     this.jdbc = jdbc;
     this.userRepository = userRepository;
     this.membershipRepository = membershipRepository;
     this.subscriptionRepository = subscriptionRepository;
+    this.platformKeyService = platformKeyService;
   }
 
   private record Ctx(String openid, String familyId) {}
@@ -131,6 +134,14 @@ public class AiKeyService {
         "list",
         keys.stream().map(k -> view(k, !hostedDefault && k.isDefault())).toList());
     out.put("presets", ModelCatalog.clientPresets());
+    // 按图预填可用性：与 ActKeyResolver.select 的取密钥口径保持一致——
+    // hosted 在档时 capture 只会拿到池子里的密钥，否则只拿家庭密钥，两者互斥。
+    boolean visionAvailable =
+        hostedDefault
+            ? platformKeyService.listEnabledForCall().stream()
+                .anyMatch(k -> ModelCatalog.isVision(k.provider(), k.model()))
+            : keys.stream().anyMatch(k -> ModelCatalog.isVision(k.provider(), k.model()));
+    out.put("visionAvailable", visionAvailable);
     if (decision.visible()) {
       Map<String, Object> hosted = new LinkedHashMap<>();
       hosted.put("active", decision.active());

@@ -10,7 +10,8 @@ import java.util.Map;
 /** Preset chat platforms. Base URLs never come from the client. */
 public final class ModelCatalog {
 
-  public record ModelChoice(String id, String label, boolean jsonObject, boolean isDefault) {}
+  public record ModelChoice(
+      String id, String label, boolean jsonObject, boolean isDefault, boolean vision) {}
 
   public record ProviderChoice(
       String id, String label, String baseUrl, String consoleUrl, List<ModelChoice> models) {}
@@ -21,7 +22,8 @@ public final class ModelCatalog {
       String baseUrl,
       String model,
       String modelLabel,
-      boolean jsonObject) {}
+      boolean jsonObject,
+      boolean vision) {}
 
   private static final List<ProviderChoice> PROVIDERS =
       List.of(
@@ -30,27 +32,44 @@ public final class ModelCatalog {
               "DeepSeek",
               "https://api.deepseek.com/v1",
               "https://platform.deepseek.com/api_keys",
-              model("deepseek-chat", "DeepSeek Chat", true, true)),
+              // 官方定价页（api-docs.deepseek.com/quick_start/pricing）核对：
+              // 在售为 deepseek-flash（V4.1-Flash-1017，支持视觉）与 deepseek-v4-pro（V4-Pro，不支持视觉）。
+              // deepseek-chat 已不在官方模型表，仅保留条目以兼容存量密钥（新建不再默认）。
+              model("deepseek-flash", "DeepSeek Flash（可看图）", true, true, true),
+              model("deepseek-v4-pro", "DeepSeek V4 Pro", true, false),
+              model("deepseek-chat", "DeepSeek Chat（旧版）", true, false)),
           provider(
               "kimi",
               "Kimi",
               "https://api.moonshot.cn/v1",
               "https://platform.moonshot.cn/console/api-keys",
-              model("kimi-k2.6", "Kimi K2.6", true, true)),
+              // 官方快速开始（platform.kimi.com/docs）：K3 / K2.7 Code / K2.6 均支持文本、图片与视频输入
+              model("kimi-k3", "Kimi K3（可看图）", true, true, true),
+              model("kimi-k2.6", "Kimi K2.6（可看图）", true, false, true)),
           provider(
               "zhipu",
               "智谱",
               "https://open.bigmodel.cn/api/paas/v4",
               "https://open.bigmodel.cn/usercenter/apikeys",
-              model("glm-4.7-flash", "GLM-4.7 Flash", true, true),
-              model("glm-4.5-flash", "GLM-4.5 Flash", true, false)),
+              // 官方定价页（bigmodel.cn/pricing）：GLM-5.3-Flash 为原生多模态（图片/视频/文件/文本）；
+              // 不收录 glm-5.3：multi-provider-ai-keys 决策已排除「必须额外关闭思考才能返回 JSON」的模型
+              model("glm-5.3-flash", "GLM-5.3 Flash（可看图）", true, true, true),
+              model("glm-4.7-flash", "GLM-4.7 Flash（旧版）", true, false),
+              model("glm-4.5-flash", "GLM-4.5 Flash（旧版）", true, false),
+              model("glm-4v-plus", "GLM-4V Plus（可看图·旧版）", false, false, true)),
           provider(
               "qwen",
               "通义千问",
               "https://dashscope.aliyuncs.com/compatible-mode/v1",
               "https://bailian.console.aliyun.com/",
-              model("qwen-plus", "Qwen Plus", true, true),
-              model("qwen-turbo", "Qwen Turbo", true, false)),
+              // 官方模型列表（help.aliyun.com/zh/model-studio/models）：
+              // qwen3.7-plus / qwen3.8-max 同属文本生成与图像理解；qwen3.8-flash 为文本生成
+              model("qwen3.7-plus", "Qwen3.7 Plus（可看图）", true, true, true),
+              model("qwen3.8-max", "Qwen3.8 Max（可看图）", true, false, true),
+              model("qwen3.8-flash", "Qwen3.8 Flash", true, false),
+              model("qwen-plus", "Qwen Plus（旧版）", true, false),
+              model("qwen-turbo", "Qwen Turbo（旧版）", true, false),
+              model("qwen-vl-plus", "Qwen VL Plus（可看图·旧版）", false, false, true)),
           provider(
               "stepfun",
               "阶跃星辰",
@@ -68,7 +87,8 @@ public final class ModelCatalog {
               "小米 MiMo",
               "https://api.xiaomimimo.com/v1",
               "https://platform.xiaomimimo.com/console/api-keys",
-              model("mimo-v2.6-flash", "MiMo V2.6 Flash", true, true),
+              // 官方文档（mimo.mi.com/models/zh-CN/mimo-v2.6-flash）：输入模态 文本/图像/视频/音频
+              model("mimo-v2.6-flash", "MiMo V2.6 Flash（可看图）", true, true, true),
               model("mimo-v2.6-pro", "MiMo V2.6 Pro", true, false)));
 
   private ModelCatalog() {}
@@ -86,6 +106,7 @@ public final class ModelCatalog {
         item.put("id", model.id());
         item.put("label", model.label());
         item.put("isDefault", model.isDefault());
+        item.put("vision", model.vision());
         models.add(item);
       }
       row.put("models", models);
@@ -114,7 +135,18 @@ public final class ModelCatalog {
         provider.baseUrl(),
         model.id(),
         model.label(),
-        model.jsonObject());
+        model.jsonObject(),
+        model.vision());
+  }
+
+  /** Whether a stored (provider, model) pair resolves to a vision-capable preset. */
+  public static boolean isVision(String providerId, String modelId) {
+    ProviderChoice provider = find(providerId == null ? "" : providerId.trim());
+    if (provider == null) {
+      return false;
+    }
+    ModelChoice model = findModel(provider, modelId == null ? "" : modelId.trim());
+    return model != null && model.vision();
   }
 
   public static String providerLabel(String providerId) {
@@ -198,6 +230,11 @@ public final class ModelCatalog {
   }
 
   private static ModelChoice model(String id, String label, boolean jsonObject, boolean isDefault) {
-    return new ModelChoice(id, label, jsonObject, isDefault);
+    return new ModelChoice(id, label, jsonObject, isDefault, false);
+  }
+
+  private static ModelChoice model(
+      String id, String label, boolean jsonObject, boolean isDefault, boolean vision) {
+    return new ModelChoice(id, label, jsonObject, isDefault, vision);
   }
 }

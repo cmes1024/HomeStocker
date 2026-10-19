@@ -4,6 +4,7 @@ import com.homestocker.common.ApiException;
 import com.homestocker.common.ApiResponse;
 import com.homestocker.common.ErrorCodes;
 import com.homestocker.modules.ai.app.AiActService;
+import com.homestocker.modules.ai.app.AiCaptureService;
 import com.homestocker.modules.ai.app.AiKeyService;
 import com.homestocker.modules.ai.app.PlatformKeyService;
 import java.util.Map;
@@ -18,12 +19,17 @@ public class AiController {
 
   private final AiKeyService aiKeyService;
   private final AiActService aiActService;
+  private final AiCaptureService aiCaptureService;
   private final PlatformKeyService platformKeyService;
 
   public AiController(
-      AiKeyService aiKeyService, AiActService aiActService, PlatformKeyService platformKeyService) {
+      AiKeyService aiKeyService,
+      AiActService aiActService,
+      AiCaptureService aiCaptureService,
+      PlatformKeyService platformKeyService) {
     this.aiKeyService = aiKeyService;
     this.aiActService = aiActService;
+    this.aiCaptureService = aiCaptureService;
     this.platformKeyService = platformKeyService;
   }
 
@@ -84,5 +90,11 @@ public class AiController {
   @PostMapping("/act")
   public ApiResponse<?> act(@RequestBody(required = false) Map<String, Object> body) {
     return ApiResponse.success(aiActService.act(body(body)));
+  }
+
+  /** 编辑页按图预填：一次性视觉抽取，只读，不写台账。 */
+  @PostMapping("/capture")
+  public ApiResponse<?> capture(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(aiCaptureService.capture(body(body)));
   }
 }

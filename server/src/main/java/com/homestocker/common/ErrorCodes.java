@@ -49,6 +49,7 @@ public final class ErrorCodes {
   public static final String DUPLICATE_NAME = "DUPLICATE_NAME";
 
   public static final String NO_AI_KEY = "NO_AI_KEY";
+  public static final String NO_VISION_KEY = "NO_VISION_KEY";
   public static final String INVALID_TEXT = "INVALID_TEXT";
   public static final String ACT_FAILED = "ACT_FAILED";
   public static final String ACT_BUDGET = "ACT_BUDGET";

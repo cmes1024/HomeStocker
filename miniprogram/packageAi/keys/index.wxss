@@ -35,6 +35,13 @@
   line-height: 1.45;
 }
 
+.vision-hint {
+  margin: 0 24rpx 8rpx;
+  font-size: 22rpx;
+  color: rgba(26, 26, 26, 0.55);
+  line-height: 1.45;
+}
+
 .add-btn {
   flex-shrink: 0;
   padding-top: 4rpx;

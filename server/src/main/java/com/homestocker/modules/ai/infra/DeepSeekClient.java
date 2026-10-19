@@ -199,7 +199,10 @@ public class DeepSeekClient {
   }
 
   /**
-   * MiMo 只认 max_completion_tokens，且思考默认开着。思考会吃掉输出额度，管家要的是正文里的 JSON。
+   * 思考默认开着的模型一律关掉：思考会吃掉输出额度，管家要的是正文里的 JSON。
+   * 更关键的是 DeepSeek 官方要求——带 tools 的请求在思考模式下必须回传 reasoning_content，否则 400；
+   * 助手正是带 tools 调的，关掉思考最省事。
+   * 旧的 deepseek-chat 不认识 thinking 参数，不带。
    */
   static void writeLimits(ObjectNode body, String model, int maxTokens) {
     int tokens = maxTokens > 0 ? maxTokens : 800;
@@ -210,6 +213,16 @@ public class DeepSeekClient {
     }
     body.put("max_tokens", tokens);
     if (model != null && model.startsWith("kimi-k2.")) {
+      body.putObject("thinking").put("type", "disabled");
+      return;
+    }
+    if (model != null && model.startsWith("kimi-k3")) {
+      // K3 用顶层 reasoning_effort 控强度（low/high/max，默认 max）；双保险压到最低档
+      body.putObject("thinking").put("type", "disabled");
+      body.put("reasoning_effort", "low");
+      return;
+    }
+    if (model != null && (model.startsWith("deepseek-flash") || model.startsWith("deepseek-v4-"))) {
       body.putObject("thinking").put("type", "disabled");
     }
   }

@@ -103,6 +103,67 @@ function readFileBuffer(filePath) {
   })
 }
 
+function readFileBase64(filePath) {
+  return new Promise((resolve, reject) => {
+    const fs = wx.getFileSystemManager()
+    fs.readFile({
+      filePath,
+      encoding: 'base64',
+      success(res) {
+        resolve(res.data)
+      },
+      fail: reject
+    })
+  })
+}
+
+function imageReadError(message, code) {
+  const err = new Error(message)
+  err.code = code
+  return err
+}
+
+/**
+ * 本地临时图 → base64 data URL（ai.capture 的 image 入参）。
+ * @param {string} localPath 本地路径（wxfile:// 或临时路径）
+ * @returns {Promise<string>} data:image/...;base64,...
+ */
+async function localImageDataUrl(localPath) {
+  if (!localPath) {
+    throw imageReadError('图片为空', 'NO_IMAGE')
+  }
+  const ext = extFromPath(localPath)
+  const base64 = await readFileBase64(localPath)
+  if (!base64) {
+    throw imageReadError('图片读取失败', 'IMAGE_READ_FAILED')
+  }
+  return `data:${contentTypeForExt(ext)};base64,${base64}`
+}
+
+/**
+ * 已存图片引用 → base64 data URL。走 downloadFile（引用需在 downloadFile 合法域名内），
+ * 失败抛错，由调用方温和降级（预填可改用本地图或放弃）。
+ * @param {string} ref https publicUrl 或可访问的存储引用
+ * @returns {Promise<string>} data:image/...;base64,...
+ */
+async function storedImageDataUrl(ref) {
+  const src = String(ref || '').trim()
+  if (!src) {
+    throw imageReadError('图片为空', 'NO_IMAGE')
+  }
+  let res
+  try {
+    res = await wx.downloadFile({ url: src })
+  } catch (e) {
+    throw imageReadError('图片下载失败', 'IMAGE_DOWNLOAD_FAILED')
+  }
+  const temp = res && res.tempFilePath
+  if (!res || res.statusCode !== 200 || !temp) {
+    throw imageReadError('图片下载失败', 'IMAGE_DOWNLOAD_FAILED')
+  }
+  return localImageDataUrl(temp)
+}
+
 async function uploadViaApi(localPath, kind) {
   const ext = extFromPath(localPath)
   const contentType = contentTypeForExt(ext)
@@ -198,6 +259,8 @@ module.exports = {
   itemCoverFileID,
   chooseLocalImage,
   chooseLocalImages,
+  localImageDataUrl,
+  storedImageDataUrl,
   uploadEntityImage,
   resolveImageFileID,
   resolveImageFileIDs,

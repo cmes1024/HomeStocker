@@ -23,6 +23,7 @@ Page({
     label: '',
     acting: false,
     showAdd: false,
+    visionAvailable: false,
     faqItems: copy.ai.faqItems || [],
     openFaqId: ''
   },
@@ -73,6 +74,7 @@ Page({
         providerIndex,
         modelNames: models.map((row) => row.label),
         modelIndex,
+        visionAvailable: !!(data && data.visionAvailable),
         loading: false,
         error: ''
       })

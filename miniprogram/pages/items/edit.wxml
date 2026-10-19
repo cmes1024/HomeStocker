@@ -38,6 +38,11 @@
               </view>
             </view>
           </view>
+          <view
+            class="capture-entry text-link theme-text"
+            wx:if="{{captureVisible}}"
+            bind:tap="onCapturePrefill"
+          >{{capturing ? copy.captureBusy : copy.captureBtn}}</view>
         </view>
 
         <view class="field">

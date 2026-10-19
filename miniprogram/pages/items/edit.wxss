@@ -22,6 +22,10 @@
   margin-bottom: 28rpx;
 }
 
+.capture-entry {
+  margin-top: 12rpx;
+}
+
 .image-row {
   display: flex;
   gap: 16rpx;

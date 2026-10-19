@@ -14,15 +14,32 @@ class ModelCatalogTest {
   void blankProviderUsesDeepseekDefault() {
     ModelCatalog.Resolved resolved = ModelCatalog.resolve("", "");
     assertEquals("deepseek", resolved.provider());
-    assertEquals("deepseek-chat", resolved.model());
+    assertEquals("deepseek-flash", resolved.model());
     assertEquals("https://api.deepseek.com/v1", resolved.baseUrl());
+    assertTrue(resolved.vision());
+  }
+
+  @Test
+  void deepseekOffersCurrentLineupWithLegacyKept() {
+    // 官方在售 flash（可看图）/ v4-pro；旧的 deepseek-chat 保留以兼容存量密钥
+    ModelCatalog.Resolved flash = ModelCatalog.resolve("deepseek", "deepseek-flash");
+    assertTrue(flash.vision());
+    assertTrue(flash.jsonObject());
+
+    ModelCatalog.Resolved pro = ModelCatalog.resolve("deepseek", "deepseek-v4-pro");
+    assertFalse(pro.vision());
+    assertTrue(pro.jsonObject());
+
+    ModelCatalog.Resolved legacy = ModelCatalog.resolve("deepseek", "deepseek-chat");
+    assertFalse(legacy.vision());
+    assertTrue(legacy.jsonObject());
   }
 
   @Test
   void clientBaseUrlIsNotPartOfResolve() {
     ModelCatalog.Resolved resolved = ModelCatalog.resolve("zhipu", "");
     assertEquals("https://open.bigmodel.cn/api/paas/v4", resolved.baseUrl());
-    assertEquals("glm-4.7-flash", resolved.model());
+    assertEquals("glm-5.3-flash", resolved.model());
   }
 
   @Test

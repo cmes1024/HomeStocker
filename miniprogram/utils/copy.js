@@ -188,7 +188,14 @@ const copy = {
     locNameRequired: '先写个位置名',
     locCreatedToast: '已新建位置',
     locCreateFailed: '新建位置失败',
-    locLoadFailed: '加载位置失败'
+    locLoadFailed: '加载位置失败',
+    captureBtn: '按图预填',
+    captureBusy: '看图…',
+    capturePicking: '先拍或选一张物资照片',
+    captureFilled: (n) => `已按图更新 ${n} 项，请核对`,
+    captureNone: '没认出物资，手动填吧',
+    captureFailed: '这次没认出来，再试一次',
+    captureNoImage: '还没有图片，先拍一张'
   },
 
   tags: {
@@ -441,6 +448,7 @@ const copy = {
     hostedUntil: (ymd) => `平台提供 · 有效至 ${ymd}`,
     hostedEnded: (ymd) => `已于 ${ymd} 到期`,
     hostedExpired: '会员模型已到期',
+    visionHint: '已配置可看图的模型：记物资时拍张照，可自动补全名称、数量和日期',
     needFamily: '请先加入家庭',
     faqTitle: '常见问题',
     faqHint: '不知道密钥从哪来、配了还不能用，先看这里',

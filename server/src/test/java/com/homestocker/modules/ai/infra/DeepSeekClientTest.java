@@ -50,6 +50,35 @@ class DeepSeekClientTest {
   }
 
   @Test
+  void v4DeepSeekDisablesThinking() {
+    ObjectNode flash = JsonNodeFactory.instance.objectNode();
+    DeepSeekClient.writeLimits(flash, "deepseek-flash", 800);
+    assertEquals(800, flash.get("max_tokens").asInt());
+    assertEquals("disabled", flash.path("thinking").path("type").asText());
+
+    ObjectNode pro = JsonNodeFactory.instance.objectNode();
+    DeepSeekClient.writeLimits(pro, "deepseek-v4-pro", 800);
+    assertEquals("disabled", pro.path("thinking").path("type").asText());
+  }
+
+  @Test
+  void legacyDeepSeekChatKeepsNoThinkingParam() {
+    ObjectNode body = JsonNodeFactory.instance.objectNode();
+    DeepSeekClient.writeLimits(body, "deepseek-chat", 800);
+    assertEquals(800, body.get("max_tokens").asInt());
+    assertFalse(body.has("thinking"));
+  }
+
+  @Test
+  void kimiK3CapsReasoningEffort() {
+    ObjectNode body = JsonNodeFactory.instance.objectNode();
+    DeepSeekClient.writeLimits(body, "kimi-k3", 800);
+    assertEquals(800, body.get("max_tokens").asInt());
+    assertEquals("disabled", body.path("thinking").path("type").asText());
+    assertEquals("low", body.get("reasoning_effort").asText());
+  }
+
+  @Test
   void quotaStaysOnTheSameKeyWhileServerErrorsCanSwitch() {
     assertFalse(DeepSeekClient.classifyError(402, "insufficient balance", "").retryable());
     assertFalse(DeepSeekClient.classifyError(400, "bad request", "").retryable());

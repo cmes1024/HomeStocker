@@ -7,9 +7,12 @@ const {
   resolveImageFileID,
   resolveImageFileIDs,
   chooseLocalImages,
+  localImageDataUrl,
+  storedImageDataUrl,
   resolveDisplayUrls,
   previewEntityImages
 } = require('../../utils/cloudImage')
+const { callAi } = require('../../utils/callAi')
 const copy = require('../../utils/copy')
 
 function unlockMask(page, id) {
@@ -65,7 +68,9 @@ Page({
     expireReminderEnabled: false,
     imageSlots: [],
     locImageLocalPath: '',
-    locImagePreview: ''
+    locImagePreview: '',
+    captureVisible: false,
+    capturing: false
   },
 
   onLoad(options) {
@@ -82,6 +87,8 @@ Page({
       expireDate: decodeOpt(options && options.expireDate),
       productionDate: decodeOpt(options && options.productionDate)
     }
+    // 用户在本页手改过的字段：按图识别的结果不得覆盖它们
+    this.touched = {}
     bindThemeToPage(this, {
       itemId,
       isEdit,
@@ -91,6 +98,20 @@ Page({
     })
     this.syncLoadingColors()
     this.bootstrap(itemId)
+    this.probeCaptureCapability()
+  },
+
+  /** 按图预填可用性探测：失败或没有视觉密钥都等价于不可用（隐藏入口），不影响任何既有路径。 */
+  async probeCaptureCapability() {
+    try {
+      const data = await callAi('listKeys')
+      const visible = !!(data && data.visionAvailable)
+      console.log('[photoPrefill] visionAvailable =', visible)
+      this.setData({ captureVisible: visible })
+    } catch (e) {
+      console.log('[photoPrefill] vision probe failed', e)
+      this.setData({ captureVisible: false })
+    }
   },
 
   onShow() {
@@ -260,6 +281,8 @@ Page({
       if (prefill.expireDate) patch.expireDate = prefill.expireDate
       if (prefill.productionDate) patch.productionDate = prefill.productionDate
     }
+    this.lastLocalPath = ''
+    this.touched = {}
     this.setData(patch)
     if (item) this.hydrateImageSlots()
   },
@@ -350,34 +373,42 @@ Page({
   },
 
   onName(e) {
+    this.touched.name = true
     this.setData({ name: e.detail.value })
   },
 
   onQuantity(e) {
+    this.touched.quantity = true
     this.setData({ quantity: e.detail.value })
   },
 
   onUnit(e) {
+    this.touched.unit = true
     this.setData({ unit: e.detail.value })
   },
 
   onNote(e) {
+    this.touched.note = true
     this.setData({ note: e.detail.value })
   },
 
   onProductionDate(e) {
+    this.touched.productionDate = true
     this.setData({ productionDate: e.detail.value || '' })
   },
 
   onExpireDate(e) {
+    this.touched.expireDate = true
     this.setData({ expireDate: e.detail.value || '' })
   },
 
   clearProductionDate() {
+    this.touched.productionDate = true
     this.setData({ productionDate: '' })
   },
 
   clearExpireDate() {
+    this.touched.expireDate = true
     this.setData({ expireDate: '', expireReminderEnabled: false })
   },
 
@@ -497,6 +528,7 @@ Page({
       this.setData({
         imageSlots: (this.data.imageSlots || []).concat(added).slice(0, MAX_ITEM_IMAGES)
       })
+      this.lastLocalPath = paths[paths.length - 1]
     } catch (e) {
       if (e && (e.errMsg || '').indexOf('cancel') >= 0) return
       if (e && e.code === 'NO_IMAGE') return
@@ -508,8 +540,113 @@ Page({
     const idx = Number(e.currentTarget.dataset.index)
     const slots = (this.data.imageSlots || []).slice()
     if (idx < 0 || idx >= slots.length) return
+    const removed = slots[idx]
     slots.splice(idx, 1)
     this.setData({ imageSlots: slots })
+    if (removed && removed.localPath && removed.localPath === this.lastLocalPath) {
+      this.lastLocalPath = ''
+    }
+  },
+
+  /** 识别用图：优先最近一次新选/新拍的本地图；没有则退回第一张本地图，再退回第一张槽位。 */
+  pickCaptureSlot(slots) {
+    if (this.lastLocalPath) {
+      const hit = slots.find((s) => s.localPath === this.lastLocalPath)
+      if (hit) return hit
+    }
+    return slots.find((s) => s.localPath) || slots[0] || null
+  },
+
+  /**
+   * 按图预填：无图先拍/选一张并入封面槽；取 data URL 调 ai.capture（只读）；
+   * 当前表单一并发给模型，由模型对比照片与表单定夺每个字段；用户手改过的字段不覆盖。
+   * capturing 独立于 loading/saving，异常一律 toast 收口，不挡保存。
+   */
+  async onCapturePrefill() {
+    if (this.data.capturing) return
+    const slots = this.data.imageSlots || []
+    let slot = this.pickCaptureSlot(slots)
+    if (!slot) {
+      try {
+        const paths = await chooseLocalImages(1)
+        const path = paths && paths[0]
+        if (!path) return
+        const added = {
+          key: `local-${Date.now()}`,
+          fileID: '',
+          preview: path,
+          localPath: path
+        }
+        this.setData({ imageSlots: slots.concat([added]) })
+        this.lastLocalPath = path
+        slot = added
+      } catch (e) {
+        if (e && (e.code === 'NO_IMAGE' || (e.errMsg || '').indexOf('cancel') >= 0)) return
+        wx.showToast({ title: copy.edit.captureFailed, icon: 'none' })
+        return
+      }
+    }
+    this.setData({ capturing: true })
+    try {
+      const dataUrl = slot.localPath
+        ? await localImageDataUrl(slot.localPath)
+        : await storedImageDataUrl(slot.fileID || slot.preview)
+      const res = await callAi('capture', {
+        image: dataUrl,
+        context: this.captureContext()
+      })
+      this.applyCaptureFields(res && res.fields)
+    } catch (e) {
+      wx.showToast({ title: copy.edit.captureFailed, icon: 'none' })
+    } finally {
+      this.setData({ capturing: false })
+    }
+  },
+
+  /** 当前表单快照：随图发给 ai.capture，让模型对比照片与已填值定夺每个字段（空串=未填）。 */
+  captureContext() {
+    const d = this.data
+    return {
+      name: d.name || '',
+      quantity: d.quantity || '',
+      unit: d.unit || '',
+      note: d.note || '',
+      productionDate: d.productionDate || '',
+      expireDate: d.expireDate || ''
+    }
+  },
+
+  /**
+   * 模型定夺：fields 是模型对比照片与当前表单后给出的每个字段最终值。
+   * 用户手改过的字段（touched）不被覆盖；空返回值不清除原值；字段上限与输入框 maxlength 对齐。
+   */
+  applyCaptureFields(fields) {
+    if (!fields || typeof fields !== 'object') {
+      wx.showToast({ title: copy.edit.captureNone, icon: 'none' })
+      return
+    }
+    const patch = {}
+    const changed = []
+    const apply = (key, label, value, cap) => {
+      if (value == null || value === '') return
+      if (this.touched[key]) return
+      const next = cap ? String(value).slice(0, cap) : String(value)
+      if (next === this.data[key]) return
+      patch[key] = next
+      changed.push(label)
+    }
+    apply('name', '名称', fields.name, 40)
+    apply('quantity', '数量', fields.quantity)
+    apply('unit', '单位', fields.unit, 10)
+    apply('note', '备注', fields.note, 100)
+    apply('productionDate', '生产日期', fields.productionDate)
+    apply('expireDate', '过期日期', fields.expireDate)
+    if (!changed.length) {
+      wx.showToast({ title: copy.edit.captureNone, icon: 'none' })
+      return
+    }
+    this.setData(patch)
+    wx.showToast({ title: copy.edit.captureFilled(changed.length), icon: 'success' })
   },
 
   onLocImageChange(e) {
