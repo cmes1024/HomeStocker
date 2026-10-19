@@ -152,7 +152,8 @@ Page({
       await this.load()
     } catch (e) {
       this.setData({ acting: false })
-      const msg = e.code === 'KEY_LIMIT' ? copy.ai.maxKeys : e.message || copy.common.opFailed
+      // 服务端超限抛的就是「最多保存 3 把密钥」的 message，直接透传；KEY_LIMIT 码不存在，删死分支
+      const msg = e.message || copy.ai.maxKeys
       wx.showToast({ title: msg, icon: 'none' })
     }
   },

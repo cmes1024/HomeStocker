@@ -332,6 +332,11 @@ public class SpaceService {
     if (ids.size() > REORDER_LIMIT) {
       throw ApiException.of(ErrorCodes.INVALID_IDS, "一次最多排序 " + REORDER_LIMIT + " 个空间");
     }
+    // 列表接口单页 100 条：家庭空间超过上限时客户端永远凑不齐完整顺序，
+    // 直接给明确错误，而不是让「半量提交」被拒得莫名其妙。
+    if (structureRepository.countSpaces(ctx.familyId()) > REORDER_LIMIT) {
+      throw ApiException.of(ErrorCodes.INVALID_IDS, "空间超过 " + REORDER_LIMIT + " 个，暂不支持重排");
+    }
     List<SpaceRow> all = structureRepository.listSpaceRows(ctx.familyId());
     if (all.size() != ids.size()) {
       throw ApiException.of(ErrorCodes.INVALID_IDS, "请提交完整的空间顺序");

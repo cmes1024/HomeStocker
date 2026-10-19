@@ -4,8 +4,6 @@
 # 新的 Flyway 脚本会在接口启动时自动执行。
 #
 # 会用本机 server/.env 覆盖服务器上的同名文件（微信登录、额度、图片地址等）。
-# 但 .env 里的 JAVA_TOOL_OPTIONS 是本机 Clash 代理，服务器上没有，
-# 同步后会在服务器侧强制置空（否则微信登录 / AI 出网全断，健康检查还探不出来）。
 # 不会覆盖服务器上已改过的这些文件：
 #   docker-compose.yml    端口只绑 127.0.0.1，Redis 宿主机端口 6380
 #   Dockerfile.minio      MinIO 安装包走国内镜像
@@ -20,7 +18,7 @@ REMOTE_DIR="${HOMESTOCKER_REMOTE_DIR:-/www/wwwroot/homestocker/server}"
 HEALTH_URL="${HOMESTOCKER_HEALTH_URL:-https://hs.zfqwjs.com/api/health}"
 
 echo "同步源码到 ${HOST}:${REMOTE_DIR}"
-rsync -av --checksum \
+rsync -av \
   --exclude 'target' \
   --exclude 'docker-compose.yml' \
   --exclude 'Dockerfile.minio' \
@@ -32,10 +30,8 @@ set -euo pipefail
 REMOTE_DIR="$1"
 HEALTH_URL="$2"
 cd "$REMOTE_DIR"
-# 服务器没有本机 Clash 代理，置空再启动；行不存在时 sed 不动。
-# sed -i 's/^JAVA_TOOL_OPTIONS=.*/JAVA_TOOL_OPTIONS=/' .env
 docker compose up -d --build --no-deps --force-recreate --pull never api
-for _ in $(seq 1 36); do
+for _ in $(seq 1 24); do
   if curl -fsS "$HEALTH_URL"; then
     echo
     exit 0

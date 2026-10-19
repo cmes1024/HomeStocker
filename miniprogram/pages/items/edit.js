@@ -12,6 +12,7 @@ const {
   resolveDisplayUrls,
   previewEntityImages
 } = require('../../utils/cloudImage')
+const { compressImageForUpload } = require('../../utils/imageCompress')
 const { callAi } = require('../../utils/callAi')
 const copy = require('../../utils/copy')
 
@@ -106,10 +107,8 @@ Page({
     try {
       const data = await callAi('listKeys')
       const visible = !!(data && data.visionAvailable)
-      console.log('[photoPrefill] visionAvailable =', visible)
       this.setData({ captureVisible: visible })
     } catch (e) {
-      console.log('[photoPrefill] vision probe failed', e)
       this.setData({ captureVisible: false })
     }
   },
@@ -589,7 +588,9 @@ Page({
     this.setData({ capturing: true })
     try {
       const dataUrl = slot.localPath
-        ? await localImageDataUrl(slot.localPath)
+        ? await localImageDataUrl(
+            await compressImageForUpload(slot.localPath, { maxEdge: 800, quality: 55 })
+          )
         : await storedImageDataUrl(slot.fileID || slot.preview)
       const res = await callAi('capture', {
         image: dataUrl,
@@ -597,7 +598,12 @@ Page({
       })
       this.applyCaptureFields(res && res.fields)
     } catch (e) {
-      wx.showToast({ title: copy.edit.captureFailed, icon: 'none' })
+      // 业务错误（无视觉密钥/额度用完/参数不符等）透出服务端文案，用户才知道去哪修；
+      // 仅网络类（JAVA_CALL_FAILED，含 60s 超时）用通用「再试一次」。
+      const code = e && e.code
+      const msg =
+        code && code !== 'JAVA_CALL_FAILED' && e.message ? e.message : copy.edit.captureFailed
+      wx.showToast({ title: msg, icon: 'none' })
     } finally {
       this.setData({ capturing: false })
     }

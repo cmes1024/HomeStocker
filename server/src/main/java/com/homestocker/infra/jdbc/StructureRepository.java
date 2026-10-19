@@ -418,13 +418,25 @@ public class StructureRepository {
    * 删除留下的空档无需处理，ORDER BY 会自然跳过。
    */
   public void renumberSpaces(String familyId, List<String> orderedIds) {
-    for (int i = 0; i < orderedIds.size(); i++) {
-      jdbc.update(
-          "UPDATE spaces SET sort_order = ? WHERE family_id = ? AND id = ?",
-          (long) i * 1000,
-          familyId,
-          orderedIds.get(i));
+    if (orderedIds == null || orderedIds.isEmpty()) {
+      return;
     }
+    // 单条 UPDATE ... FROM (VALUES ...)：避免逐条 UPDATE 与并发 insertSpace（取 max+1000）
+    // 之间的序号覆盖窗口；参数化拼接，无注入面。
+    StringBuilder sql =
+        new StringBuilder("UPDATE spaces s SET sort_order = v.ord FROM (VALUES ");
+    List<Object> args = new ArrayList<>();
+    for (int i = 0; i < orderedIds.size(); i++) {
+      if (i > 0) {
+        sql.append(',');
+      }
+      sql.append("(?,?)");
+      args.add(orderedIds.get(i));
+      args.add((long) i * 1000);
+    }
+    sql.append(") AS v(id, ord) WHERE s.family_id = ? AND s.id = v.id");
+    args.add(familyId);
+    jdbc.update(sql.toString(), args.toArray());
   }
 
   public void deleteLocationsBySpace(String spaceId) {

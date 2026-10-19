@@ -512,10 +512,14 @@ public class ActToolLoop {
     List<Map<String, Object>> duplicates = new ArrayList<>();
     duplicates.addAll(mapList(first.get("possibleDuplicates")));
     duplicates.addAll(mapList(second.get("possibleDuplicates")));
+    List<Map<String, Object>> touched = new ArrayList<>();
+    touched.addAll(mapList(first.get("touched")));
+    touched.addAll(mapList(second.get("touched")));
     merged.put("executed", executed);
     merged.put("failed", failed);
     merged.put("navLinks", nav);
     merged.put("possibleDuplicates", duplicates);
+    merged.put("touched", touched);
     merged.put("wrote", Boolean.TRUE.equals(first.get("wrote")) || Boolean.TRUE.equals(second.get("wrote")));
     merged.put(
         "subscribeUi",

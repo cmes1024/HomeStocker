@@ -191,11 +191,9 @@ const copy = {
     locLoadFailed: '加载位置失败',
     captureBtn: '按图预填',
     captureBusy: '看图…',
-    capturePicking: '先拍或选一张物资照片',
     captureFilled: (n) => `已按图更新 ${n} 项，请核对`,
     captureNone: '没认出物资，手动填吧',
-    captureFailed: '这次没认出来，再试一次',
-    captureNoImage: '还没有图片，先拍一张'
+    captureFailed: '这次没认出来，再试一次'
   },
 
   tags: {

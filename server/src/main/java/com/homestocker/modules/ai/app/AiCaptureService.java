@@ -34,7 +34,8 @@ public class AiCaptureService {
 
   private static final Logger log = LoggerFactory.getLogger(AiCaptureService.class);
 
-  private static final int TIMEOUT_MS = 20_000;
+  /** 单次模型调用超时。最坏 2 把 key + 1 次 repair ≈ 3×12s=36s，客户端 capture 超时 60s。 */
+  private static final int TIMEOUT_MS = 12_000;
   private static final int MAX_TOKENS = 800;
   private static final int MAX_HINT = 200;
   /** data URL 字符上限（base64 后约 3MB；小程序端已压到 800px/quality55）。 */

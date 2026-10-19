@@ -22,7 +22,6 @@ import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
-import com.homestocker.modules.ai.agent.Receipts;
 import com.homestocker.modules.ai.habits.FamilyHabit;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
 import com.homestocker.modules.ai.habits.HabitApplied;
@@ -205,8 +204,15 @@ public class AiActService {
         yield sanitizeUserPayload(askPayload, actCtx.focus(), rows);
       }
       case CONFIRM -> {
+        // turnTouched 取本轮写工具真实改过的行（report.touched，经 mergeReports 透传）；
+        // 没有（本轮只读）才回退用读到的行。用于「删掉刚改过的行」警告。
+        List<Map<String, Object>> turnTouched = touchedFromReport(outcome.report());
+        if (turnTouched.isEmpty()) {
+          turnTouched = rows;
+        }
         Map<String, Object> confirmPayload =
-            buildConfirmPayload(outcome.calls(), outcome.calls(), actCtx.refs(), actCtx.focus(), rows);
+            buildConfirmPayload(
+                outcome.calls(), outcome.calls(), actCtx.refs(), actCtx.focus(), turnTouched);
         attachExecutedReceipt(confirmPayload, outcome.report(), List.of());
         yield confirmPayload;
       }
@@ -269,65 +275,7 @@ public class AiActService {
   }
 
 
-  private ActPlan askPlan(ModelOpts opts, String system, String user) {
-    try {
-      return actPrompt.askModel(opts, system, user).plan();
-    } catch (ActModelException e) {
-      throw ApiException.of(e.code(), e.getMessage());
-    }
-  }
 
-  private String replanSystem(ActContext actCtx, Map<String, String> vars) {
-    String systemText =
-        String.valueOf(
-            actCtx.promptDoc().get("system") != null
-                ? actCtx.promptDoc().get("system")
-                : AssistPromptTexts.ASSIST_PROMPT_V2);
-    return ActPrompt.fillAssistPrompt(systemText, vars);
-  }
-
-  private ActPlan recoverIdlePlan(
-      ModelOpts modelOpts,
-      ActContext actCtx,
-      List<Map<String, Object>> probedRows,
-      List<Map<String, Object>> turnRows,
-      String familyId) {
-    Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-    vars.put("probe", ActPrompt.renderProbeRows(probedRows.isEmpty() ? turnRows : probedRows));
-    String idleSystem = replanSystem(actCtx, vars);
-    String probeNote =
-        probedRows.isEmpty() && turnRows.isEmpty()
-            ? "本轮尚无探查结果。"
-            : "本轮已有探查/关注行：\n"
-                + ActPrompt.renderProbeRows(probedRows.isEmpty() ? turnRows : probedRows);
-    ActPlan plan =
-        askPlan(
-            modelOpts,
-            idleSystem,
-            actCtx.userText() + "\n（系统：禁止交空计划。缺槽位则 ask。）\n" + probeNote);
-    if (plan.probe() != null && probedRows.isEmpty()) {
-      probedRows = itemsProbe.runProbe(familyId, actCtx.tree(), plan.probe(), actCtx.refs());
-      turnRows.addAll(probedRows);
-      Map<String, String> afterVars = new LinkedHashMap<>(actCtx.vars());
-      afterVars.put("probe", ActPrompt.renderProbeRows(probedRows));
-      String afterSystem = replanSystem(actCtx, afterVars);
-      String afterNote =
-          probedRows.isEmpty()
-              ? "探查结果：无匹配物资"
-              : "探查结果：\n" + ActPrompt.renderProbeRows(probedRows);
-      plan =
-          askPlan(
-              modelOpts,
-              afterSystem,
-              actCtx.userText() + "\n" + afterNote + "\n（系统：禁止空计划。）");
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), plan.present());
-      bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
-    } else {
-      plan = new ActPlan(plan.ask(), null, plan.calls(), plan.reply(), plan.present());
-      bindUnresolvedWritesToProbe(plan, actCtx.refs(), probedRows);
-    }
-    return plan;
-  }
 
   private Map<String, Object> execute(
       String familyId,
@@ -945,6 +893,20 @@ public class AiActService {
     return payload;
   }
 
+  @SuppressWarnings("unchecked")
+  private static List<Map<String, Object>> touchedFromReport(Map<String, Object> report) {
+    if (report == null || !(report.get("touched") instanceof List<?> raw)) {
+      return List.of();
+    }
+    List<Map<String, Object>> out = new ArrayList<>();
+    for (Object o : raw) {
+      if (o instanceof Map) {
+        out.add((Map<String, Object>) o);
+      }
+    }
+    return out;
+  }
+
   private Map<String, Object> buildConfirmPayload(
       List<Map<String, Object>> planCalls,
       List<Map<String, Object>> confirmCalls,
@@ -1254,190 +1216,8 @@ public class AiActService {
     return payload;
   }
 
-  /** Soft fact inject after item writes: observe candidates; model may upsert habits. */
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> tryHabitObserveFollowUp(
-      ModelOpts modelOpts,
-      ActContext actCtx,
-      List<Map<String, Object>> finalCalls,
-      Map<String, Object> finalReport,
-      String familyId,
-      String openid,
-      ActPlan writePlan,
-      List<Map<String, Object>> turnRows) {
-    if (!Boolean.TRUE.equals(finalReport.get("wrote"))) {
-      return null;
-    }
-    if (!hasItemWriteCalls(finalCalls)) {
-      return null;
-    }
-    List<Map<String, Object>> writeFacts = itemWriteFactsFromCalls(finalCalls);
-    Map<String, Object> observe = habitObserveService.observe(familyId, writeFacts);
-    Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-    vars.put("probe", vars.getOrDefault("probe", "无"));
-    vars.put("exec", str(finalReport.get("lead")));
-    vars.put("habits", familyHabitService.renderForPrompt(familyId, actCtx.tree()));
-    String note = HabitObserveService.renderForModel(observe);
-    ActPlan next;
-    try {
-      next =
-          askPlan(
-              modelOpts,
-              replanSystem(actCtx, vars),
-              actCtx.userText()
-                  + "\n（系统：物资写已完成。以下为本家办事统计候选，供参考。）\n"
-                  + note);
-    } catch (Exception e) {
-      log.warn("act habit observe follow-up failed {}", e.getMessage());
-      return null;
-    }
-    List<String> applied =
-        !next.appliedHabits().isEmpty() ? next.appliedHabits() : writePlan.appliedHabits();
-    List<Map<String, Object>> habitCalls =
-        next.calls().stream()
-            .filter(
-                c -> {
-                  String use = c == null ? "" : String.valueOf(c.get("use")).trim();
-                  return use.startsWith("habit.");
-                })
-            .toList();
-    Map<String, Object> mergedReport = finalReport;
-    List<Map<String, Object>> mergedCalls = new ArrayList<>(finalCalls);
-    if (!habitCalls.isEmpty()) {
-      Map<String, Object> habitReport =
-          execute(
-              familyId,
-              openid,
-              actCtx.tree(),
-              habitCalls,
-              actCtx.refs(),
-              actCtx.catalogMap(),
-              actCtx.today().get("ymd"));
-      mergedReport = mergeCreateReports(finalReport, habitReport);
-      mergedCalls = concatCalls(finalCalls, habitCalls);
-    }
-    if (!next.ask().isEmpty() && habitCalls.isEmpty()) {
-      // Soft path: do not force ask about habits; fall through to normal done
-      Map<String, Object> done = buildDonePayload(mergedCalls, mergedReport, actCtx.focus());
-      attachHabitApplied(done, applied, familyId, writeFacts);
-      return sanitizeUserPayload(done, actCtx.focus(), turnRows);
-    }
-    if ((!next.reply().isEmpty() || (next.present() != null && !next.present().isEmpty()))
-        && habitCalls.isEmpty()
-        && next.calls().isEmpty()) {
-      Map<String, Object> payload =
-          attachDoneReply(next.reply(), actCtx.focus(), next.present(), turnRows, null);
-      payload.put("calls", mergedCalls);
-      payload.put("wrote", Boolean.TRUE.equals(mergedReport.get("wrote")));
-      if (mergedReport.get("blocks") instanceof List<?> blocks && !blocks.isEmpty()) {
-        payload.put("blocks", blocks);
-        payload.put("lead", mergedReport.get("lead"));
-        payload.put("report", slimReport(mergedReport));
-      }
-      attachHabitApplied(payload, applied, familyId, writeFacts);
-      return sanitizeUserPayload(payload, actCtx.focus(), turnRows);
-    }
-    Map<String, Object> done = buildDonePayload(mergedCalls, mergedReport, actCtx.focus());
-    attachHabitApplied(done, applied, familyId, writeFacts);
-    return sanitizeUserPayload(done, actCtx.focus(), turnRows);
-  }
 
-  private void attachHabitApplied(
-      Map<String, Object> payload,
-      List<String> declared,
-      String familyId,
-      List<Map<String, Object>> writeFacts) {
-    if (payload == null) {
-      return;
-    }
-    List<FamilyHabit> stored = familyHabitService.list(familyId);
-    List<Map<String, Object>> applied = HabitApplied.resolve(declared, stored, writeFacts);
-    if (applied.isEmpty()) {
-      return;
-    }
-    payload.put("habitApplied", applied);
-    String line = HabitApplied.labelLine(applied);
-    if (!line.isEmpty()) {
-      String lead = str(payload.get("lead"));
-      if (lead.isEmpty()) {
-        payload.put("lead", line);
-      } else if (!lead.contains("根据习惯")) {
-        payload.put("lead", lead + "\n" + line);
-      }
-      Object reportObj = payload.get("report");
-      if (reportObj instanceof Map<?, ?> raw) {
-        Map<String, Object> report = new LinkedHashMap<>((Map<String, Object>) raw);
-        List<String> lines = new ArrayList<>();
-        if (report.get("lines") instanceof List<?> existing) {
-          for (Object o : existing) {
-            if (o != null && !String.valueOf(o).isBlank()) {
-              lines.add(String.valueOf(o).trim());
-            }
-          }
-        }
-        if (!lines.contains(line)) {
-          lines.add(line);
-        }
-        report.put("lines", lines);
-        report.put("habitApplied", applied);
-        payload.put("report", report);
-      }
-    }
-  }
 
-  private static boolean hasItemWriteCalls(List<Map<String, Object>> calls) {
-    if (calls == null) {
-      return false;
-    }
-    for (Map<String, Object> c : calls) {
-      String use = c == null ? "" : String.valueOf(c.get("use")).trim();
-      if ("item.create".equals(use)
-          || "item.createMany".equals(use)
-          || "item.update".equals(use)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static List<Map<String, Object>> itemWriteFactsFromCalls(List<Map<String, Object>> calls) {
-    List<Map<String, Object>> out = new ArrayList<>();
-    if (calls == null) {
-      return out;
-    }
-    for (Map<String, Object> c : calls) {
-      if (c == null) {
-        continue;
-      }
-      String use = String.valueOf(c.get("use")).trim();
-      if ("item.create".equals(use) || "item.update".equals(use)) {
-        Map<String, Object> row = new LinkedHashMap<>();
-        row.put("kind", "item.create".equals(use) ? "create" : "update");
-        row.put("name", str(c.get("name")));
-        row.put("itemName", str(c.get("name")));
-        row.put("spaceName", str(c.get("spaceName")));
-        row.put("locationName", str(c.get("locationName")));
-        row.put("unit", str(c.get("unit")));
-        out.add(row);
-      } else if ("item.createMany".equals(use) && c.get("items") instanceof List<?> items) {
-        for (Object o : items) {
-          if (!(o instanceof Map<?, ?> m)) {
-            continue;
-          }
-          Map<String, Object> row = new LinkedHashMap<>();
-          row.put("kind", "create");
-          row.put("name", str(m.get("name")));
-          row.put("itemName", str(m.get("name")));
-          row.put("spaceName", str(m.get("spaceName")));
-          row.put("locationName", str(m.get("locationName")));
-          row.put("unit", str(m.get("unit")));
-          out.add(row);
-        }
-      }
-    }
-    return out;
-  }
 
   @SuppressWarnings("unchecked")
   private static List<Map<String, Object>> collectNavLinks(Map<String, Object> report) {
@@ -1664,17 +1444,6 @@ public class AiActService {
     }
   }
 
-  private Map<String, Object> attachDoneReplyWithReport(
-      String reply,
-      List<Map<String, Object>> readCalls,
-      Map<String, Object> inventoryReadReport,
-      Map<String, Object> focus) {
-    Map<String, Object> payload =
-        attachDoneReply(reply, focus, null, List.of(), inventoryReadReport);
-    payload.put("calls", readCalls);
-    return payload;
-  }
-
   @SuppressWarnings("unchecked")
   private Map<String, Object> slimReport(Map<String, Object> report) {
     Map<String, Object> r = new LinkedHashMap<>();
@@ -1708,178 +1477,6 @@ public class AiActService {
     return Map.of("ref", focus.get("ref"), "name", focus.get("name"));
   }
 
-  private Map<String, Object> tryReplanCreateFailure(
-      ModelOpts modelOpts,
-      ActContext actCtx,
-      ActPlan plan,
-      Map<String, Object> report,
-      String familyId,
-      String openid,
-      boolean confirmed,
-      List<Map<String, Object>> turnRows) {
-    try {
-      @SuppressWarnings("unchecked")
-      Map<String, Object> treeAfter =
-          report.get("tree") instanceof Map<?, ?> t ? (Map<String, Object>) t : actCtx.tree();
-      String treeText = FamilyTreeService.renderTreeNames(treeAfter);
-      String execText = ActPrompt.renderExecReceipt(report, treeText);
-      Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-      vars.put("tree", treeText);
-      vars.put("exec", execText);
-      vars.put("probe", vars.getOrDefault("probe", "无"));
-      ActPlan nextPlan =
-          askPlan(
-              modelOpts,
-              replanSystem(actCtx, vars),
-              actCtx.userText() + "\n（执行回执如下，请只重编排尚未完成的事，勿重复已成功步骤。）\n" + execText);
-      if (!nextPlan.ask().isEmpty()) {
-        Map<String, Object> askPayload = new LinkedHashMap<>();
-        askPayload.put("status", "ask");
-        askPayload.put("ask", nextPlan.ask());
-        if (!nextPlan.reply().isBlank()) {
-          askPayload.put("reply", nextPlan.reply().trim());
-        }
-        askPayload.put("calls", List.of());
-        askPayload.put("draft", PlanParser.draftFromCalls(nextPlan.calls()));
-        askPayload.put("focus", focusPublic(actCtx.focus()));
-        askPayload.put("wrote", report.get("wrote"));
-        askPayload.put("report", slimReport(report));
-        return Map.of("__askPayload", askPayload);
-      }
-      if (!nextPlan.calls().isEmpty()) {
-        if (Guardrails.planNeedsUnavailableCapability(nextPlan.calls(), actCtx.catalogMap())) {
-          return Map.of(
-              "__askPayload",
-              buildAskResponse(Guardrails.capabilityLimitAsk(), actCtx.focus(), List.of()));
-        }
-        List<Map<String, Object>> confirm2 =
-            Guardrails.needsConfirm(nextPlan.calls(), actCtx.catalogMap());
-        if (!confirm2.isEmpty() && !confirmed) {
-          List<Map<String, Object>> touched = new ArrayList<>();
-          if (report.get("touched") instanceof List<?> t) {
-            for (Object o : t) {
-              if (o instanceof Map<?, ?> m) {
-                touched.add((Map<String, Object>) m);
-              }
-            }
-          }
-          touched.addAll(turnRows);
-          return Map.of(
-              "__confirmPayload",
-              buildConfirmPayload(nextPlan.calls(), confirm2, actCtx.refs(), actCtx.focus(), touched));
-        }
-        Map<String, Object> second =
-            execute(
-                familyId,
-                openid,
-                treeAfter,
-                nextPlan.calls(),
-                actCtx.refs(),
-                actCtx.catalogMap(),
-                actCtx.today().get("ymd"));
-        Map<String, Object> merged = mergeCreateReports(report, second);
-        merged.put("mergedCalls", concatCalls(plan.calls(), nextPlan.calls()));
-        return merged;
-      }
-    } catch (Exception e) {
-      log.warn("act replan failed {}", e.getMessage());
-    }
-    return report;
-  }
-
-  private Map<String, Object> tryKnowledgeOnlyFollowUp(
-      ModelOpts modelOpts, ActContext actCtx, List<Map<String, Object>> finalCalls, Map<String, Object> finalReport) {
-    if (!isKnowledgeOnlyReport(finalReport)) {
-      return null;
-    }
-    String knowledgeText = collectKnowledgeBodies(finalReport);
-    Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-    vars.put("knowledge", knowledgeText.isEmpty() ? "无" : knowledgeText);
-    vars.put("probe", vars.getOrDefault("probe", "无"));
-    vars.put("exec", "无");
-    String replyText = "";
-    try {
-      ActPlan second =
-          askPlan(
-              modelOpts,
-              replanSystem(actCtx, vars),
-              actCtx.userText() + "\n（系统已取回知识正文。）\n知识正文：\n" + knowledgeText);
-      replyText = second.reply().trim();
-      if (replyText.isEmpty() && !second.ask().isEmpty()) {
-        replyText = String.valueOf(second.ask().get(0).get("question")).trim();
-      }
-    } catch (Exception e) {
-      log.warn("act knowledge reply failed {}", e.getMessage());
-    }
-    if (replyText.isEmpty()) {
-      replyText = knowledgeFallbackText(finalReport);
-    }
-    if (replyText.isEmpty()) {
-      return null;
-    }
-    return sanitizeUserPayload(attachDoneReply(replyText, actCtx.focus()), actCtx.focus(), List.of());
-  }
-
-  private Map<String, Object> tryPageDocFollowUp(
-      ModelOpts modelOpts,
-      ActContext actCtx,
-      List<Map<String, Object>> finalCalls,
-      Map<String, Object> finalReport,
-      String familyId,
-      String openid,
-      List<Map<String, Object>> probedRows) {
-    if (!isPageDocOnlyReport(finalReport)) {
-      return null;
-    }
-    String pageText = collectPageBodies(finalReport);
-    Map<String, String> vars = new LinkedHashMap<>(actCtx.vars());
-    vars.put("probe", vars.getOrDefault("probe", "无"));
-    vars.put("exec", "无");
-    try {
-      ActPlan nextPlan =
-          askPlan(
-              modelOpts,
-              replanSystem(actCtx, vars),
-              actCtx.userText() + "\n（系统已取回产品页说明。禁止臆造 path。）\n页面说明：\n" + pageText);
-      if (!nextPlan.ask().isEmpty()) {
-        return buildAskResponse(nextPlan.ask(), actCtx.focus(), probedRows, nextPlan.reply());
-      }
-      List<Map<String, Object>> nextCalls =
-          nextPlan.calls().stream().filter(c -> "page.get".equals(String.valueOf(c.get("use")))).toList();
-      if (!nextCalls.isEmpty()) {
-        Map<String, Object> secondReport =
-            execute(
-                familyId,
-                openid,
-                finalReport.get("tree") instanceof Map<?, ?> t ? (Map<String, Object>) t : actCtx.tree(),
-                nextCalls,
-                actCtx.refs(),
-                actCtx.catalogMap(),
-                actCtx.today().get("ymd"));
-        // 必须吃下合并结果：原先丢掉 return 值，open:true 的 navLinks 会随「空 done」被降级成「刚才没办妥」
-        Map<String, Object> merged = mergeCreateReports(finalReport, secondReport);
-        List<Map<String, Object>> mergedCalls = concatCalls(finalCalls, nextCalls);
-        if (Boolean.TRUE.equals(merged.get("subscribeUi"))) {
-          return buildSubscribePayload(mergedCalls, merged, actCtx.focus());
-        }
-        return sanitizeUserPayload(
-            buildDonePayload(mergedCalls, merged, actCtx.focus()), actCtx.focus(), probedRows);
-      }
-      String reply = nextPlan.reply().trim();
-      if (reply.isEmpty()) {
-        reply = pageFallbackText(finalReport);
-      }
-      if (!reply.isEmpty()) {
-        return sanitizeUserPayload(
-            attachDoneReply(reply, actCtx.focus()), actCtx.focus(), probedRows);
-      }
-    } catch (Exception e) {
-      log.warn("act page reply failed {}", e.getMessage());
-    }
-    return null;
-  }
-
-  @SuppressWarnings("unchecked")
   private static Map<String, Object> mergeCreateReports(Map<String, Object> first, Map<String, Object> second) {
     int offset = stepOffset(first);
     List<Map<String, Object>> executed = copyMapList(first.get("executed"));

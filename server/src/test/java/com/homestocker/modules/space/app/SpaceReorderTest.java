@@ -108,6 +108,11 @@ class SpaceReorderTest {
     }
 
     @Override
+    public int countSpaces(String familyId) {
+      return rows.size();
+    }
+
+    @Override
     public void renumberSpaces(String familyId, List<String> orderedIds) {
       renumberCalls.add(List.copyOf(orderedIds));
       List<SpaceRow> byId = new ArrayList<>();
@@ -210,5 +215,30 @@ class SpaceReorderTest {
 
     ApiException e = assertThrows(ApiException.class, () -> c.svc().reorder(Map.of()));
     assertEquals(ErrorCodes.INVALID_IDS, e.getCode());
+  }
+
+  @Test
+  void rejectsTooManySpaces() {
+    SpaceReorderTestContext c = ctx();
+    String[] many = new String[101];
+    for (int i = 0; i < many.length; i++) {
+      many[i] = "s" + i;
+    }
+    c.structure().seed(many);
+
+    // 列表接口单页 100：超过上限时客户端永远凑不齐完整顺序，须明确报错而非静默半量重排
+    ApiException e =
+        assertThrows(
+            ApiException.class,
+            () ->
+                c.svc()
+                    .reorder(
+                        Map.of(
+                            "spaceIds",
+                            java.util.stream.IntStream.range(0, 100)
+                                .mapToObj(i -> "s" + i)
+                                .toList())));
+    assertEquals(ErrorCodes.INVALID_IDS, e.getCode());
+    assertTrue(c.structure().renumberCalls.isEmpty());
   }
 }

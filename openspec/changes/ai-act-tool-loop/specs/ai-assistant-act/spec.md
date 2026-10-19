@@ -29,3 +29,23 @@ The model MUST be able to call enabled capabilities as tools and read each tool 
 #### Scenario: JSON text does not write
 - **WHEN** the model returns a JSON object containing calls and no tool call
 - **THEN** those calls are not executed and the member does not see the raw JSON
+
+## MODIFIED Requirements
+
+### Requirement: Create-class failure triggers at most one model replan
+工具循环下不再有独立的「重编排轮」：create 类步骤失败时，失败结果作为工具结果在同一轮回喂给模型（可见 successes / failure / pending），后续步骤由模型自行决定；系统不得在代码里偷换空间或位置目标，不得仅为构建回执而扫全库。整轮仍受步数与时间预算约束。
+
+#### Scenario: Location create fails inside the tool loop
+- **WHEN** space.createLocation fails and later steps were pending
+- **THEN** the failure is returned to the model as a tool result within the same turn and no code-level degrade placement is invented
+
+#### Scenario: No separate replan round
+- **WHEN** a later create-class step also fails
+- **THEN** the loop stays within its step and time budget and no additional planning round is started
+
+### Requirement: page.get bodies inject like progressive knowledge
+page.get 的目录/契约正文作为工具结果在同一轮回喂给模型，不再有独立的再次调用轮。注入的页面文本不得自行授权领域写操作；禁止臆造注册表之外的 path。
+
+#### Scenario: Fetch then answer with page facts
+- **WHEN** the loop calls page.get for the item-edit contract and the body is returned
+- **THEN** a later step in the same turn may see that contract text and MUST still use only catalog tools for any further side effects

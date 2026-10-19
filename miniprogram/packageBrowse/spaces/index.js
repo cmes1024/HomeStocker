@@ -70,18 +70,21 @@ Page({
   },
 
   async load(silent) {
-    if (!silent) this.setData({ loading: true, error: '' })
+    // syncing 门闩：静默刷新（改名/删除后 load(true)）进行中时，禁止 moveSpace 基于旧快照提交顺序
+    if (this.data.syncing) return
+    this.setData({ syncing: true })
     try {
       let spaces = await listSpaces()
       if (!spaces.length) {
         await callSpace('ensureDefault')
         spaces = await listSpaces()
       }
-      this.setData({ spaces, loading: false, error: '' })
+      this.setData({ spaces, loading: false, error: '', syncing: false })
     } catch (e) {
       this.setData({
         loading: false,
-        error: e.message || copy.common.loadFailed
+        error: e.message || copy.common.loadFailed,
+        syncing: false
       })
     }
   },
@@ -262,7 +265,7 @@ Page({
 
   // 上移/下移：本地换位 → 提交完整顺序 → 失败回滚重新拉取
   async moveSpace(e, dir) {
-    if (this.data.acting || this.data.reordering) return
+    if (this.data.acting || this.data.reordering || this.data.syncing) return
     const index = Number(e.currentTarget.dataset.index)
     if (!Number.isInteger(index)) return
     const target = index + dir

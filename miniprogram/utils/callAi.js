@@ -7,7 +7,8 @@ const javaApi = require('./javaApi')
  */
 async function callAi(action, data = {}) {
   try {
-    const timeout = action === 'act' ? 60000 : action === 'capture' ? 30000 : 20000
+    // capture 最坏约 36s（两把 key 各 12s + 一次 repair 12s），留足余量
+    const timeout = action === 'act' ? 60000 : action === 'capture' ? 60000 : 20000
     return await javaApi.callModule('ai', action, { ...data }, { timeout })
   } catch (e) {
     if (e && e.code) throw e
