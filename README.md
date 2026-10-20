@@ -21,7 +21,7 @@
 <p align="center"><sub>左：首页台账（按空间分组 + 临期提醒）&#12288;右：家庭管家（记关注点、查药品清单）</sub></p>
 
 <details>
-<summary>更多界面：语音记账、物资详情、家庭消息、空间与位置、家庭页、主题、按图预填、AI 配置</summary>
+<summary>更多界面：语音记账、物资详情、家庭消息、过期提醒推送、空间与位置、家庭页、主题、按图预填、AI 配置</summary>
 
 <p align="center">
   <img src="docs/screenshots/ai-voice.jpg" width="185" alt="语音输入：按住说话" />
@@ -43,9 +43,10 @@
 <p align="center">
   <img src="docs/screenshots/edit.jpg" width="185" alt="按图预填：已按图更新 3 项，请核对" />
   <img src="docs/screenshots/keys.jpg" width="185" alt="AI 配置：家庭 BYOK 与视觉模型" />
+  <img src="docs/screenshots/notify.jpg" width="185" alt="订阅消息：商品过期提醒，含仓库与位置" />
 </p>
 
-<p align="center"><sub>按图预填（识别后人工核对）&#12288; AI 配置（BYOK + 可看图模型）</sub></p>
+<p align="center"><sub>按图预填（识别后人工核对）&#12288; AI 配置（BYOK + 可看图模型）&#12288; 过期提醒推送（仓库 / 位置 / 备注）</sub></p>
 
 </details>
 
