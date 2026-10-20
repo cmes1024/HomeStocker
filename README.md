@@ -49,7 +49,8 @@
 
 </details>
 
-> **当前迭代分支 `feature/1019`**：已完成 **云开发 → 自建 Java 后端** 迁移 —— 业务读写、鉴权、定时提醒、AI 管家、对象存储全部走 `server/`（Spring Boot），不再依赖云函数 / 云开发客户端。
+> **当前版本 v2（Java 后端）**：已完成 **云开发 → 自建 Spring Boot** 迁移 —— 业务读写、鉴权、定时提醒、AI 管家、对象存储全部走 `server/`，不再依赖云函数 / 云开发客户端。
+> v1 云开发版已冻结为 tag `v1.0-cloudbase`，代码未删除、可随时检出，见下方「版本里程碑」。
 
 ---
 
@@ -223,6 +224,23 @@ curl http://127.0.0.1:8080/api/health   # 期望包含 "ok": true
 - **备份**：Postgres 数据卷 `hs_pg_data` 需定期备份
 - **停服**：`docker compose down` 保留卷；`down -v` 会清空数据，慎用
 - **安全**：生产务必改掉 Compose 默认的 Postgres / MinIO 口令，5432 / 6379 / 9000 / 9001 不要对公网裸露
+
+## 🧭 版本里程碑
+
+项目按技术栈分成两个都跑得起来的版本，旧版不删除，以 tag 冻结：
+
+| 版本 | 位置 | 技术栈 | 状态 |
+|------|------|--------|------|
+| **v2 Java 版** | `main` 分支 | 微信原生小程序 + Java 17 / Spring Boot 3.3 / PostgreSQL / Redis / MinIO | 当前主线 |
+| **v1 云开发版** | tag `v1.0-cloudbase` | 微信原生小程序 + 云函数 + 云数据库 | 冻结存档 |
+
+```bash
+git fetch --tags
+git checkout v1.0-cloudbase    # 回到 v1 云开发版
+git checkout main              # 回到 v2 主线
+```
+
+> v1 是项目第一个可用版本，`miniprogram/cloudfunctions/` 与 `utils/cloud.js`（`wx.cloud.callFunction`）完整保留；v1 → v2 的过程见[服务器迁移手册](服务器迁移手册.md)与 [Java 迁移路线图](docs/plans/2026-09-30-java-backend-migration/05-migration-roadmap.md)。
 
 ## 📌 迁移与路线状态
 
