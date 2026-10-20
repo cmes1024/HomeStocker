@@ -53,6 +53,14 @@
 > **当前版本 v2（Java 后端）**：已完成 **云开发 → 自建 Spring Boot** 迁移 —— 业务读写、鉴权、定时提醒、AI 管家、对象存储全部走 `server/`，不再依赖云函数 / 云开发客户端。
 > v1 云开发版已冻结为 tag `v1.0-cloudbase`，代码未删除、可随时检出，见下方「版本里程碑」。
 
+## 📱 体验
+
+<p align="center">
+  <img src="docs/screenshots/miniprogram-code.png" width="880" alt="微信扫码打开「家里小仓库」，或在微信搜一搜搜索「家里小仓库」" />
+</p>
+
+<p align="center"><sub>微信扫码进入小程序，或在微信「搜一搜」搜索「家里小仓库」</sub></p>
+
 ---
 
 ## ✨ 核心能力
