@@ -106,3 +106,4 @@ familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端�
 4. 领域写操作做成可被 tool 调用的 Java API action，保持单一写模型
 5. 用户未要求时不要擅自 commit / push
 6. **助手相关改动禁止再加 NL 关键词路由**（见上文「严禁自然语言意图关键词路由」）。办砸了按 `docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md` 先对三类：信息不够、私自决定并执行、拦截/忽略模型计划。不要在 prompt/hint 加「说 xxx 就做 xxx」
+7. **禁止直接在 `main` 提交**：动手前先从 `main` 切开发分支（`docs/…` / `feature/…` / `fix/…`），改动只在分支上提交，再合并回 `main`（PR 或 `git merge --no-ff`）。`main` 只接受合并结果，不承载直接提交；分支提交后未获明确要求不 push
