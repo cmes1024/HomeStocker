@@ -15,7 +15,47 @@ const { ensureSession } = require('../../utils/session')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const { callItem, callFamily, invalidateItemDomain } = require('../../utils/cloud')
 const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
+const { callModule } = require('../../utils/javaApi')
+const tts = require('../../utils/tts')
 const copy = require('../../utils/copy')
+
+/** 强制朗读开关的本地键；默认关，语音提问时自动念 */
+const AUTO_SPEAK_KEY = 'hs_assist_auto_speak'
+
+/** confirm 卡 / 工具调用 → 交给服务端改写的事实清单 */
+function factsFromConfirm(list) {
+  return (Array.isArray(list) ? list : [])
+    .slice(0, 5)
+    .map((row) => ({
+      name: String((row && (row.name || (row.names || [])[0])) || '').trim(),
+      quantity: row && row.quantity != null ? String(row.quantity) : '',
+      unit: String((row && row.unit) || ''),
+      spaceName: String((row && row.spaceName) || ''),
+      ok: true
+    }))
+    .filter((row) => row.name)
+}
+
+function factsFromCalls(calls) {
+  return (Array.isArray(calls) ? calls : [])
+    .slice(0, 5)
+    .map((row) => ({
+      name: String((row && row.name) || '').trim(),
+      quantity: row && row.quantity != null ? String(row.quantity) : '',
+      unit: String((row && row.unit) || ''),
+      spaceName: String((row && row.spaceName) || ''),
+      ok: true
+    }))
+    .filter((row) => row.name)
+}
+
+function readAutoSpeak() {
+  try {
+    return !!wx.getStorageSync(AUTO_SPEAK_KEY)
+  } catch (e) {
+    return false
+  }
+}
 
 function decodeOpt(value) {
   if (value == null || value === '') return ''
@@ -391,7 +431,13 @@ Page({
     keyboardHeight: 0,
     transcriptCapped: false,
     canClear: false,
-    loadingColors: ['#C4A484', '#8B6914']
+    loadingColors: ['#C4A484', '#8B6914'],
+    /** 强制朗读：打字的提问也念；语音提问不依赖它 */
+    autoSpeak: false,
+    /** 家庭或平台有可用 MiMo 密钥才为 true；false 时整个朗读入口都不显示 */
+    speakAvailable: false,
+    /** 正在朗读的消息 id，空串表示没在播 */
+    speakingId: ''
   },
 
   onLoad(options) {
@@ -402,6 +448,8 @@ Page({
     this._pendingId = ''
     this._submitting = false
     this._familyId = ''
+    this._turnSource = 'text'
+    this.setData({ autoSpeak: readAutoSpeak() })
     bindThemeToPage(this, {
       headerTitle: copy.assist.pageTitle,
       focusItemId,
@@ -425,6 +473,7 @@ Page({
       bindThemeToPage(this, { headerTitle: copy.assist.pageTitle, booting: false })
       this.syncLoadingColors()
       this.loadModelSubtitle()
+      this.refreshSpeakCapability()
       if (this.data.focusItemId) this.loadFocusLabel(this.data.focusItemId)
       this.scrollToBottom()
     } catch (e) {
@@ -432,6 +481,16 @@ Page({
         booting: false,
         fatalError: e.message || copy.common.loadFailed
       })
+    }
+  },
+
+  /** 朗读能不能用由服务端判定：家庭 MiMo 密钥优先，平台池兜底。 */
+  async refreshSpeakCapability() {
+    try {
+      const res = (await callModule('voice', 'capability')) || {}
+      this.setData({ speakAvailable: !!res.available })
+    } catch (e) {
+      this.setData({ speakAvailable: false })
     }
   },
 
@@ -465,10 +524,13 @@ Page({
 
   onHide() {
     this.applyKeyboardHeight(0)
+    tts.stop()
+    this.setData({ speakingId: '' })
   },
 
   onUnload() {
     this.applyKeyboardHeight(0)
+    tts.stop()
   },
 
   hydrateTranscript(familyId) {
@@ -638,8 +700,95 @@ Page({
     this.submit({
       resetRound: true,
       text: typed,
+      source: detail.source === 'voice' ? 'voice' : 'text',
       keepDraft: detail.source === 'voice'
     })
+  },
+
+  /** 顶部开关：只影响打字提问，语音提问本来就念 */
+  onToggleAutoSpeak() {
+    if (!this.data.speakAvailable) return
+    const next = !this.data.autoSpeak
+    this.setData({ autoSpeak: next })
+    try {
+      wx.setStorageSync(AUTO_SPEAK_KEY, next)
+    } catch (e) {
+      // 存不下就算了，本次会话仍生效
+    }
+    if (!next) {
+      tts.stop()
+      this.setData({ speakingId: '' })
+    }
+  },
+
+  /** 点喇叭：手动重播这条回复 */
+  onSpeakMessage(e) {
+    const ds = (e && e.currentTarget && e.currentTarget.dataset) || {}
+    const id = String(ds.id || '')
+    if (id && id === this.data.speakingId) {
+      tts.stop()
+      this.setData({ speakingId: '' })
+      return
+    }
+    const messages = this._messages || this.data.messages || []
+    const row = messages.find((m) => m && m.id === id)
+    if (!row) return
+    this.playSpeech({
+      id,
+      kind: row.speechKind || 'answer',
+      text: row.speechText || row.text,
+      facts: row.speechFacts || []
+    })
+  },
+
+  /** 统一出口：id 用于高亮，播完清空 */
+  /**
+   * 回复落地后决定要不要念。
+   *
+   * 三级优先：确认动作必念 > 强制开关 > 提问来源。语音问的一定念，打字问的默认安静，
+   * 因为打字的人就在看屏幕。
+   */
+  speakResult(options) {
+    if (!this.data.speakAvailable) return
+    const opts = options || {}
+    const messages = this._messages || this.data.messages || []
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant') return
+    const facts = opts.confirmed ? factsFromCalls(opts.calls) : last.speechFacts || []
+    const text = String(last.speechText || last.text || '').trim()
+    if (!text && !facts.length) return
+    const should = !!opts.confirmed || this._turnSource === 'voice' || !!this.data.autoSpeak
+    if (!should) return
+    this.playSpeech({
+      id: last.id,
+      kind: opts.confirmed ? 'receipt' : last.speechKind || 'answer',
+      text,
+      facts
+    })
+  },
+
+  playSpeech(options) {
+    if (!this.data.speakAvailable) return
+    const opts = options || {}
+    const id = String(opts.id || '')
+    const text = String(opts.text || '').trim()
+    const facts = Array.isArray(opts.facts) ? opts.facts : []
+    if (!text && !facts.length) return
+    if (id) this.setData({ speakingId: id })
+    tts
+      .speak({
+        kind: opts.kind,
+        text,
+        facts,
+        onEnd: () => {
+          if (id && this.data.speakingId === id) this.setData({ speakingId: '' })
+        }
+      })
+      .then((ok) => {
+        if ((!ok || !id) && this.data.speakingId === id) {
+          this.setData({ speakingId: '' })
+        }
+      })
   },
 
   onPickChip(e) {
@@ -754,6 +903,10 @@ Page({
     }
   },
 
+  goSpeakSettings() {
+    wx.navigateTo({ url: '/packageVoiceCall/settings/index' })
+  },
+
   goKeys() {
     wx.navigateTo({
       url: '/packageAi/keys/index',
@@ -819,6 +972,8 @@ Page({
     }
     this._turnId = turnId
     const resetRound = options.resetRound !== false
+    // 确认/取消沿用上一轮的来源：语音问的，确认完也要念
+    if (resetRound) this._turnSource = options.source === 'voice' ? 'voice' : 'text'
     const askRound = resetRound ? 0 : this.data.askRound
     const actText = String(options.actText || text).trim()
     let history = this.historyPayload()
@@ -887,6 +1042,7 @@ Page({
         invalidateItemDomain()
       }
       this.applyResult(data, askRound)
+      this.speakResult(options)
       // 确认已落地（done/subscribe）：turnId 到此为止，避免下一次确认复用到旧结果
       if (options.confirmed && data && data.status !== 'confirm') this._confirmTurnId = ''
     } catch (e) {
@@ -976,6 +1132,7 @@ Page({
       this.persistTranscript()
       this.scrollToBottom()
     })
+    return next
   },
 
   applyResult(data, askRound) {
@@ -1003,7 +1160,10 @@ Page({
           hasChips,
           goSpaces,
           confirmList: [],
-          showEdit: nextRound >= 2 && hasChips
+          showEdit: nextRound >= 2 && hasChips,
+          // 朗读只念追问本身，不念选项列表
+          speechText: reply || questions[0] || '',
+          speechKind: 'answer'
         },
         {
           askRound: nextRound,
@@ -1043,7 +1203,11 @@ Page({
           askList: [],
           confirmList,
           confirmKind,
-          subscribeItems: []
+          subscribeItems: [],
+          // 确认卡也念，但念的是改写后的口语，不是卡上的标题
+          speechText: title,
+          speechKind: 'confirm',
+          speechFacts: factsFromConfirm(confirmList)
         },
         {
           draft,
@@ -1068,7 +1232,9 @@ Page({
           askList: [],
           confirmList: [],
           subscribeItems: asArray(data && data.subscribeItems),
-          navLinks: normalizeNavLinks(data && data.navLinks)
+          navLinks: normalizeNavLinks(data && data.navLinks),
+          speechText: lead || text,
+          speechKind: 'answer'
         },
         {
           askRound: 0,
@@ -1130,7 +1296,11 @@ Page({
         askList: [],
         confirmList: [],
         subscribeItems: [],
-        navLinks: normalizeNavLinks(data && data.navLinks)
+        navLinks: normalizeNavLinks(data && data.navLinks),
+        // 念小结不念清单：lead 一句话说清结果，完整内容留给屏幕
+        speechText: lead || text,
+        speechKind: 'answer',
+        speechFacts: factsFromCalls(data && data.calls)
       },
       {
         askRound: 0,

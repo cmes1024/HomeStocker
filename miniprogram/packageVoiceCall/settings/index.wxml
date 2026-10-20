@@ -1,0 +1,98 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="朗读设置"
+  back="{{true}}"
+  plainBack="{{true}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
+  lightHeader="{{theme.lightHeader}}"
+>
+  <loading show="{{loading}}" text="读取设置…" glass ballColor="{{loadingColors}}" />
+
+  <view class="state" wx:if="{{loadFailed}}">
+    <view class="state-text error">{{error}}</view>
+    <view class="pill-btn theme-btn" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="page" wx:elif="{{!loading && !loadFailed}}">
+    <view class="card">
+      <view class="card-hd">
+        <view class="card-title">朗读模型</view>
+        <view class="card-sub">决定管家的回复怎么出声；改写措辞仍由管家当前模型负责</view>
+      </view>
+      <view class="row">
+        <view class="row-body">
+          <view class="row-name">{{modelLabel}}</view>
+          <view class="row-hint">{{model}}</view>
+        </view>
+        <view class="row-tag">当前</view>
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-hd">
+        <view class="card-title">使用哪把密钥</view>
+        <view class="card-sub">只决定朗读用哪把 MiMo 密钥；家庭一把都没有时，自动使用平台密钥</view>
+      </view>
+
+      <view class="row" hover-class="press" data-id="" bindtap="onPickKey">
+        <view class="row-body">
+          <view class="row-name">自动</view>
+          <view class="row-hint">优先用家庭第一把 MiMo 密钥</view>
+        </view>
+        <view class="row-flag" wx:if="{{keyId === ''}}">已选</view>
+      </view>
+
+      <view
+        wx:for="{{keys}}"
+        wx:key="id"
+        class="row"
+        hover-class="press"
+        data-id="{{item.id}}"
+        bindtap="onPickKey"
+      >
+        <view class="row-body">
+          <view class="row-name">{{item.label}}</view>
+          <view class="row-hint">{{item.model}}</view>
+        </view>
+        <view class="row-flag" wx:if="{{keyId === item.id}}">已选</view>
+      </view>
+
+      <view class="row-note" wx:if="{{!keys.length}}">
+        家庭还没有 MiMo 密钥，当前走平台密钥；也可以去「我的 - 密钥」自己配一把
+      </view>
+    </view>
+
+    <view class="card">
+      <view class="card-hd">
+        <view class="card-title">音色</view>
+        <view class="card-sub">管家朗读时用的声音</view>
+      </view>
+      <picker range="{{voiceLabels}}" value="{{voiceIndex}}" bindchange="onVoiceChange">
+        <view class="row row-last">
+          <view class="row-body">
+            <view class="row-name">{{voiceLabels[voiceIndex]}}</view>
+            <view class="row-hint">点这里换一个声音</view>
+          </view>
+          <view class="row-chevron">›</view>
+        </view>
+      </picker>
+    </view>
+
+    <view class="note" wx:if="{{!available}}">
+      当前没有可用的 MiMo 密钥，管家页不会显示朗读入口。去「我的 - 密钥」配一把 MiMo 密钥后即可使用。
+    </view>
+    <view class="note" wx:elif="{{effective}}">
+      当前生效 · {{effective.modelLabel}} · {{effective.keyLabel}} · {{effective.voice}}{{source === 'platform' ? ' · 平台密钥' : ''}}
+    </view>
+
+    <view class="note error-text" wx:if="{{error}}">{{error}}</view>
+  </view>
+
+  <view class="actions" wx:if="{{!loading && !loadFailed}}">
+    <view class="save-btn theme-btn {{saving ? 'busy' : ''}}" hover-class="press" bind:tap="onSave">
+      {{saving ? common.saving : common.save}}
+    </view>
+  </view>
+</AppShell>

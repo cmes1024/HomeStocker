@@ -38,8 +38,19 @@
       <view class="text-link theme-text" bind:tap="goKeys">{{copy.goKeys}}</view>
     </view>
 
-    <view class="chat-tools" wx:if="{{canClear}}">
+    <view class="chat-tools">
       <view
+        wx:if="{{speakAvailable}}"
+        class="speak-toggle {{autoSpeak ? 'is-on' : ''}}"
+        bind:tap="onToggleAutoSpeak"
+      >{{autoSpeak ? copy.speakOn : copy.speakOff}}</view>
+      <view
+        wx:if="{{speakAvailable}}"
+        class="speak-toggle"
+        bind:tap="goSpeakSettings"
+      >{{copy.speakSettings}}</view>
+      <view
+        wx:if="{{canClear}}"
         class="clear-chat {{loading ? 'is-disabled' : ''}}"
         bind:tap="onClearChat"
       >{{copy.clearChat}}</view>
@@ -273,6 +284,17 @@
         <view class="fallback" wx:if="{{item.showEdit}}">
           <view class="fallback-text">{{copy.needEdit}}</view>
           <view class="text-link theme-text" bind:tap="goEdit">{{copy.goEdit}}</view>
+        </view>
+
+        <view
+          class="speak-row"
+          wx:if="{{speakAvailable && item.role === 'assistant' && item.kind === 'result' && (item.speechText || item.speechFacts)}}"
+        >
+          <view
+            class="speak-btn {{speakingId === item.id ? 'is-playing' : ''}}"
+            data-id="{{item.id}}"
+            bind:tap="onSpeakMessage"
+          >{{speakingId === item.id ? copy.speakStop : copy.speakPlay}}</view>
         </view>
 
         <view class="text-link theme-text retry" wx:if="{{item.retry}}" bind:tap="onRetry">{{common.retry}}</view>

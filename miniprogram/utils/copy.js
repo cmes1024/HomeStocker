@@ -406,6 +406,11 @@ const copy = {
     duplicatesTitle: '可能重复（未合并）',
     focusLabel: '当前关注',
     openFail: '家庭管家暂时打不开',
+    speakOn: '朗读 开',
+    speakOff: '朗读 关',
+    speakSettings: '朗读设置',
+    speakPlay: '朗读',
+    speakStop: '停止',
     doneEmpty: '刚才没办妥，你再说具体一点？查家里有什么、记一笔或改数量都可以～',
     // ask 页兜底话术（服务端 question 优先）
     capabilityLimited: '抱歉，这个我还没有学会～',

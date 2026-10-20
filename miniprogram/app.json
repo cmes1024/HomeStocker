@@ -45,6 +45,13 @@
         "index/index",
         "chat/chat"
       ]
+    },
+    {
+      "root": "packageVoiceCall",
+      "name": "voiceCall",
+      "pages": [
+        "settings/index"
+      ]
     }
   ],
   "preloadRule": {

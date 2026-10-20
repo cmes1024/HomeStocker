@@ -341,6 +341,20 @@ public class AiActService {
     return toolRegistry.runAll(ctx, calls);
   }
 
+  /**
+   * 通话侧执行一批已经和用户确认过的写调用。
+   *
+   * <p>与管家共用同一个 {@code ToolContext} 和 {@code ToolRegistry}，写库入口只有这一条；
+   * 差别只在确认环节：语音侧先播确认句，用户点头后才走到这里，不再生成计划。
+   */
+  public Map<String, Object> runConfirmedCalls(
+      String openid, String familyId, List<Map<String, Object>> calls) {
+    Map<String, Object> tree = familyTreeService.getOrRebuild(familyId);
+    Map<String, Map<String, Object>> catalogMap = catalogMapFromDb();
+    return execute(
+        familyId, openid, tree, calls, new LinkedHashMap<>(), catalogMap, ShanghaiDates.todayYmd());
+  }
+
   private Map<String, Map<String, Object>> catalogMapFromDb() {
     Map<String, Object> catalog = aiSeedService.ensureCapabilities();
     Map<String, Map<String, Object>> map = new LinkedHashMap<>();

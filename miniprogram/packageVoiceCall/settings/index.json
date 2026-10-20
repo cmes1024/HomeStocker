@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "朗读设置",
+  "usingComponents": {
+    "AppShell": "/components/AppShell/index"
+  }
+}
