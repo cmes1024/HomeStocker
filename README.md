@@ -134,7 +134,7 @@
 
 ```bash
 git clone https://github.com/cmes1024/HomeStocker.git
-cd HomeStocker && git checkout feature/1019
+cd HomeStocker    # main 即 v2（Java 后端）主线
 ```
 
 ### 1. 启动后端
