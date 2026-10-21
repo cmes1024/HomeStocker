@@ -128,7 +128,7 @@
 这个项目不只是「产品里有 AI」，开发过程本身也按规格驱动的 AI 工作流交付：
 
 - **OpenSpec 规格驱动**：[`openspec/`](openspec/) 每个能力变更走 proposal → design → tasks → specs，`openspec/` 内 160+ 篇规格文档形成可追溯的行为契约
-- **管家能力可回归**：[`ai-eval/`](ai-eval/) 500+ 条口语化评测用例（日常使用 / 边界陷阱 / 课程进阶 / 红线），分 plan 用 `ai.act` 实跑判定——**AI 能力像代码一样被测试**
+- **管家能力可回归**：[`ai-eval/`](ai-eval/) 513 条口语化评测用例（日常使用 / 边界陷阱 / 课程进阶 / 红线），分 12 个 plan 用 `ai.act` 实跑判定，`requiredTools` / `forbiddenTools` 双向断言——**AI 能力像代码一样被测试**；实测报告见 [`ai-eval/REPORT.md`](ai-eval/REPORT.md)（模型对比：step-3.5-flash 82.8% → mimo-v2.6-flash 推算约 95%，含 24 个已知边界）
 - **多 IDE 适配**：`.claude` / `.cursor` / `.kiro` / `.trae` / `.qoder` / `.hermes` / `.agents` 七套 skills 与命令，同一套规格在不同工具间复用
 - **Agent 工程化**：[`agent/`](agent/README.md) LangGraph 状态图 + 4 个工具 + `MockBackend`，可免真实 Key 跑冒烟测试
 - **协作护栏**：[`AGENTS.md`](AGENTS.md) 固化工作约定（改动范围、先方案后动手、未要求不擅自 commit）
@@ -274,6 +274,7 @@ git checkout main              # 回到 v2 主线
 | 管家排障手册 | [`迭代指南.md`](docs/plans/2026-09-23-ai-assist-curriculum/迭代指南.md) |
 | 行为规格 | [`openspec/specs/`](openspec/specs/) |
 | 管家评测题库 | [`ai-eval/README.md`](ai-eval/README.md) |
+| **评测报告（模型对比 + 已知边界）** | [`ai-eval/REPORT.md`](ai-eval/REPORT.md) |
 | 云开发 → Java 迁移记录 | [`服务器迁移手册.md`](服务器迁移手册.md) |
 
 ## 许可证
