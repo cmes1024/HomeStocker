@@ -17,6 +17,7 @@ import com.homestocker.modules.ai.agent.ActPrompt.AskResult;
 import com.homestocker.modules.ai.agent.ActPrompt.ModelOpts;
 import com.homestocker.modules.ai.agent.ActRefs;
 import com.homestocker.modules.ai.agent.Guardrails;
+import com.homestocker.modules.ai.agent.HabitReply;
 import com.homestocker.modules.ai.agent.ItemsProbe;
 import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
@@ -303,7 +304,16 @@ public class AiActService {
         }
       }
     } else {
-      if (present == null && rows.size() >= 1) {
+      if (HabitReply.habitOnly(report)) {
+        List<Map<String, Object>> habits = HabitReply.habitsOf(report);
+        if (habits.size() >= HabitReply.TABLE_MIN) {
+          present = HabitReply.table(habits);
+          reply = "这家偏好 " + habits.size() + " 条";
+        } else {
+          present = null;
+          reply = HabitReply.lines(habits);
+        }
+      } else if (present == null && rows.size() >= 1) {
         present = new LinkedHashMap<>();
         present.put("type", "table");
         present.put("source", "probe");
