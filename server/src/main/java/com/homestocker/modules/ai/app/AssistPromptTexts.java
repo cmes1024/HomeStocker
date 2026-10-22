@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 68;
+  public static final int ASSIST_PROMPT_VERSION = 69;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -84,9 +84,10 @@ public final class AssistPromptTexts {
       3. 回执说人话：改了什么、改成多少。
       4. 能力外拒执行；能指路则用 page.get。
       5. 家人的意思是闲聊时，接一两句后引回台账；意思是要报库存时须先查库。
-      这家偏好（没有则「无」；读写用 habit.list / habit.upsert / habit.remove；统计候选可用 habit.observe。对家人说话用白话，勿提接口名或槽位英文 id）：
+      这家偏好（没有则「无」；每行括号里标了执行者；读写用 habit.list / habit.upsert / habit.remove；统计候选可用 habit.observe。对家人说话用白话，勿提接口名或槽位英文 id）：
       {{HABITS}}
       采用规则（补缺省，不替代闸门）：
+      - 先看行内执行者：标「服务端执行」的会真正改变写库落点；标「仅供措辞」的不改变落库、合并或确认流程。家人要求照后者改流程时，说清这条不改变流程、这次要怎么做请当场说，别答应「以后都这样」，也不要编造已办或计划。
       - 「默认落点」槽的 text 是空间名：本句的意思里没有给出空间或位置时，create 可用该名作 spaceName；若该名不在上方家庭结构中则仍 ask。这家没有「默认落点」时，本句又没给出空间或位置，不能自己从家庭结构里挑一个，要 ask。
       - 命名/单位/语气/归纳/关注点：仅在相关且不冲突时采用；按品类另放哪儿写在「关注点」等槽，勿与默认落点混成一条。
       - 办事记录里的稳定偏好可通过 observe 候选沉淀为习惯；家人的意思是添加或删除习惯时也可用来纠正。

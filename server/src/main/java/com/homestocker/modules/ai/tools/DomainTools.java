@@ -940,6 +940,8 @@ public class DomainTools {
           .append(HabitSlots.label(h.slot()))
           .append('(')
           .append(h.slot())
+          .append('；')
+          .append(HabitSlots.enforceNote(h.slot()))
           .append(")：")
           .append(h.text());
       if (!defaultSpaceOk) {
