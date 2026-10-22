@@ -13,7 +13,7 @@ public final class ToolSchemas {
 
   public static final String ASK = "ask";
   public static final String PRESENT = "present";
-  public static final int MAX_STEPS = 6;
+  public static final int MAX_STEPS = 4;
 
   private ToolSchemas() {}
 

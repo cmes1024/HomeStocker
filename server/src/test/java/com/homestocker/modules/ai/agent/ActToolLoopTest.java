@@ -256,7 +256,7 @@ class ActToolLoopTest {
     Outcome outcome =
         loop(
                 List.of(
-                    result(call("1", "item_update", "{\"ref\":\"P1\",\"quantity\":1}")),
+                    result(call("1", "item_update", "{\"name\":\"牛奶\",\"quantity\":1}")),
                     result(call("2", "ask", "{\"question\":\"喝的是冰箱那盒，还是常温那盒？\",\"options\":[]}"))))
             .run(
                 context("牛奶和酸奶各喝一盒", rows),
@@ -269,6 +269,30 @@ class ActToolLoopTest {
     assertEquals(0, hits.get());
     assertEquals(Kind.ASK, outcome.kind());
     assertTrue(outcome.calls().isEmpty());
+  }
+
+  @Test
+  void sameNameUpdateByUniqueRefIsExecuted() throws Exception {
+    AtomicInteger hits = new AtomicInteger();
+    List<Map<String, Object>> rows = new ArrayList<>();
+    rows.add(milk("P1", "m1", "2", "冰箱", ""));
+    rows.add(milk("P2", "m2", "1", "", "常温未开"));
+    Outcome outcome =
+        loop(
+                List.of(
+                    result(call("1", "item_update", "{\"ref\":\"P1\",\"quantity\":1}")),
+                    new ChatResult("已改 牛奶：1", 200, 1)))
+            .run(
+                context("牛奶和酸奶各喝一盒", rows),
+                null,
+                calls -> {
+                  hits.incrementAndGet();
+                  return receipt(true, "已改");
+                });
+
+    assertEquals(1, hits.get());
+    assertEquals(Kind.DONE, outcome.kind());
+    assertEquals("item.update", outcome.calls().get(0).get("use"));
   }
 
   private static ActContext context(String userText) {
