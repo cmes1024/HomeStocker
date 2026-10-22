@@ -13,7 +13,7 @@ public final class ToolSchemas {
 
   public static final String ASK = "ask";
   public static final String PRESENT = "present";
-  public static final int MAX_STEPS = 4;
+  public static final int MAX_STEPS = 6;
 
   private ToolSchemas() {}
 
@@ -81,13 +81,32 @@ public final class ToolSchemas {
     fn.put("name", PRESENT);
     fn.put(
         "description",
-        "把本轮已经查到的结果画给家人。type 用 table、stats、bars 或 pie。对比或占比用 bars 或 pie，并带 groupBy（space、tag、location 或 name）。不要自己编数字。");
+        "把本轮已经查到的物资行画给家人。type 用 table、stats、bars 或 pie。对比或占比用 bars 或 pie，并带 groupBy（space、tag、location 或 name）。table 的列由你决定：字段列的值由服务端按 key 取，不要自己写数字；说明列由你在 notes 里逐行写，放差异、状态、来源、提醒等事实，不给饮食、健康、购买、处理建议。不要自己编数字。");
     ObjectNode params = fn.putObject("parameters");
     params.put("type", "object");
     ObjectNode props = params.putObject("properties");
     props.putObject("type").put("type", "string").put("description", "table、stats、bars 或 pie");
     props.putObject("groupBy").put("type", "string").put("description", "space、tag、location 或 name");
-    props.putObject("title").put("type", "string");
+    props.putObject("title").put("type", "string").put("description", "表上方短标题，不超过 24 字");
+    ObjectNode cols = props.putObject("columns");
+    cols.put("type", "array");
+    cols.put(
+        "description",
+        "仅 table：列出要展示的列。字段列 {\"key\":\"name|quantity|place|space|expire|production\",\"label\":\"名称\",\"width\":1-5}，值由服务端取；说明列 {\"label\":\"说明\",\"text\":true,\"width\":1-5}，内容在 notes 里逐行给。也可简写 [\"名称\",\"数量\",\"位置\",\"备注\"]（备注=说明列）。最多 5 列，数量列建议 width 1。");
+    cols.putObject("items").put("type", "object");
+    ObjectNode notes = props.putObject("notes");
+    notes.put("type", "array");
+    notes.put(
+        "description",
+        "仅 table：说明列每行的文字，用本轮短号绑定，如 [{\"ref\":\"P1\",\"text\":\"红苹果\"}]。只写其它列没有的事实（品种、来源、状态、到期等），不要复述名称、数量、位置，不要写「没写/未填/无/未知」这类空缺说明；这行没有额外事实就不传这段，该格留空。不编数字，不给建议。");
+    ObjectNode noteItem = notes.putObject("items");
+    noteItem.put("type", "object");
+    ObjectNode noteProps = noteItem.putObject("properties");
+    noteProps.putObject("ref").put("type", "string");
+    noteProps.putObject("text").put("type", "string");
+    props.putObject("caption")
+        .put("type", "string")
+        .put("description", "仅 table：表下一句事实（跨行归纳或状态），不超过 60 字，不给建议");
     params.putArray("required").add("type");
     return tool;
   }

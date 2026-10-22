@@ -364,18 +364,6 @@
   margin-bottom: 8rpx;
 }
 
-.habit-applied {
-  margin-top: 10rpx;
-  padding: 8rpx 16rpx;
-  font-size: 22rpx;
-  line-height: 1.4;
-  color: rgba(26, 26, 26, 0.55);
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 12rpx;
-  align-self: flex-start;
-  max-width: 100%;
-}
-
 .confirm-name {
   font-size: 28rpx;
   color: #1a1a1a;
@@ -535,7 +523,7 @@
 
 .present-td {
   flex: 1;
-  min-width: 140rpx;
+  min-width: 112rpx;
   padding: 14rpx 16rpx;
   font-size: 24rpx;
   line-height: 1.35;
@@ -548,6 +536,13 @@
 .present-th .present-td {
   font-weight: 500;
   color: rgba(26, 26, 26, 0.65);
+}
+
+.present-caption {
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.45;
+  color: rgba(26, 26, 26, 0.7);
 }
 
 .present-footer {

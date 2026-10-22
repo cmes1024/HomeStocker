@@ -18,13 +18,26 @@ class WriteGroundingTest {
               Map.of("name", "客厅", "locations", List.of())));
 
   @Test
-  void twoMilksNeedAPlaceBeforeEitherIsChanged() {
+  void twoMilksByNameNeedAPlaceBeforeEitherIsChanged() {
     List<Map<String, Object>> rows =
         List.of(milk("P1", "2", "冰箱", ""), milk("P2", "1", "", "常温未开"));
     String why =
         WriteGrounding.blocked(
-            "牛奶和酸奶各喝一盒", "", tree, rows, Map.of("use", "item.update", "ref", "P1", "quantity", 1));
+            "牛奶和酸奶各喝一盒",
+            "",
+            tree,
+            rows,
+            Map.of("use", "item.update", "name", "牛奶", "quantity", 1));
     assertTrue(why.contains("哪一条"));
+  }
+
+  @Test
+  void refFromThisTurnPointsAtWhichOne() {
+    List<Map<String, Object>> rows =
+        List.of(milk("P1", "2", "冰箱", ""), milk("P2", "1", "", "常温未开"));
+    assertNull(
+        WriteGrounding.blocked(
+            "牛奶改成一盒", "", tree, rows, Map.of("use", "item.update", "ref", "P2", "quantity", 1)));
   }
 
   @Test

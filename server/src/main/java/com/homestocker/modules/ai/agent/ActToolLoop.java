@@ -188,12 +188,14 @@ public class ActToolLoop {
       Map<String, Object> report,
       Map<String, Object> present,
       Set<String> seenSearches) {
+    String ground = ActPrompt.groundText(ctx.history(), ctx.text(), System.currentTimeMillis());
     boolean asked = false;
     boolean holdWrites = false;
     String askQuestion = "";
     List<String> askOptions = new ArrayList<>();
     for (ToolCall call : calls) {
       if (ToolSchemas.ASK.equals(call.name())) {
+        log.info("[ai.act] tool ask");
         asked = true;
         Map<String, Object> args = parseArgs(call.arguments());
         askQuestion = str(args.get("question"));
@@ -214,6 +216,10 @@ public class ActToolLoop {
       }
       if (ToolSchemas.PRESENT.equals(call.name())) {
         Map<String, Object> spec = presentSpec(parseArgs(call.arguments()));
+        log.info(
+            "[ai.act] tool present accepted={} spec={}",
+            spec != null,
+            clip(String.valueOf(spec), 200));
         if (spec == null) {
           appendToolMessage(messages, call.id(), "展示类型只能是 table、stats、bars、pie。");
         } else {
@@ -239,20 +245,21 @@ public class ActToolLoop {
       boolean confirm = api != null && Boolean.TRUE.equals(api.get("confirm"));
       String blocked =
           PlaceGrounding.ungrounded(
-              ctx.userText(),
+              ground,
               PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
               ctx.tree(),
               domainCall);
       if (blocked == null) {
         blocked =
             WriteGrounding.blocked(
-                ctx.userText(),
+                ground,
                 PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
                 ctx.tree(),
                 rows,
                 domainCall);
       }
       if (blocked != null) {
+        log.info("[ai.act] tool blocked use={} reason={}", use, blocked);
         appendToolMessage(messages, call.id(), blocked);
         continue;
       }
@@ -260,13 +267,20 @@ public class ActToolLoop {
         if (!asked) {
           held.add(domainCall);
         }
+        log.info("[ai.act] tool held use={} asked={}", use, asked);
         appendToolMessage(
             messages,
             call.id(),
             asked ? "本轮改为提问，这项先不写入。" : "须家人确认后才执行，本轮先停住。");
         continue;
       }
+      long toolStart = System.currentTimeMillis();
       Map<String, Object> one = executor.execute(List.of(domainCall));
+      log.info(
+          "[ai.act] tool use={} ms={} args={}",
+          use,
+          System.currentTimeMillis() - toolStart,
+          clip(String.valueOf(domainCall), 160));
       report = mergeReports(report, one, ctx.tree());
       List<Map<String, Object>> fresh = ingest(one, ctx);
       rows.addAll(fresh);
@@ -275,7 +289,15 @@ public class ActToolLoop {
           "item.search".equals(use) && !seenSearches.add(searchSignature(domainCall))
               ? "相同条件本轮已经查过，下面仍是那些行。不要再用同一条件查。\n"
               : "";
-      appendToolMessage(messages, call.id(), repeated + toolText(one, fresh));
+      List<Map<String, Object>> shown = fresh;
+      String seenBefore = "";
+      if (fresh.isEmpty()) {
+        shown = knownRows(one, ctx);
+        if (!shown.isEmpty()) {
+          seenBefore = "这些行本轮查过，短号沿用上面的。\n";
+        }
+      }
+      appendToolMessage(messages, call.id(), repeated + seenBefore + toolText(one, shown));
       if (one != null && Boolean.TRUE.equals(one.get("subscribeUi"))) {
         return new BatchStep(
             new Outcome(Kind.SUBSCRIBE, "", List.of(), allCalls, rows, report, present), report, present);
@@ -370,6 +392,47 @@ public class ActToolLoop {
       }
     }
     return rows;
+  }
+
+  /** 本次返回的行本轮都已查过（被 {@link #ingest} 去重）时，用 refs 里已有的行回给模型，短号不变。 */
+  private List<Map<String, Object>> knownRows(
+      Map<String, Object> report, ActContextBuilder.ActContext ctx) {
+    List<Map<String, Object>> out = new ArrayList<>();
+    if (report == null || !(report.get("executed") instanceof List<?> executed)) {
+      return out;
+    }
+    for (Object rowObj : executed) {
+      if (!(rowObj instanceof Map<?, ?> row) || !(row.get("inventory") instanceof List<?> inv)) {
+        continue;
+      }
+      for (Object itemObj : inv) {
+        if (!(itemObj instanceof Map<?, ?> item)) {
+          continue;
+        }
+        String id = str(item.get("_id"));
+        if (id.isBlank()) {
+          id = str(item.get("itemId"));
+        }
+        Map<String, Object> known = knownById(ctx.refs(), id);
+        if (known != null && !out.contains(known)) {
+          out.add(known);
+        }
+      }
+    }
+    return out;
+  }
+
+  private static Map<String, Object> knownById(
+      Map<String, Map<String, Object>> refs, String itemId) {
+    if (itemId.isBlank()) {
+      return null;
+    }
+    for (Map<String, Object> row : refs.values()) {
+      if (row != null && itemId.equals(str(row.get("itemId")))) {
+        return row;
+      }
+    }
+    return null;
   }
 
   private static boolean already(Map<String, Map<String, Object>> refs, String itemId) {
@@ -596,6 +659,32 @@ public class ActToolLoop {
   private static final Set<String> PRESENT_TYPES = Set.of("table", "stats", "bars", "pie");
   private static final Set<String> PRESENT_GROUPS = Set.of("space", "tag", "location", "name");
 
+  /** 字段列：服务端按 key 取库值，模型不能改写。 */
+  private static final Map<String, String> PRESENT_FIELD_COLS =
+      Map.ofEntries(
+          Map.entry("名称", "name"),
+          Map.entry("name", "name"),
+          Map.entry("数量", "quantity"),
+          Map.entry("quantity", "quantity"),
+          Map.entry("位置", "place"),
+          Map.entry("地点", "place"),
+          Map.entry("place", "place"),
+          Map.entry("空间", "space"),
+          Map.entry("space", "space"),
+          Map.entry("过期", "expire"),
+          Map.entry("到期", "expire"),
+          Map.entry("expire", "expire"),
+          Map.entry("生产日期", "production"),
+          Map.entry("生产", "production"),
+          Map.entry("production", "production"));
+
+  /** 说明列：内容由模型逐行写，服务端不填字段。 */
+  private static final Set<String> PRESENT_TEXT_COLS =
+      Set.of("备注", "说明", "差异", "提醒", "注意", "note", "comment", "text");
+
+  private static final Map<String, Integer> PRESENT_DEFAULT_WIDTH =
+      Map.of("name", 2, "quantity", 1, "place", 2, "space", 2, "expire", 2, "production", 2);
+
   static Map<String, Object> presentSpec(Map<String, Object> args) {
     if (args == null || args.isEmpty()) {
       return null;
@@ -622,7 +711,96 @@ public class ActToolLoop {
     if (!title.isEmpty()) {
       spec.put("title", title.length() <= 24 ? title : title.substring(0, 24));
     }
+    List<Map<String, Object>> columns = new ArrayList<>();
+    if (args.get("columns") instanceof List<?> colList) {
+      for (Object o : colList) {
+        if (columns.size() >= PresentResolver.MAX_SPEC_COLS) {
+          break;
+        }
+        Map<String, Object> col =
+            o instanceof String s ? plainColumn(s) : o instanceof Map<?, ?> m ? specColumn(m) : null;
+        if (col != null) {
+          columns.add(col);
+        }
+      }
+    }
+    if (!columns.isEmpty()) {
+      spec.put("columns", columns);
+    }
+    List<Map<String, Object>> notes = new ArrayList<>();
+    if (args.get("notes") instanceof List<?> noteList) {
+      for (Object o : noteList) {
+        if (!(o instanceof Map<?, ?> m)) {
+          continue;
+        }
+        String ref = str(m.get("ref")).trim().toUpperCase(Locale.ROOT);
+        String text = str(m.get("text")).trim().replaceAll("\\s+", " ");
+        if (ref.isEmpty() || text.isEmpty()) {
+          continue;
+        }
+        Map<String, Object> note = new LinkedHashMap<>();
+        note.put("ref", ref);
+        note.put("text", text.length() <= 40 ? text : text.substring(0, 40));
+        notes.add(note);
+        if (notes.size() >= 40) {
+          break;
+        }
+      }
+    }
+    if (!notes.isEmpty()) {
+      spec.put("notes", notes);
+    }
+    String caption = str(args.get("caption")).trim().replaceAll("\\s+", " ");
+    if (!caption.isEmpty()) {
+      spec.put("caption", caption.length() <= 60 ? caption : caption.substring(0, 60));
+    }
     return spec;
+  }
+
+  /** 支持简写 ["名称","数量","位置","备注"]；「备注」类列按说明列处理。 */
+  private static Map<String, Object> plainColumn(String raw) {
+    String name = str(raw).trim();
+    if (name.isEmpty()) {
+      return null;
+    }
+    String key = PRESENT_FIELD_COLS.get(name);
+    boolean text = PRESENT_TEXT_COLS.contains(name) || PRESENT_TEXT_COLS.contains(name.toLowerCase(Locale.ROOT));
+    if (key == null && !text) {
+      return null;
+    }
+    Map<String, Object> col = new LinkedHashMap<>();
+    col.put("label", name.length() <= 6 ? name : name.substring(0, 6));
+    col.put("key", text ? "note" : key);
+    col.put("text", text);
+    col.put("width", text ? 4 : PRESENT_DEFAULT_WIDTH.getOrDefault(key, 2));
+    return col;
+  }
+
+  private static Map<String, Object> specColumn(Map<?, ?> m) {
+    String label = str(m.get("label")).trim();
+    String key = str(m.get("key")).trim().toLowerCase(Locale.ROOT);
+    boolean text = Boolean.TRUE.equals(m.get("text")) || PRESENT_TEXT_COLS.contains(label);
+    if (label.isEmpty()) {
+      label = text ? "说明" : str(m.get("key")).trim();
+    }
+    if (label.isEmpty() || (!text && !PRESENT_FIELD_COLS.containsValue(key))) {
+      return null;
+    }
+    int width = 0;
+    try {
+      width = (int) Math.round(Double.parseDouble(str(m.get("width")).trim()));
+    } catch (Exception ignored) {
+      width = 0;
+    }
+    if (width <= 0) {
+      width = text ? 4 : PRESENT_DEFAULT_WIDTH.getOrDefault(key, 2);
+    }
+    Map<String, Object> col = new LinkedHashMap<>();
+    col.put("label", label.length() <= 6 ? label : label.substring(0, 6));
+    col.put("key", text ? "note" : key);
+    col.put("text", text);
+    col.put("width", Math.min(5, Math.max(1, width)));
+    return col;
   }
 
   private static String visible(String text) {

@@ -73,11 +73,34 @@ public final class WriteGrounding {
     if (siblings.size() < 2) {
       return null;
     }
+    if (pickedByRef(rows, call)) {
+      return null;
+    }
     Map<String, Object> target = findRow(rows, call);
     if (target != null && uniquely(userText, target, siblings)) {
       return null;
     }
     return "「" + name + "」有 " + siblings.size() + " 条，各条是不同的几件。先问是哪一条，不要挑一条改。";
+  }
+
+  /** 本轮短号 / itemId 唯一命中一条：模型已经点明是哪一条，不再要求本句里有文字线索。 */
+  private static boolean pickedByRef(List<Map<String, Object>> rows, Map<String, Object> call) {
+    String ref = ActRefs.pickCallRef(call);
+    if (!ref.isEmpty() && hits(rows, "ref", ref)) {
+      return true;
+    }
+    String itemId = str(call.get("itemId"));
+    return !itemId.isEmpty() && hits(rows, "itemId", itemId);
+  }
+
+  private static boolean hits(List<Map<String, Object>> rows, String key, String want) {
+    int n = 0;
+    for (Map<String, Object> row : rows) {
+      if (want.equalsIgnoreCase(str(row.get(key)))) {
+        n++;
+      }
+    }
+    return n == 1;
   }
 
   static String placeChange(

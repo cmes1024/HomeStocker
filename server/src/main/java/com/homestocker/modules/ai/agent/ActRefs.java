@@ -8,6 +8,9 @@ import java.util.Map;
 /** Port of agent/refs.js */
 public final class ActRefs {
 
+  /** 行内备注最多展示的字数；超出截断，避免撑爆短号行。 */
+  static final int NOTE_RENDER_MAX = 40;
+
   private ActRefs() {}
 
   public static boolean isShortRef(String value) {
@@ -76,6 +79,7 @@ public final class ActRefs {
     } else if ("update".equals(op)) {
       touch = " · 本轮改过";
     }
+    String note = clipNote(str(row.get("note")));
     return "["
         + row.get("ref")
         + "] "
@@ -84,7 +88,17 @@ public final class ActRefs {
         + qty
         + (!place.isEmpty() ? " · " + place : "")
         + expire
-        + touch;
+        + touch
+        + (note.isEmpty() ? "" : " · 备注 " + note);
+  }
+
+  /** 备注压成一行并截断，避免长文本把短号行淹没；空备注不留痕。 */
+  static String clipNote(String raw) {
+    String s = str(raw).replaceAll("\\s+", " ").trim();
+    if (s.length() <= NOTE_RENDER_MAX) {
+      return s;
+    }
+    return s.substring(0, NOTE_RENDER_MAX) + "…";
   }
 
   public static String renderFocusList(List<Map<String, Object>> rows) {

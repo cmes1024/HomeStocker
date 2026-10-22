@@ -71,7 +71,6 @@
         </view>
         <view class="bubble" wx:elif="{{item.bubbleText}}">{{item.bubbleText}}</view>
         <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
-        <view class="habit-applied" wx:if="{{item.habitAppliedText}}">{{item.habitAppliedText}}</view>
 
         <view class="blocks" wx:if="{{item.blocks && item.blocks.length}}">
           <view
@@ -120,6 +119,7 @@
             <view class="present-tr present-th">
               <view
                 class="present-td"
+                style="flex: {{item.present.widths[index]}}"
                 wx:for="{{item.present.columns}}"
                 wx:for-item="col"
                 wx:key="*this"
@@ -133,12 +133,14 @@
             >
               <view
                 class="present-td"
+                style="flex: {{item.present.widths[index]}}"
                 wx:for="{{row.cells}}"
                 wx:for-item="cell"
                 wx:key="*this"
               >{{cell}}</view>
             </view>
           </view>
+          <view class="present-caption" wx:if="{{item.present.type === 'table' && item.present.caption}}">{{item.present.caption}}</view>
           <view class="present-footer" wx:if="{{item.present.type === 'table' && item.present.footer}}">{{item.present.footer}}</view>
 
           <view class="present-stats" wx:if="{{item.present.type === 'stats'}}">

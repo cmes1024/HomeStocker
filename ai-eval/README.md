@@ -20,6 +20,7 @@
 | `bank/eng` | 红线（仍用白话 prompt） |
 | `fixtures/home-daily.json` | 共享假家里库存 |
 | `fixtures/home-wide.json` | 更密的一套：含苹果/电脑、大米/米，给 `scenes-wide` 用 |
+| `fixtures/home-unit-clash.json` | 厨房有按斤记的苹果（1 斤无位置 + 5 斤在冰箱），给 C9/C10 用 |
 | `plans/` | 开跑计划 |
 | `runner.mjs` | 誊抄 / mock 结构检查 / `--mode act` 打真接口 |
 

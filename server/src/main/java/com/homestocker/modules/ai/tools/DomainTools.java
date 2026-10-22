@@ -1115,9 +1115,11 @@ public class DomainTools {
   }
 
   /**
-   * 记入意图：同位置同名已有行则并入数量（多行先收成一条），直接告知，不先 ask。
+   * 记入意图：同位置同名且单位一致时并入数量（多行先收成一条），直接告知，不先 ask。
+   * 单位不一致时不并入、也不挡着：返回 null 让 create 另开一行（同空间允许同名多条），
+   * 否则会写出「斤 + 袋」这种合计数。
    *
-   * @return 已并入的结果；无同名则 null（继续 create）
+   * @return 已并入的结果；无同名或单位不一致则 null（继续 create）
    */
   private ToolResult foldCreateIntoExisting(
       ToolContext ctx,
@@ -1140,21 +1142,27 @@ public class DomainTools {
     if (addUnit.isEmpty()) {
       addUnit = inferSharedUnit(ctx.familyId, name);
     }
+    String existingUnit = "";
+    boolean mixedExisting = false;
     for (ItemRow row : existing) {
       String u = row.unit() == null ? "" : row.unit().trim();
-      if (!addUnit.isEmpty() && !u.isEmpty() && !addUnit.equals(u)) {
-        return ToolResult.fail(
-                "第 "
-                    + step
-                    + " 步：同位置「"
-                    + name
-                    + "」单位不一致（已有 "
-                    + u
-                    + "，本次 "
-                    + addUnit
-                    + "），未合并也未新建")
-            .build();
+      if (u.isEmpty()) {
+        continue;
       }
+      if (existingUnit.isEmpty()) {
+        existingUnit = u;
+      } else if (!existingUnit.equals(u)) {
+        mixedExisting = true;
+        break;
+      }
+    }
+    if (mixedExisting) {
+      return null;
+    }
+    if (addUnit.isEmpty()) {
+      addUnit = existingUnit;
+    } else if (!existingUnit.isEmpty() && !addUnit.equals(existingUnit)) {
+      return null;
     }
 
     BigDecimal before =

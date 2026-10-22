@@ -357,41 +357,13 @@ function normalizeTurn(row) {
   let text = String(row.text || '').trim().slice(0, TEXT_MAX)
   const blocks = role === 'assistant' ? sanitizeBlocks(row.blocks) : []
   const present = role === 'assistant' ? sanitizePresent(row.present) : null
-  const habitApplied = role === 'assistant' ? sanitizeHabitApplied(row.habitApplied) : null
-  const habitLine = habitAppliedToLine(habitApplied)
-  if (habitLine && text && !text.includes(habitLine)) {
-    text = (text + '\n' + habitLine).slice(0, TEXT_MAX)
-  } else if (habitLine && !text) {
-    text = habitLine
-  }
-  if (!text && !blocks.length && !present && !habitApplied) return null
-  const turn = { role, text: text || (blocks.length || present || habitApplied ? '完成' : '') }
+  if (!text && !blocks.length && !present) return null
+  const turn = { role, text: text || (blocks.length || present ? '完成' : '') }
   if (blocks.length) turn.blocks = blocks
   if (present) turn.present = present
-  if (habitApplied) turn.habitApplied = habitApplied
   const at = parseAt(row.at)
   if (at) turn.at = at
   return turn
-}
-
-function sanitizeHabitApplied(raw) {
-  if (!Array.isArray(raw) || !raw.length) return null
-  const out = []
-  raw.forEach((row) => {
-    if (!row || typeof row !== 'object') return
-    const label = String(row.label || '').trim()
-    const slot = String(row.slot || '').trim()
-    const text = String(row.text || '').trim()
-    if (!label && !slot) return
-    out.push({ slot, label: label || slot, text })
-  })
-  return out.length ? out : null
-}
-
-function habitAppliedToLine(habitApplied) {
-  if (!habitApplied || !habitApplied.length) return ''
-  const labels = habitApplied.map((h) => h.label).filter(Boolean)
-  return labels.length ? '根据习惯：' + labels.join('、') : ''
 }
 
 /** 去掉空格和收尾套话，用来判断一句话是不是在复述卡片。 */
@@ -525,20 +497,11 @@ function turnsToMessages(turns, nextId) {
   return (turns || []).map((turn) => {
     const blocks = turn.role === 'assistant' ? sanitizeBlocks(turn.blocks) : []
     const present = turn.role === 'assistant' ? sanitizePresent(turn.present) : null
-    const habitApplied = turn.role === 'assistant' ? sanitizeHabitApplied(turn.habitApplied) : null
-    const habitAppliedText = habitAppliedToLine(habitApplied)
     const text = turn.text || ''
     let bubbleText = text
     if (turn.role === 'assistant') {
       bubbleText = bubbleTextWithoutBlockDup(text, blocks)
       if (present) bubbleText = bubbleTextWithoutPresentDup(bubbleText, present)
-      if (habitAppliedText) {
-        bubbleText = bubbleText
-          .split('\n')
-          .map((l) => l.trim())
-          .filter((l) => l && l !== habitAppliedText)
-          .join('\n')
-      }
     }
     const msg = {
       id: idFn(),
@@ -548,8 +511,6 @@ function turnsToMessages(turns, nextId) {
       bubbleText,
       blocks,
       present,
-      habitApplied,
-      habitAppliedText,
       askList: [],
       confirmList: [],
       hasChips: false,

@@ -22,9 +22,7 @@ import com.homestocker.modules.ai.agent.PresentResolver;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
-import com.homestocker.modules.ai.habits.FamilyHabit;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
-import com.homestocker.modules.ai.habits.HabitApplied;
 import com.homestocker.modules.ai.habits.HabitObserveService;
 import com.homestocker.modules.ai.app.AiKeyService.KeyRow;
 import com.homestocker.modules.ai.tools.ToolContext;
@@ -305,7 +303,7 @@ public class AiActService {
         }
       }
     } else {
-      if (present == null && rows.size() >= 2) {
+      if (present == null && rows.size() >= 1) {
         present = new LinkedHashMap<>();
         present.put("type", "table");
         present.put("source", "probe");

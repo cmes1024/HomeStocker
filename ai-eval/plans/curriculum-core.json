@@ -1,7 +1,7 @@
 {
   "id": "curriculum-core",
   "title": "课表核心轨",
-  "description": "C1–C8。断言接口或必须提问，不断言人话原文。实跑：HS_TOKEN=xxx node ai-eval/runner.mjs --plan curriculum-core --mode act",
+  "description": "C1–C10。断言接口或必须提问，不断言人话原文。实跑：HS_TOKEN=xxx node ai-eval/runner.mjs --plan curriculum-core --mode act",
   "cases": [
     "curriculum-c1-undo",
     "curriculum-c2-not-enough",
@@ -10,6 +10,8 @@
     "curriculum-c5-add-existing",
     "curriculum-c6-open-page",
     "curriculum-c7-knowledge",
-    "curriculum-c8-dissolve"
+    "curriculum-c8-dissolve",
+    "curriculum-c9-unit-clash",
+    "curriculum-c10-short-answer-place"
   ]
 }

@@ -158,31 +158,7 @@ function pickPresentation(data) {
     (data && data.blocks) || report.blocks || []
   )
   const present = normalizePresent(data && data.present)
-  const habitApplied = normalizeHabitApplied(
-    (data && data.habitApplied) || report.habitApplied
-  )
-  return { lead, blocks, report, present, habitApplied }
-}
-
-function normalizeHabitApplied(raw) {
-  const list = asArray(raw)
-    .map((row) => {
-      if (!row || typeof row !== 'object') return null
-      const label = String(row.label || '').trim()
-      const text = String(row.text || '').trim()
-      const slot = String(row.slot || '').trim()
-      if (!label && !slot) return null
-      return { slot, label: label || slot, text }
-    })
-    .filter(Boolean)
-  return list.length ? list : null
-}
-
-function habitAppliedLine(habitApplied) {
-  if (!habitApplied || !habitApplied.length) return ''
-  const labels = habitApplied.map((h) => h.label).filter(Boolean)
-  if (!labels.length) return ''
-  return '根据习惯：' + labels.join('、')
+  return { lead, blocks, report, present }
 }
 
 /** 服务端 present 白名单：table / stats / bars / pie */
@@ -197,6 +173,12 @@ function normalizePresent(raw) {
       .map((c) => String(c || '').trim())
       .filter(Boolean)
       .slice(0, 6)
+    const rawWidths = asArray(raw.widths)
+    const widths = columns.map((_, i) => {
+      const n = Math.round(Number(rawWidths[i]) || 0)
+      return Math.min(5, Math.max(1, n || 1))
+    })
+    const caption = String(raw.caption || '').trim()
     const rows = asArray(raw.rows)
       .map((row, ri) => {
         const cellsSrc = Array.isArray(row)
@@ -217,6 +199,8 @@ function normalizePresent(raw) {
       type: 'table',
       title,
       columns,
+      widths,
+      caption,
       rows,
       footer: String(raw.footer || '').trim(),
       colCount: columns.length
@@ -1098,10 +1082,6 @@ Page({
             .join('；')
       )
     }
-    const habitApplied = normalizeHabitApplied(
-      (data && data.habitApplied) || report.habitApplied
-    )
-    const habitLine = habitAppliedLine(habitApplied)
     const textParts = [
       buildResultText(lead, blocks, lines, !!(data && data.wrote)),
       presentToHistoryText(present)
@@ -1113,20 +1093,11 @@ Page({
       .map((l) => l.trim())
       .filter((l) => l && l !== copy.assist.doneEmpty && l !== '没有需要执行的操作')
       .join('\n')
-    if (habitLine && text.includes(habitLine)) {
-      text = text
-        .split('\n')
-        .filter((l) => l.trim() !== habitLine)
-        .join('\n')
-        .trim()
-    }
     this.replacePending(
       {
         text: text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty),
         blocks: present ? [] : blocks,
         present,
-        habitApplied,
-        habitAppliedText: habitLine,
         askList: [],
         confirmList: [],
         subscribeItems: [],
