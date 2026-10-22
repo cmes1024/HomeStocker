@@ -27,6 +27,7 @@
 ## 开跑
 
 ```bash
+node ai-eval/runner.mjs --plan release-smoke   # 上线必跑（16 题）
 node ai-eval/runner.mjs --plan core-smoke
 node ai-eval/runner.mjs --plan daily-use
 node ai-eval/runner.mjs --plan pitfalls
