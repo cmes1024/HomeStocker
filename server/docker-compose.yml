@@ -71,6 +71,8 @@ services:
       WECHAT_MOCK_ENABLED: ${WECHAT_MOCK_ENABLED:-false}
       # 可发体验码的 openid，逗号分隔；见 .env.example
       ADMIN_OPENIDS: ${ADMIN_OPENIDS:-${ADMIN_OPENID:-}}
+      # 后台数据看板令牌（/admin/api/**）。留空 = 看板接口一律拒绝。
+      ADMIN_DASHBOARD_TOKEN: ${ADMIN_DASHBOARD_TOKEN:-}
       EXPIRE_SUBSCRIBE_TMPL_ID: ${EXPIRE_SUBSCRIBE_TMPL_ID:-X4rf9mfFUtUksbg6hHM1fYS3Cu1nzMX5m9IWbktlj9g}
       # AI 话术用「可添加的微信号」（非 openid）
       CAPACITY_ADMIN_WECHAT: ${CAPACITY_ADMIN_WECHAT:-}
