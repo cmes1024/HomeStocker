@@ -16,7 +16,6 @@ import com.homestocker.modules.ai.agent.ActPrompt.ActModelException;
 import com.homestocker.modules.ai.agent.ActPrompt.AskResult;
 import com.homestocker.modules.ai.agent.ActPrompt.ModelOpts;
 import com.homestocker.modules.ai.agent.ActRefs;
-import com.homestocker.modules.ai.agent.Guardrails;
 import com.homestocker.modules.ai.agent.HabitReply;
 import com.homestocker.modules.ai.agent.ItemsProbe;
 import com.homestocker.modules.ai.agent.PresentResolver;
@@ -382,132 +381,6 @@ public class AiActService {
     return ids;
   }
 
-  private static boolean isIdlePlan(ActPlan plan) {
-    if (plan == null) {
-      return true;
-    }
-    if (!plan.ask().isEmpty()) {
-      return false;
-    }
-    if (plan.probe() != null) {
-      return false;
-    }
-    if (!plan.calls().isEmpty()) {
-      return false;
-    }
-    if (plan.present() != null && !plan.present().isEmpty()) {
-      return false;
-    }
-    return plan.reply().isEmpty();
-  }
-
-  /** 提问气泡里带上本轮查库事实。模型已经说出查到或没查到时不重复。 */
-  private static String withProbeFact(
-      String reply, Map<String, Object> probe, List<Map<String, Object>> rows) {
-    String fact = replyOrProbeFact("", probe, rows);
-    String spoken = reply == null ? "" : reply.trim();
-    if (fact.isEmpty()) {
-      return spoken;
-    }
-    if (spoken.isEmpty()) {
-      return fact;
-    }
-    if (spoken.contains("没查到") || spoken.contains("查到")) {
-      return spoken;
-    }
-    return fact + "\n" + spoken;
-  }
-
-  /**
-   * 模型查完仍只提问、却没写 reply 时，用本轮查库事实补一句。不读用户原话。
-   */
-  private static String replyOrProbeFact(
-      String reply, Map<String, Object> probe, List<Map<String, Object>> rows) {
-    if (reply != null && !reply.isBlank()) {
-      return reply;
-    }
-    if (rows != null && !rows.isEmpty()) {
-      StringBuilder sb = new StringBuilder("查到了：");
-      int n = 0;
-      for (Map<String, Object> row : rows) {
-        String label = PlanParser.probeOptionLabel(row);
-        if (label.isEmpty()) {
-          continue;
-        }
-        if (n > 0) {
-          sb.append('，');
-        }
-        sb.append(label);
-        n++;
-        if (n >= 5) {
-          break;
-        }
-      }
-      return n == 0 ? "" : sb.toString();
-    }
-    if (probe == null) {
-      return "";
-    }
-    String name = str(probe.get("name")).trim();
-    if (name.isEmpty() && probe.get("names") instanceof List<?> names) {
-      StringBuilder sb = new StringBuilder();
-      for (Object item : names) {
-        String one = str(item).trim();
-        if (one.isEmpty()) {
-          continue;
-        }
-        if (sb.length() > 0) {
-          sb.append('、');
-        }
-        sb.append(one);
-      }
-      name = sb.toString();
-    }
-    if (!name.isEmpty()) {
-      return "家里没查到" + name + "。";
-    }
-    return "家里没查到匹配的物资。";
-  }
-
-  /** 纯提问、且本轮还没有任何库存事实。模型仍自己决定查什么。 */
-  private static boolean askBeforeAnyInventoryFacts(
-      ActPlan plan, List<Map<String, Object>> turnRows) {
-    if (plan == null || plan.probe() != null || !plan.calls().isEmpty() || plan.ask().isEmpty()) {
-      return false;
-    }
-    return turnRows == null || turnRows.isEmpty();
-  }
-
-  private static boolean claimsInventoryAbsenceWithoutFacts(
-      ActPlan plan, List<Map<String, Object>> turnRows) {
-    if (plan == null) {
-      return false;
-    }
-    if (turnRows != null && !turnRows.isEmpty()) {
-      return false;
-    }
-    if (plan.probe() != null || isInventoryReadOnlyCalls(plan.calls())) {
-      return false;
-    }
-    String blob = str(plan.reply());
-    for (Map<String, Object> ask : plan.ask()) {
-      if (ask != null) {
-        blob = blob + "\n" + str(ask.get("question"));
-      }
-    }
-    if (blob.isBlank()) {
-      return false;
-    }
-    return blob.contains("没找到")
-        || blob.contains("没有找到")
-        || blob.contains("未找到")
-        || blob.contains("查不到")
-        || blob.contains("台账里没")
-        || blob.contains("家里没查到")
-        || blob.contains("家里没有")
-        || blob.contains("库里没有");
-  }
-
   private static boolean isInventoryReadOnlyCalls(List<Map<String, Object>> calls) {
     if (calls == null || calls.isEmpty()) {
       return false;
@@ -523,72 +396,6 @@ public class AiActService {
                   || "habit.list".equals(use)
                   || "habit.observe".equals(use);
             });
-  }
-
-  /**
-   * 从 item.stats 结构化 buckets 生成 present（不编汇报散文）。优先带分桶的 space/tag；否则用 total。
-   */
-  @SuppressWarnings("unchecked")
-  private static Map<String, Object> presentFromStatsReport(Map<String, Object> report) {
-    if (report == null) {
-      return null;
-    }
-    Object exec = report.get("executed");
-    if (!(exec instanceof List<?> executed) || executed.isEmpty()) {
-      return null;
-    }
-    Map<String, Object> best = null;
-    for (Object rowObj : executed) {
-      if (!(rowObj instanceof Map<?, ?> row)) {
-        continue;
-      }
-      if (!"item.stats".equals(str(row.get("use")).trim())) {
-        continue;
-      }
-      Object statsObj = row.get("stats");
-      if (!(statsObj instanceof Map<?, ?>)) {
-        continue;
-      }
-      Map<String, Object> stats = (Map<String, Object>) statsObj;
-      String groupBy = str(stats.get("groupBy")).trim().toLowerCase();
-      List<Map<String, Object>> buckets =
-          stats.get("buckets") instanceof List<?> b
-              ? (List<Map<String, Object>>) b
-              : List.of();
-      if (buckets.isEmpty()) {
-        continue;
-      }
-      Map<String, Object> candidate = new LinkedHashMap<>();
-      candidate.put("type", "stats");
-      candidate.put("groupBy", groupBy.isEmpty() ? "total" : groupBy);
-      if ("space".equals(groupBy)) {
-        candidate.put("title", "各空间物资行数");
-      } else if ("tag".equals(groupBy)) {
-        candidate.put("title", "各标签物资行数");
-      } else {
-        candidate.put("title", "物资行数");
-      }
-      List<Map<String, Object>> items = new ArrayList<>();
-      for (Map<String, Object> bucket : buckets) {
-        if (bucket == null) {
-          continue;
-        }
-        String label = str(bucket.get("label")).trim();
-        if (label.isEmpty()) {
-          continue;
-        }
-        items.add(Map.of("label", label, "value", bucket.get("value")));
-      }
-      if (items.isEmpty()) {
-        continue;
-      }
-      candidate.put("items", items);
-      if ("space".equals(groupBy) || "tag".equals(groupBy)) {
-        return candidate;
-      }
-      best = candidate;
-    }
-    return best;
   }
 
   /** 查询回执里是否已有可给家人看的库存列表卡（不含 item.stats 机器串） */
@@ -621,43 +428,6 @@ public class AiActService {
     return false;
   }
 
-  /** Prefer tool summaries (aggregates / habits) plus P* inventory when both exist. */
-  private static String buildReadOnlyResultNote(
-      Map<String, Object> report, List<Map<String, Object>> invRows) {
-    List<String> summaries = new ArrayList<>();
-    Object exec = report != null ? report.get("executed") : null;
-    if (exec instanceof List<?> executed) {
-      for (Object rowObj : executed) {
-        if (!(rowObj instanceof Map<?, ?> row)) {
-          continue;
-        }
-        if ("habit.list".equals(str(row.get("use")).trim())
-            && row.get("habits") instanceof List<?> habitRows) {
-          summaries.add(formatHabitFactsForModel(habitRows));
-          continue;
-        }
-        String summary = str(row.get("summary")).trim();
-        if (!summary.isEmpty()) {
-          summaries.add(summary);
-        }
-      }
-    }
-    boolean hasInv = invRows != null && !invRows.isEmpty();
-    if (!summaries.isEmpty() && hasInv) {
-      return "查询结果：\n"
-          + String.join("\n", summaries)
-          + "\n短号：\n"
-          + ActPrompt.renderProbeRows(invRows);
-    }
-    if (hasInv) {
-      return "查询结果已写入本轮短号：\n" + ActPrompt.renderProbeRows(invRows);
-    }
-    if (!summaries.isEmpty()) {
-      return "查询结果：\n" + String.join("\n", summaries);
-    }
-    return "查询结果：无匹配";
-  }
-
   /** habit.list 结构化事实 → 重编排注；由模型决定 reply/present，代码不写家人气泡。 */
   private static String formatHabitFactsForModel(List<?> habitRows) {
     if (habitRows == null || habitRows.isEmpty()) {
@@ -679,27 +449,6 @@ public class AiActService {
       }
     }
     return sb.toString();
-  }
-
-  private static ActPlan ensurePresentHasFacts(
-      ActPlan plan, List<Map<String, Object>> turnRows) {
-    if (plan == null || plan.present() == null || plan.present().isEmpty()) {
-      return plan;
-    }
-    if (plan.probe() != null || !plan.ask().isEmpty()) {
-      return plan;
-    }
-    if (turnRows != null && !turnRows.isEmpty()) {
-      return plan;
-    }
-    Map<String, Object> present = new LinkedHashMap<>(plan.present());
-    if (!presentNeedsFactSource(present)) {
-      return plan;
-    }
-    if (str(present.get("source")).isBlank()) {
-      present.put("source", "probe");
-    }
-    return new ActPlan(plan.ask(), Map.of("listAll", true), plan.calls(), plan.reply(), present);
   }
 
   private static boolean presentNeedsFactSource(Map<String, Object> present) {
@@ -727,35 +476,6 @@ public class AiActService {
 
   private static String str(Object v) {
     return v == null ? "" : String.valueOf(v);
-  }
-
-  private static ActPlan ensureProbeForUnresolvedWrites(
-      ActPlan plan, Map<String, Map<String, Object>> refs) {
-    if (plan.probe() != null || !plan.ask().isEmpty()) {
-      return plan;
-    }
-    List<Map<String, Object>> calls = new ArrayList<>(plan.calls());
-    for (Map<String, Object> call : calls) {
-      if (call == null) {
-        continue;
-      }
-      String use = String.valueOf(call.get("use")).trim();
-      if ("item.update".equals(use) || "item.remove".equals(use)) {
-        if (ActRefs.lookupRef(call, refs) != null) {
-          continue;
-        }
-        String name = String.valueOf(call.get("name")).trim();
-        Map<String, Object> probe = new LinkedHashMap<>();
-        if (!name.isEmpty()) {
-          probe.put("name", name);
-          probe.put("spaceName", String.valueOf(call.get("fromSpaceName")).trim());
-          probe.put("locationName", String.valueOf(call.get("fromLocationName")).trim());
-          return new ActPlan(plan.ask(), probe, plan.calls(), plan.reply(), plan.present());
-        }
-        return new ActPlan(plan.ask(), Map.of("listAll", true), plan.calls(), plan.reply(), plan.present());
-      }
-    }
-    return plan;
   }
 
   /**
@@ -800,121 +520,6 @@ public class AiActService {
       probe.put("names", names);
     }
     return new ActPlan(plan.ask(), probe, plan.calls(), plan.reply(), plan.present());
-  }
-
-  private static void bindUnresolvedWritesToProbe(
-      ActPlan plan, Map<String, Map<String, Object>> refs, List<Map<String, Object>> probedRows) {
-    Map<String, Map<String, Object>> pool = new LinkedHashMap<>();
-    if (refs != null) {
-      pool.putAll(refs);
-    }
-    if (probedRows != null) {
-      for (Map<String, Object> row : probedRows) {
-        if (row == null) {
-          continue;
-        }
-        String ref = str(row.get("ref")).trim();
-        if (!ref.isEmpty()) {
-          pool.putIfAbsent(ref, row);
-        }
-        String id = str(row.get("itemId")).trim();
-        if (!id.isEmpty()) {
-          pool.putIfAbsent("ID:" + id, row);
-        }
-      }
-    }
-    for (Map<String, Object> call : plan.calls()) {
-      if (call == null) {
-        continue;
-      }
-      String use = String.valueOf(call.get("use")).trim();
-      if (!"item.update".equals(use) && !"item.remove".equals(use)) {
-        continue;
-      }
-      Map<String, Object> hit = ActRefs.lookupRef(call, pool);
-      if (hit == null && str(call.get("name")).isBlank() && probedRows != null && probedRows.size() == 1) {
-        hit = probedRows.get(0);
-      }
-      if (hit == null) {
-        continue;
-      }
-      if (str(call.get("ref")).isBlank() && hit.get("ref") != null) {
-        call.put("ref", hit.get("ref"));
-      }
-      if (!call.containsKey("name") || str(call.get("name")).isBlank()) {
-        call.put("name", hit.get("name"));
-      }
-      if (refs != null && hit.get("ref") != null && !str(hit.get("ref")).isBlank()) {
-        refs.putIfAbsent(str(hit.get("ref")), hit);
-      }
-    }
-  }
-
-  private static boolean hasUnresolvedItemWrites(
-      ActPlan plan, Map<String, Map<String, Object>> refs) {
-    List<Map<String, Object>> bound = ActRefs.bindCallIds(plan.calls(), refs);
-    for (Map<String, Object> c : bound) {
-      if (c == null) {
-        continue;
-      }
-      String use = String.valueOf(c.get("use")).trim();
-      if ("item.update".equals(use) || "item.remove".equals(use)) {
-        if (ActRefs.lookupRef(c, refs) == null) {
-          return true;
-        }
-      }
-      if ("item.merge".equals(use) || "item.removeMany".equals(use)) {
-        @SuppressWarnings("unchecked")
-        List<String> ids = (List<String>) c.get("itemIds");
-        int need = "item.merge".equals(use) ? 2 : 1;
-        if (ids == null || ids.stream().filter(x -> x != null && !x.isBlank()).count() < need) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  @SuppressWarnings("unchecked")
-  private static List<Map<String, Object>> ingestInventoryToProbeRefs(
-      Map<String, Object> report, Map<String, Object> tree, Map<String, Map<String, Object>> refs) {
-    List<Map<String, Object>> rows = new ArrayList<>();
-    java.util.Set<String> seen = new java.util.LinkedHashSet<>();
-    int n = 0;
-    for (String k : refs.keySet()) {
-      if (k.matches("(?i)^P\\d+$")) {
-        n = Math.max(n, Integer.parseInt(k.replaceAll("\\D", "")));
-      }
-    }
-    Object exec = report.get("executed");
-    if (!(exec instanceof List<?> executed)) {
-      return rows;
-    }
-    Map<String, Object> useTree =
-        report.get("tree") instanceof Map<?, ?> t ? (Map<String, Object>) t : tree;
-    for (Object rowObj : executed) {
-      if (!(rowObj instanceof Map<?, ?> row) || !(row.get("inventory") instanceof List<?> inv)) {
-        continue;
-      }
-      for (Object itemObj : inv) {
-        if (!(itemObj instanceof Map<?, ?> item)) {
-          continue;
-        }
-        String id = String.valueOf(((Map<?, ?>) item).get("_id"));
-        if (id.isBlank()) {
-          id = String.valueOf(((Map<?, ?>) item).get("itemId"));
-        }
-        if (id.isBlank() || !seen.add(id)) {
-          continue;
-        }
-        n++;
-        Map<String, Object> compact =
-            ActRefs.compactItem((Map<String, Object>) item, "P" + n, useTree);
-        refs.put(String.valueOf(compact.get("ref")), compact);
-        rows.add(compact);
-      }
-    }
-    return rows;
   }
 
   private Map<String, Object> buildAskResponse(
@@ -1313,10 +918,6 @@ public class AiActService {
     return payload;
   }
 
-  private Map<String, Object> attachDoneReply(String reply, Map<String, Object> focus) {
-    return attachDoneReply(reply, focus, null, List.of(), null);
-  }
-
   private Map<String, Object> attachDoneReply(
       String reply,
       Map<String, Object> focus,
@@ -1527,67 +1128,6 @@ public class AiActService {
     return Map.of("ref", focus.get("ref"), "name", focus.get("name"));
   }
 
-  private static Map<String, Object> mergeCreateReports(Map<String, Object> first, Map<String, Object> second) {
-    int offset = stepOffset(first);
-    List<Map<String, Object>> executed = copyMapList(first.get("executed"));
-    List<Map<String, Object>> failed = copyMapList(first.get("failed"));
-    List<Map<String, Object>> possibleDuplicates = copyMapList(first.get("possibleDuplicates"));
-    for (Map<String, Object> row : copyMapList(second.get("executed"))) {
-      Map<String, Object> copy = new LinkedHashMap<>(row);
-      int step = row.get("step") instanceof Number n ? n.intValue() : 0;
-      copy.put("step", step + offset);
-      executed.add(copy);
-    }
-    for (Map<String, Object> row : copyMapList(second.get("failed"))) {
-      Map<String, Object> copy = new LinkedHashMap<>(row);
-      int step = row.get("step") instanceof Number n ? n.intValue() : 0;
-      copy.put("step", step + offset);
-      failed.add(copy);
-    }
-    possibleDuplicates.addAll(copyMapList(second.get("possibleDuplicates")));
-    Map<String, Object> tree =
-        second.get("tree") instanceof Map<?, ?> t
-            ? (Map<String, Object>) t
-            : (first.get("tree") instanceof Map<?, ?> f ? (Map<String, Object>) f : Map.of());
-    Presentation.PresentationView presentation =
-        Presentation.buildExecutionPresentation(executed, failed, possibleDuplicates, tree);
-    List<Map<String, Object>> touched = new ArrayList<>();
-    touched.addAll(copyMapList(first.get("touched")));
-    touched.addAll(copyMapList(second.get("touched")));
-    List<Map<String, Object>> navLinks = new ArrayList<>();
-    navLinks.addAll(copyMapList(first.get("navLinks")));
-    navLinks.addAll(copyMapList(second.get("navLinks")));
-    Map<String, Object> merged = new LinkedHashMap<>();
-    merged.put("executed", executed);
-    merged.put("failed", failed);
-    merged.put("pending", second.getOrDefault("pending", List.of()));
-    merged.put("createClassFailed", Boolean.TRUE.equals(second.get("createClassFailed")));
-    merged.put("possibleDuplicates", possibleDuplicates);
-    List<String> lines = presentation.lines();
-    merged.put("lines", lines);
-    merged.put(
-        "lead",
-        !presentation.lead().isEmpty()
-            ? presentation.lead()
-            : (first.get("lead") != null ? first.get("lead") : ""));
-    merged.put("blocks", presentation.blocks());
-    merged.put("touched", touched);
-    merged.put(
-        "wrote", Boolean.TRUE.equals(first.get("wrote")) || Boolean.TRUE.equals(second.get("wrote")));
-    merged.put(
-        "subscribeUi",
-        Boolean.TRUE.equals(second.get("subscribeUi")) || Boolean.TRUE.equals(first.get("subscribeUi")));
-    merged.put(
-        "subscribeItems",
-        second.get("subscribeItems") != null
-            ? second.get("subscribeItems")
-            : first.getOrDefault("subscribeItems", List.of()));
-    merged.put("navLinks", navLinks);
-    merged.put("tree", tree);
-    merged.put("replanned", true);
-    return merged;
-  }
-
   private static int stepOffset(Map<String, Object> report) {
     int max = 0;
     for (String key : List.of("executed", "failed")) {
@@ -1615,111 +1155,4 @@ public class AiActService {
     return out;
   }
 
-  private static List<Map<String, Object>> concatCalls(
-      List<Map<String, Object>> a, List<Map<String, Object>> b) {
-    List<Map<String, Object>> out = new ArrayList<>(a);
-    out.addAll(b);
-    return out;
-  }
-
-  private static boolean isKnowledgeOnlyReport(Map<String, Object> report) {
-    if (Boolean.TRUE.equals(report.get("wrote")) || Boolean.TRUE.equals(report.get("subscribeUi"))) {
-      return false;
-    }
-    if (!(report.get("executed") instanceof List<?> exec)) {
-      return false;
-    }
-    boolean hasKnowledge =
-        exec.stream()
-            .anyMatch(
-                r ->
-                    r instanceof Map<?, ?> m
-                        && "knowledge.get".equals(m.get("use"))
-                        && m.get("knowledge") instanceof Map<?, ?> k
-                        && k.get("body") != null);
-    return hasKnowledge;
-  }
-
-  private static boolean isPageDocOnlyReport(Map<String, Object> report) {
-    if (Boolean.TRUE.equals(report.get("wrote")) || Boolean.TRUE.equals(report.get("subscribeUi"))) {
-      return false;
-    }
-    // 已带跳转链时不再当「仅说明」跟进，避免再次问模型
-    if (report.get("navLinks") instanceof List<?> n && !n.isEmpty()) {
-      return false;
-    }
-    if (!(report.get("executed") instanceof List<?> exec)) {
-      return false;
-    }
-    return exec.stream()
-        .anyMatch(
-            r ->
-                r instanceof Map<?, ?> m
-                    && "page.get".equals(m.get("use"))
-                    && m.get("pageDoc") instanceof Map<?, ?> p
-                    && p.get("body") != null);
-  }
-
-  private static String collectKnowledgeBodies(Map<String, Object> report) {
-    StringBuilder sb = new StringBuilder();
-    if (report.get("executed") instanceof List<?> exec) {
-      for (Object o : exec) {
-        if (o instanceof Map<?, ?> row && row.get("knowledge") instanceof Map<?, ?> k) {
-          String body = String.valueOf(k.get("body")).trim();
-          if (!body.isEmpty()) {
-            if (sb.length() > 0) {
-              sb.append("\n\n");
-            }
-            String title = String.valueOf(k.get("title")).trim();
-            sb.append(title.isEmpty() ? body : title + "\n" + body);
-          }
-        }
-      }
-    }
-    return sb.toString();
-  }
-
-  private static String collectPageBodies(Map<String, Object> report) {
-    StringBuilder sb = new StringBuilder();
-    if (report.get("executed") instanceof List<?> exec) {
-      for (Object o : exec) {
-        if (o instanceof Map<?, ?> row && row.get("pageDoc") instanceof Map<?, ?> p) {
-          if ("navLinks".equals(row.get("ui"))) {
-            continue;
-          }
-          String body = String.valueOf(p.get("body")).trim();
-          if (!body.isEmpty()) {
-            if (sb.length() > 0) {
-              sb.append("\n\n");
-            }
-            String kind = "index".equals(p.get("kind")) ? "页面目录" : "页面说明";
-            sb.append(kind).append("\n").append(body);
-          }
-        }
-      }
-    }
-    return sb.toString();
-  }
-
-  private static String knowledgeFallbackText(Map<String, Object> report) {
-    if (report.get("executed") instanceof List<?> exec) {
-      for (Object o : exec) {
-        if (o instanceof Map<?, ?> r && "knowledge.get".equals(r.get("use"))) {
-          return String.valueOf(r.get("summary")).trim();
-        }
-      }
-    }
-    return "";
-  }
-
-  private static String pageFallbackText(Map<String, Object> report) {
-    if (report.get("executed") instanceof List<?> exec) {
-      for (Object o : exec) {
-        if (o instanceof Map<?, ?> r && "page.get".equals(r.get("use")) && r.get("pageDoc") != null) {
-          return String.valueOf(r.get("summary")).trim();
-        }
-      }
-    }
-    return "";
-  }
 }

@@ -4,14 +4,16 @@
 
 **通过线**：编译 + 全量单测通过；`release-smoke` / `daily-use` / `day-flow` 三份 run 落盘并记录通过率。
 
-- [ ] 0.1 复核 `Guardrails` 全类无调用点（`grep -rn "Guardrails\." server/src`），确认后删除文件
-- [ ] 0.2 复核 `AiActService` 21 个无调用点方法（`isIdlePlan` … `pageFallbackText`）后逐个删除
-- [ ] 0.3 删除后全量编译 + `mvn -q test` 通过
-- [ ] 0.4 起容器（`docker compose up -d`），确认 `/api/health` 正常
-- [ ] 0.5 跑 `node ai-eval/runner.mjs --plan release-smoke --mode act`，结果落 `ai-eval/runs/<ts>-baseline/`
-- [ ] 0.6 跑 `daily-use` 与 `day-flow`，同样落盘
-- [ ] 0.7 在 `ai-eval/runs/<ts>-baseline/summary.md` 顶部写「基线：通过 x/y」，并提交
-- [ ] 0.8 新增 `ai-eval/bank/eng/` 三条回归题骨架（保鲜膜推断落点 / 同名确认 / 多轮短号），标 `pending` 待后续批次启用
+- [x] 0.1 复核 `Guardrails` 全类无调用点（`grep -rn "Guardrails\." server/src`），确认后删除文件
+- [x] 0.2 复核 `AiActService` 21 个无调用点方法（`isIdlePlan` … `pageFallbackText`）后逐个删除
+- [x] 0.3 删除后全量编译 + `mvn -q test` 通过
+- [x] 0.4 起容器（`docker compose up -d`），确认 `/api/health` 正常
+- [x] 0.5 跑 `node ai-eval/runner.mjs --plan release-smoke --mode act`，结果落 `ai-eval/runs/<ts>-baseline/`
+- [x] 0.6 跑 `daily-use` 与 `day-flow`，同样落盘
+- [x] 0.7 在 `ai-eval/runs/<ts>-baseline/summary.md` 顶部写「基线：通过 x/y」，并提交
+- [x] 0.8 新增 `ai-eval/bank/eng/` 三条回归题骨架（保鲜膜推断落点 / 同名确认 / 多轮短号），标 `pending` 待后续批次启用
+
+**B0 结果（2026-10-24）：** `release-smoke 15/16` · `daily-use 32/35` · `day-flow 2/3`；见 `ai-eval/runs/20261024T110259Z-baseline/summary.md`
 
 ## 1. B1 结构化错误回执
 
