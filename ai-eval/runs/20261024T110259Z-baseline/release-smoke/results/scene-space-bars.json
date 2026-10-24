@@ -1,0 +1,288 @@
+{
+  "id": "scene-space-bars",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:03:38.462Z",
+  "mode": "act",
+  "outcome": "按空间给出件数并画出柱状图，不改账",
+  "actual": {
+    "dialogue": {
+      "text": "每个空间有多少件，画成柱状图",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "groupBy": "space",
+          "use": "item.stats"
+        }
+      ],
+      "blocks": [],
+      "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+      "report": {
+        "executed": [
+          {
+            "summary": "item.stats totalItems=18 groupBy=space\n厨房=11\n客厅=4\n卫生间=2\n宝宝房=1",
+            "step": 1,
+            "use": "item.stats"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "全库共 18 条记录，厨房最多，仓库目前没有物资。"
+        ],
+        "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "bars",
+        "title": "各空间物资件数",
+        "items": [
+          {
+            "label": "厨房",
+            "value": 11,
+            "pct": 100,
+            "share": 61,
+            "color": "#C4A484"
+          },
+          {
+            "label": "客厅",
+            "value": 4,
+            "pct": 36,
+            "share": 22,
+            "color": "#7A9E7E"
+          },
+          {
+            "label": "卫生间",
+            "value": 2,
+            "pct": 18,
+            "share": 11,
+            "color": "#6B8CAE"
+          },
+          {
+            "label": "宝宝房",
+            "value": 1,
+            "pct": 9,
+            "share": 6,
+            "color": "#C48B7A"
+          }
+        ]
+      }
+    },
+    "tools": [
+      "item.stats",
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "groupBy": "space",
+            "use": "item.stats"
+          }
+        ],
+        "blocks": [],
+        "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+        "report": {
+          "executed": [
+            {
+              "summary": "item.stats totalItems=18 groupBy=space\n厨房=11\n客厅=4\n卫生间=2\n宝宝房=1",
+              "step": 1,
+              "use": "item.stats"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "全库共 18 条记录，厨房最多，仓库目前没有物资。"
+          ],
+          "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "bars",
+          "title": "各空间物资件数",
+          "items": [
+            {
+              "label": "厨房",
+              "value": 11,
+              "pct": 100,
+              "share": 61,
+              "color": "#C4A484"
+            },
+            {
+              "label": "客厅",
+              "value": 4,
+              "pct": 36,
+              "share": 22,
+              "color": "#7A9E7E"
+            },
+            {
+              "label": "卫生间",
+              "value": 2,
+              "pct": 18,
+              "share": 11,
+              "color": "#6B8CAE"
+            },
+            {
+              "label": "宝宝房",
+              "value": 1,
+              "pct": 9,
+              "share": 6,
+              "color": "#C48B7A"
+            }
+          ]
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "groupBy": "space",
+                "use": "item.stats"
+              }
+            ],
+            "blocks": [],
+            "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "item.stats totalItems=18 groupBy=space\n厨房=11\n客厅=4\n卫生间=2\n宝宝房=1",
+                  "step": 1,
+                  "use": "item.stats"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "全库共 18 条记录，厨房最多，仓库目前没有物资。"
+              ],
+              "lead": "全库共 18 条记录，厨房最多，仓库目前没有物资。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "bars",
+              "title": "各空间物资件数",
+              "items": [
+                {
+                  "label": "厨房",
+                  "value": 11,
+                  "pct": 100,
+                  "share": 61,
+                  "color": "#C4A484"
+                },
+                {
+                  "label": "客厅",
+                  "value": 4,
+                  "pct": 36,
+                  "share": 22,
+                  "color": "#7A9E7E"
+                },
+                {
+                  "label": "卫生间",
+                  "value": 2,
+                  "pct": 18,
+                  "share": 11,
+                  "color": "#6B8CAE"
+                },
+                {
+                  "label": "宝宝房",
+                  "value": 1,
+                  "pct": 9,
+                  "share": 6,
+                  "color": "#C48B7A"
+                }
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.stats|item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustPresent:bars",
+      "ok": true,
+      "detail": "type=bars"
+    }
+  ],
+  "notes": ""
+}

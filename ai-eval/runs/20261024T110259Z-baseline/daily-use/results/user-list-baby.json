@@ -1,0 +1,258 @@
+{
+  "id": "user-list-baby",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:05:41.752Z",
+  "mode": "act",
+  "outcome": "列出宝宝房/宝宝相关物资",
+  "actual": {
+    "dialogue": {
+      "text": "宝宝的东西列一下",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "tagName": "宝宝",
+          "use": "item.search"
+        },
+        {
+          "spaceName": "宝宝房",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+      "report": {
+        "executed": [
+          {
+            "summary": "标签「宝宝」：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。"
+        ],
+        "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "宝宝的东西",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "纸尿裤",
+            "1包",
+            "宝宝房"
+          ]
+        ],
+        "caption": "挂宝宝标签的和放在宝宝房的都是这一件。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "tagName": "宝宝",
+            "use": "item.search"
+          },
+          {
+            "spaceName": "宝宝房",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+        "report": {
+          "executed": [
+            {
+              "summary": "标签「宝宝」：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。"
+          ],
+          "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "宝宝的东西",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "纸尿裤",
+              "1包",
+              "宝宝房"
+            ]
+          ],
+          "caption": "挂宝宝标签的和放在宝宝房的都是这一件。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "tagName": "宝宝",
+                "use": "item.search"
+              },
+              {
+                "spaceName": "宝宝房",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "标签「宝宝」：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。"
+              ],
+              "lead": "宝宝的东西就这一件，纸尿裤 1 包，放在宝宝房。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "宝宝的东西",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "纸尿裤",
+                  "1包",
+                  "宝宝房"
+                ]
+              ],
+              "caption": "挂宝宝标签的和放在宝宝房的都是这一件。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    }
+  ],
+  "notes": ""
+}

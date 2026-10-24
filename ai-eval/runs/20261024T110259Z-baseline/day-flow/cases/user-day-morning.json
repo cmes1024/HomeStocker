@@ -1,0 +1,32 @@
+{
+  "id": "user-day-morning",
+  "perspective": "user",
+  "title": "一天·早上酸奶",
+  "tags": [
+    "day"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "酸奶还有吗"
+    },
+    {
+      "role": "assistant",
+      "text": "有，冰箱里 2 盒，明天到期"
+    },
+    {
+      "role": "user",
+      "text": "快过期的那两盒提我一下"
+    }
+  ],
+  "expected": {
+    "outcome": "把快到期的酸奶说清楚提醒到人",
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.search"
+    ]
+  }
+}

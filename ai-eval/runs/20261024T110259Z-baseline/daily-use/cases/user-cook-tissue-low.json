@@ -1,0 +1,16 @@
+{
+  "id": "user-cook-tissue-low",
+  "perspective": "user",
+  "title": "打扫：纸巾不多了吧",
+  "tags": [
+    "query"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "纸巾不多了吧",
+  "expected": {
+    "outcome": "看过数量再说多不多，别随口附和「嗯不多了」",
+    "mustProbe": true
+  }
+}

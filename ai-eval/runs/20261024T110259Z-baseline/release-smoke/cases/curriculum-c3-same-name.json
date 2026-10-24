@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c3-same-name",
+  "perspective": "product",
+  "title": "C3 同名歧义",
+  "tags": ["curriculum", "ask"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "删掉牛奶",
+  "expected": {
+    "outcome": "冰箱和常温都有牛奶时先问是哪一条，不默默删",
+    "mustAsk": true,
+    "forbiddenTools": ["item.remove", "item.removeMany", "item.update"]
+  }
+}

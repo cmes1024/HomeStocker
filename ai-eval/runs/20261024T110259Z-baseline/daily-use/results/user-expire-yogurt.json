@@ -1,0 +1,231 @@
+{
+  "id": "user-expire-yogurt",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:55.159Z",
+  "mode": "act",
+  "outcome": "结合过期日说能不能喝/快不行了",
+  "actual": {
+    "dialogue": {
+      "text": "酸奶还能喝吗",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "酸奶",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。"
+        ],
+        "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "酸奶",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ]
+        ],
+        "caption": "过期日是明天，今天还在期内。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "酸奶",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。"
+          ],
+          "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "酸奶",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ]
+          ],
+          "caption": "过期日是明天，今天还在期内。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "酸奶",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。"
+              ],
+              "lead": "就这一份，过期日是明天，今天还在期内，尽快喝掉吧。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "酸奶",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ]
+              ],
+              "caption": "过期日是明天，今天还在期内。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

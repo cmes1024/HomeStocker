@@ -1,0 +1,231 @@
+{
+  "id": "user-list-medicine",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:05:46.048Z",
+  "mode": "act",
+  "outcome": "列出西药相关还剩什么",
+  "actual": {
+    "dialogue": {
+      "text": "西药还剩什么",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "tagName": "西药",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "挂西药标签的就这一件，在卫生间。",
+      "report": {
+        "executed": [
+          {
+            "summary": "标签「西药」：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "挂西药标签的就这一件，在卫生间。"
+        ],
+        "lead": "挂西药标签的就这一件，在卫生间。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "西药还剩这些",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "布洛芬",
+            "1盒",
+            "卫生间"
+          ]
+        ],
+        "caption": "挂西药标签的就这一件，放在卫生间。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "tagName": "西药",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "挂西药标签的就这一件，在卫生间。",
+        "report": {
+          "executed": [
+            {
+              "summary": "标签「西药」：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "挂西药标签的就这一件，在卫生间。"
+          ],
+          "lead": "挂西药标签的就这一件，在卫生间。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "西药还剩这些",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "布洛芬",
+              "1盒",
+              "卫生间"
+            ]
+          ],
+          "caption": "挂西药标签的就这一件，放在卫生间。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "tagName": "西药",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "挂西药标签的就这一件，在卫生间。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "标签「西药」：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "挂西药标签的就这一件，在卫生间。"
+              ],
+              "lead": "挂西药标签的就这一件，在卫生间。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "西药还剩这些",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "布洛芬",
+                  "1盒",
+                  "卫生间"
+                ]
+              ],
+              "caption": "挂西药标签的就这一件，放在卫生间。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,270 @@
+{
+  "id": "user-use-chips-gone",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:05:22.112Z",
+  "mode": "act",
+  "outcome": "去掉薯片这条，要确认；别留 0 袋在账上",
+  "actual": {
+    "dialogue": {
+      "text": "薯片没了去掉",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "use": "item.remove",
+          "itemId": "ae3ca348-3281-4b0d-8345-b57016ac3a2d",
+          "name": "薯片"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "已删掉 薯片 2袋（客厅 / 零食柜）",
+            "step": 1,
+            "use": "item.remove"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已删掉 薯片 2袋（客厅 / 零食柜）"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "薯片",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.remove"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "use": "item.remove",
+            "itemId": "ae3ca348-3281-4b0d-8345-b57016ac3a2d",
+            "name": "薯片"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "已删掉 薯片 2袋（客厅 / 零食柜）",
+              "step": 1,
+              "use": "item.remove"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已删掉 薯片 2袋（客厅 / 零食柜）"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "薯片",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "confirm",
+            "ask": [],
+            "confirm": [
+              {
+                "use": "item.remove",
+                "ref": "P1",
+                "itemId": "ae3ca348-3281-4b0d-8345-b57016ac3a2d",
+                "name": "薯片",
+                "label": "删除 薯片"
+              }
+            ],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "ae3ca348-3281-4b0d-8345-b57016ac3a2d",
+                "name": "薯片"
+              }
+            ],
+            "draft": {
+              "name": "薯片",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "planId": "1275aeecbcec4feb86eaad531bdf70a7"
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "ae3ca348-3281-4b0d-8345-b57016ac3a2d",
+                "name": "薯片"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                  "step": 1,
+                  "use": "item.remove"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已删掉 薯片 2袋（客厅 / 零食柜）"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "已删掉 薯片 2袋（客厅 / 零食柜）",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "薯片",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.remove",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

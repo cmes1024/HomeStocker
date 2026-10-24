@@ -1,0 +1,29 @@
+{
+  "id": "eng-multiturn-ref",
+  "perspective": "eng",
+  "title": "回归：多轮短号跨轮仍指同一件",
+  "tags": ["eng", "regression", "ref", "B3"],
+  "status": "pending",
+  "setup": {
+    "fixture": "home-daily",
+    "notes": "第一轮查过冰箱，第二轮已改过一盒酸奶；第三轮不能再问「哪盒酸奶」，也不能报 REF_UNKNOWN。B0 建骨架，B3 启用。"
+  },
+  "prompt": [
+    { "role": "user", "text": "厨房冰箱里还有什么" },
+    { "role": "assistant", "text": "冰箱里：P1 牛奶 2 盒（后天到期）、P2 鸡蛋 8 个、P3 酸奶 2 盒（明天到期）。" },
+    { "role": "user", "text": "酸奶喝掉一盒" },
+    { "role": "assistant", "text": "酸奶改成 1 盒了。" },
+    { "role": "user", "text": "再喝一盒" }
+  ],
+  "expected": {
+    "outcome": "第三轮仍改到第一轮查到的那盒酸奶（P3），不改牛奶、不新记一条、不反问是哪件。",
+    "callIncludes": [{ "use": "item.update", "name": "酸奶" }],
+    "callExcludes": [
+      { "use": "item.update", "name": "牛奶" },
+      { "use": "item.create", "name": "酸奶" },
+      { "use": "item.remove", "name": "酸奶" }
+    ],
+    "forbiddenTools": ["item.removeMany"],
+    "manual": "B3 启用后补断言：第三轮 tool result 里 P3 仍指向同一 itemId，且回执无 REF_UNKNOWN。"
+  }
+}

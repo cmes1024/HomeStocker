@@ -1,0 +1,18 @@
+{
+  "id": "user-expire-three-days",
+  "perspective": "user",
+  "title": "过期：还有三天过期的",
+  "tags": [
+    "expire"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "还有三天过期的",
+  "expected": {
+    "outcome": "按临期窗口回答，人话列出名称",
+    "requiredTools": [
+      "item.listExpiring"
+    ]
+  }
+}

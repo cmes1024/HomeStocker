@@ -1,0 +1,192 @@
+{
+  "id": "user-cook-rice-rough",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:47.072Z",
+  "mode": "act",
+  "outcome": "有就说大概多少，没有就说没有；夹具里可能没有大米——如实说",
+  "actual": {
+    "dialogue": {
+      "text": "米还有吗大概",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "米",
+          "use": "item.search"
+        },
+        {
+          "name": "大米",
+          "use": "item.search"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。"
+        ],
+        "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+      "blocks": []
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "米",
+            "use": "item.search"
+          },
+          {
+            "name": "大米",
+            "use": "item.search"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。"
+          ],
+          "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "米",
+                "use": "item.search"
+              },
+              {
+                "name": "大米",
+                "use": "item.search"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。"
+              ],
+              "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "lead": "我查了，台账里没有米，大米也没有。要不要我记一条？告诉我放哪儿、多少就行。",
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

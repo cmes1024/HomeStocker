@@ -1,0 +1,228 @@
+{
+  "id": "user-cook-wrap-where",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:35.498Z",
+  "mode": "act",
+  "outcome": "说出大概位置（比如厨房橱柜）",
+  "actual": {
+    "dialogue": {
+      "text": "保鲜膜在哪",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "保鲜膜",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "在厨房橱柜里，就一卷。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "在厨房橱柜里，就一卷。"
+        ],
+        "lead": "在厨房橱柜里，就一卷。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "保鲜膜",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "保鲜膜",
+            "1卷",
+            "厨房 / 橱柜"
+          ]
+        ]
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "保鲜膜",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "在厨房橱柜里，就一卷。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "在厨房橱柜里，就一卷。"
+          ],
+          "lead": "在厨房橱柜里，就一卷。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "保鲜膜",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "保鲜膜",
+              "1卷",
+              "厨房 / 橱柜"
+            ]
+          ]
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "保鲜膜",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "在厨房橱柜里，就一卷。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "在厨房橱柜里，就一卷。"
+              ],
+              "lead": "在厨房橱柜里，就一卷。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "保鲜膜",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "保鲜膜",
+                  "1卷",
+                  "厨房 / 橱柜"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,180 @@
+{
+  "id": "curriculum-c7-knowledge",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:03:45.320Z",
+  "mode": "act",
+  "outcome": "先取知识再答，不编价格或购买渠道",
+  "actual": {
+    "dialogue": {
+      "text": "空间和位置有什么区别",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "topicId": "ledger",
+          "use": "knowledge.get"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "空间、位置、物资与临期\n已取回产品说明，请用短句回答家人。",
+            "step": 1,
+            "use": "knowledge.get"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。"
+        ],
+        "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+      "blocks": []
+    },
+    "tools": [
+      "knowledge.get"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "topicId": "ledger",
+            "use": "knowledge.get"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "空间、位置、物资与临期\n已取回产品说明，请用短句回答家人。",
+              "step": 1,
+              "use": "knowledge.get"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。"
+          ],
+          "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "topicId": "ledger",
+                "use": "knowledge.get"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "空间、位置、物资与临期\n已取回产品说明，请用短句回答家人。",
+                  "step": 1,
+                  "use": "knowledge.get"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。"
+              ],
+              "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "lead": "空间是房间或大区域，比如厨房、客厅、仓库；位置是空间里的具体存放点，比如冰箱、橱柜、零食柜。物资必须挂在某个空间下，位置可以不填。删掉位置时，东西还留在那个空间里，只是不再标具体位置。",
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:knowledge.get",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,289 @@
+{
+  "id": "user-expire-fridge-bad",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:59.640Z",
+  "mode": "act",
+  "outcome": "看看冰箱相关临期/过期，据实说",
+  "actual": {
+    "dialogue": {
+      "text": "冰箱里有没有坏了的",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "spaceName": "厨房",
+          "locationName": "冰箱",
+          "use": "item.search"
+        },
+        {
+          "use": "item.listExpiring"
+        }
+      ],
+      "blocks": [],
+      "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 3 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "临期/过期：找到 2 件",
+            "step": 1,
+            "use": "item.listExpiring"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。"
+        ],
+        "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "冰箱里的东西",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ],
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ],
+          [
+            "鸡蛋",
+            "8个",
+            "厨房 / 冰箱"
+          ]
+        ],
+        "caption": "酸奶明天到期，牛奶后天到期；鸡蛋没记过期日。"
+      }
+    },
+    "tools": [
+      "item.search",
+      "item.listExpiring"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "spaceName": "厨房",
+            "locationName": "冰箱",
+            "use": "item.search"
+          },
+          {
+            "use": "item.listExpiring"
+          }
+        ],
+        "blocks": [],
+        "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 3 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "临期/过期：找到 2 件",
+              "step": 1,
+              "use": "item.listExpiring"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。"
+          ],
+          "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "冰箱里的东西",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ],
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ],
+            [
+              "鸡蛋",
+              "8个",
+              "厨房 / 冰箱"
+            ]
+          ],
+          "caption": "酸奶明天到期，牛奶后天到期；鸡蛋没记过期日。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "spaceName": "厨房",
+                "locationName": "冰箱",
+                "use": "item.search"
+              },
+              {
+                "use": "item.listExpiring"
+              }
+            ],
+            "blocks": [],
+            "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 3 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "临期/过期：找到 2 件",
+                  "step": 1,
+                  "use": "item.listExpiring"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。"
+              ],
+              "lead": "冰箱里共 3 样，没有已过期的；酸奶明天到期、牛奶后天到期，先吃这两样吧。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "冰箱里的东西",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ],
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ],
+                [
+                  "鸡蛋",
+                  "8个",
+                  "厨房 / 冰箱"
+                ]
+              ],
+              "caption": "酸奶明天到期，牛奶后天到期；鸡蛋没记过期日。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.listExpiring|item.search",
+      "ok": true,
+      "detail": "hit"
+    }
+  ],
+  "notes": ""
+}

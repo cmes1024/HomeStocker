@@ -1,0 +1,209 @@
+{
+  "id": "user-undo-dont-reduce-milk",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:06:14.826Z",
+  "mode": "act",
+  "outcome": "不要减牛奶；账上牛奶数量保持原样",
+  "actual": {
+    "dialogue": {
+      "text": "牛奶别减",
+      "history": [
+        {
+          "role": "user",
+          "text": "牛奶少一盒"
+        },
+        {
+          "role": "assistant",
+          "text": "冰箱牛奶准备改成 1 盒，要我改吗？"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [],
+      "report": {
+        "executed": [],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [],
+        "lead": "好，牛奶不动。",
+        "wrote": false
+      },
+      "lead": "好，牛奶不动。",
+      "blocks": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "牛奶",
+            "1箱",
+            "厨房"
+          ],
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ]
+        ]
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [],
+        "report": {
+          "executed": [],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [],
+          "lead": "好，牛奶不动。",
+          "wrote": false
+        },
+        "lead": "好，牛奶不动。",
+        "blocks": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "牛奶",
+              "1箱",
+              "厨房"
+            ],
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ]
+          ]
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [],
+            "report": {
+              "executed": [],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [],
+              "lead": "好，牛奶不动。",
+              "wrote": false
+            },
+            "lead": "好，牛奶不动。",
+            "blocks": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "牛奶",
+                  "1箱",
+                  "厨房"
+                ],
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

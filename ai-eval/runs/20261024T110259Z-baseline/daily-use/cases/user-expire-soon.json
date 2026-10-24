@@ -1,0 +1,18 @@
+{
+  "id": "user-expire-soon",
+  "perspective": "user",
+  "title": "过期：什么快过期了",
+  "tags": [
+    "expire"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "什么快过期了",
+  "expected": {
+    "outcome": "列快过期的东西，别把全屋库存当临期念一遍",
+    "requiredTools": [
+      "item.listExpiring"
+    ]
+  }
+}

@@ -1,0 +1,372 @@
+{
+  "id": "user-expire-fridge-deal",
+  "status": "fail",
+  "judgedAt": "2026-10-24T11:05:07.063Z",
+  "mode": "act",
+  "outcome": "先列出快过期的再问怎么处理（删/用掉），不能一声不吭全删",
+  "actual": {
+    "dialogue": {
+      "text": "冰箱里快过期的处理一下",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "refs": [
+            "P1",
+            "P3"
+          ],
+          "use": "item.removeMany",
+          "itemIds": [
+            "f35c9e59-8377-43bb-8e9e-4259c064d5a4",
+            "4df38810-0195-4556-9f5c-31f71cdaa082"
+          ],
+          "names": [
+            "酸奶",
+            "牛奶"
+          ],
+          "name": "酸奶"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "已删掉 2 件物资",
+            "step": 1,
+            "use": "item.removeMany"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已删掉 2 件物资"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已删掉 2 件物资",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "已删掉 2 件物资",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "酸奶",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.removeMany",
+      "item.listExpiring"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "refs": [
+              "P1",
+              "P3"
+            ],
+            "use": "item.removeMany",
+            "itemIds": [
+              "f35c9e59-8377-43bb-8e9e-4259c064d5a4",
+              "4df38810-0195-4556-9f5c-31f71cdaa082"
+            ],
+            "names": [
+              "酸奶",
+              "牛奶"
+            ],
+            "name": "酸奶"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "已删掉 2 件物资",
+              "step": 1,
+              "use": "item.removeMany"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已删掉 2 件物资"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "已删掉 2 件物资",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已删掉 2 件物资",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "酸奶",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "冰箱里临期的是酸奶2盒（明天到期）和牛奶2盒（后天到期），要怎么处理？",
+                "options": [
+                  {
+                    "label": "酸奶和牛奶都删掉",
+                    "value": "酸奶和牛奶都删掉"
+                  },
+                  {
+                    "label": "只删酸奶",
+                    "value": "只删酸奶"
+                  },
+                  {
+                    "label": "只删牛奶",
+                    "value": "只删牛奶"
+                  },
+                  {
+                    "label": "先不动，我自己处理",
+                    "value": "先不动，我自己处理"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "confirm",
+            "ask": [],
+            "confirm": [
+              {
+                "use": "item.removeMany",
+                "refs": [
+                  "P1",
+                  "P3"
+                ],
+                "itemIds": [
+                  "f35c9e59-8377-43bb-8e9e-4259c064d5a4",
+                  "4df38810-0195-4556-9f5c-31f71cdaa082"
+                ],
+                "name": "酸奶",
+                "names": [
+                  "酸奶",
+                  "牛奶"
+                ],
+                "label": "删除 酸奶"
+              }
+            ],
+            "calls": [
+              {
+                "refs": [
+                  "P1",
+                  "P3"
+                ],
+                "use": "item.removeMany",
+                "itemIds": [
+                  "f35c9e59-8377-43bb-8e9e-4259c064d5a4",
+                  "4df38810-0195-4556-9f5c-31f71cdaa082"
+                ],
+                "names": [
+                  "酸奶",
+                  "牛奶"
+                ],
+                "name": "酸奶"
+              }
+            ],
+            "draft": {
+              "name": "酸奶",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "planId": "e221b8d093d2477e81438b40ec0584f1"
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "refs": [
+                  "P1",
+                  "P3"
+                ],
+                "use": "item.removeMany",
+                "itemIds": [
+                  "f35c9e59-8377-43bb-8e9e-4259c064d5a4",
+                  "4df38810-0195-4556-9f5c-31f71cdaa082"
+                ],
+                "names": [
+                  "酸奶",
+                  "牛奶"
+                ],
+                "name": "酸奶"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "已删掉 2 件物资",
+                  "step": 1,
+                  "use": "item.removeMany"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已删掉 2 件物资"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "已删掉 2 件物资",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "已删掉 2 件物资",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "酸奶",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.listExpiring|item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": false,
+      "detail": "present"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

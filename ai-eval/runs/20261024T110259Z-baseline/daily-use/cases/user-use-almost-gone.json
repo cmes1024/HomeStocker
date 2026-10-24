@@ -1,0 +1,18 @@
+{
+  "id": "user-use-almost-gone",
+  "perspective": "user",
+  "title": "含糊：纸巾差不多没了",
+  "tags": [
+    "update",
+    "vague"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "纸巾差不多没了",
+  "expected": {
+    "outcome": "「差不多没了」不是精确数，先问改成多少/是否删掉，不能擅自清零",
+    "mustAsk": true,
+    "mustProbe": true
+  }
+}

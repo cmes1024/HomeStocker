@@ -1,0 +1,266 @@
+{
+  "id": "user-list-snacks",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:05:37.860Z",
+  "mode": "act",
+  "outcome": "列出零食相关的东西",
+  "actual": {
+    "dialogue": {
+      "text": "零食都有哪些",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "tagName": "零食",
+          "use": "item.search"
+        },
+        {
+          "spaceName": "客厅",
+          "locationName": "零食柜",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "零食柜里就薯片一样，2袋。",
+      "report": {
+        "executed": [
+          {
+            "summary": "标签「零食」：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "零食柜里就薯片一样，2袋。"
+        ],
+        "lead": "零食柜里就薯片一样，2袋。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "零食柜里的东西",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "薯片",
+            "2袋",
+            "客厅 / 零食柜"
+          ]
+        ],
+        "caption": "零食柜里就这一样，挂零食标签的也只有它。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "tagName": "零食",
+            "use": "item.search"
+          },
+          {
+            "spaceName": "客厅",
+            "locationName": "零食柜",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "零食柜里就薯片一样，2袋。",
+        "report": {
+          "executed": [
+            {
+              "summary": "标签「零食」：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "零食柜里就薯片一样，2袋。"
+          ],
+          "lead": "零食柜里就薯片一样，2袋。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "零食柜里的东西",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "薯片",
+              "2袋",
+              "客厅 / 零食柜"
+            ]
+          ],
+          "caption": "零食柜里就这一样，挂零食标签的也只有它。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "tagName": "零食",
+                "use": "item.search"
+              },
+              {
+                "spaceName": "客厅",
+                "locationName": "零食柜",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "零食柜里就薯片一样，2袋。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "标签「零食」：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "零食柜里就薯片一样，2袋。"
+              ],
+              "lead": "零食柜里就薯片一样，2袋。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "零食柜里的东西",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "薯片",
+                  "2袋",
+                  "客厅 / 零食柜"
+                ]
+              ],
+              "caption": "零食柜里就这一样，挂零食标签的也只有它。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

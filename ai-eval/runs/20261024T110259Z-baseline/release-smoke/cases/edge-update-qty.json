@@ -1,0 +1,13 @@
+{
+  "id": "edge-update-qty",
+  "perspective": "product",
+  "title": "改数量直接写入",
+  "tags": ["edge", "update"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "鸡蛋改成 5 个",
+  "expected": {
+    "outcome": "对准唯一的鸡蛋后直接改成 5，不先弹确认，也不删行",
+    "requiredTools": ["item.update"],
+    "forbiddenTools": ["item.remove", "item.removeMany", "item.create"]
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c7-knowledge",
+  "perspective": "product",
+  "title": "C7 空间和位置的区别",
+  "tags": ["curriculum", "knowledge"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "空间和位置有什么区别",
+  "expected": {
+    "outcome": "先取知识再答，不编价格或购买渠道",
+    "requiredTools": ["knowledge.get"],
+    "forbiddenTools": ["item.create", "item.update", "item.remove"]
+  }
+}

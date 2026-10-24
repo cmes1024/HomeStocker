@@ -1,0 +1,136 @@
+{
+  "id": "user-undo-said-wrong",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:06:12.778Z",
+  "mode": "act",
+  "outcome": "接住「说错了」：问要改回什么/撤销哪步，或按回执改回；别继续乱改别的",
+  "actual": {
+    "dialogue": {
+      "text": "不对，刚才说错了",
+      "history": [
+        {
+          "role": "user",
+          "text": "牛奶少一盒"
+        },
+        {
+          "role": "assistant",
+          "text": "冰箱里的牛奶我先按减一盒记了，还剩 1 盒"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [],
+      "report": {
+        "executed": [],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？"
+        ],
+        "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+        "wrote": false,
+        "blocks": []
+      },
+      "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "blocks": []
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [],
+        "report": {
+          "executed": [],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？"
+          ],
+          "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+          "wrote": false,
+          "blocks": []
+        },
+        "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [],
+            "report": {
+              "executed": [],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？"
+              ],
+              "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+              "wrote": false,
+              "blocks": []
+            },
+            "lead": "好，那先不动。你想改成多少？还是说刚才那句不算，牛奶还是 2 盒？",
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,21 @@
+{
+  "id": "user-shop-salt-add",
+  "perspective": "user",
+  "title": "拆袋：加两袋盐",
+  "tags": [
+    "shopping",
+    "create"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "加两袋盐",
+  "expected": {
+    "outcome": "盐加量或新记两袋；落点不清就问；说人话回执",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.create",
+      "item.update"
+    ]
+  }
+}

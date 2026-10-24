@@ -1,0 +1,258 @@
+{
+  "id": "user-shop-need-salt-bags",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:06:07.762Z",
+  "mode": "act",
+  "outcome": "分别查盐、垃圾袋有没有；没有的说没有",
+  "actual": {
+    "dialogue": {
+      "text": "盐和垃圾袋缺吗",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "盐",
+          "use": "item.search"
+        },
+        {
+          "name": "垃圾袋",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。"
+        ],
+        "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "盐和垃圾袋",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "盐",
+            "2袋",
+            "厨房 / 橱柜"
+          ]
+        ],
+        "caption": "盐还有 2 袋；垃圾袋台账里没查到记录。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "盐",
+            "use": "item.search"
+          },
+          {
+            "name": "垃圾袋",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。"
+          ],
+          "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "盐和垃圾袋",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "盐",
+              "2袋",
+              "厨房 / 橱柜"
+            ]
+          ],
+          "caption": "盐还有 2 袋；垃圾袋台账里没查到记录。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "盐",
+                "use": "item.search"
+              },
+              {
+                "name": "垃圾袋",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。"
+              ],
+              "lead": "盐还有 2 袋，在厨房橱柜；垃圾袋台账里没查到记录，家里要是还有，跟我说一声我记上。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "盐和垃圾袋",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "盐",
+                  "2袋",
+                  "厨房 / 橱柜"
+                ]
+              ],
+              "caption": "盐还有 2 袋；垃圾袋台账里没查到记录。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}
