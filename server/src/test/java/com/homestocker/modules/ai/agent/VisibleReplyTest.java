@@ -3,6 +3,7 @@ package com.homestocker.modules.ai.agent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -33,5 +34,18 @@ class VisibleReplyTest {
     assertEquals("space", spec.get("groupBy"));
     assertEquals("probe", spec.get("source"));
     assertNull(spec.get("rows"));
+  }
+
+  @Test
+  void noteColumnReadsItemFieldWhileExplainColumnTakesModelText() {
+    Map<String, Object> spec =
+        ActToolLoop.presentSpec(
+            Map.of("type", "table", "columns", List.of("名称", "备注", "说明")));
+    List<?> cols = (List<?>) spec.get("columns");
+    assertEquals(3, cols.size());
+    assertEquals("name", ((Map<?, ?>) cols.get(0)).get("key"));
+    assertEquals("note", ((Map<?, ?>) cols.get(1)).get("key"));
+    assertEquals(false, ((Map<?, ?>) cols.get(1)).get("text"));
+    assertEquals(true, ((Map<?, ?>) cols.get(2)).get("text"));
   }
 }

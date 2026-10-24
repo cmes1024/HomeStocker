@@ -92,7 +92,7 @@ public final class ToolSchemas {
     cols.put("type", "array");
     cols.put(
         "description",
-        "仅 table：列出要展示的列。字段列 {\"key\":\"name|quantity|place|space|expire|production\",\"label\":\"名称\",\"width\":1-5}，值由服务端取；说明列 {\"label\":\"说明\",\"text\":true,\"width\":1-5}，内容在 notes 里逐行给。也可简写 [\"名称\",\"数量\",\"位置\",\"备注\"]（备注=说明列）。最多 5 列，数量列建议 width 1。");
+        "仅 table：列出要展示的列。字段列 {\"key\":\"name|quantity|place|space|expire|production|note\",\"label\":\"名称\",\"width\":1-5}，值由服务端取（note = 物资自带的备注原文，不是你的话）；说明列 {\"label\":\"说明\",\"text\":true,\"width\":1-5}，内容在 notes 里逐行给。也可简写 [\"名称\",\"数量\",\"位置\",\"备注\",\"说明\"]：其中「备注」是物资自带备注字段，「说明」才是你自己写的。最多 5 列，数量列建议 width 1。");
     cols.putObject("items").put("type", "object");
     ObjectNode notes = props.putObject("notes");
     notes.put("type", "array");

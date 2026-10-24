@@ -676,14 +676,28 @@ public class ActToolLoop {
           Map.entry("expire", "expire"),
           Map.entry("生产日期", "production"),
           Map.entry("生产", "production"),
-          Map.entry("production", "production"));
+          Map.entry("production", "production"),
+          Map.entry("备注", "note"),
+          Map.entry("note", "note"));
 
-  /** 说明列：内容由模型逐行写，服务端不填字段。 */
+  /**
+   * 说明列：内容由模型逐行写，服务端不填字段。
+   *
+   * <p>注意「备注」和「note」<b>不在</b>这里：它们指物资自带的 note 字段，由服务端按 key 取值。
+   * 要让模型自己写一段说明，用「说明 / 差异 / 提醒 / 注意 / comment / text」。
+   */
   private static final Set<String> PRESENT_TEXT_COLS =
-      Set.of("备注", "说明", "差异", "提醒", "注意", "note", "comment", "text");
+      Set.of("说明", "差异", "提醒", "注意", "comment", "text");
 
   private static final Map<String, Integer> PRESENT_DEFAULT_WIDTH =
-      Map.of("name", 2, "quantity", 1, "place", 2, "space", 2, "expire", 2, "production", 2);
+      Map.of(
+          "name", 2,
+          "quantity", 1,
+          "place", 2,
+          "space", 2,
+          "expire", 2,
+          "production", 2,
+          "note", 3);
 
   static Map<String, Object> presentSpec(Map<String, Object> args) {
     if (args == null || args.isEmpty()) {
@@ -770,7 +784,7 @@ public class ActToolLoop {
     }
     Map<String, Object> col = new LinkedHashMap<>();
     col.put("label", name.length() <= 6 ? name : name.substring(0, 6));
-    col.put("key", text ? "note" : key);
+    col.put("key", text ? "text" : key);
     col.put("text", text);
     col.put("width", text ? 4 : PRESENT_DEFAULT_WIDTH.getOrDefault(key, 2));
     return col;
@@ -779,6 +793,10 @@ public class ActToolLoop {
   private static Map<String, Object> specColumn(Map<?, ?> m) {
     String label = str(m.get("label")).trim();
     String key = str(m.get("key")).trim().toLowerCase(Locale.ROOT);
+    if (key.isEmpty()) {
+      // 只给 label 的写法（如 {"label":"备注"}）按字段名补 key，避免整列被静默丢弃。
+      key = PRESENT_FIELD_COLS.getOrDefault(label, "");
+    }
     boolean text = Boolean.TRUE.equals(m.get("text")) || PRESENT_TEXT_COLS.contains(label);
     if (label.isEmpty()) {
       label = text ? "说明" : str(m.get("key")).trim();
@@ -797,7 +815,7 @@ public class ActToolLoop {
     }
     Map<String, Object> col = new LinkedHashMap<>();
     col.put("label", label.length() <= 6 ? label : label.substring(0, 6));
-    col.put("key", text ? "note" : key);
+    col.put("key", text ? "text" : key);
     col.put("text", text);
     col.put("width", Math.min(5, Math.max(1, width)));
     return col;
