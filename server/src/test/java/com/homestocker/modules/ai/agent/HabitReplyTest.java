@@ -43,6 +43,7 @@ class HabitReplyTest {
     assertEquals("这家偏好", table.get("title"));
     assertEquals(4, ((List<?>) table.get("rows")).size());
     assertEquals(3, ((List<?>) table.get("columns")).size());
+    assertEquals(List.of(2, 3, 2), table.get("widths"));
   }
 
   @Test

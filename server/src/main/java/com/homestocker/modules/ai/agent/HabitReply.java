@@ -95,6 +95,12 @@ public final class HabitReply {
     out.put("type", "table");
     out.put("title", "这家偏好");
     out.put("columns", columns);
+    // 与 PresentResolver.resolveTable 输出一致：小程序按 present.widths 分配列宽，缺了会退化成等宽。
+    List<Integer> widths = new ArrayList<>();
+    for (Map<String, Object> c : columns) {
+      widths.add(((Number) c.get("width")).intValue());
+    }
+    out.put("widths", widths);
     out.put("rows", rows);
     out.put("caption", "「只影响说话」的不改变落库与合并");
     return out;
