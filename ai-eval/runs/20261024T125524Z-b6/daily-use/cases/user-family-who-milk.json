@@ -1,0 +1,18 @@
+{
+  "id": "user-family-who-milk",
+  "perspective": "user",
+  "title": "家人：上次谁加的牛奶",
+  "tags": [
+    "activity"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "上次谁加的牛奶",
+  "expected": {
+    "outcome": "去家庭消息里找；找不到就老实说不知道，别编人名",
+    "requiredTools": [
+      "activity.list"
+    ]
+  }
+}

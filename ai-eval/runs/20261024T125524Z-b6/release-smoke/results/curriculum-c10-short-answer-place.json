@@ -1,0 +1,270 @@
+{
+  "id": "curriculum-c10-short-answer-place",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:55:44.783Z",
+  "mode": "act",
+  "outcome": "听自家上一句：在厨房另记一条「苹果 2 袋」。不许回「厨房这个落点没对上」「再说一次放哪儿」，也不许因为助手列过仓库就记到仓库。",
+  "actual": {
+    "dialogue": {
+      "text": "是的",
+      "history": [
+        {
+          "role": "user",
+          "text": "加两袋苹果"
+        },
+        {
+          "role": "assistant",
+          "text": "这两袋苹果放哪儿？厨房、仓库还是客厅零食柜？"
+        },
+        {
+          "role": "user",
+          "text": "厨房"
+        },
+        {
+          "role": "assistant",
+          "text": "厨房里已有苹果 1 斤，要我在厨房另记一条「苹果 2 袋」吗？"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "苹果",
+          "quantity": 2,
+          "unit": "袋",
+          "spaceName": "厨房",
+          "use": "item.create"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.create",
+            "summary": "已记下 苹果 2袋（厨房）",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已记下 苹果 2袋（厨房）"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已记下 苹果 2袋（厨房）"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "记好了，苹果 2 袋，放在厨房。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "tone": "ok",
+              "title": "已记下 苹果 2袋（厨房）"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "苹果",
+        "quantity": 2,
+        "unit": "袋",
+        "note": "",
+        "spaceName": "厨房",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.create"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "苹果",
+            "quantity": 2,
+            "unit": "袋",
+            "spaceName": "厨房",
+            "use": "item.create"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.create",
+              "summary": "已记下 苹果 2袋（厨房）",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已记下 苹果 2袋（厨房）"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "tone": "ok",
+                  "title": "已记下 苹果 2袋（厨房）"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "记好了，苹果 2 袋，放在厨房。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已记下 苹果 2袋（厨房）"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "苹果",
+          "quantity": 2,
+          "unit": "袋",
+          "note": "",
+          "spaceName": "厨房",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "苹果",
+                "quantity": 2,
+                "unit": "袋",
+                "spaceName": "厨房",
+                "use": "item.create"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.create",
+                  "summary": "已记下 苹果 2袋（厨房）",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已记下 苹果 2袋（厨房）"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "tone": "ok",
+                      "title": "已记下 苹果 2袋（厨房）"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "记好了，苹果 2 袋，放在厨房。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "tone": "ok",
+                    "title": "已记下 苹果 2袋（厨房）"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "苹果",
+              "quantity": 2,
+              "unit": "袋",
+              "note": "",
+              "spaceName": "厨房",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.create|item.createMany",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callIncludes:*:苹果:2",
+      "ok": true,
+      "detail": "matched"
+    },
+    {
+      "name": "callExcludes:item.update:苹果",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callExcludes:*:",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": "同时用「不要只说本句」核对：日志里应有 item.create（spaceName=厨房），无「不是本句说的」类拦截。"
+}

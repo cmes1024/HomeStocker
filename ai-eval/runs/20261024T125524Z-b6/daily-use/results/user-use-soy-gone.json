@@ -1,0 +1,270 @@
+{
+  "id": "user-use-soy-gone",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:00.506Z",
+  "mode": "act",
+  "outcome": "要删酱油时先让人点头确认，确认前账上不能已经没了",
+  "actual": {
+    "dialogue": {
+      "text": "那瓶酱油没了，删掉",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "use": "item.remove",
+          "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5",
+          "name": "酱油"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.remove",
+            "summary": "已删掉 酱油 1瓶（厨房 / 橱柜）",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已删掉 酱油 1瓶（厨房 / 橱柜）"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "tone": "ok",
+              "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "酱油",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.remove"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "use": "item.remove",
+            "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5",
+            "name": "酱油"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.remove",
+              "summary": "已删掉 酱油 1瓶（厨房 / 橱柜）",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已删掉 酱油 1瓶（厨房 / 橱柜）"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "tone": "ok",
+                  "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "酱油",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "confirm",
+            "ask": [],
+            "confirm": [
+              {
+                "use": "item.remove",
+                "ref": "P1",
+                "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5",
+                "name": "酱油",
+                "label": "删除 酱油"
+              }
+            ],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5",
+                "name": "酱油"
+              }
+            ],
+            "draft": {
+              "name": "酱油",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "planId": "3f8852d466d44d01a6e4ab392b724fb8"
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5",
+                "name": "酱油"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.remove",
+                  "summary": "已删掉 酱油 1瓶（厨房 / 橱柜）",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已删掉 酱油 1瓶（厨房 / 橱柜）"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "tone": "ok",
+                      "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "tone": "ok",
+                    "title": "已删掉 酱油 1瓶（厨房 / 橱柜）"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "酱油",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.remove",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

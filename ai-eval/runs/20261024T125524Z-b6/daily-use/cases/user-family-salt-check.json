@@ -1,0 +1,21 @@
+{
+  "id": "user-family-salt-check",
+  "perspective": "user",
+  "title": "家人：盐是不是被记成两袋了",
+  "tags": [
+    "query",
+    "activity"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "有没有人把盐记成两袋了",
+  "expected": {
+    "outcome": "看看盐现在多少、最近有没有改过，据实说",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.search",
+      "activity.list"
+    ]
+  }
+}

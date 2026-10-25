@@ -1,0 +1,258 @@
+{
+  "id": "user-list-medicine",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:29.132Z",
+  "mode": "act",
+  "outcome": "列出西药相关还剩什么",
+  "actual": {
+    "dialogue": {
+      "text": "西药还剩什么",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "tagName": "西药",
+          "use": "item.search"
+        },
+        {
+          "tagName": "药品",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "标签「西药」：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.search",
+            "summary": "标签「药品」：没有找到匹配的物品",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。"
+        ],
+        "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "西药",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "布洛芬",
+            "1盒",
+            "卫生间"
+          ]
+        ],
+        "caption": "挂西药标签的就这一件，没记过期日。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "tagName": "西药",
+            "use": "item.search"
+          },
+          {
+            "tagName": "药品",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "标签「西药」：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.search",
+              "summary": "标签「药品」：没有找到匹配的物品",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。"
+          ],
+          "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "西药",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "布洛芬",
+              "1盒",
+              "卫生间"
+            ]
+          ],
+          "caption": "挂西药标签的就这一件，没记过期日。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "tagName": "西药",
+                "use": "item.search"
+              },
+              {
+                "tagName": "药品",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "标签「西药」：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.search",
+                  "summary": "标签「药品」：没有找到匹配的物品",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。"
+              ],
+              "lead": "西药就剩这一件，没记过期日，用之前看一眼盒子上的日期。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "西药",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "布洛芬",
+                  "1盒",
+                  "卫生间"
+                ]
+              ],
+              "caption": "挂西药标签的就这一件，没记过期日。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    }
+  ],
+  "notes": ""
+}

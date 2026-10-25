@@ -609,16 +609,38 @@ public class DomainTools {
       return ToolResult.fail("第 " + step + " 步失败：" + row.get("name") + " — " + ToolHelpers.msg(res)).build();
     }
     String summary = buildUpdateSummary(row, call);
-    return ToolResult.ok(summary)
-        .wrote(true)
-        .remember(
-            ToolResult.rememberItem(
-                ToolHelpers.str(row.get("itemId")),
-                ToolHelpers.str(row.get("name")),
-                "update",
-                row.get("quantity"),
-                call.containsKey("quantity") ? call.get("quantity") : row.get("quantity")))
-        .build();
+    Map<String, Object> remember =
+        ToolResult.rememberItem(
+            ToolHelpers.str(row.get("itemId")),
+            ToolHelpers.str(row.get("name")),
+            "update",
+            row.get("quantity"),
+            call.containsKey("quantity") ? call.get("quantity") : row.get("quantity"));
+    // 写后把同一行（同 itemId，refs 里就是这一份）就地更新：短号行、卡片、正文分段都用写后的值
+    applyWrittenFields(row, call);
+    return ToolResult.ok(summary).wrote(true).remember(remember).build();
+  }
+
+  /** 只用写成功的入参覆盖已知行，空值不动，避免把没提交的字段清空。 */
+  private static void applyWrittenFields(Map<String, Object> row, Map<String, Object> call) {
+    if (row == null || call == null) {
+      return;
+    }
+    applyField(row, call, "name");
+    applyField(row, call, "unit");
+    applyField(row, call, "note");
+    if (call.get("quantity") != null) {
+      row.put("quantity", call.get("quantity"));
+    }
+    applyField(row, call, "expireDate");
+    applyField(row, call, "productionDate");
+  }
+
+  private static void applyField(Map<String, Object> row, Map<String, Object> call, String key) {
+    String value = ToolHelpers.str(call.get(key));
+    if (!value.isEmpty()) {
+      row.put(key, value);
+    }
   }
 
   private ToolResult itemRemove(ToolContext ctx, Map<String, Object> call, int step) {

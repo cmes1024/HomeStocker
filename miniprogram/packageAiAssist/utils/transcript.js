@@ -4,6 +4,7 @@ const HISTORY_LIMIT = 20
 /** 单轮送模型 / 落盘文本上限；须与云函数 HISTORY_TEXT_MAX 同步 */
 const TEXT_MAX = 800
 const BLOCKS_MAX = 6
+const SEGMENTS_MAX = 24
 const CARDS_PER_BLOCK_MAX = 12
 const KEY_PREFIX = 'assist_transcript_'
 
@@ -188,6 +189,27 @@ function sanitizePresent(raw) {
   return null
 }
 
+/** 落盘用：正文分段只留白名单 tone 与文字，超长按 TEXT_MAX 截断 */
+function sanitizeSegments(raw) {
+  const list = Array.isArray(raw) ? raw : []
+  const out = []
+  let total = 0
+  let tinted = 0
+  for (let i = 0; i < list.length && out.length < SEGMENTS_MAX; i++) {
+    const row = list[i]
+    if (!row || typeof row !== 'object') break
+    const v = String(row.v == null ? '' : row.v)
+    if (!v) continue
+    const room = TEXT_MAX - total
+    if (room <= 0) break
+    const tone = row.t === 'num' || row.t === 'warn' ? row.t : 'text'
+    out.push({ k: `g${out.length}`, t: tone, v: v.slice(0, room) })
+    total += Math.min(v.length, room)
+    if (tone !== 'text') tinted++
+  }
+  return tinted && out.length > 1 ? out : null
+}
+
 /** present 摊进 text 的行，用于恢复时去掉与表格重复的气泡正文 */
 function presentHistoryLines(present) {
   if (!present) return []
@@ -357,10 +379,15 @@ function normalizeTurn(row) {
   let text = String(row.text || '').trim().slice(0, TEXT_MAX)
   const blocks = role === 'assistant' ? sanitizeBlocks(row.blocks) : []
   const present = role === 'assistant' ? sanitizePresent(row.present) : null
+  const segments = role === 'assistant' ? sanitizeSegments(row.segments) : null
   if (!text && !blocks.length && !present) return null
   const turn = { role, text: text || (blocks.length || present ? '完成' : '') }
   if (blocks.length) turn.blocks = blocks
   if (present) turn.present = present
+  // 分段必须正好铺满正文，否则恢复后会上错色，直接不存
+  if (segments && segments.map((seg) => seg.v).join('') === turn.text) {
+    turn.segments = segments
+  }
   const at = parseAt(row.at)
   if (at) turn.at = at
   return turn
@@ -491,7 +518,7 @@ function clearTurns(familyId) {
   }
 }
 
-/** 冷启动恢复文字 + blocks + present；不恢复 confirm / chips / navLinks */
+/** 冷启动恢复文字 + blocks + present + 分段；不恢复 confirm / chips / navLinks */
 function turnsToMessages(turns, nextId) {
   const idFn = typeof nextId === 'function' ? nextId : () => `r${Math.random()}`
   return (turns || []).map((turn) => {
@@ -503,12 +530,19 @@ function turnsToMessages(turns, nextId) {
       bubbleText = bubbleTextWithoutBlockDup(text, blocks)
       if (present) bubbleText = bubbleTextWithoutPresentDup(bubbleText, present)
     }
+    // 去重后气泡正文可能变短，分段对不上就不上色，回退纯文本
+    const segments = turn.role === 'assistant' ? sanitizeSegments(turn.segments) : null
+    const keptSegments =
+      segments && bubbleText && segments.map((seg) => seg.v).join('') === bubbleText
+        ? segments
+        : null
     const msg = {
       id: idFn(),
       role: turn.role,
       kind: turn.role === 'user' ? 'user' : 'result',
       text,
       bubbleText,
+      segments: keptSegments,
       blocks,
       present,
       askList: [],

@@ -1,0 +1,19 @@
+{
+  "id": "user-use-soy-gone",
+  "perspective": "user",
+  "title": "用完：那瓶酱油没了删掉",
+  "tags": [
+    "remove"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "那瓶酱油没了，删掉",
+  "expected": {
+    "outcome": "要删酱油时先让人点头确认，确认前账上不能已经没了",
+    "mustProbe": true,
+    "requiredTools": [
+      "item.remove"
+    ]
+  }
+}

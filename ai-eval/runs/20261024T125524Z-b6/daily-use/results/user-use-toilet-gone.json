@@ -1,0 +1,270 @@
+{
+  "id": "user-use-toilet-gone",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:05.710Z",
+  "mode": "act",
+  "outcome": "厕纸从家里账上拿掉（确认后），别留 0 卷",
+  "actual": {
+    "dialogue": {
+      "text": "厕纸用完了",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "use": "item.remove",
+          "itemId": "4ecf0e85-787c-4836-8bb3-6d2d71ef6907",
+          "name": "厕纸"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.remove",
+            "summary": "已删掉 厕纸 1卷（卫生间）",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已删掉 厕纸 1卷（卫生间）"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已删掉 厕纸 1卷（卫生间）"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "tone": "ok",
+              "title": "已删掉 厕纸 1卷（卫生间）"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "厕纸",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.remove"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "use": "item.remove",
+            "itemId": "4ecf0e85-787c-4836-8bb3-6d2d71ef6907",
+            "name": "厕纸"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.remove",
+              "summary": "已删掉 厕纸 1卷（卫生间）",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已删掉 厕纸 1卷（卫生间）"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "tone": "ok",
+                  "title": "已删掉 厕纸 1卷（卫生间）"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已删掉 厕纸 1卷（卫生间）"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "厕纸",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "confirm",
+            "ask": [],
+            "confirm": [
+              {
+                "use": "item.remove",
+                "ref": "P1",
+                "itemId": "4ecf0e85-787c-4836-8bb3-6d2d71ef6907",
+                "name": "厕纸",
+                "label": "删除 厕纸"
+              }
+            ],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "4ecf0e85-787c-4836-8bb3-6d2d71ef6907",
+                "name": "厕纸"
+              }
+            ],
+            "draft": {
+              "name": "厕纸",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "planId": "4d58f218190a44188cf0d0711e9ea61e"
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "use": "item.remove",
+                "itemId": "4ecf0e85-787c-4836-8bb3-6d2d71ef6907",
+                "name": "厕纸"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.remove",
+                  "summary": "已删掉 厕纸 1卷（卫生间）",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已删掉 厕纸 1卷（卫生间）"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "tone": "ok",
+                      "title": "已删掉 厕纸 1卷（卫生间）"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "tone": "ok",
+                    "title": "已删掉 厕纸 1卷（卫生间）"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "厕纸",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.remove",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

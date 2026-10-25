@@ -1,0 +1,19 @@
+{
+  "id": "user-expire-fridge-bad",
+  "perspective": "user",
+  "title": "过期：冰箱里有没有坏了的",
+  "tags": [
+    "expire"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "冰箱里有没有坏了的",
+  "expected": {
+    "outcome": "看看冰箱相关临期/过期，据实说",
+    "requiredToolsAny": [
+      "item.listExpiring",
+      "item.search"
+    ]
+  }
+}

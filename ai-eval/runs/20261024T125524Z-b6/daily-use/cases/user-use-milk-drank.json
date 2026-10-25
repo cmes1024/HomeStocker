@@ -1,0 +1,19 @@
+{
+  "id": "user-use-milk-drank",
+  "perspective": "user",
+  "title": "用掉：牛奶喝了一盒",
+  "tags": [
+    "update",
+    "ambiguity"
+  ],
+  "setup": {
+    "fixture": "home-daily",
+    "notes": "家里牛奶不止一处"
+  },
+  "prompt": "牛奶喝了一盒",
+  "expected": {
+    "outcome": "牛奶不止一处时先问是哪边的；问清后再减一盒，并说清还剩多少",
+    "mustProbe": true,
+    "mustAsk": true
+  }
+}

@@ -1,0 +1,339 @@
+{
+  "id": "user-shop-salt-add",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:58.730Z",
+  "mode": "act",
+  "outcome": "盐加量或新记两袋；落点不清就问；说人话回执",
+  "actual": {
+    "dialogue": {
+      "text": "加两袋盐",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "盐",
+          "use": "item.search"
+        },
+        {
+          "quantity": 4,
+          "ref": "P1",
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 盐（厨房 / 橱柜）：2袋→4",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "盐 · 2袋 · 厨房 / 橱柜",
+          "已改 盐（厨房 / 橱柜）：2袋→4"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "盐",
+                "subtitle": "2袋",
+                "facts": [
+                  "厨房 / 橱柜"
+                ],
+                "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 盐（厨房 / 橱柜）",
+                "subtitle": "2袋→4",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "盐加好了，橱柜里现在4袋。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "盐",
+              "subtitle": "2袋",
+              "facts": [
+                "厨房 / 橱柜"
+              ],
+              "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 盐（厨房 / 橱柜）",
+              "subtitle": "2袋→4",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "盐",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "盐",
+            "use": "item.search"
+          },
+          {
+            "quantity": 4,
+            "ref": "P1",
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 盐（厨房 / 橱柜）：2袋→4",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "盐 · 2袋 · 厨房 / 橱柜",
+            "已改 盐（厨房 / 橱柜）：2袋→4"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "盐",
+                  "subtitle": "2袋",
+                  "facts": [
+                    "厨房 / 橱柜"
+                  ],
+                  "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 盐（厨房 / 橱柜）",
+                  "subtitle": "2袋→4",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "盐加好了，橱柜里现在4袋。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "盐",
+                "subtitle": "2袋",
+                "facts": [
+                  "厨房 / 橱柜"
+                ],
+                "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 盐（厨房 / 橱柜）",
+                "subtitle": "2袋→4",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "盐",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "盐",
+                "use": "item.search"
+              },
+              {
+                "quantity": 4,
+                "ref": "P1",
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 盐（厨房 / 橱柜）：2袋→4",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "盐 · 2袋 · 厨房 / 橱柜",
+                "已改 盐（厨房 / 橱柜）：2袋→4"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "盐",
+                      "subtitle": "2袋",
+                      "facts": [
+                        "厨房 / 橱柜"
+                      ],
+                      "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 盐（厨房 / 橱柜）",
+                      "subtitle": "2袋→4",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "盐加好了，橱柜里现在4袋。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "盐",
+                    "subtitle": "2袋",
+                    "facts": [
+                      "厨房 / 橱柜"
+                    ],
+                    "itemId": "11fea0ef-e091-4593-83fe-3fffe20c5eb2"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 盐（厨房 / 橱柜）",
+                    "subtitle": "2袋→4",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "盐",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.create|item.update",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

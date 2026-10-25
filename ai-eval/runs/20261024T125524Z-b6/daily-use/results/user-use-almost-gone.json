@@ -1,0 +1,268 @@
+{
+  "id": "user-use-almost-gone",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:11.320Z",
+  "mode": "act",
+  "outcome": "「差不多没了」不是精确数，先问改成多少/是否删掉，不能擅自清零",
+  "actual": {
+    "dialogue": {
+      "text": "纸巾差不多没了",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "纸巾",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？"
+        ],
+        "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "纸巾",
+            "3包",
+            "客厅"
+          ]
+        ]
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "纸巾",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？"
+          ],
+          "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "纸巾",
+              "3包",
+              "客厅"
+            ]
+          ]
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "纸巾现在记着 3 包，是改成 0 还是先记 1 包？",
+                "options": [
+                  {
+                    "label": "改成 0，用完了",
+                    "value": "改成 0，用完了"
+                  },
+                  {
+                    "label": "改成 1 包",
+                    "value": "改成 1 包"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "纸巾",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？"
+              ],
+              "lead": "纸巾数量不能记成 0，用完了我就把这条删掉，行吗？",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "纸巾",
+                  "3包",
+                  "客厅"
+                ]
+              ]
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

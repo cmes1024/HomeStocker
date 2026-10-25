@@ -17,6 +17,23 @@ const { callItem, callFamily, invalidateItemDomain } = require('../../utils/clou
 const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
 const copy = require('../../utils/copy')
 
+/**
+ * 服务端分段只覆盖正文首句；拼接进来的其余部分按普通文字接在后面。
+ * 首句对不上（被改写或裁掉）就返回 null，回退纯文本渲染。
+ */
+function attachSegments(segments, mainText, fullText) {
+  const segs = Array.isArray(segments) ? segments.filter((seg) => seg && seg.v) : []
+  if (!segs.length || !mainText || !fullText) return null
+  if (fullText.indexOf(mainText) !== 0) return null
+  const tail = fullText.slice(mainText.length)
+  const list = tail ? segs.concat([{ t: 'text', v: tail }]) : segs
+  return list.map((seg, i) => ({
+    k: `g${i}`,
+    t: seg.t === 'num' || seg.t === 'warn' ? seg.t : 'text',
+    v: String(seg.v)
+  }))
+}
+
 function decodeOpt(value) {
   if (value == null || value === '') return ''
   try {
@@ -470,6 +487,26 @@ Page({
     const turns = loadTurns(familyId)
     const restored = turnsToMessages(turns, () => this.nextId())
     const messages = [helloMessage()].concat(restored)
+    // 上次离开时还挂着一张确认卡：恢复后它已经不能点了，说清楚，别让家人以为还等着点
+    let staleConfirm = false
+    try {
+      staleConfirm = !!wx.getStorageSync(this.confirmFlagKey())
+    } catch (e) {
+      staleConfirm = false
+    }
+    if (staleConfirm) {
+      messages.push(
+        stampMessage({
+          id: this.nextId(),
+          role: 'assistant',
+          kind: 'result',
+          text: copy.assist.confirmExpired,
+          askList: [],
+          confirmList: []
+        })
+      )
+      this.clearPendingConfirm()
+    }
     this._messages = messages
     this._pendingId = ''
     this.setData({
@@ -505,6 +542,27 @@ Page({
     if (capped !== this.data.transcriptCapped) patch.transcriptCapped = capped
     if (canClear !== this.data.canClear) patch.canClear = canClear
     if (Object.keys(patch).length) this.setData(patch)
+  },
+
+  confirmFlagKey() {
+    return `hs_assist_confirm_pending_${this._familyId || ''}`
+  },
+
+  /** 记住「有一张确认卡没处理」，冷启动时据此告知家人它已失效。 */
+  markPendingConfirm() {
+    try {
+      wx.setStorageSync(this.confirmFlagKey(), 1)
+    } catch (e) {
+      // 本地存储不可用就不提示，不影响主流程
+    }
+  },
+
+  clearPendingConfirm() {
+    try {
+      wx.removeStorageSync(this.confirmFlagKey())
+    } catch (e) {
+      // ignore
+    }
   },
 
   commitMessages(messages, extra) {
@@ -654,9 +712,12 @@ Page({
     // 先收起确认卡，避免合并项无 ref / WXML join 在列表 diff 时炸 weui
     const cleared = clearConfirmCards(this._messages || this.data.messages || [])
     this.commitMessages(cleared)
+    this.clearPendingConfirm()
     this.submit({
       resetRound: false,
       confirmed: true,
+      // 确认不是家人说的话：不往对话里塞一条假的 user 气泡，只用 confirmed + planId 表达
+      skipUserBubble: true,
       turnId: confirmTurnId,
       text: isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes,
       actText: this.data.originalText || (isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes),
@@ -668,6 +729,7 @@ Page({
 
   onCancelConfirm() {
     this._confirmTurnId = ''
+    this.clearPendingConfirm()
     const pending = this.data.pendingCalls || []
     const isMerge = pending.some((c) => c && c.use === 'item.merge')
     const heldWrite = pending.some(
@@ -949,6 +1011,11 @@ Page({
     } else if (next.bubbleText == null) {
       next.bubbleText = bubbleTextWithoutBlockDup(next.text, next.blocks)
     }
+    // 去重/改写过正文后分段可能对不上，宁可纯文本也不画错位置
+    if (next.segments && next.segments.length) {
+      const joined = next.segments.map((seg) => seg.v).join('')
+      if (!next.bubbleText || joined !== next.bubbleText) next.segments = null
+    }
     next = stampMessage(next)
     if (realIdx >= 0) messages[realIdx] = next
     else messages.push(next)
@@ -983,6 +1050,8 @@ Page({
           text,
           blocks,
           present,
+          // 提问分支的正文也是模型写的，同样分段上色
+          segments: present ? null : attachSegments(data && data.replySegments, reply, text),
           askList,
           hasChips,
           goSpaces,
@@ -1020,9 +1089,12 @@ Page({
         (confirmKind === 'removeUpdated' ? copy.assist.confirmHintUpdated : '')
       // 新的确认卡 = 新的确认动作，不能复用上一张卡的 turnId（否则会回放旧结果）
       this._confirmTurnId = ''
+      const confirmLead = String((data && data.lead) || '').trim()
+      this.markPendingConfirm()
       this.replacePending(
         {
-          text: title,
+          // 模型这一轮说的话（lead）不能因为要出确认卡就丢掉
+          text: [confirmLead, title].filter(Boolean).join('\n'),
           confirmHint,
           askList: [],
           confirmList,
@@ -1066,6 +1138,7 @@ Page({
 
     const { lead, blocks, report, present } = pickPresentation(data)
     const lines = asArray(report.lines).filter(Boolean)
+    const modelReply = String((data && data.reply) || '').trim()
     if (
       !blocks.length &&
       report.possibleDuplicates &&
@@ -1082,8 +1155,9 @@ Page({
             .join('；')
       )
     }
+    // 模型自己说的话优先，回执拼接只作兜底
     const textParts = [
-      buildResultText(lead, blocks, lines, !!(data && data.wrote)),
+      modelReply || buildResultText(lead, blocks, lines, !!(data && data.wrote)),
       presentToHistoryText(present)
     ].filter(Boolean)
     // 有结构化展示时，丢掉空操作占位文案
@@ -1093,11 +1167,18 @@ Page({
       .map((l) => l.trim())
       .filter((l) => l && l !== copy.assist.doneEmpty && l !== '没有需要执行的操作')
       .join('\n')
+    const bubbleText = text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty)
     this.replacePending(
       {
-        text: text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty),
+        text: bubbleText,
         blocks: present ? [] : blocks,
         present,
+        // 表格/图与正文是两块，正文里与表格重复的行已被 bubbleText 去重，可照常上色
+        segments: attachSegments(
+          data && data.leadSegments,
+          String((data && data.lead) || '').trim(),
+          bubbleText
+        ),
         askList: [],
         confirmList: [],
         subscribeItems: [],

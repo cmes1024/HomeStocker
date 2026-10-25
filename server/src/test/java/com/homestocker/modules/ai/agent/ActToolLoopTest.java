@@ -25,30 +25,29 @@ import org.junit.jupiter.api.Test;
 class ActToolLoopTest {
 
   @Test
-  void updateBesideRemoveIsNotWrittenBeforeConfirm() throws Exception {
+  void onlyTheConfirmCallIsHeldWhileTheUpdateRuns() throws Exception {
     List<String> executed = new ArrayList<>();
     Outcome outcome =
         loop(
                 List.of(
                     result(
                         call("1", "item_update", "{\"ref\":\"P1\",\"quantity\":3}"),
-                        call("2", "item_remove", "{\"ref\":\"P2\"}"))))
+                        call("2", "item_remove", "{\"ref\":\"P2\"}")),
+                    new ChatResult("已改 苹果：3，电脑等你确认。", 200, 1)))
             .run(context(), null, calls -> {
               executed.add(String.valueOf(calls.get(0).get("use")));
               return receipt(false, "已改 苹果：3");
             });
 
-    assertTrue(executed.isEmpty());
+    assertEquals(List.of("item.update"), executed);
     assertEquals(Kind.CONFIRM, outcome.kind());
-    assertEquals("item.update", outcome.calls().get(0).get("use"));
-    assertEquals(3, outcome.calls().get(0).get("quantity"));
-    assertEquals("item.remove", outcome.calls().get(1).get("use"));
-    assertEquals("P1", outcome.calls().get(0).get("ref"));
-    assertEquals("P2", outcome.calls().get(1).get("ref"));
+    assertEquals(1, outcome.calls().size());
+    assertEquals("item.remove", outcome.calls().get(0).get("use"));
+    assertEquals("P2", outcome.calls().get(0).get("ref"));
   }
 
   @Test
-  void askDoesNotCommitTheWriteInTheSameBatch() throws Exception {
+  void askAndWriteLandInTheSameBatch() throws Exception {
     List<String> executed = new ArrayList<>();
     Outcome outcome =
         loop(
@@ -61,9 +60,10 @@ class ActToolLoopTest {
               return receipt(true, "已改 苹果：3");
             });
 
-    assertTrue(executed.isEmpty());
+    assertEquals(List.of("item.update"), executed);
     assertEquals(Kind.ASK, outcome.kind());
-    assertTrue(outcome.calls().isEmpty());
+    assertEquals(1, outcome.calls().size());
+    assertEquals("item.update", outcome.calls().get(0).get("use"));
     assertEquals("单位用什么？", outcome.ask().get(0).get("question"));
   }
 
@@ -86,7 +86,7 @@ class ActToolLoopTest {
   void stepCapKeepsTheWritesInsteadOfABlankAsk() throws Exception {
     AtomicInteger hits = new AtomicInteger();
     List<ChatResult> script = new ArrayList<>();
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < ToolSchemas.MAX_STEPS; i++) {
       script.add(result(call("c" + i, "item_update", "{\"ref\":\"P1\",\"quantity\":" + (i + 1) + "}")));
     }
     Outcome outcome =
@@ -96,9 +96,9 @@ class ActToolLoopTest {
               return receipt(true, "已改 苹果：" + calls.get(0).get("quantity"));
             });
 
-    assertEquals(4, hits.get());
+    assertEquals(ToolSchemas.MAX_STEPS, hits.get());
     assertEquals(Kind.DONE, outcome.kind());
-    assertEquals(4, outcome.calls().size());
+    assertEquals(ToolSchemas.MAX_STEPS, outcome.calls().size());
     assertEquals(true, outcome.report().get("wrote"));
   }
 
@@ -306,6 +306,31 @@ class ActToolLoopTest {
     catalog.put("item.create", api("item.create", false, "name, quantity?, spaceName"));
     catalog.put("item.search", api("item.search", false, "name?, spaceName?"));
     catalog.put("ask", api("ask", false, "question"));
+    Map<String, Map<String, Object>> refs = new LinkedHashMap<>();
+    List<Map<String, Object>> rows = turnRows;
+    List<Map<String, Object>> known = turnRows;
+    if (known.isEmpty()) {
+      Map<String, Object> apple = new LinkedHashMap<>();
+      apple.put("ref", "P1");
+      apple.put("itemId", "a1");
+      apple.put("name", "苹果");
+      apple.put("quantity", new BigDecimal("2"));
+      apple.put("unit", "个");
+      apple.put("spaceName", "厨房");
+      apple.put("locationName", "冰箱");
+      Map<String, Object> computer = new LinkedHashMap<>();
+      computer.put("ref", "P2");
+      computer.put("itemId", "a2");
+      computer.put("name", "电脑");
+      computer.put("quantity", new BigDecimal("1"));
+      computer.put("unit", "台");
+      computer.put("spaceName", "客厅");
+      computer.put("locationName", "");
+      known = List.of(apple, computer);
+    }
+    for (Map<String, Object> row : known) {
+      refs.put(String.valueOf(row.get("ref")), row);
+    }
     return new ActContext(
         "openid",
         "family",
@@ -318,10 +343,10 @@ class ActToolLoopTest {
                 Map.of("name", "客厅", "locations", List.of()))),
         "家",
         Map.of("ymd", "2026-10-15", "weekday", "四"),
-        new LinkedHashMap<>(),
+        refs,
         List.of(),
         null,
-        turnRows,
+        rows,
         Map.of(),
         "",
         userText,

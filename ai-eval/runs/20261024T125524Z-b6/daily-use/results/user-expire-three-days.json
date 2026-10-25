@@ -1,0 +1,256 @@
+{
+  "id": "user-expire-three-days",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:57:42.384Z",
+  "mode": "act",
+  "outcome": "按临期窗口回答，人话列出名称",
+  "actual": {
+    "dialogue": {
+      "text": "还有三天过期的",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "use": "item.listExpiring"
+        }
+      ],
+      "blocks": [],
+      "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+      "report": {
+        "executed": [
+          {
+            "use": "item.listExpiring",
+            "summary": "临期/过期：找到 2 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。"
+        ],
+        "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "三天内到期的",
+        "columns": [
+          "名称",
+          "数量",
+          "位置",
+          "过期"
+        ],
+        "widths": [
+          2,
+          1,
+          2,
+          2
+        ],
+        "rows": [
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-25"
+          ],
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-26"
+          ]
+        ],
+        "caption": "共 2 件，都在冰箱里。"
+      }
+    },
+    "tools": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "use": "item.listExpiring"
+          }
+        ],
+        "blocks": [],
+        "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+        "report": {
+          "executed": [
+            {
+              "use": "item.listExpiring",
+              "summary": "临期/过期：找到 2 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。"
+          ],
+          "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "三天内到期的",
+          "columns": [
+            "名称",
+            "数量",
+            "位置",
+            "过期"
+          ],
+          "widths": [
+            2,
+            1,
+            2,
+            2
+          ],
+          "rows": [
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-25"
+            ],
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-26"
+            ]
+          ],
+          "caption": "共 2 件，都在冰箱里。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "use": "item.listExpiring"
+              }
+            ],
+            "blocks": [],
+            "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.listExpiring",
+                  "summary": "临期/过期：找到 2 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。"
+              ],
+              "lead": "三天内到期的就这两件，都在冰箱里，酸奶明天到期，牛奶后天到期。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "三天内到期的",
+              "columns": [
+                "名称",
+                "数量",
+                "位置",
+                "过期"
+              ],
+              "widths": [
+                2,
+                1,
+                2,
+                2
+              ],
+              "rows": [
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-25"
+                ],
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-26"
+                ]
+              ],
+              "caption": "共 2 件，都在冰箱里。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.listExpiring",
+      "ok": true,
+      "detail": "present"
+    }
+  ],
+  "notes": ""
+}

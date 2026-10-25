@@ -1,0 +1,377 @@
+{
+  "id": "eng-multiturn-ref",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:59:16.957Z",
+  "mode": "act",
+  "outcome": "第三轮仍改到第一轮查到的那盒酸奶（P3），不改牛奶、不新记一条、不反问是哪件。",
+  "actual": {
+    "dialogue": {
+      "text": "再喝一盒",
+      "history": [
+        {
+          "role": "user",
+          "text": "厨房冰箱里还有什么"
+        },
+        {
+          "role": "assistant",
+          "text": "冰箱里：P1 牛奶 2 盒（后天到期）、P2 鸡蛋 8 个、P3 酸奶 2 盒（明天到期）。"
+        },
+        {
+          "role": "user",
+          "text": "酸奶喝掉一盒"
+        },
+        {
+          "role": "assistant",
+          "text": "酸奶改成 1 盒了。"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "酸奶",
+          "use": "item.search"
+        },
+        {
+          "ref": "P1",
+          "quantity": 1,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 酸奶（厨房 / 冰箱）：2盒→1",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "酸奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-25",
+          "已改 酸奶（厨房 / 冰箱）：2盒→1"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "酸奶",
+                "subtitle": "2盒",
+                "facts": [
+                  "厨房 / 冰箱",
+                  "过期 2026-10-25"
+                ],
+                "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 酸奶（厨房 / 冰箱）",
+                "subtitle": "2盒→1",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "酸奶现在剩 1 盒，明天到期。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "酸奶",
+              "subtitle": "2盒",
+              "facts": [
+                "厨房 / 冰箱",
+                "过期 2026-10-25"
+              ],
+              "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 酸奶（厨房 / 冰箱）",
+              "subtitle": "2盒→1",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "酸奶",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "酸奶",
+            "use": "item.search"
+          },
+          {
+            "ref": "P1",
+            "quantity": 1,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 酸奶（厨房 / 冰箱）：2盒→1",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "酸奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-25",
+            "已改 酸奶（厨房 / 冰箱）：2盒→1"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "酸奶",
+                  "subtitle": "2盒",
+                  "facts": [
+                    "厨房 / 冰箱",
+                    "过期 2026-10-25"
+                  ],
+                  "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 酸奶（厨房 / 冰箱）",
+                  "subtitle": "2盒→1",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "酸奶现在剩 1 盒，明天到期。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "酸奶",
+                "subtitle": "2盒",
+                "facts": [
+                  "厨房 / 冰箱",
+                  "过期 2026-10-25"
+                ],
+                "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 酸奶（厨房 / 冰箱）",
+                "subtitle": "2盒→1",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "酸奶",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "酸奶",
+                "use": "item.search"
+              },
+              {
+                "ref": "P1",
+                "quantity": 1,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 酸奶（厨房 / 冰箱）：2盒→1",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "酸奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-25",
+                "已改 酸奶（厨房 / 冰箱）：2盒→1"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "酸奶",
+                      "subtitle": "2盒",
+                      "facts": [
+                        "厨房 / 冰箱",
+                        "过期 2026-10-25"
+                      ],
+                      "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 酸奶（厨房 / 冰箱）",
+                      "subtitle": "2盒→1",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "酸奶现在剩 1 盒，明天到期。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "酸奶",
+                    "subtitle": "2盒",
+                    "facts": [
+                      "厨房 / 冰箱",
+                      "过期 2026-10-25"
+                    ],
+                    "itemId": "e8f4b0ae-0556-43bb-8cb9-0731eda13f85"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 酸奶（厨房 / 冰箱）",
+                    "subtitle": "2盒→1",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "酸奶",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callIncludes:item.update:酸奶:",
+      "ok": true,
+      "detail": "matched"
+    },
+    {
+      "name": "callExcludes:item.update:牛奶",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callExcludes:item.create:酸奶",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callExcludes:item.remove:酸奶",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": "B3 启用后补断言：第三轮 tool result 里 P3 仍指向同一 itemId，且回执无 REF_UNKNOWN。"
+}

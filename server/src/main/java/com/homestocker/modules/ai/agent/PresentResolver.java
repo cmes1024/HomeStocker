@@ -1,6 +1,10 @@
 package com.homestocker.modules.ai.agent;
 
+import com.homestocker.common.ShanghaiDates;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -616,13 +620,39 @@ public final class PresentResolver {
       return str(item.get("spaceName"));
     }
     if (key.contains("过期") || key.contains("expire")) {
-      return str(item.get("expireDate"));
+      return expireLabel(str(item.get("expireDate")), ShanghaiDates.todayLocalDate());
     }
     if (key.contains("生产") || key.contains("production")) {
       return str(item.get("productionDate"));
     }
     if (key.contains("备注") || key.equals("note")) {
       return str(item.get("note"));
+    }
+    return "";
+  }
+
+  /** 过期只给状态，不给日期：已过期 N 天 / 今日到期 / 快过期 N 天 / 空。 */
+  static String expireLabel(String raw, LocalDate today) {
+    String text = str(raw).trim();
+    if (text.isEmpty() || today == null) {
+      return "";
+    }
+    String ymd = text.length() > 10 ? text.substring(0, 10) : text;
+    LocalDate date;
+    try {
+      date = LocalDate.parse(ymd);
+    } catch (DateTimeParseException e) {
+      return "";
+    }
+    long days = ChronoUnit.DAYS.between(today, date);
+    if (days < 0) {
+      return "已过期 " + (-days) + " 天";
+    }
+    if (days == 0) {
+      return "今日到期";
+    }
+    if (days <= 3) {
+      return "快过期 " + days + " 天";
     }
     return "";
   }

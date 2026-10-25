@@ -190,28 +190,27 @@ public class ActToolLoop {
       Set<String> seenSearches) {
     String ground = ActPrompt.groundText(ctx.history(), ctx.text(), System.currentTimeMillis());
     boolean asked = false;
-    boolean holdWrites = false;
     String askQuestion = "";
     List<String> askOptions = new ArrayList<>();
     for (ToolCall call : calls) {
-      if (ToolSchemas.ASK.equals(call.name())) {
-        log.info("[ai.act] tool ask");
-        asked = true;
-        Map<String, Object> args = parseArgs(call.arguments());
-        askQuestion = str(args.get("question"));
-        askOptions = stringList(args.get("options"));
+      if (!ToolSchemas.ASK.equals(call.name())) {
         continue;
       }
-      String use = ToolSchemas.capabilityId(call.name());
-      Map<String, Object> api = ctx.catalogMap() == null ? null : ctx.catalogMap().get(use);
-      if (api != null && Boolean.TRUE.equals(api.get("confirm"))) {
-        holdWrites = true;
-      }
+      log.info("[ai.act] tool ask");
+      asked = true;
+      Map<String, Object> args = parseArgs(call.arguments());
+      askQuestion = str(args.get("question"));
+      askOptions = stringList(args.get("options"));
     }
     List<Map<String, Object>> held = new ArrayList<>();
     for (ToolCall call : calls) {
       if (ToolSchemas.ASK.equals(call.name())) {
-        appendToolMessage(messages, call.id(), "已向家人提问，本轮不再改台账。");
+        appendToolMessage(
+            messages,
+            call.id(),
+            ToolFeedback.of(GroundingCodes.ASK_REQUIRED, "question", askQuestion)
+                .withCandidates(askOptions)
+                .toJson());
         continue;
       }
       if (ToolSchemas.PRESENT.equals(call.name())) {
@@ -221,10 +220,10 @@ public class ActToolLoop {
             spec != null,
             clip(String.valueOf(spec), 200));
         if (spec == null) {
-          appendToolMessage(messages, call.id(), "展示类型只能是 table、stats、bars、pie。");
+          appendToolMessage(messages, call.id(), PRESENT_REJECTED);
         } else {
           present = spec;
-          appendToolMessage(messages, call.id(), "已记下展示，本轮结束时画给家人。不要自己编数字。");
+          appendToolMessage(messages, call.id(), PRESENT_ACCEPTED);
         }
         continue;
       }
@@ -233,7 +232,7 @@ public class ActToolLoop {
           || CapabilityCatalog.isHardDenied(use)
           || ctx.catalogMap() == null
           || !ctx.catalogMap().containsKey(use)) {
-        appendToolMessage(messages, call.id(), "不能执行" + (use.isBlank() ? "" : "（" + use + "）"));
+        appendToolMessage(messages, call.id(), notAllowed(use));
         continue;
       }
       Map<String, Object> domainCall = new LinkedHashMap<>();
@@ -243,38 +242,50 @@ public class ActToolLoop {
       domainCall.put("use", use);
       Map<String, Object> api = ctx.catalogMap().get(use);
       boolean confirm = api != null && Boolean.TRUE.equals(api.get("confirm"));
-      String blocked =
-          PlaceGrounding.ungrounded(
-              ground,
-              PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
-              ctx.tree(),
-              domainCall);
-      if (blocked == null) {
-        blocked =
-            WriteGrounding.blocked(
-                ground,
-                PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
-                ctx.tree(),
-                rows,
-                domainCall);
-      }
-      if (blocked != null) {
-        log.info("[ai.act] tool blocked use={} reason={}", use, blocked);
-        appendToolMessage(messages, call.id(), blocked);
+      String habitSpace = PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits"));
+      ToolFeedback audit = Provenance.verify(ground, habitSpace, domainCall, rows);
+      if (audit != null) {
+        log.info(
+            "[ai.act] audit code={} field={} declared={} use={}",
+            audit.code(),
+            audit.field(),
+            audit.declared(),
+            use);
+        appendToolMessage(messages, call.id(), audit.toJson());
         continue;
       }
-      if (confirm || (isMutation(use) && (asked || holdWrites))) {
-        if (!asked) {
-          held.add(domainCall);
+      if (isMutation(use)) {
+        List<String> missing = Provenance.missingFields(domainCall);
+        String declared = Provenance.describe(domainCall);
+        if (!missing.isEmpty()) {
+          log.info("[ai.act] audit noSource={} use={}", String.join(",", missing), use);
+        } else if (!declared.isEmpty()) {
+          log.info("[ai.act] audit declared={} use={}", declared, use);
+        } else {
+          log.info("[ai.act] audit refOnly use={}", use);
         }
+      }
+      ToolFeedback blocked = refUnknown(domainCall, ctx);
+      if (blocked == null) {
+        blocked = PlaceGrounding.check(ctx.tree(), domainCall);
+      }
+      if (blocked == null) {
+        blocked = WriteGrounding.check(ground, rows, domainCall);
+      }
+      if (blocked != null) {
+        log.info("[ai.act] tool blocked use={} code={}", use, blocked.code());
+        appendToolMessage(messages, call.id(), blocked.toJson());
+        continue;
+      }
+      if (confirm) {
+        held.add(domainCall);
         log.info("[ai.act] tool held use={} asked={}", use, asked);
-        appendToolMessage(
-            messages,
-            call.id(),
-            asked ? "本轮改为提问，这项先不写入。" : "须家人确认后才执行，本轮先停住。");
+        appendToolMessage(messages, call.id(), held(use).toJson());
         continue;
       }
       long toolStart = System.currentTimeMillis();
+      // _src 只存在于请求与回执，不进写路径、不进活动日志。
+      domainCall.remove(Provenance.SRC);
       Map<String, Object> one = executor.execute(List.of(domainCall));
       log.info(
           "[ai.act] tool use={} ms={} args={}",
@@ -283,25 +294,28 @@ public class ActToolLoop {
           clip(String.valueOf(domainCall), 160));
       report = mergeReports(report, one, ctx.tree());
       List<Map<String, Object>> fresh = ingest(one, ctx);
-      rows.addAll(fresh);
+      for (Map<String, Object> row : fresh) {
+        if (!containsRow(rows, row)) {
+          rows.add(row);
+        }
+      }
       allCalls.add(domainCall);
       String repeated =
           "item.search".equals(use) && !seenSearches.add(searchSignature(domainCall))
-              ? "相同条件本轮已经查过，下面仍是那些行。不要再用同一条件查。\n"
+              ? "相同条件本轮已经查过，下面仍是那些行。\n"
               : "";
-      List<Map<String, Object>> shown = fresh;
-      String seenBefore = "";
-      if (fresh.isEmpty()) {
-        shown = knownRows(one, ctx);
-        if (!shown.isEmpty()) {
-          seenBefore = "这些行本轮查过，短号沿用上面的。\n";
-        }
-      }
-      appendToolMessage(messages, call.id(), repeated + seenBefore + toolText(one, shown));
+      appendToolMessage(messages, call.id(), repeated + toolText(one, fresh));
       if (one != null && Boolean.TRUE.equals(one.get("subscribeUi"))) {
         return new BatchStep(
             new Outcome(Kind.SUBSCRIBE, "", List.of(), allCalls, rows, report, present), report, present);
       }
+    }
+    if (!held.isEmpty()) {
+      if (asked) {
+        log.info("[ai.act] ask and confirm in one batch, confirm wins q={}", clip(askQuestion, 60));
+      }
+      return new BatchStep(
+          new Outcome(Kind.CONFIRM, "", List.of(), held, rows, report, present), report, present);
     }
     if (asked) {
       String question = askQuestion.isBlank() ? AssistPromptTexts.DEGRADE_ASK : askQuestion;
@@ -312,10 +326,6 @@ public class ActToolLoop {
           askOptions.stream().map(label -> Map.<String, Object>of("label", label, "value", label)).toList());
       return new BatchStep(
           new Outcome(Kind.ASK, "", List.of(ask), allCalls, rows, report, present), report, present);
-    }
-    if (!held.isEmpty()) {
-      return new BatchStep(
-          new Outcome(Kind.CONFIRM, "", List.of(), held, rows, report, present), report, present);
     }
     return new BatchStep(null, report, present);
   }
@@ -358,6 +368,10 @@ public class ActToolLoop {
     return new Outcome(Kind.ASK, "", List.of(ask), List.of(), rows, null);
   }
 
+  /**
+   * 工具返回的库存行都回给模型：见过的行重发（短号不变），没见过的签发新短号。
+   * 隐藏已见行会让模型跨轮拿不到可引用的短号。
+   */
   private List<Map<String, Object>> ingest(Map<String, Object> report, ActContextBuilder.ActContext ctx) {
     if (report == null) {
       return List.of();
@@ -382,7 +396,12 @@ public class ActToolLoop {
         if (id.isBlank()) {
           id = str(itemMap.get("itemId"));
         }
-        if (id.isBlank() || already(ctx.refs(), id)) {
+        if (id.isBlank()) {
+          continue;
+        }
+        Map<String, Object> known = knownById(ctx.refs(), id);
+        if (known != null) {
+          rows.add(known);
           continue;
         }
         n++;
@@ -394,30 +413,31 @@ public class ActToolLoop {
     return rows;
   }
 
-  /** 本次返回的行本轮都已查过（被 {@link #ingest} 去重）时，用 refs 里已有的行回给模型，短号不变。 */
-  private List<Map<String, Object>> knownRows(
-      Map<String, Object> report, ActContextBuilder.ActContext ctx) {
-    List<Map<String, Object>> out = new ArrayList<>();
-    if (report == null || !(report.get("executed") instanceof List<?> executed)) {
-      return out;
+  /** 短号或 itemId 不存在/已失效时回 REF_UNKNOWN，不再让模型拿旧引用去写。 */
+  private static ToolFeedback refUnknown(Map<String, Object> call, ActContextBuilder.ActContext ctx) {
+    String use = str(call.get("use"));
+    if ("item.removeMany".equals(use) || "item.merge".equals(use)) {
+      return null;
     }
-    for (Object rowObj : executed) {
-      if (!(rowObj instanceof Map<?, ?> row) || !(row.get("inventory") instanceof List<?> inv)) {
-        continue;
+    String itemId = str(call.get("itemId"));
+    if (!itemId.isEmpty() && ActRefs.lookupRef(Map.of("itemId", itemId), ctx.refs()) == null) {
+      return ToolFeedback.of(GroundingCodes.REF_UNKNOWN, "itemId", itemId)
+          .withCandidates(knownRefs(ctx));
+    }
+    String ref = ActRefs.pickCallRef(call);
+    if (!ref.isEmpty() && ActRefs.lookupRef(Map.of("ref", ref), ctx.refs()) == null) {
+      return ToolFeedback.of(GroundingCodes.REF_UNKNOWN, "ref", ref).withCandidates(knownRefs(ctx));
+    }
+    return null;
+  }
+
+  private static List<String> knownRefs(ActContextBuilder.ActContext ctx) {
+    List<String> out = new ArrayList<>();
+    for (String key : ctx.refs().keySet()) {
+      if (out.size() >= 5) {
+        break;
       }
-      for (Object itemObj : inv) {
-        if (!(itemObj instanceof Map<?, ?> item)) {
-          continue;
-        }
-        String id = str(item.get("_id"));
-        if (id.isBlank()) {
-          id = str(item.get("itemId"));
-        }
-        Map<String, Object> known = knownById(ctx.refs(), id);
-        if (known != null && !out.contains(known)) {
-          out.add(known);
-        }
-      }
+      out.add(key);
     }
     return out;
   }
@@ -435,9 +455,17 @@ public class ActToolLoop {
     return null;
   }
 
-  private static boolean already(Map<String, Map<String, Object>> refs, String itemId) {
-    for (Map<String, Object> row : refs.values()) {
-      if (row != null && itemId.equals(str(row.get("itemId")))) {
+  private static boolean containsRow(List<Map<String, Object>> rows, Map<String, Object> row) {
+    String id = str(row.get("itemId"));
+    String ref = str(row.get("ref"));
+    for (Map<String, Object> one : rows) {
+      if (one == null) {
+        continue;
+      }
+      if (!id.isEmpty() && id.equals(str(one.get("itemId")))) {
+        return true;
+      }
+      if (!ref.isEmpty() && ref.equals(str(one.get("ref")))) {
         return true;
       }
     }
@@ -526,6 +554,19 @@ public class ActToolLoop {
         .put("role", "tool")
         .put("tool_call_id", toolCallId == null ? "" : toolCallId)
         .put("content", content == null ? "" : content);
+  }
+
+  private static final String PRESENT_ACCEPTED = "{\"ok\":true,\"accepted\":true}";
+
+  private static final String PRESENT_REJECTED =
+      "{\"ok\":false,\"accepted\":false,\"allowed\":[\"table\",\"stats\",\"bars\",\"pie\"]}";
+
+  private static String notAllowed(String use) {
+    return "{\"ok\":false,\"allowed\":false,\"use\":\"" + (use == null ? "" : use) + "\"}";
+  }
+
+  private static ToolFeedback held(String use) {
+    return ToolFeedback.of(GroundingCodes.WRITE_HELD, "use", use);
   }
 
   private Map<String, Object> parseArgs(String arguments) {

@@ -1,0 +1,348 @@
+{
+  "id": "user-use-set-left",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:57:58.213Z",
+  "mode": "act",
+  "outcome": "把刚才说的鸡蛋改成 2 个",
+  "actual": {
+    "dialogue": {
+      "text": "改成还剩2",
+      "history": [
+        {
+          "role": "user",
+          "text": "鸡蛋还剩几个"
+        },
+        {
+          "role": "assistant",
+          "text": "冰箱里鸡蛋还有 8 个"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "鸡蛋",
+          "use": "item.search"
+        },
+        {
+          "ref": "P1",
+          "quantity": 2,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→2",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "鸡蛋 · 8个 · 厨房 / 冰箱",
+          "已改 鸡蛋（厨房 / 冰箱）：8个→2"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "鸡蛋",
+                "subtitle": "8个",
+                "facts": [
+                  "厨房 / 冰箱"
+                ],
+                "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→2",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "鸡蛋改好了，现在记的是 2 个。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "鸡蛋",
+              "subtitle": "8个",
+              "facts": [
+                "厨房 / 冰箱"
+              ],
+              "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 鸡蛋（厨房 / 冰箱）",
+              "subtitle": "8个→2",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "鸡蛋",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "鸡蛋",
+            "use": "item.search"
+          },
+          {
+            "ref": "P1",
+            "quantity": 2,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→2",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "鸡蛋 · 8个 · 厨房 / 冰箱",
+            "已改 鸡蛋（厨房 / 冰箱）：8个→2"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "鸡蛋",
+                  "subtitle": "8个",
+                  "facts": [
+                    "厨房 / 冰箱"
+                  ],
+                  "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 鸡蛋（厨房 / 冰箱）",
+                  "subtitle": "8个→2",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "鸡蛋改好了，现在记的是 2 个。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "鸡蛋",
+                "subtitle": "8个",
+                "facts": [
+                  "厨房 / 冰箱"
+                ],
+                "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→2",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "鸡蛋",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "鸡蛋",
+                "use": "item.search"
+              },
+              {
+                "ref": "P1",
+                "quantity": 2,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→2",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "鸡蛋 · 8个 · 厨房 / 冰箱",
+                "已改 鸡蛋（厨房 / 冰箱）：8个→2"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "鸡蛋",
+                      "subtitle": "8个",
+                      "facts": [
+                        "厨房 / 冰箱"
+                      ],
+                      "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 鸡蛋（厨房 / 冰箱）",
+                      "subtitle": "8个→2",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "鸡蛋改好了，现在记的是 2 个。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "鸡蛋",
+                    "subtitle": "8个",
+                    "facts": [
+                      "厨房 / 冰箱"
+                    ],
+                    "itemId": "b3a9e3fa-7e3e-43a5-84dd-c92281e122a6"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 鸡蛋（厨房 / 冰箱）",
+                    "subtitle": "8个→2",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "鸡蛋",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.update",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

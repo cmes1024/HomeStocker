@@ -1,0 +1,157 @@
+{
+  "id": "curriculum-c3-same-name",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:55:37.926Z",
+  "mode": "act",
+  "outcome": "冰箱和常温都有牛奶时先问是哪一条，不默默删",
+  "actual": {
+    "dialogue": {
+      "text": "删掉牛奶",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "牛奶有两件，删哪个？",
+          "options": [
+            {
+              "label": "冰箱里那2盒（10月26日过期）",
+              "value": "冰箱里那2盒（10月26日过期）"
+            },
+            {
+              "label": "厨房那1箱（常温未开）",
+              "value": "厨房那1箱（常温未开）"
+            },
+            {
+              "label": "两件都删",
+              "value": "两件都删"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "牛奶有两件，删哪个？",
+            "options": [
+              {
+                "label": "冰箱里那2盒（10月26日过期）",
+                "value": "冰箱里那2盒（10月26日过期）"
+              },
+              {
+                "label": "厨房那1箱（常温未开）",
+                "value": "厨房那1箱（常温未开）"
+              },
+              {
+                "label": "两件都删",
+                "value": "两件都删"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "牛奶有两件，删哪个？",
+                "options": [
+                  {
+                    "label": "冰箱里那2盒（10月26日过期）",
+                    "value": "冰箱里那2盒（10月26日过期）"
+                  },
+                  {
+                    "label": "厨房那1箱（常温未开）",
+                    "value": "厨房那1箱（常温未开）"
+                  },
+                  {
+                    "label": "两件都删",
+                    "value": "两件都删"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

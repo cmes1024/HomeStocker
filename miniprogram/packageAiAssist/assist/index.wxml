@@ -69,6 +69,7 @@
             <view class="pending-dot"></view>
           </view>
         </view>
+        <view class="bubble" wx:elif="{{item.segments && item.segments.length}}"><text wx:for="{{item.segments}}" wx:key="k" class="seg-{{item.t}}">{{item.v}}</text></view>
         <view class="bubble" wx:elif="{{item.bubbleText}}">{{item.bubbleText}}</view>
         <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
 

@@ -385,6 +385,7 @@ const copy = {
     askTitle: '还差这一点',
     confirmTitle: '确认要删掉吗？',
     confirmHint: '删掉后家人那边也看不到。',
+    confirmExpired: '上一张确认已失效，需要的话再说一次。',
     confirmTitleUpdated: '确定整条删除吗？',
     confirmHintUpdated:
       '刚才是改了原有物资的数量，不是新开条目。删掉会把原来的库存一并去掉，不只是撤销刚才 +1。',

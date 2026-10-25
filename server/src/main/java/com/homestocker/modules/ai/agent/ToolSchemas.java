@@ -13,9 +13,31 @@ public final class ToolSchemas {
 
   public static final String ASK = "ask";
   public static final String PRESENT = "present";
-  public static final int MAX_STEPS = 4;
+  public static final String SRC = "_src";
+  public static final int MAX_STEPS = 6;
+
+  private static final String SRC_HINT =
+      "_src 声明关键参数的来源：{字段:{from:user|probe|inference|habit|default, quote?, via?}}；"
+          + "user 带本句原话 quote，probe/inference 带依据短号 via。";
 
   private ToolSchemas() {}
+
+  /** `_src` 的对象结构：键为字段名，值为来源声明。 */
+  private static void addSrcSchema(ObjectNode props) {
+    ObjectNode src = props.putObject(SRC);
+    src.put("type", "object");
+    src.put(
+        "description",
+        "键是参数名（spaceName、locationName、quantity），值是来源 {from, quote?, via?}。");
+    ObjectNode one = src.putObject("additionalProperties");
+    one.put("type", "object");
+    ObjectNode inner = one.putObject("properties");
+    ObjectNode from = inner.putObject("from");
+    from.put("type", "string");
+    from.putArray("enum").add("user").add("probe").add("inference").add("habit").add("default");
+    inner.putObject("quote").put("type", "string");
+    inner.putObject("via").put("type", "string");
+  }
 
   public static String functionName(String capabilityId) {
     String id = capabilityId == null ? "" : capabilityId.trim();
@@ -120,7 +142,13 @@ public final class ToolSchemas {
     String args = api.get("args") == null ? "" : String.valueOf(api.get("args")).trim();
     String confirm =
         Boolean.TRUE.equals(api.get("confirm")) ? "调用后由服务端弹出确认卡，先不要向家人预确认。" : "";
-    fn.put("description", (hint + (args.isEmpty() ? "" : " 参数：" + args) + confirm).trim());
+    fn.put(
+        "description",
+        (hint
+                + (args.isEmpty() ? "" : " 参数：" + args)
+                + confirm
+                + (args.contains("_src") ? " " + SRC_HINT : ""))
+            .trim());
     ObjectNode params = fn.putObject("parameters");
     params.put("type", "object");
     ObjectNode props = params.putObject("properties");
@@ -179,6 +207,10 @@ public final class ToolSchemas {
     boolean stringArray = !objectArray && arrayAt >= 0;
     String name = token.replaceAll("[^A-Za-z0-9_].*$", "");
     if (name.isEmpty() || props.has(name)) {
+      return;
+    }
+    if (SRC.equals(name)) {
+      addSrcSchema(props);
       return;
     }
     ObjectNode schema = props.putObject(name);

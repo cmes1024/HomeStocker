@@ -1,0 +1,30 @@
+{
+  "id": "curriculum-c10-short-answer-place",
+  "perspective": "product",
+  "title": "C10 短答沿用上一句的落点",
+  "tags": ["curriculum", "create", "history"],
+  "setup": {
+    "fixture": "home-unit-clash",
+    "notes": "落点「厨房」在前两轮由家人自己说过；助手那一轮还列了仓库/零食柜当干扰项。"
+  },
+  "prompt": [
+    { "role": "user", "text": "加两袋苹果" },
+    { "role": "assistant", "text": "这两袋苹果放哪儿？厨房、仓库还是客厅零食柜？" },
+    { "role": "user", "text": "厨房" },
+    { "role": "assistant", "text": "厨房里已有苹果 1 斤，要我在厨房另记一条「苹果 2 袋」吗？" },
+    { "role": "user", "text": "是的" }
+  ],
+  "expected": {
+    "outcome": "听自家上一句：在厨房另记一条「苹果 2 袋」。不许回「厨房这个落点没对上」「再说一次放哪儿」，也不许因为助手列过仓库就记到仓库。",
+    "requiredToolsAny": ["item.create", "item.createMany"],
+    "callIncludes": [
+      { "name": "苹果", "quantity": 2, "spaceName": "厨房" }
+    ],
+    "callExcludes": [
+      { "use": "item.update", "name": "苹果" },
+      { "spaceName": "仓库" }
+    ],
+    "forbiddenTools": ["item.remove", "item.removeMany"],
+    "manual": "同时用「不要只说本句」核对：日志里应有 item.create（spaceName=厨房），无「不是本句说的」类拦截。"
+  }
+}

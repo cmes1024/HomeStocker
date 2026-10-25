@@ -145,13 +145,8 @@ public final class ActRefs {
           return row;
         }
       }
-      Map<String, Object> stub = new LinkedHashMap<>();
-      stub.put("ref", pickCallRef(call).isEmpty() ? "X" : pickCallRef(call));
-      stub.put("itemId", itemId);
-      stub.put("name", str(call.get("name")));
-      stub.put("spaceName", "");
-      stub.put("locationName", "");
-      return stub;
+      // 查不到就是查不到：不再凭 id 造一条空行，避免模型拿假命中继续写。
+      return null;
     }
     String raw = pickCallRef(call);
     if (isShortRef(raw) && refs != null) {

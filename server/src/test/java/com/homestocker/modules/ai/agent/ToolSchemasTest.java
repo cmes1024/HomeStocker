@@ -81,6 +81,29 @@ class ToolSchemasTest {
     assertFalse(remove.path("function").path("parameters").path("properties").has("name"));
   }
 
+  @Test
+  void srcArgBecomesAnObjectWithOriginEnum() {
+    Map<String, Object> update = new LinkedHashMap<>();
+    update.put("id", "item.update");
+    update.put("enabled", true);
+    update.put("confirm", false);
+    update.put("hint", "改已有物资");
+    update.put("args", "ref, spaceName?, quantity?, _src?");
+    Map<String, Map<String, Object>> catalog = new LinkedHashMap<>();
+    catalog.put("item.update", update);
+
+    ArrayNode tools = ToolSchemas.openAiTools(new ObjectMapper(), catalog);
+    JsonNode tool = findTool(tools, "item_update");
+    JsonNode params = tool.path("function").path("parameters");
+    JsonNode src = params.path("properties").path("_src");
+    assertEquals("object", src.path("type").asText());
+    JsonNode origins = src.path("additionalProperties").path("properties").path("from").path("enum");
+    assertEquals("inference", origins.get(2).asText());
+    for (JsonNode name : params.path("required")) {
+      assertFalse("_src".equals(name.asText()));
+    }
+  }
+
   private static JsonNode findTool(ArrayNode tools, String name) {
     for (JsonNode tool : tools) {
       if (name.equals(tool.path("function").path("name").asText())) {

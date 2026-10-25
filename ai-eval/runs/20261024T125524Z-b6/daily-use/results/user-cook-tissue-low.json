@@ -1,0 +1,273 @@
+{
+  "id": "user-cook-tissue-low",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:57:16.534Z",
+  "mode": "act",
+  "outcome": "看过数量再说多不多，别随口附和「嗯不多了」",
+  "actual": {
+    "dialogue": {
+      "text": "纸巾不多了吧",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "纸巾",
+          "use": "item.search"
+        },
+        {
+          "name": "厕纸",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "纸巾还剩 3 包，厕纸 1 卷，确实不多了。"
+        ],
+        "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "纸巾和厕纸",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "纸巾",
+            "3包",
+            "客厅"
+          ],
+          [
+            "厕纸",
+            "1卷",
+            "卫生间"
+          ]
+        ],
+        "caption": "纸巾在客厅，厕纸在卫生间，两处分开记。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "纸巾",
+            "use": "item.search"
+          },
+          {
+            "name": "厕纸",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "纸巾还剩 3 包，厕纸 1 卷，确实不多了。"
+          ],
+          "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "纸巾和厕纸",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "纸巾",
+              "3包",
+              "客厅"
+            ],
+            [
+              "厕纸",
+              "1卷",
+              "卫生间"
+            ]
+          ],
+          "caption": "纸巾在客厅，厕纸在卫生间，两处分开记。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "纸巾",
+                "use": "item.search"
+              },
+              {
+                "name": "厕纸",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "纸巾还剩 3 包，厕纸 1 卷，确实不多了。"
+              ],
+              "lead": "纸巾还剩 3 包，厕纸 1 卷，确实不多了。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "纸巾和厕纸",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "纸巾",
+                  "3包",
+                  "客厅"
+                ],
+                [
+                  "厕纸",
+                  "1卷",
+                  "卫生间"
+                ]
+              ],
+              "caption": "纸巾在客厅，厕纸在卫生间，两处分开记。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

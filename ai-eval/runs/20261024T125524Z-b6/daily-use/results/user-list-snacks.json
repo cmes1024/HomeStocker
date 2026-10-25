@@ -1,0 +1,266 @@
+{
+  "id": "user-list-snacks",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:19.918Z",
+  "mode": "act",
+  "outcome": "列出零食相关的东西",
+  "actual": {
+    "dialogue": {
+      "text": "零食都有哪些",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "tagName": "零食",
+          "use": "item.search"
+        },
+        {
+          "spaceName": "客厅",
+          "locationName": "零食柜",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "标签「零食」：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "零食就薯片一样，2袋，在客厅零食柜。"
+        ],
+        "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "家里的零食",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "薯片",
+            "2袋",
+            "客厅 / 零食柜"
+          ]
+        ],
+        "caption": "零食柜里就这一样，没写过期日。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "tagName": "零食",
+            "use": "item.search"
+          },
+          {
+            "spaceName": "客厅",
+            "locationName": "零食柜",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "标签「零食」：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "零食就薯片一样，2袋，在客厅零食柜。"
+          ],
+          "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "家里的零食",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "薯片",
+              "2袋",
+              "客厅 / 零食柜"
+            ]
+          ],
+          "caption": "零食柜里就这一样，没写过期日。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "tagName": "零食",
+                "use": "item.search"
+              },
+              {
+                "spaceName": "客厅",
+                "locationName": "零食柜",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "标签「零食」：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "零食就薯片一样，2袋，在客厅零食柜。"
+              ],
+              "lead": "零食就薯片一样，2袋，在客厅零食柜。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "家里的零食",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "薯片",
+                  "2袋",
+                  "客厅 / 零食柜"
+                ]
+              ],
+              "caption": "零食柜里就这一样，没写过期日。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

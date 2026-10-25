@@ -108,6 +108,17 @@
   align-items: stretch;
 }
 
+/* 正文分段：只由服务端已知事实上色（数量 / 近 3 天到期） */
+.seg-num {
+  font-weight: 600;
+  color: #111;
+}
+
+.seg-warn {
+  font-weight: 600;
+  color: #b45309;
+}
+
 .bubble {
   max-width: 100%;
   min-width: 0;

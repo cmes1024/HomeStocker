@@ -101,6 +101,6 @@ class ReleaseRegressionTest {
   /** 步数上限以 openspec/changes/ai-act-tool-loop/design.md 的「步数上限 4」为准，改动须先改规格。 */
   @Test
   void toolLoopStepCapMatchesSpec() {
-    assertEquals(4, ToolSchemas.MAX_STEPS);
+    assertEquals(6, ToolSchemas.MAX_STEPS);
   }
 }

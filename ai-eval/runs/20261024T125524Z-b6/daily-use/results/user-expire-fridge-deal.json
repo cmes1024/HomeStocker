@@ -1,0 +1,266 @@
+{
+  "id": "user-expire-fridge-deal",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:57:47.080Z",
+  "mode": "act",
+  "outcome": "先列出快过期的再问怎么处理（删/用掉），不能一声不吭全删",
+  "actual": {
+    "dialogue": {
+      "text": "冰箱里快过期的处理一下",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "use": "item.listExpiring"
+        }
+      ],
+      "blocks": [],
+      "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+      "report": {
+        "executed": [
+          {
+            "use": "item.listExpiring",
+            "summary": "临期/过期：找到 2 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？"
+        ],
+        "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "冰箱临期",
+        "columns": [
+          "名称",
+          "数量",
+          "位置",
+          "过期"
+        ],
+        "widths": [
+          2,
+          1,
+          2,
+          2
+        ],
+        "rows": [
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-25"
+          ],
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-26"
+          ]
+        ],
+        "caption": "冰箱里就这两件临期，其余没到日子。"
+      }
+    },
+    "tools": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "use": "item.listExpiring"
+          }
+        ],
+        "blocks": [],
+        "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+        "report": {
+          "executed": [
+            {
+              "use": "item.listExpiring",
+              "summary": "临期/过期：找到 2 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？"
+          ],
+          "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "冰箱临期",
+          "columns": [
+            "名称",
+            "数量",
+            "位置",
+            "过期"
+          ],
+          "widths": [
+            2,
+            1,
+            2,
+            2
+          ],
+          "rows": [
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-25"
+            ],
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-26"
+            ]
+          ],
+          "caption": "冰箱里就这两件临期，其余没到日子。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "use": "item.listExpiring"
+              }
+            ],
+            "blocks": [],
+            "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.listExpiring",
+                  "summary": "临期/过期：找到 2 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？"
+              ],
+              "lead": "冰箱里就这两件快到期了。你说的处理，是喝掉后从台账里删掉，还是先改数量？",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "冰箱临期",
+              "columns": [
+                "名称",
+                "数量",
+                "位置",
+                "过期"
+              ],
+              "widths": [
+                2,
+                1,
+                2,
+                2
+              ],
+              "rows": [
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-25"
+                ],
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-26"
+                ]
+              ],
+              "caption": "冰箱里就这两件临期，其余没到日子。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.listExpiring|item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

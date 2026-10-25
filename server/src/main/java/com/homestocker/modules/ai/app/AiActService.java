@@ -19,9 +19,12 @@ import com.homestocker.modules.ai.agent.ActRefs;
 import com.homestocker.modules.ai.agent.HabitReply;
 import com.homestocker.modules.ai.agent.ItemsProbe;
 import com.homestocker.modules.ai.agent.PresentResolver;
+import com.homestocker.modules.ai.agent.Provenance;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
+import com.homestocker.modules.ai.agent.ReplyTableGuard;
+import com.homestocker.modules.ai.agent.TextHighlight;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
 import com.homestocker.modules.ai.habits.HabitObserveService;
 import com.homestocker.modules.ai.app.AiKeyService.KeyRow;
@@ -252,7 +255,12 @@ public class AiActService {
         }
         Map<String, Object> confirmPayload =
             buildConfirmPayload(
-                outcome.calls(), outcome.calls(), actCtx.refs(), actCtx.focus(), turnTouched);
+                outcome.calls(),
+                outcome.calls(),
+                actCtx.refs(),
+                actCtx.focus(),
+                turnTouched,
+                outcome.reply());
         attachExecutedReceipt(confirmPayload, outcome.report(), List.of());
         yield confirmPayload;
       }
@@ -288,6 +296,11 @@ public class AiActService {
     List<Map<String, Object>> rows = outcome.rows() == null ? List.of() : outcome.rows();
     Map<String, Object> report = outcome.report();
     String reply = outcome.reply() == null ? "" : outcome.reply().trim();
+    ReplyTableGuard.Result guarded = ReplyTableGuard.strip(reply);
+    if (guarded.stripped()) {
+      log.warn("[ai.act] dropped handwritten table in reply");
+      reply = guarded.text();
+    }
     boolean wrote = report != null && Boolean.TRUE.equals(report.get("wrote"));
     Map<String, Object> present = outcome.present();
     Map<String, Object> payload;
@@ -345,7 +358,21 @@ public class AiActService {
             itemService,
             spaceService,
             tagService);
-    return toolRegistry.runAll(ctx, calls);
+    List<Map<String, Object>> runnable = new ArrayList<>();
+    for (Map<String, Object> call : calls) {
+      if (call == null) {
+        runnable.add(null);
+        continue;
+      }
+      if (!call.containsKey("_src")) {
+        runnable.add(call);
+        continue;
+      }
+      Map<String, Object> clean = new LinkedHashMap<>(call);
+      clean.remove("_src");
+      runnable.add(clean);
+    }
+    return toolRegistry.runAll(ctx, runnable);
   }
 
   private Map<String, Map<String, Object>> catalogMapFromDb() {
@@ -567,13 +594,14 @@ public class AiActService {
       List<Map<String, Object>> confirmCalls,
       Map<String, Map<String, Object>> refs,
       Map<String, Object> focus,
-      List<Map<String, Object>> turnTouched) {
+      List<Map<String, Object>> turnTouched,
+      String reply) {
     List<Map<String, Object>> boundCalls = ActRefs.bindCallIds(planCalls, refs);
     Map<String, Object> removeWarn = removeConfirmWarnForUpdates(boundCalls, turnTouched);
     List<Map<String, Object>> confirmView = new ArrayList<>();
     for (Map<String, Object> call : confirmCalls) {
       Map<String, Object> view = new LinkedHashMap<>(confirmCallView(call, refs));
-      view.put("label", confirmActionLabel(call, view));
+      view.put("label", confirmActionLabel(call, view) + Provenance.inferredRefNote(call));
       confirmView.add(view);
     }
     Map<String, Object> payload = new LinkedHashMap<>();
@@ -590,6 +618,10 @@ public class AiActService {
     }
     payload.put("confirm", confirmView);
     payload.put("calls", boundCalls);
+    // 出确认卡不等于模型可以少说一句：把这一轮的正文一并回给客户端
+    if (reply != null && !reply.isBlank()) {
+      payload.put("lead", reply.trim());
+    }
     payload.put("draft", PlanParser.draftFromCalls(boundCalls));
     payload.put("focus", focusPublic(focus));
     payload.put("wrote", false);
@@ -626,12 +658,16 @@ public class AiActService {
     return name;
   }
 
-  private static void attachExecutedReceipt(
+  static void attachExecutedReceipt(
       Map<String, Object> payload, Map<String, Object> report, List<Map<String, Object>> executedCalls) {
     if (payload == null || report == null || !Boolean.TRUE.equals(report.get("wrote"))) {
       return;
     }
     payload.put("wrote", true);
+    // 同批里已经执行完的写（如「先改数量再删另一条」的前半句）也要回执，calls 仍只放待确认的。
+    if (report.get("executed") instanceof List<?> executed && !executed.isEmpty()) {
+      payload.put("executed", executed);
+    }
     if (report.get("blocks") != null) {
       payload.put("blocks", report.get("blocks"));
     }
@@ -989,7 +1025,22 @@ public class AiActService {
       log.warn("act degrade: empty or noop done payload");
       return buildDegradeAsk(focus, rows);
     }
+    attachSegments(payload, "lead", rows);
+    attachSegments(payload, "reply", rows);
     return payload;
+  }
+
+  /** 给正文附一份分段（数量/临期日期），前端按段上样式；text 本身不变。 */
+  private static void attachSegments(
+      Map<String, Object> payload, String field, List<Map<String, Object>> rows) {
+    Object raw = payload.get(field);
+    if (!(raw instanceof String text) || text.isBlank()) {
+      return;
+    }
+    List<Map<String, Object>> segments = TextHighlight.segments(text, rows);
+    if (segments.size() > 1) {
+      payload.put(field + "Segments", segments);
+    }
   }
 
   private Map<String, Object> buildDegradeAsk(

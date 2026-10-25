@@ -1,0 +1,377 @@
+{
+  "id": "curriculum-c4-record-existing",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:55:34.442Z",
+  "mode": "act",
+  "outcome": "先看见已有鸡蛋再记；同位置并入或问清楚，不声称家里没有鸡蛋",
+  "actual": {
+    "dialogue": {
+      "text": "记一笔，厨房鸡蛋 8 个",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "鸡蛋",
+          "use": "item.search"
+        },
+        {
+          "ref": "P1",
+          "quantity": 16,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→16",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "鸡蛋 · 8个 · 厨房 / 冰箱",
+          "已改 鸡蛋（厨房 / 冰箱）：8个→16"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "鸡蛋",
+                "subtitle": "8个",
+                "facts": [
+                  "厨房 / 冰箱"
+                ],
+                "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→16",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "鸡蛋改成 16 个了，在厨房冰箱。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "鸡蛋",
+              "subtitle": "8个",
+              "facts": [
+                "厨房 / 冰箱"
+              ],
+              "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 鸡蛋（厨房 / 冰箱）",
+              "subtitle": "8个→16",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "鸡蛋",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "鸡蛋",
+            "use": "item.search"
+          },
+          {
+            "ref": "P1",
+            "quantity": 16,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→16",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "鸡蛋 · 8个 · 厨房 / 冰箱",
+            "已改 鸡蛋（厨房 / 冰箱）：8个→16"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "鸡蛋",
+                  "subtitle": "8个",
+                  "facts": [
+                    "厨房 / 冰箱"
+                  ],
+                  "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 鸡蛋（厨房 / 冰箱）",
+                  "subtitle": "8个→16",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "鸡蛋改成 16 个了，在厨房冰箱。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "鸡蛋",
+                "subtitle": "8个",
+                "facts": [
+                  "厨房 / 冰箱"
+                ],
+                "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→16",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "鸡蛋",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "厨房冰箱里已经有 8 个鸡蛋了，这次是再加 8 个，还是就是这 8 个？",
+                "options": [
+                  {
+                    "label": "再加 ，变成",
+                    "value": "再加 ，变成"
+                  },
+                  {
+                    "label": "就是这 8 个，不用改",
+                    "value": "就是这 8 个，不用改"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "鸡蛋",
+                "use": "item.search"
+              },
+              {
+                "ref": "P1",
+                "quantity": 16,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→16",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "鸡蛋 · 8个 · 厨房 / 冰箱",
+                "已改 鸡蛋（厨房 / 冰箱）：8个→16"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "鸡蛋",
+                      "subtitle": "8个",
+                      "facts": [
+                        "厨房 / 冰箱"
+                      ],
+                      "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 鸡蛋（厨房 / 冰箱）",
+                      "subtitle": "8个→16",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "鸡蛋改成 16 个了，在厨房冰箱。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "鸡蛋",
+                    "subtitle": "8个",
+                    "facts": [
+                      "厨房 / 冰箱"
+                    ],
+                    "itemId": "80efc1d5-7b0a-40a8-a048-5a7f45d5a6d3"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 鸡蛋（厨房 / 冰箱）",
+                    "subtitle": "8个→16",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "鸡蛋",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.create|item.update",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

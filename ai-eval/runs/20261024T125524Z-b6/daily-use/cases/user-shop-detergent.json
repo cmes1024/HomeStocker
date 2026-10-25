@@ -1,0 +1,20 @@
+{
+  "id": "user-shop-detergent",
+  "perspective": "user",
+  "title": "拆袋：洗衣液新买了旧的还剩半瓶",
+  "tags": [
+    "shopping",
+    "multi-fact"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "洗衣液买了，还剩半瓶旧的",
+  "expected": {
+    "outcome": "听出「新的一瓶 + 旧的还剩半瓶」两件事；说不清落点/是否另开时要先问，不能假装记完了",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.remove"
+    ]
+  }
+}
