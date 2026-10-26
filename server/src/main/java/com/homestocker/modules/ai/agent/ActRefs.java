@@ -57,7 +57,23 @@ public final class ActRefs {
     row.put("note", str(item.get("note")));
     Object tagIds = item.get("tagIds");
     row.put("tagIds", tagIds instanceof List<?> ? tagIds : List.of());
+    row.put("tagNames", tagNamesOf(item.get("tagIds"), tree));
     return row;
+  }
+
+  /** 标签 id → 名称。行文本只说名字，模型拿 id 对不上家庭结构里的标签名。 */
+  private static List<String> tagNamesOf(Object rawTagIds, Map<String, Object> tree) {
+    if (!(rawTagIds instanceof List<?> ids)) {
+      return List.of();
+    }
+    List<String> out = new ArrayList<>();
+    for (Object idObj : ids) {
+      String name = TreeMatch.tagNameById(tree, str(idObj));
+      if (!name.isEmpty() && !out.contains(name)) {
+        out.add(name);
+      }
+    }
+    return out;
   }
 
   public static String renderFocus(Map<String, Object> row) {
@@ -89,7 +105,32 @@ public final class ActRefs {
         + (!place.isEmpty() ? " · " + place : "")
         + expire
         + touch
-        + (note.isEmpty() ? "" : " · 备注 " + note);
+        + (note.isEmpty() ? "" : " · 备注 " + note)
+        + renderTags(row);
+  }
+
+  /**
+   * 行文本带上标签名：没有这一段，模型无法回答「哪些没挂标签 / 这件挂的是什么」。
+   * 行里没有 tagNames 字段（非 compactItem 产出的行）时不补，避免把「没带这个字段」说成「无标签」。
+   */
+  static String renderTags(Map<String, Object> row) {
+    if (row == null || !row.containsKey("tagNames")) {
+      return "";
+    }
+    Object raw = row.get("tagNames");
+    List<String> names = new ArrayList<>();
+    if (raw instanceof List<?> list) {
+      for (Object o : list) {
+        String s = str(o);
+        if (!s.isEmpty() && !names.contains(s)) {
+          names.add(s);
+        }
+      }
+    }
+    if (names.isEmpty()) {
+      return " · 无标签";
+    }
+    return " · 标签 " + String.join("、", names);
   }
 
   /** 备注压成一行并截断，避免长文本把短号行淹没；空备注不留痕。 */

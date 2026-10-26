@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -102,6 +103,58 @@ class ToolSchemasTest {
     for (JsonNode name : params.path("required")) {
       assertFalse("_src".equals(name.asText()));
     }
+  }
+
+  @Test
+  void structuredParamsCarryEnumRangeAndObjectArrayFields() {
+    Map<String, Object> tagged = new LinkedHashMap<>();
+    tagged.put("name", "tagged");
+    tagged.put("type", "string");
+    tagged.put("enum", List.of("any", "untagged"));
+    tagged.put("description", "any=不限；untagged=只列没挂标签的");
+    Map<String, Object> quantity = new LinkedHashMap<>();
+    quantity.put("name", "quantity");
+    quantity.put("type", "number");
+    quantity.put("exclusiveMinimum", 0);
+
+    Map<String, Object> groupName = new LinkedHashMap<>();
+    groupName.put("name", "name");
+    groupName.put("type", "string");
+    groupName.put("required", true);
+    Map<String, Object> groupTags = new LinkedHashMap<>();
+    groupTags.put("name", "tagNames");
+    groupTags.put("type", "array");
+    groupTags.put("items", "string");
+    Map<String, Object> groups = new LinkedHashMap<>();
+    groups.put("name", "itemGroups");
+    groups.put("type", "array");
+    groups.put("required", true);
+    groups.put("items", List.of(groupName, groupTags));
+
+    Map<String, Object> search = new LinkedHashMap<>();
+    search.put("id", "item.search");
+    search.put("enabled", true);
+    search.put("confirm", false);
+    search.put("hint", "只读列出物资");
+    search.put("args", "tagged?, itemGroups[{ name, tagNames? }]");
+    search.put("params", List.of(tagged, quantity, groups));
+    Map<String, Map<String, Object>> catalog = new LinkedHashMap<>();
+    catalog.put("item.search", search);
+
+    ArrayNode tools = ToolSchemas.openAiTools(new ObjectMapper(), catalog);
+    JsonNode params = findTool(tools, "item_search").path("function").path("parameters");
+
+    assertEquals("untagged", params.path("properties").path("tagged").path("enum").get(1).asText());
+    assertEquals(
+        0d, params.path("properties").path("quantity").path("exclusiveMinimum").asDouble());
+    JsonNode groupItem = params.path("properties").path("itemGroups").path("items");
+    assertEquals("object", groupItem.path("type").asText());
+    assertEquals("name", groupItem.path("required").get(0).asText());
+    assertEquals(
+        "string",
+        groupItem.path("properties").path("tagNames").path("items").path("type").asText());
+    assertEquals(1, params.path("required").size());
+    assertEquals("itemGroups", params.path("required").get(0).asText());
   }
 
   private static JsonNode findTool(ArrayNode tools, String name) {

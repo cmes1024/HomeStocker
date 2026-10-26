@@ -32,6 +32,15 @@ class ReplyTableGuardTest {
   }
 
   @Test
+  void sentenceWithSlashIsNotAHeader() {
+    // 「空间/位置」这种单个斜杠是正常中文；以前会被当成表头，整句删掉后整轮降级
+    String text = "能看到名称、数量、所在空间/位置、过期时间、备注。";
+    ReplyTableGuard.Result out = ReplyTableGuard.strip(text);
+    assertFalse(out.stripped());
+    assertEquals(text, out.text());
+  }
+
+  @Test
   void singleDotLineIsNotATable() {
     String text = "牛奶 2 盒·冰箱\n酸奶明天到期。";
     ReplyTableGuard.Result out = ReplyTableGuard.strip(text);

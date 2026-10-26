@@ -51,7 +51,12 @@ public final class ReplyTableGuard {
         kept.add(lines[i]);
       }
     }
-    return new Result(String.join("\n", kept).trim(), true);
+    String out = String.join("\n", kept).trim();
+    // 保底：删干净等于把回答吞了，宁可保留原句
+    if (out.isEmpty()) {
+      return Result.keep(text);
+    }
+    return new Result(out, true);
   }
 
   private static int headerLine(String[] lines) {
@@ -88,7 +93,9 @@ public final class ReplyTableGuard {
     if (s.isEmpty() || !s.contains("名称") || !s.contains("数量")) {
       return false;
     }
-    return s.contains("/") || s.contains("|") || s.contains("｜");
+    // 表头至少要分三列（两个分隔符）；「空间/位置」这种单个斜杠是正常中文，别当表头
+    int bars = count(s, '|') + count(s, '｜');
+    return bars >= 2 || count(s, '/') >= 2;
   }
 
   private static boolean isBody(String line) {

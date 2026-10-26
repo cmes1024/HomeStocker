@@ -262,7 +262,7 @@ public class ToolRegistry {
     for (String k :
         List.of(
             "name", "spaceName", "locationName", "quantity", "unit", "ref", "note", "topicId",
-            "pageId", "label", "open")) {
+            "pageId", "label", "open", "tagged")) {
       if (call.get(k) != null && !"".equals(call.get(k))) {
         row.put(k, call.get(k));
       }

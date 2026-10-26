@@ -897,6 +897,7 @@ public class ActToolLoop {
         str(call.get("spaceName")),
         str(call.get("locationName")),
         str(call.get("tagName")),
+        str(call.get("tagged")),
         str(call.get("maxQuantity")));
   }
 

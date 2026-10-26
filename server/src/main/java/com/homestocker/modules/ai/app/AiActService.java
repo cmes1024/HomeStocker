@@ -23,6 +23,7 @@ import com.homestocker.modules.ai.agent.Provenance;
 import com.homestocker.modules.ai.agent.PlanParser;
 import com.homestocker.modules.ai.agent.PlanParser.ActPlan;
 import com.homestocker.modules.ai.agent.Presentation;
+import com.homestocker.modules.ai.agent.ReplyRedactor;
 import com.homestocker.modules.ai.agent.ReplyTableGuard;
 import com.homestocker.modules.ai.agent.TextHighlight;
 import com.homestocker.modules.ai.habits.FamilyHabitService;
@@ -976,12 +977,18 @@ public class AiActService {
     if (inventoryReadReport != null) {
       Map<String, Object> report = new LinkedHashMap<>(slimReport(inventoryReadReport));
       if (present != null) {
-        String kept = replyText.isEmpty() ? str(inventoryReadReport.get("lead")) : replyText;
+        // 有表格/图时正文只认模型说的话：不再拿工具摘要（"查询：找到 N 件"）冒充正文
         report.put("blocks", List.of());
-        report.put("lines", kept.isEmpty() ? List.of() : List.of(kept));
-        report.put("lead", kept);
+        report.put("lines", replyText.isEmpty() ? List.of() : List.of(replyText));
+        report.put("lead", replyText);
         payload.put("blocks", List.of());
-        payload.put("lead", kept);
+        payload.put("lead", replyText);
+      } else if (!replyText.isEmpty()) {
+        // 纯文字回答（不调工具、没有表格）必须原样送达；以前这里只塞 report，
+        // reply 被丢掉，下游判成「空 done」就降级成「刚才没能办妥」。
+        report.put("lead", replyText);
+        report.put("lines", List.of(replyText));
+        payload.put("lead", replyText);
       }
       payload.put("report", report);
     } else {
@@ -1021,13 +1028,73 @@ public class AiActService {
       return buildDegradeAsk(focus, rows);
     }
     scrubInternalNoop(payload);
+    stripPseudoVisible(payload);
     if (needsUserDegrade(payload)) {
       log.warn("act degrade: empty or noop done payload");
       return buildDegradeAsk(focus, rows);
     }
+    redactVisible(payload);
     attachSegments(payload, "lead", rows);
     attachSegments(payload, "reply", rows);
     return payload;
+  }
+
+  /** 去掉模型吐出的伪工具调用 XML（<function=…><parameter=…>），别当正文发给家人。 */
+  @SuppressWarnings("unchecked")
+  private static void stripPseudoVisible(Map<String, Object> payload) {
+    for (String key : List.of("lead", "reply")) {
+      Object raw = payload.get(key);
+      if (raw instanceof String text && !text.isBlank()) {
+        payload.put(key, ReplyRedactor.stripPseudoCalls(text));
+      }
+    }
+    if (payload.get("report") instanceof Map<?, ?> raw) {
+      Map<String, Object> report = new LinkedHashMap<>((Map<String, Object>) raw);
+      Object lead = report.get("lead");
+      if (lead instanceof String text && !text.isBlank()) {
+        report.put("lead", ReplyRedactor.stripPseudoCalls(text));
+      }
+      if (report.get("lines") instanceof List<?> lines) {
+        List<String> cleaned = new ArrayList<>();
+        for (Object o : lines) {
+          String text = ReplyRedactor.stripPseudoCalls(str(o));
+          if (!text.isBlank()) {
+            cleaned.add(text);
+          }
+        }
+        report.put("lines", cleaned);
+      }
+      payload.put("report", report);
+    }
+  }
+
+  /** 出口最后一道：把模型漏出的接口名换成家人能懂的动作（只改措辞）。 */
+  @SuppressWarnings("unchecked")
+  private static void redactVisible(Map<String, Object> payload) {
+    for (String key : List.of("lead", "reply")) {
+      Object raw = payload.get(key);
+      if (raw instanceof String text && !text.isBlank()) {
+        payload.put(key, ReplyRedactor.redact(text));
+      }
+    }
+    if (payload.get("report") instanceof Map<?, ?> raw) {
+      Map<String, Object> report = new LinkedHashMap<>((Map<String, Object>) raw);
+      Object lead = report.get("lead");
+      if (lead instanceof String text && !text.isBlank()) {
+        report.put("lead", ReplyRedactor.redact(text));
+      }
+      if (report.get("lines") instanceof List<?> lines) {
+        List<String> cleaned = new ArrayList<>();
+        for (Object o : lines) {
+          String text = str(o);
+          if (!text.isBlank()) {
+            cleaned.add(ReplyRedactor.redact(text));
+          }
+        }
+        report.put("lines", cleaned);
+      }
+      payload.put("report", report);
+    }
   }
 
   /** 给正文附一份分段（数量/临期日期），前端按段上样式；text 本身不变。 */

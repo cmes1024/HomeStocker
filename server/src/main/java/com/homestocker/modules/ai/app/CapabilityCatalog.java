@@ -12,7 +12,7 @@ import java.util.Map;
 public final class CapabilityCatalog {
 
   public static final String CAPABILITY_ID = "assist-act-v3";
-  public static final int CAPABILITY_VERSION = 48;
+  public static final int CAPABILITY_VERSION = 50;
 
   private static final Map<String, Boolean> HARD_DENY = hardDenyMap();
   private static final List<Map<String, Object>> SEED_APIS = loadSeedApis();
@@ -38,7 +38,7 @@ public final class CapabilityCatalog {
 
   private static List<Map<String, Object>> loadSeedApis() {
     try (InputStream in =
-        CapabilityCatalog.class.getResourceAsStream("/ai/capability-seed-v48.json")) {
+        CapabilityCatalog.class.getResourceAsStream("/ai/capability-seed-v50.json")) {
       if (in == null) {
         return List.of();
       }

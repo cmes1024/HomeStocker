@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.homestocker.modules.ai.app.CapabilityCatalog;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /** 能力 id 与 OpenAI tools 函数名的对应。函数名不能带点。 */
@@ -153,13 +154,122 @@ public final class ToolSchemas {
     params.put("type", "object");
     ObjectNode props = params.putObject("properties");
     ArrayNode required = mapper.createArrayNode();
-    if (!args.isEmpty()) {
+    if (api.get("params") instanceof List<?> specs && !specs.isEmpty()) {
+      addSpecArgs(mapper, props, required, specs);
+    } else if (!args.isEmpty()) {
       for (String piece : splitArgs(args)) {
         addArg(props, required, piece);
       }
     }
+    if (args.contains(SRC) && !props.has(SRC)) {
+      addSrcSchema(props);
+    }
     params.set("required", required);
     return tool;
+  }
+
+  /**
+   * 结构化参数：能力表里带 params 时按它生成 JSON Schema。
+   *
+   * <p>比从 args 散文里猜更准：每个字段能带 description / enum / 范围 / 日期格式，
+   * 数组元素也能带 properties。args 字符串只留给人读。
+   *
+   * <p>spec 形如 {@code {"name":"quantity","type":"number","exclusiveMinimum":0}}；
+   * {@code items} 为 "string" 或以 spec 数组表示对象数组元素。
+   */
+  private static void addSpecArgs(
+      ObjectMapper mapper, ObjectNode props, ArrayNode required, List<?> specs) {
+    for (Object o : specs) {
+      if (!(o instanceof Map<?, ?> spec)) {
+        continue;
+      }
+      String name = str(spec.get("name")).trim();
+      if (name.isEmpty() || props.has(name)) {
+        continue;
+      }
+      if (SRC.equals(name)) {
+        addSrcSchema(props);
+        continue;
+      }
+      props.set(name, specSchema(mapper, spec));
+      if (Boolean.TRUE.equals(spec.get("required"))) {
+        required.add(name);
+      }
+    }
+  }
+
+  private static ObjectNode specSchema(ObjectMapper mapper, Map<?, ?> spec) {
+    ObjectNode node = mapper.createObjectNode();
+    String type = str(spec.get("type")).trim().toLowerCase(Locale.ROOT);
+    if (type.isEmpty()) {
+      type = "string";
+    }
+    node.put("type", type);
+    if ("array".equals(type)) {
+      Object items = spec.get("items");
+      if (items instanceof List<?> itemSpecs && !itemSpecs.isEmpty()) {
+        ObjectNode itemNode = node.putObject("items");
+        itemNode.put("type", "object");
+        ObjectNode itemProps = itemNode.putObject("properties");
+        ArrayNode itemRequired = mapper.createArrayNode();
+        for (Object so : itemSpecs) {
+          if (!(so instanceof Map<?, ?> sm)) {
+            continue;
+          }
+          String itemName = str(sm.get("name")).trim();
+          if (itemName.isEmpty() || itemProps.has(itemName)) {
+            continue;
+          }
+          itemProps.set(itemName, specSchema(mapper, sm));
+          if (Boolean.TRUE.equals(sm.get("required"))) {
+            itemRequired.add(itemName);
+          }
+        }
+        itemNode.set("required", itemRequired);
+      } else {
+        String itemType = items instanceof String s && !s.isBlank() ? s.trim() : "string";
+        node.putObject("items").put("type", itemType);
+      }
+    }
+    String description = str(spec.get("description")).trim();
+    if (!description.isEmpty()) {
+      node.put("description", description);
+    }
+    if (spec.get("enum") instanceof List<?> values && !values.isEmpty()) {
+      ArrayNode enums = node.putArray("enum");
+      for (Object value : values) {
+        enums.add(str(value));
+      }
+    }
+    putNumber(node, spec, "minimum");
+    putNumber(node, spec, "maximum");
+    putNumber(node, spec, "exclusiveMinimum");
+    putNumber(node, spec, "exclusiveMaximum");
+    String format = str(spec.get("format")).trim();
+    if (!format.isEmpty()) {
+      node.put("format", format);
+    }
+    String pattern = str(spec.get("pattern")).trim();
+    if (!pattern.isEmpty()) {
+      node.put("pattern", pattern);
+    }
+    return node;
+  }
+
+  private static void putNumber(ObjectNode node, Map<?, ?> spec, String key) {
+    Object raw = spec.get(key);
+    if (raw == null) {
+      return;
+    }
+    try {
+      node.put(key, Double.parseDouble(str(raw)));
+    } catch (NumberFormatException ignored) {
+      // 非数字就跳过，不让手写能力表把整轮工具定义弄坏
+    }
+  }
+
+  private static String str(Object value) {
+    return value == null ? "" : String.valueOf(value).trim();
   }
 
   /** 只在括号外切逗号，避免 items[{ name, quantity? }] 被拆成顶层字段。 */

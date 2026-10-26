@@ -98,6 +98,46 @@ public final class TreeMatch {
 
   public record TagResolve(List<String> tagIds, List<String> tagNames) {}
 
+  /** 家庭结构里的全部标签名，用于写路径回执给候选项。 */
+  public static List<String> allTagNames(Map<String, Object> tree) {
+    List<String> out = new ArrayList<>();
+    for (Map<String, Object> tag : tags(tree)) {
+      String name = str(tag.get("name"));
+      if (!name.isEmpty() && !out.contains(name)) {
+        out.add(name);
+      }
+    }
+    return out;
+  }
+
+  /** 申报了但家庭结构里没有的标签名。空表示全部命中。 */
+  public static List<String> missingTags(Map<String, Object> tree, List<String> names) {
+    List<String> missing = new ArrayList<>();
+    if (names == null) {
+      return missing;
+    }
+    for (String raw : names) {
+      if (matchTag(tree, raw) == null && !missing.contains(raw)) {
+        missing.add(raw);
+      }
+    }
+    return missing;
+  }
+
+  /** 按 id 找标签名，给行文本回灌用；找不到返回空串。 */
+  public static String tagNameById(Map<String, Object> tree, String tagId) {
+    String id = str(tagId);
+    if (id.isEmpty()) {
+      return "";
+    }
+    for (Map<String, Object> tag : tags(tree)) {
+      if (id.equals(str(tag.get("id")))) {
+        return str(tag.get("name"));
+      }
+    }
+    return "";
+  }
+
   public static String placeLabel(String spaceName, String locationName) {
     List<String> bits = new ArrayList<>();
     if (spaceName != null && !spaceName.isBlank()) {
