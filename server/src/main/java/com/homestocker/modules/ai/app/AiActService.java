@@ -562,9 +562,10 @@ public class AiActService {
       String reply) {
     Map<String, Object> payload = new LinkedHashMap<>();
     payload.put("status", "ask");
+    List<Map<String, Object>> shown = PlanParser.presentChoiceAsks(ask);
+    // 兜底/边界问句只是请家人重说一遍，没有「点哪条」语义，不能把查到的行铺成按钮
     payload.put(
-        "ask",
-        PlanParser.enrichAskOptionsFromProbe(PlanParser.presentChoiceAsks(ask), probedRows));
+        "ask", isBoundaryAsk(shown) ? shown : PlanParser.enrichAskOptionsFromProbe(shown, probedRows));
     if (reply != null && !reply.isBlank()) {
       payload.put("reply", reply.trim());
     }
@@ -574,6 +575,38 @@ public class AiActService {
     payload.put("focus", focusPublic(focus));
     payload.put("wrote", false);
     return payload;
+  }
+
+  /**
+   * 兜底/边界问句：请家人重说、或告知做不到。这类问句不该带「点哪条」候选芯片，
+   * 否则一轮超时就会把整批查库行铺成几十个按钮。
+   */
+  static boolean isBoundaryAsk(List<Map<String, Object>> ask) {
+    if (ask == null || ask.isEmpty()) {
+      return false;
+    }
+    boolean boundary = false;
+    for (Map<String, Object> row : ask) {
+      if (row == null) {
+        continue;
+      }
+      String question = str(row.get("question")).trim();
+      if (question.isEmpty()) {
+        // 纯选项行（presentChoiceAsks 的多行选择合并）不是兜底
+        continue;
+      }
+      if (!isBoundaryQuestion(question)) {
+        return false;
+      }
+      boundary = true;
+    }
+    return boundary;
+  }
+
+  private static boolean isBoundaryQuestion(String question) {
+    return AssistPromptTexts.DEGRADE_ASK.equals(question)
+        || AssistPromptTexts.CAPABILITY_LIMIT_ASK.equals(question)
+        || AssistPromptTexts.OUT_OF_SCOPE_ASK.equals(question);
   }
 
   @SuppressWarnings("unchecked")

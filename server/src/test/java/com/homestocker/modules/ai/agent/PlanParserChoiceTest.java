@@ -41,6 +41,40 @@ class PlanParserChoiceTest {
     assertTrue(options.stream().noneMatch(o -> String.valueOf(o.get("label")).contains("盒")));
   }
 
+  @Test
+  void probeChipsAreCappedNoMatterHowManyRows() {
+    List<Map<String, Object>> rows = new java.util.ArrayList<>();
+    for (int i = 1; i <= 20; i++) {
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("name", "物资" + i);
+      row.put("quantity", 1);
+      row.put("spaceName", "厨房");
+      row.put("locationName", "");
+      rows.add(row);
+    }
+    List<Map<String, Object>> options = PlanParser.optionsFromProbeRows(rows);
+    // 5 条物资 + 一句「相关记录都改」，不能跟着查库行数涨
+    assertEquals(PlanParser.MAX_PROBE_CHIPS + 1, options.size());
+    assertEquals("物资5 1（厨房）", options.get(4).get("label"));
+    assertEquals("相关记录都改", options.get(5).get("label"));
+  }
+
+  @Test
+  void enrichKeepsChipsCappedForRealQuestion() {
+    List<Map<String, Object>> rows = new java.util.ArrayList<>();
+    for (int i = 1; i <= 8; i++) {
+      Map<String, Object> row = new LinkedHashMap<>();
+      row.put("name", "物资" + i);
+      row.put("quantity", 1);
+      rows.add(row);
+    }
+    List<Map<String, Object>> shown =
+        PlanParser.enrichAskOptionsFromProbe(List.of(ask("您指哪一条？")), rows);
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> options = (List<Map<String, Object>>) shown.get(0).get("options");
+    assertEquals(PlanParser.MAX_PROBE_CHIPS + 1, options.size());
+  }
+
   private static Map<String, Object> ask(String question) {
     return ask(question, List.of());
   }

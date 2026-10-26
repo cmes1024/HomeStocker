@@ -419,11 +419,17 @@ public final class PlanParser {
     return sb.toString();
   }
 
+  /** 「点哪条」芯片上限：查库可能几十行，按钮不能跟着行数涨。 */
+  static final int MAX_PROBE_CHIPS = 5;
+
   public static List<Map<String, Object>> optionsFromProbeRows(List<Map<String, Object>> rows) {
     List<Map<String, Object>> opts = new ArrayList<>();
     java.util.LinkedHashSet<String> seen = new java.util.LinkedHashSet<>();
     if (rows != null) {
       for (Map<String, Object> row : rows) {
+        if (opts.size() >= MAX_PROBE_CHIPS) {
+          break;
+        }
         String label = probeOptionLabel(row);
         if (label.isEmpty() || seen.contains(label)) {
           continue;
