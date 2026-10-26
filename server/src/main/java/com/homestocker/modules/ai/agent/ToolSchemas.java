@@ -108,7 +108,14 @@ public final class ToolSchemas {
     ObjectNode params = fn.putObject("parameters");
     params.put("type", "object");
     ObjectNode props = params.putObject("properties");
-    props.putObject("type").put("type", "string").put("description", "table、stats、bars 或 pie");
+    ObjectNode typeProp = props.putObject("type");
+    typeProp.put("type", "string").put("description", "table、stats、bars 或 pie");
+    // 只给描述不给枚举时，模型会自由发挥（chart / list / 统计），服务端一律判非法
+    ArrayNode typeEnum = typeProp.putArray("enum");
+    typeEnum.add("table");
+    typeEnum.add("stats");
+    typeEnum.add("bars");
+    typeEnum.add("pie");
     props.putObject("groupBy").put("type", "string").put("description", "space、tag、location 或 name");
     props.putObject("title").put("type", "string").put("description", "表上方短标题，不超过 24 字");
     ObjectNode cols = props.putObject("columns");

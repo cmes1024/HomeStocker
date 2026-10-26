@@ -214,13 +214,15 @@ public class ActToolLoop {
         continue;
       }
       if (ToolSchemas.PRESENT.equals(call.name())) {
-        Map<String, Object> spec = presentSpec(parseArgs(call.arguments()));
+        Map<String, Object> presentArgs = parseArgs(call.arguments());
+        Map<String, Object> spec = presentSpec(presentArgs);
         log.info(
-            "[ai.act] tool present accepted={} spec={}",
+            "[ai.act] tool present accepted={} spec={} args={}",
             spec != null,
-            clip(String.valueOf(spec), 200));
+            clip(String.valueOf(spec), 200),
+            clip(call.arguments(), 400));
         if (spec == null) {
-          appendToolMessage(messages, call.id(), PRESENT_REJECTED);
+          appendToolMessage(messages, call.id(), presentRejected(presentArgs));
         } else {
           present = spec;
           appendToolMessage(messages, call.id(), PRESENT_ACCEPTED);
@@ -558,8 +560,27 @@ public class ActToolLoop {
 
   private static final String PRESENT_ACCEPTED = "{\"ok\":true,\"accepted\":true}";
 
-  private static final String PRESENT_REJECTED =
-      "{\"ok\":false,\"accepted\":false,\"allowed\":[\"table\",\"stats\",\"bars\",\"pie\"]}";
+  /**
+   * 拒绝时把「收到的 type」和原因回给模型。只说 allowed 列表，模型就会连着瞎试，
+   * 一步 3 秒，6 步用完直接退化成文本。
+   */
+  private String presentRejected(Map<String, Object> args) {
+    String given = args == null ? "" : str(args.get("type")).trim();
+    ObjectNode node = objectMapper.createObjectNode();
+    node.put("ok", false);
+    node.put("accepted", false);
+    node.put(
+        "reason",
+        given.isEmpty()
+            ? "type 缺失：table/stats/bars/pie 选一个；统计件数或分布用 stats 并带 groupBy"
+            : "type 不在允许值内：收到「" + clip(given, 20) + "」，只能是 table/stats/bars/pie");
+    node.put("given", given);
+    ArrayNode allowed = node.putArray("allowed");
+    for (String type : List.of("table", "stats", "bars", "pie")) {
+      allowed.add(type);
+    }
+    return node.toString();
+  }
 
   private static String notAllowed(String use) {
     return "{\"ok\":false,\"allowed\":false,\"use\":\"" + (use == null ? "" : use) + "\"}";
@@ -698,6 +719,24 @@ public class ActToolLoop {
   }
 
   private static final Set<String> PRESENT_TYPES = Set.of("table", "stats", "bars", "pie");
+
+  /** 模型给的近义写法收敛到四种已知类型，别为一个词丢掉整张表。 */
+  private static final Map<String, String> PRESENT_TYPE_ALIASES =
+      Map.ofEntries(
+          Map.entry("bar", "bars"),
+          Map.entry("donut", "pie"),
+          Map.entry("stat", "stats"),
+          Map.entry("count", "stats"),
+          Map.entry("summary", "stats"),
+          Map.entry("统计", "stats"),
+          Map.entry("list", "table"),
+          Map.entry("text", "table"),
+          Map.entry("清单", "table"),
+          Map.entry("表格", "table"),
+          Map.entry("chart", "bars"),
+          Map.entry("柱状", "bars"),
+          Map.entry("柱状图", "bars"),
+          Map.entry("饼图", "pie"));
   private static final Set<String> PRESENT_GROUPS = Set.of("space", "tag", "location", "name");
 
   /** 字段列：服务端按 key 取库值，模型不能改写。 */
@@ -740,18 +779,42 @@ public class ActToolLoop {
           "production", 2,
           "note", 3);
 
+  /**
+   * 归一化 present 类型：近义词收敛，缺 type 时按参数形态推断
+   * （有 groupBy 或 items 视为统计，有 columns 视为表格）。推断不出来返回空串，交给调用方拒绝。
+   */
+  static String normalizePresentType(Map<String, Object> args) {
+    if (args == null || args.isEmpty()) {
+      return "";
+    }
+    String raw = str(args.get("type")).trim().toLowerCase(Locale.ROOT);
+    String mapped = PRESENT_TYPE_ALIASES.get(raw);
+    if (mapped != null) {
+      return mapped;
+    }
+    if (PRESENT_TYPES.contains(raw)) {
+      return raw;
+    }
+    if (!raw.isEmpty()) {
+      return raw;
+    }
+    if (!str(args.get("groupBy")).isBlank()) {
+      return "stats";
+    }
+    if (args.get("items") instanceof List<?> items && !items.isEmpty()) {
+      return "stats";
+    }
+    if (args.get("columns") != null) {
+      return "table";
+    }
+    return "";
+  }
+
   static Map<String, Object> presentSpec(Map<String, Object> args) {
     if (args == null || args.isEmpty()) {
       return null;
     }
-    String type = str(args.get("type")).trim().toLowerCase(Locale.ROOT);
-    type =
-        switch (type) {
-          case "bar" -> "bars";
-          case "donut" -> "pie";
-          case "stat" -> "stats";
-          default -> type;
-        };
+    String type = normalizePresentType(args);
     if (!PRESENT_TYPES.contains(type)) {
       return null;
     }
