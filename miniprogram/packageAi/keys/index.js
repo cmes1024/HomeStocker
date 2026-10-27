@@ -148,7 +148,7 @@ Page({
         model: model.id
       })
       this.setData({ apiKey: '', label: '', acting: false, showAdd: false })
-      wx.showToast({ title: '已添加', icon: 'success' })
+      wx.showToast({ title: copy.ai.keyAdded, icon: 'none' })
       await this.load()
     } catch (e) {
       this.setData({ acting: false })
@@ -266,7 +266,7 @@ Page({
     wx.setClipboardData({
       data: url,
       success: () => {
-        wx.showToast({ title: copy.ai.faqCopied, icon: 'success' })
+        wx.showToast({ title: copy.ai.faqCopied, icon: 'none' })
       }
     })
   }

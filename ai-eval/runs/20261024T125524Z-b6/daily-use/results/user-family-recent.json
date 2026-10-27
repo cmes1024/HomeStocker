@@ -1,0 +1,328 @@
+{
+  "id": "user-family-recent",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:37.070Z",
+  "mode": "act",
+  "outcome": "按最近进出/新记的东西说几样",
+  "actual": {
+    "dialogue": {
+      "text": "最近家里进了啥",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "day": "recent",
+          "days": 3,
+          "action": "create",
+          "use": "activity.list"
+        }
+      ],
+      "blocks": [],
+      "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+      "report": {
+        "executed": [
+          {
+            "use": "activity.list",
+            "summary": "activity.list window=近3天 action=create returned=7 truncated=false（明细供自行计数/去重；非库存快照）\n2026-10-24 20:58 | create | 厕纸 qty=1卷 | 卫生间\n2026-10-24 20:58 | create | 薯片 qty=2袋 | 客厅 / 零食柜\n2026-10-24 20:58 | create | 酱油 qty=1瓶 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 挂面 qty=3把 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 大米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 电脑 qty=1台 | 客厅",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？"
+        ],
+        "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "近三天新进的东西",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "厕纸",
+            "1卷",
+            "卫生间"
+          ],
+          [
+            "薯片",
+            "2袋",
+            "客厅 / 零食柜"
+          ],
+          [
+            "酱油",
+            "1瓶",
+            "厨房 / 橱柜"
+          ],
+          [
+            "挂面",
+            "3把",
+            "厨房 / 橱柜"
+          ],
+          [
+            "米",
+            "1袋",
+            "厨房 / 橱柜"
+          ],
+          [
+            "大米",
+            "1袋",
+            "厨房 / 橱柜"
+          ],
+          [
+            "电脑",
+            "1台",
+            "客厅"
+          ]
+        ],
+        "caption": "近三天共新记 7 次，米和大米是分开记的两条。"
+      }
+    },
+    "tools": [
+      "activity.list",
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "day": "recent",
+            "days": 3,
+            "action": "create",
+            "use": "activity.list"
+          }
+        ],
+        "blocks": [],
+        "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+        "report": {
+          "executed": [
+            {
+              "use": "activity.list",
+              "summary": "activity.list window=近3天 action=create returned=7 truncated=false（明细供自行计数/去重；非库存快照）\n2026-10-24 20:58 | create | 厕纸 qty=1卷 | 卫生间\n2026-10-24 20:58 | create | 薯片 qty=2袋 | 客厅 / 零食柜\n2026-10-24 20:58 | create | 酱油 qty=1瓶 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 挂面 qty=3把 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 大米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 电脑 qty=1台 | 客厅",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？"
+          ],
+          "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "近三天新进的东西",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "厕纸",
+              "1卷",
+              "卫生间"
+            ],
+            [
+              "薯片",
+              "2袋",
+              "客厅 / 零食柜"
+            ],
+            [
+              "酱油",
+              "1瓶",
+              "厨房 / 橱柜"
+            ],
+            [
+              "挂面",
+              "3把",
+              "厨房 / 橱柜"
+            ],
+            [
+              "米",
+              "1袋",
+              "厨房 / 橱柜"
+            ],
+            [
+              "大米",
+              "1袋",
+              "厨房 / 橱柜"
+            ],
+            [
+              "电脑",
+              "1台",
+              "客厅"
+            ]
+          ],
+          "caption": "近三天共新记 7 次，米和大米是分开记的两条。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "day": "recent",
+                "days": 3,
+                "action": "create",
+                "use": "activity.list"
+              }
+            ],
+            "blocks": [],
+            "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+            "report": {
+              "executed": [
+                {
+                  "use": "activity.list",
+                  "summary": "activity.list window=近3天 action=create returned=7 truncated=false（明细供自行计数/去重；非库存快照）\n2026-10-24 20:58 | create | 厕纸 qty=1卷 | 卫生间\n2026-10-24 20:58 | create | 薯片 qty=2袋 | 客厅 / 零食柜\n2026-10-24 20:58 | create | 酱油 qty=1瓶 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 挂面 qty=3把 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 大米 qty=1袋 | 厨房 / 橱柜\n2026-10-24 20:56 | create | 电脑 qty=1台 | 客厅",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？"
+              ],
+              "lead": "近三天新记了 7 次，米和大米是分开记的两条，要不要看看是不是同一袋？",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "近三天新进的东西",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "厕纸",
+                  "1卷",
+                  "卫生间"
+                ],
+                [
+                  "薯片",
+                  "2袋",
+                  "客厅 / 零食柜"
+                ],
+                [
+                  "酱油",
+                  "1瓶",
+                  "厨房 / 橱柜"
+                ],
+                [
+                  "挂面",
+                  "3把",
+                  "厨房 / 橱柜"
+                ],
+                [
+                  "米",
+                  "1袋",
+                  "厨房 / 橱柜"
+                ],
+                [
+                  "大米",
+                  "1袋",
+                  "厨房 / 橱柜"
+                ],
+                [
+                  "电脑",
+                  "1台",
+                  "客厅"
+                ]
+              ],
+              "caption": "近三天共新记 7 次，米和大米是分开记的两条。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:activity.list",
+      "ok": true,
+      "detail": "present"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,16 @@
+{
+  "id": "user-cook-soy",
+  "perspective": "user",
+  "title": "做饭：酱油还有没有",
+  "tags": [
+    "query"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "酱油还有没有",
+  "expected": {
+    "outcome": "据实说有没有、大概在哪",
+    "mustProbe": true
+  }
+}

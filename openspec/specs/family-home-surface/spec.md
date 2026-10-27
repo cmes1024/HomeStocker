@@ -24,12 +24,16 @@ The family page MUST expose entries for browsing spaces, managing tags, opening 
 - **WHEN** a member taps the messages tool
 - **THEN** the system opens the family message feed for the current family
 
-### Requirement: Family reminder master switch
-The family page MUST show the household expiry-reminder master switch and persist it through the family domain write API. Toggling it MUST NOT by itself subscribe any member to a specific item.
+### Requirement: Family reminder settings entry
+The family page MUST present the household expiry-reminder settings as a single tappable button in the key card whose label reflects the saved state (for example "临期提醒·上午9点" when on with send time 09:00, "临期提醒关闭" when off). Tapping it MUST open a settings panel containing the master switch, a single-choice reminder lead time, and a send time; the panel MUST persist all three in one save through the family domain write API. Changing these settings MUST NOT by itself subscribe any member to a specific item.
 
 #### Scenario: Turn master reminder off
-- **WHEN** a member turns off the family reminder switch
-- **THEN** the family document records the master switch as off
+- **WHEN** a member turns off the family reminder switch in the panel and saves
+- **THEN** the family document records the master switch as off, the button label reflects the off state, and the lead time and send time are preserved
+
+#### Scenario: Change send time
+- **WHEN** a member picks 09:07 and saves while reminders are on
+- **THEN** the family document records hour 9 and minute 7, and the button label shows the new send time
 
 ### Requirement: List and switch homes
 The family page MUST list families the caller belongs to, mark the current one, and allow switching, creating another family, or joining another by invite code.

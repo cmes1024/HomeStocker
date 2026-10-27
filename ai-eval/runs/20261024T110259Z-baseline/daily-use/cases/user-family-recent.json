@@ -1,0 +1,18 @@
+{
+  "id": "user-family-recent",
+  "perspective": "user",
+  "title": "家人：最近家里进了啥",
+  "tags": [
+    "activity"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "最近家里进了啥",
+  "expected": {
+    "outcome": "按最近进出/新记的东西说几样",
+    "requiredTools": [
+      "activity.list"
+    ]
+  }
+}

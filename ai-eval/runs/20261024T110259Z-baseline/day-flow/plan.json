@@ -1,0 +1,14 @@
+{
+  "id": "day-flow",
+  "title": "更贴近一天",
+  "description": "",
+  "cases": [
+    "user-day-morning",
+    "user-day-noon",
+    "user-day-home"
+  ],
+  "copiedAt": "2026-10-24T11:06:19.545Z",
+  "mode": "act",
+  "actUrl": "http://127.0.0.1:8080/api/ai/act",
+  "apiBase": "http://127.0.0.1:8080"
+}

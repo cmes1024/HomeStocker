@@ -1,0 +1,17 @@
+{
+  "id": "user-cook-wrap-where",
+  "perspective": "user",
+  "title": "做饭：保鲜膜在哪",
+  "tags": [
+    "query",
+    "location"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "保鲜膜在哪",
+  "expected": {
+    "outcome": "说出大概位置（比如厨房橱柜）",
+    "mustProbe": true
+  }
+}

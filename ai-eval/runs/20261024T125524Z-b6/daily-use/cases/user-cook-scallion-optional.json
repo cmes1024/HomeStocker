@@ -1,0 +1,20 @@
+{
+  "id": "user-cook-scallion-optional",
+  "perspective": "user",
+  "title": "做饭：葱还有吗没有就算了",
+  "tags": [
+    "query",
+    "casual"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "葱还有吗，没有就算了",
+  "expected": {
+    "outcome": "查一下葱；没有就短说没有，别硬推销去记一笔",
+    "mustProbe": true,
+    "forbiddenTools": [
+      "item.create"
+    ]
+  }
+}

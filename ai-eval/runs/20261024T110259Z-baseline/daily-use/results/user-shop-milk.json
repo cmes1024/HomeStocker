@@ -1,0 +1,407 @@
+{
+  "id": "user-shop-milk",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:11.947Z",
+  "mode": "act",
+  "outcome": "家里账上多了/加上冰箱里的牛奶两盒，跟人说清楚记哪儿了",
+  "actual": {
+    "dialogue": {
+      "text": "牛奶两盒，放冰箱",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "牛奶",
+          "use": "item.search"
+        },
+        {
+          "ref": "P2",
+          "quantity": 4,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 2 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "已改 牛奶（厨房 / 冰箱）：2盒→4",
+            "step": 1,
+            "use": "item.update"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 2 件",
+          "牛奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-26",
+          "牛奶 · 1箱 · 厨房 · 常温未开",
+          "已改 牛奶（厨房 / 冰箱）：2盒→4"
+        ],
+        "lead": "查询：找到 2 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "牛奶",
+                "subtitle": "2盒",
+                "facts": [
+                  "厨房 / 冰箱",
+                  "过期 2026-10-26"
+                ],
+                "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+              },
+              {
+                "title": "牛奶",
+                "subtitle": "1箱",
+                "facts": [
+                  "厨房",
+                  "常温未开"
+                ],
+                "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 牛奶（厨房 / 冰箱）",
+                "subtitle": "2盒→4",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "冰箱里的牛奶从 2 盒改成 4 盒了，那两盒 10 月 26 日到期，记得先喝。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "牛奶",
+              "subtitle": "2盒",
+              "facts": [
+                "厨房 / 冰箱",
+                "过期 2026-10-26"
+              ],
+              "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+            },
+            {
+              "title": "牛奶",
+              "subtitle": "1箱",
+              "facts": [
+                "厨房",
+                "常温未开"
+              ],
+              "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 牛奶（厨房 / 冰箱）",
+              "subtitle": "2盒→4",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "牛奶",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "牛奶",
+            "use": "item.search"
+          },
+          {
+            "ref": "P2",
+            "quantity": 4,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 2 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "已改 牛奶（厨房 / 冰箱）：2盒→4",
+              "step": 1,
+              "use": "item.update"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 2 件",
+            "牛奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-26",
+            "牛奶 · 1箱 · 厨房 · 常温未开",
+            "已改 牛奶（厨房 / 冰箱）：2盒→4"
+          ],
+          "lead": "查询：找到 2 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "牛奶",
+                  "subtitle": "2盒",
+                  "facts": [
+                    "厨房 / 冰箱",
+                    "过期 2026-10-26"
+                  ],
+                  "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+                },
+                {
+                  "title": "牛奶",
+                  "subtitle": "1箱",
+                  "facts": [
+                    "厨房",
+                    "常温未开"
+                  ],
+                  "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 牛奶（厨房 / 冰箱）",
+                  "subtitle": "2盒→4",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "冰箱里的牛奶从 2 盒改成 4 盒了，那两盒 10 月 26 日到期，记得先喝。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "牛奶",
+                "subtitle": "2盒",
+                "facts": [
+                  "厨房 / 冰箱",
+                  "过期 2026-10-26"
+                ],
+                "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+              },
+              {
+                "title": "牛奶",
+                "subtitle": "1箱",
+                "facts": [
+                  "厨房",
+                  "常温未开"
+                ],
+                "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 牛奶（厨房 / 冰箱）",
+                "subtitle": "2盒→4",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "牛奶",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "牛奶",
+                "use": "item.search"
+              },
+              {
+                "ref": "P2",
+                "quantity": 4,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 2 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "已改 牛奶（厨房 / 冰箱）：2盒→4",
+                  "step": 1,
+                  "use": "item.update"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 2 件",
+                "牛奶 · 2盒 · 厨房 / 冰箱 · 过期 2026-10-26",
+                "牛奶 · 1箱 · 厨房 · 常温未开",
+                "已改 牛奶（厨房 / 冰箱）：2盒→4"
+              ],
+              "lead": "查询：找到 2 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "牛奶",
+                      "subtitle": "2盒",
+                      "facts": [
+                        "厨房 / 冰箱",
+                        "过期 2026-10-26"
+                      ],
+                      "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+                    },
+                    {
+                      "title": "牛奶",
+                      "subtitle": "1箱",
+                      "facts": [
+                        "厨房",
+                        "常温未开"
+                      ],
+                      "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 牛奶（厨房 / 冰箱）",
+                      "subtitle": "2盒→4",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "冰箱里的牛奶从 2 盒改成 4 盒了，那两盒 10 月 26 日到期，记得先喝。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "牛奶",
+                    "subtitle": "2盒",
+                    "facts": [
+                      "厨房 / 冰箱",
+                      "过期 2026-10-26"
+                    ],
+                    "itemId": "4df38810-0195-4556-9f5c-31f71cdaa082"
+                  },
+                  {
+                    "title": "牛奶",
+                    "subtitle": "1箱",
+                    "facts": [
+                      "厨房",
+                      "常温未开"
+                    ],
+                    "itemId": "889a8848-d149-41f7-8318-9dc41f70b77d"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 牛奶（厨房 / 冰箱）",
+                    "subtitle": "2盒→4",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "牛奶",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.create|item.update",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

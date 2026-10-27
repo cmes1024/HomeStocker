@@ -1,0 +1,26 @@
+{
+  "applied": [
+    {
+      "fixtureId": "home-daily",
+      "created": 0,
+      "updated": 13,
+      "removed": 0,
+      "spaces": 5
+    },
+    {
+      "fixtureId": "home-unit-clash",
+      "created": 3,
+      "updated": 2,
+      "removed": 11,
+      "spaces": 5
+    },
+    {
+      "fixtureId": "home-wide",
+      "created": 14,
+      "updated": 4,
+      "removed": 1,
+      "spaces": 5
+    }
+  ],
+  "at": "2026-10-24T12:55:28.718Z"
+}

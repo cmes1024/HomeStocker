@@ -1,0 +1,147 @@
+{
+  "id": "user-shop-detergent",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:48.682Z",
+  "mode": "act",
+  "outcome": "听出「新的一瓶 + 旧的还剩半瓶」两件事；说不清落点/是否另开时要先问，不能假装记完了",
+  "actual": {
+    "dialogue": {
+      "text": "洗衣液买了，还剩半瓶旧的",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "新买的洗衣液放哪儿？旧的半瓶也一起记吗？",
+          "options": [
+            {
+              "label": "新的放卫生间，旧的也记上",
+              "value": "新的放卫生间，旧的也记上"
+            },
+            {
+              "label": "新的放厨房橱柜，旧的也记上",
+              "value": "新的放厨房橱柜，旧的也记上"
+            },
+            {
+              "label": "只记新的，旧的不用记",
+              "value": "只记新的，旧的不用记"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "新买的洗衣液放哪儿？旧的半瓶也一起记吗？",
+            "options": [
+              {
+                "label": "新的放卫生间，旧的也记上",
+                "value": "新的放卫生间，旧的也记上"
+              },
+              {
+                "label": "新的放厨房橱柜，旧的也记上",
+                "value": "新的放厨房橱柜，旧的也记上"
+              },
+              {
+                "label": "只记新的，旧的不用记",
+                "value": "只记新的，旧的不用记"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "新买的洗衣液放哪儿？旧的半瓶也一起记吗？",
+                "options": [
+                  {
+                    "label": "新的放卫生间，旧的也记上",
+                    "value": "新的放卫生间，旧的也记上"
+                  },
+                  {
+                    "label": "新的放厨房橱柜，旧的也记上",
+                    "value": "新的放厨房橱柜，旧的也记上"
+                  },
+                  {
+                    "label": "只记新的，旧的不用记",
+                    "value": "只记新的，旧的不用记"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

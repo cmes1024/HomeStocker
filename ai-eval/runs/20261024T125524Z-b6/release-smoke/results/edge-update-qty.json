@@ -1,0 +1,243 @@
+{
+  "id": "edge-update-qty",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:55:55.637Z",
+  "mode": "act",
+  "outcome": "对准唯一的鸡蛋后直接改成 5，不先弹确认，也不删行",
+  "actual": {
+    "dialogue": {
+      "text": "鸡蛋改成 5 个",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "quantity": 5,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.update",
+            "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→5",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已改 鸡蛋（厨房 / 冰箱）：8个→5"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→5",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "鸡蛋改好了，冰箱里现在 5 个。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "已改 鸡蛋（厨房 / 冰箱）",
+              "subtitle": "8个→5",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "",
+        "quantity": 5,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "quantity": 5,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.update",
+              "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→5",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已改 鸡蛋（厨房 / 冰箱）：8个→5"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "已改 鸡蛋（厨房 / 冰箱）",
+                  "subtitle": "8个→5",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "鸡蛋改好了，冰箱里现在 5 个。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→5",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "",
+          "quantity": 5,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "quantity": 5,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.update",
+                  "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→5",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已改 鸡蛋（厨房 / 冰箱）：8个→5"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "已改 鸡蛋（厨房 / 冰箱）",
+                      "subtitle": "8个→5",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "鸡蛋改好了，冰箱里现在 5 个。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "已改 鸡蛋（厨房 / 冰箱）",
+                    "subtitle": "8个→5",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "",
+              "quantity": 5,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.update",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

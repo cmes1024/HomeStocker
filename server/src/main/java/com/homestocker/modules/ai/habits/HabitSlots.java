@@ -28,6 +28,28 @@ public final class HabitSlots {
     return slot != null && ALL.contains(slot.trim());
   }
 
+  /** 该槽是否由服务端闸门真正执行（当前只有默认落点影响写库落点）。 */
+  public static boolean serverExecuted(String slot) {
+    return DEFAULT_SPACE.equals(slot == null ? "" : slot.trim());
+  }
+
+  /** 当前系统无法据此改变流程的槽：写入拒收，避免记下却永远不兑现。 */
+  public static boolean unsupported(String slot) {
+    return DUPLICATE_NAME.equals(slot == null ? "" : slot.trim());
+  }
+
+  /** 行内执行者说明；不得含「：」，默认落点由 PlaceGrounding 按文本解析。 */
+  public static String enforceNote(String slot) {
+    String s = slot == null ? "" : slot.trim();
+    if (serverExecuted(s)) {
+      return "服务端执行，缺落点时可补 spaceName";
+    }
+    if (unsupported(s)) {
+      return "仅供措辞，不改变落库或合并流程";
+    }
+    return "仅影响措辞与缺省";
+  }
+
   public static Set<String> all() {
     return ALL;
   }

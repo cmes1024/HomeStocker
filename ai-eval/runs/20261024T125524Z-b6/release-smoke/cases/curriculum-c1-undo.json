@@ -1,0 +1,17 @@
+{
+  "id": "curriculum-c1-undo",
+  "perspective": "product",
+  "title": "C1 各加之后撤销",
+  "tags": ["curriculum", "undo"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": [
+    { "role": "user", "text": "鸡蛋和盐各加一个" },
+    { "role": "assistant", "text": "已改 鸡蛋（厨房 / 冰箱）：8个→9\n已改 盐（厨房 / 橱柜）：2袋→3" },
+    { "role": "user", "text": "撤销刚才的" }
+  ],
+  "expected": {
+    "outcome": "鸡蛋和盐回到加之前的数量，不整条删除",
+    "requiredTools": ["item.update"],
+    "forbiddenTools": ["item.remove", "item.removeMany"]
+  }
+}

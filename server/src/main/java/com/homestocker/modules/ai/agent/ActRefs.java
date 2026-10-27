@@ -8,6 +8,9 @@ import java.util.Map;
 /** Port of agent/refs.js */
 public final class ActRefs {
 
+  /** 行内备注最多展示的字数；超出截断，避免撑爆短号行。 */
+  static final int NOTE_RENDER_MAX = 40;
+
   private ActRefs() {}
 
   public static boolean isShortRef(String value) {
@@ -54,7 +57,23 @@ public final class ActRefs {
     row.put("note", str(item.get("note")));
     Object tagIds = item.get("tagIds");
     row.put("tagIds", tagIds instanceof List<?> ? tagIds : List.of());
+    row.put("tagNames", tagNamesOf(item.get("tagIds"), tree));
     return row;
+  }
+
+  /** 标签 id → 名称。行文本只说名字，模型拿 id 对不上家庭结构里的标签名。 */
+  private static List<String> tagNamesOf(Object rawTagIds, Map<String, Object> tree) {
+    if (!(rawTagIds instanceof List<?> ids)) {
+      return List.of();
+    }
+    List<String> out = new ArrayList<>();
+    for (Object idObj : ids) {
+      String name = TreeMatch.tagNameById(tree, str(idObj));
+      if (!name.isEmpty() && !out.contains(name)) {
+        out.add(name);
+      }
+    }
+    return out;
   }
 
   public static String renderFocus(Map<String, Object> row) {
@@ -76,6 +95,7 @@ public final class ActRefs {
     } else if ("update".equals(op)) {
       touch = " · 本轮改过";
     }
+    String note = clipNote(str(row.get("note")));
     return "["
         + row.get("ref")
         + "] "
@@ -84,7 +104,42 @@ public final class ActRefs {
         + qty
         + (!place.isEmpty() ? " · " + place : "")
         + expire
-        + touch;
+        + touch
+        + (note.isEmpty() ? "" : " · 备注 " + note)
+        + renderTags(row);
+  }
+
+  /**
+   * 行文本带上标签名：没有这一段，模型无法回答「哪些没挂标签 / 这件挂的是什么」。
+   * 行里没有 tagNames 字段（非 compactItem 产出的行）时不补，避免把「没带这个字段」说成「无标签」。
+   */
+  static String renderTags(Map<String, Object> row) {
+    if (row == null || !row.containsKey("tagNames")) {
+      return "";
+    }
+    Object raw = row.get("tagNames");
+    List<String> names = new ArrayList<>();
+    if (raw instanceof List<?> list) {
+      for (Object o : list) {
+        String s = str(o);
+        if (!s.isEmpty() && !names.contains(s)) {
+          names.add(s);
+        }
+      }
+    }
+    if (names.isEmpty()) {
+      return " · 无标签";
+    }
+    return " · 标签 " + String.join("、", names);
+  }
+
+  /** 备注压成一行并截断，避免长文本把短号行淹没；空备注不留痕。 */
+  static String clipNote(String raw) {
+    String s = str(raw).replaceAll("\\s+", " ").trim();
+    if (s.length() <= NOTE_RENDER_MAX) {
+      return s;
+    }
+    return s.substring(0, NOTE_RENDER_MAX) + "…";
   }
 
   public static String renderFocusList(List<Map<String, Object>> rows) {
@@ -131,13 +186,8 @@ public final class ActRefs {
           return row;
         }
       }
-      Map<String, Object> stub = new LinkedHashMap<>();
-      stub.put("ref", pickCallRef(call).isEmpty() ? "X" : pickCallRef(call));
-      stub.put("itemId", itemId);
-      stub.put("name", str(call.get("name")));
-      stub.put("spaceName", "");
-      stub.put("locationName", "");
-      return stub;
+      // 查不到就是查不到：不再凭 id 造一条空行，避免模型拿假命中继续写。
+      return null;
     }
     String raw = pickCallRef(call);
     if (isShortRef(raw) && refs != null) {

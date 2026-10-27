@@ -1,0 +1,185 @@
+{
+  "id": "scene-want-coffee",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:09.668Z",
+  "mode": "act",
+  "outcome": "先看家里有没有咖啡，没有就说没有，不要记成新物资",
+  "actual": {
+    "dialogue": {
+      "text": "我想喝咖啡",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "咖啡",
+          "use": "item.search"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。"
+        ],
+        "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+      "blocks": []
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "咖啡",
+            "use": "item.search"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。"
+          ],
+          "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "咖啡",
+                "use": "item.search"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。"
+              ],
+              "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "lead": "台账里没查到咖啡，家里可能真没存货了。要不要我记一条？或者你告诉我买了多少，我帮你记上。",
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.search",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.createMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

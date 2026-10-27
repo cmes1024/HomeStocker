@@ -1,0 +1,169 @@
+{
+  "id": "chat-computer-room",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:27.348Z",
+  "mode": "act",
+  "outcome": "家里没有叫房间的地方，先问，别把电脑删了",
+  "actual": {
+    "dialogue": {
+      "text": "电脑我搬房间去了",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "电脑搬到哪个房间了？",
+          "options": [
+            {
+              "label": "宝宝房",
+              "value": "宝宝房"
+            },
+            {
+              "label": "厨房",
+              "value": "厨房"
+            },
+            {
+              "label": "卫生间",
+              "value": "卫生间"
+            },
+            {
+              "label": "仓库",
+              "value": "仓库"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "电脑搬到哪个房间了？",
+            "options": [
+              {
+                "label": "宝宝房",
+                "value": "宝宝房"
+              },
+              {
+                "label": "厨房",
+                "value": "厨房"
+              },
+              {
+                "label": "卫生间",
+                "value": "卫生间"
+              },
+              {
+                "label": "仓库",
+                "value": "仓库"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "电脑搬到哪个房间了？",
+                "options": [
+                  {
+                    "label": "宝宝房",
+                    "value": "宝宝房"
+                  },
+                  {
+                    "label": "厨房",
+                    "value": "厨房"
+                  },
+                  {
+                    "label": "卫生间",
+                    "value": "卫生间"
+                  },
+                  {
+                    "label": "仓库",
+                    "value": "仓库"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:space.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

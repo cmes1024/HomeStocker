@@ -1,0 +1,249 @@
+{
+  "id": "user-day-morning",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:06:22.508Z",
+  "mode": "act",
+  "outcome": "把快到期的酸奶说清楚提醒到人",
+  "actual": {
+    "dialogue": {
+      "text": "快过期的那两盒提我一下",
+      "history": [
+        {
+          "role": "user",
+          "text": "酸奶还有吗"
+        },
+        {
+          "role": "assistant",
+          "text": "有，冰箱里 2 盒，明天到期"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "酸奶",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "就这一条记录，明天到期，记得喝掉。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "就这一条记录，明天到期，记得喝掉。"
+        ],
+        "lead": "就这一条记录，明天到期，记得喝掉。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "快过期的酸奶",
+        "columns": [
+          "名称",
+          "数量",
+          "位置",
+          "过期"
+        ],
+        "widths": [
+          2,
+          1,
+          2,
+          2
+        ],
+        "rows": [
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-25"
+          ]
+        ],
+        "caption": "明天到期，就这一条记录。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "酸奶",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "就这一条记录，明天到期，记得喝掉。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "就这一条记录，明天到期，记得喝掉。"
+          ],
+          "lead": "就这一条记录，明天到期，记得喝掉。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "快过期的酸奶",
+          "columns": [
+            "名称",
+            "数量",
+            "位置",
+            "过期"
+          ],
+          "widths": [
+            2,
+            1,
+            2,
+            2
+          ],
+          "rows": [
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-25"
+            ]
+          ],
+          "caption": "明天到期，就这一条记录。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "酸奶",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "就这一条记录，明天到期，记得喝掉。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "就这一条记录，明天到期，记得喝掉。"
+              ],
+              "lead": "就这一条记录，明天到期，记得喝掉。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "快过期的酸奶",
+              "columns": [
+                "名称",
+                "数量",
+                "位置",
+                "过期"
+              ],
+              "widths": [
+                2,
+                1,
+                2,
+                2
+              ],
+              "rows": [
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-25"
+                ]
+              ],
+              "caption": "明天到期，就这一条记录。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.listExpiring|item.search",
+      "ok": true,
+      "detail": "hit"
+    }
+  ],
+  "notes": ""
+}

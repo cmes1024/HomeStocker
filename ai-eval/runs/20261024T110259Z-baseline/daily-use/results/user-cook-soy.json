@@ -1,0 +1,231 @@
+{
+  "id": "user-cook-soy",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:32.017Z",
+  "mode": "act",
+  "outcome": "据实说有没有、大概在哪",
+  "actual": {
+    "dialogue": {
+      "text": "酱油还有没有",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "酱油",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "还有，就这一瓶，在厨房橱柜里。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "还有，就这一瓶，在厨房橱柜里。"
+        ],
+        "lead": "还有，就这一瓶，在厨房橱柜里。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "酱油",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "酱油",
+            "1瓶",
+            "厨房 / 橱柜"
+          ]
+        ],
+        "caption": "台账里就这一条酱油记录。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "酱油",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "还有，就这一瓶，在厨房橱柜里。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "还有，就这一瓶，在厨房橱柜里。"
+          ],
+          "lead": "还有，就这一瓶，在厨房橱柜里。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "酱油",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "酱油",
+              "1瓶",
+              "厨房 / 橱柜"
+            ]
+          ],
+          "caption": "台账里就这一条酱油记录。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "酱油",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "还有，就这一瓶，在厨房橱柜里。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "还有，就这一瓶，在厨房橱柜里。"
+              ],
+              "lead": "还有，就这一瓶，在厨房橱柜里。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "酱油",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "酱油",
+                  "1瓶",
+                  "厨房 / 橱柜"
+                ]
+              ],
+              "caption": "台账里就这一条酱油记录。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

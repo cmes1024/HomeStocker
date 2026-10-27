@@ -1,0 +1,30 @@
+{
+  "id": "scene-toilet-gone",
+  "perspective": "product",
+  "title": "厕纸用完了",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "厕纸用完了",
+  "expected": {
+    "outcome": "删掉现有厕纸，不把数量改成 0，也不再记一卷",
+    "requiredTools": [
+      "item.remove"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update"
+    ],
+    "callIncludes": [
+      {
+        "use": "item.remove",
+        "name": "厕纸"
+      }
+    ]
+  }
+}

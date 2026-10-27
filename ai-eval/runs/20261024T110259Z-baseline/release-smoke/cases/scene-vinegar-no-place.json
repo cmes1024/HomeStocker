@@ -1,0 +1,23 @@
+{
+  "id": "scene-vinegar-no-place",
+  "perspective": "product",
+  "title": "记醋但没说放哪",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "记一瓶醋",
+  "expected": {
+    "outcome": "没说放在哪，先问位置，先不写入",
+    "mustAsk": true,
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

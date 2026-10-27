@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>家庭管家 · 3D 架构与数据流</title>
+<style>
+  :root {
+    --bg: #060a14;
+    --fg: #e6edf7;
+    --dim: #8fa3bf;
+    --line: rgba(140, 170, 210, 0.18);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; }
+  #scene, #labels { position: fixed; inset: 0; }
+  #labels { pointer-events: none; }
+
+  .glass {
+    background: linear-gradient(160deg, rgba(18, 27, 44, 0.82), rgba(10, 16, 28, 0.78));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+  }
+
+  #title {
+    position: fixed; left: 22px; top: 20px; padding: 14px 18px; max-width: 360px;
+  }
+  #title h1 { margin: 0 0 6px; font-size: 16px; letter-spacing: 0.5px; }
+  #title p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--dim); }
+  #title code { color: #9ed0ff; }
+
+  #hud { position: fixed; right: 22px; top: 20px; padding: 12px; display: flex; flex-direction: column; gap: 8px; width: 208px; }
+  #hud button {
+    appearance: none; border: 1px solid var(--line); background: rgba(30, 45, 70, 0.6);
+    color: var(--fg); font-size: 12px; padding: 8px 10px; border-radius: 9px; cursor: pointer;
+    transition: background 0.15s, border-color 0.15s; text-align: left;
+  }
+  #hud button:hover { background: rgba(50, 78, 120, 0.75); border-color: rgba(140, 180, 240, 0.45); }
+  #hud button.active { background: rgba(77, 163, 255, 0.28); border-color: rgba(120, 190, 255, 0.65); }
+  #hud .hint { font-size: 11px; color: var(--dim); line-height: 1.5; }
+  #hud .speed-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  #hud .speed-row button { flex: 1 1 calc(33.333% - 4px); text-align: center; padding: 6px 0; font-size: 11px; }
+
+  #panel { position: fixed; right: 22px; bottom: 22px; width: 320px; padding: 16px 18px; display: none; }
+  #panel.show { display: block; }
+  #panel .kind { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--dim); }
+  #panel h2 { margin: 6px 0 8px; font-size: 15px; }
+  #panel p { margin: 0 0 10px; font-size: 12px; line-height: 1.65; color: #c3d2e6; }
+  #panel .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11px; color: #8fc1ff; word-break: break-all; }
+  #panel .tagline { margin-top: 10px; font-size: 11px; color: var(--dim); }
+
+  #legend { position: fixed; left: 22px; bottom: 22px; padding: 12px 14px; font-size: 11px; color: var(--dim); }
+  #legend .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  #legend .dot { width: 9px; height: 9px; border-radius: 50%; box-shadow: 0 0 10px currentColor; }
+
+  #status { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); font-size: 12px; color: var(--dim); padding: 8px 16px; }
+
+  .node-label {
+    font-size: 10px; line-height: 1.2; padding: 2px 6px; border-radius: 6px;
+    color: #dce9fb; background: rgba(8, 14, 24, 0.72); border: 1px solid rgba(120, 160, 210, 0.22);
+    white-space: nowrap; transform: translateY(-2px);
+  }
+  .node-label.hot { color: #fff; border-color: rgba(255, 200, 120, 0.8); background: rgba(60, 40, 10, 0.85); }
+  .layer-label {
+    font-size: 12px; letter-spacing: 1px; color: #9fb6d4; padding: 2px 8px;
+    background: rgba(6, 10, 20, 0.6); border-radius: 6px; border: 1px solid rgba(120, 160, 210, 0.16);
+  }
+  @media (max-width: 760px) {
+    #title { max-width: 220px; }
+    #panel { width: 240px; }
+    #hud { width: 168px; }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="scene"></div>
+<div id="labels"></div>
+
+<div id="title" class="glass">
+  <h1>家庭管家 · 内部架构与数据流</h1>
+  <p>
+    依据 <code>feature/ai-decision-authority</code> 代码实绘。粒子沿连线流动：
+    青=读、橙=写、紫=确认、红=拦截回执。
+  </p>
+</div>
+
+<div id="hud" class="glass">
+  <button id="btn-query">▶ 播放：厨房有什么</button>
+  <button id="btn-write">▶ 播放：先改苹果再删电脑</button>
+  <button id="btn-stop">■ 停止播放</button>
+  <div class="speed-row">
+    <button data-speed="0.2">0.2x</button>
+    <button data-speed="0.4">0.4x</button>
+    <button data-speed="0.6">0.6x</button>
+    <button data-speed="0.8">0.8x</button>
+    <button data-speed="1">1x</button>
+    <button data-speed="1.5">1.5x</button>
+  </div>
+  <button id="btn-rotate">⟳ 自动旋转：开</button>
+  <button id="btn-labels">🏷 标签：开</button>
+  <div class="hint">拖拽旋转 · 滚轮缩放 · 点击节点看职责与代码位置</div>
+</div>
+
+<div id="panel" class="glass">
+  <div class="kind" id="panel-kind"></div>
+  <h2 id="panel-title"></h2>
+  <p id="panel-desc"></p>
+  <div class="code" id="panel-code"></div>
+  <div class="tagline" id="panel-tag"></div>
+</div>
+
+<div id="legend" class="glass">
+  <div>数据流</div>
+  <div class="row"><span class="dot" style="color:#4dd7e0;background:#4dd7e0"></span>读：查询 / 召回 / 回灌</div>
+  <div class="row"><span class="dot" style="color:#ffb057;background:#ffb057"></span>写：改数 / 记一条 / 删</div>
+  <div class="row"><span class="dot" style="color:#b28dff;background:#b28dff"></span>确认：待确认 → 重放</div>
+  <div class="row"><span class="dot" style="color:#ff6b7a;background:#ff6b7a"></span>拦截：闸门回执</div>
+</div>
+
+<div id="status" class="glass">空闲 · 点击节点查看细节</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ─────────────────────────────────────────────
+// 数据：层 / 节点 / 边（全部来自当前代码）
+// ─────────────────────────────────────────────
+const LAYERS = [
+  { id: 'client', name: '① 端 · 小程序 packageAiAssist', y: 54, color: 0x4da3ff },
+  { id: 'entry',  name: '② 接入 · AiActService',        y: 44, color: 0x53d3c6 },
+  { id: 'ctx',    name: '③ 上下文 · ActContextBuilder',  y: 34, color: 0x8b7cf6 },
+  { id: 'loop',   name: '④ 模型循环 · ActToolLoop',      y: 22, color: 0xffb057 },
+  { id: 'out',    name: '⑤ 组装 · AiActService',         y: 11, color: 0x5fd68a },
+  { id: 'data',   name: '⑥ 数据',                        y: 0,  color: 0xff7a8a },
+];
+
+const NODES = [
+  // ① 端
+  { id: 'chat', layer: 'client', short: '聊天页',
+    label: '聊天页 assist/index.js',
+    desc: '发送 {text, history, focusItemId}；渲染 lead / blocks / present / confirm / ask。确认时不插入假的用户气泡。',
+    code: 'miniprogram/packageAiAssist/assist/index.js',
+    tag: '入口·出口' },
+  { id: 'confirmUI', layer: 'client', short: '确认卡',
+    label: '确认卡',
+    desc: '点确认回传 {confirmed:true, calls, planId}；取消只清本地待确认态，不写库。',
+    code: 'assist/index.js · confirmed = true',
+    tag: '确认' },
+  { id: 'askUI', layer: 'client', short: '澄清卡',
+    label: '澄清卡（ask options）',
+    desc: '把选项作为下一句继续对话；选项由本轮召回行生成，不凭空编。',
+    code: 'assist/index.js · ask',
+    tag: '澄清' },
+
+  // ② 接入
+  { id: 'auth', layer: 'entry', short: '鉴权',
+    label: 'AuthFilter',
+    desc: 'X-HS-Token → Redis session → openid。服务端只用 openid 定位 family，不信任入参身份。',
+    code: 'auth/AuthFilter.java',
+    tag: '身份' },
+  { id: 'rate', layer: 'entry', short: '限流',
+    label: 'checkAct 限流',
+    desc: 'Redis 计数，AI_ACT_RATE_PER_MINUTE=30/min；超限返回 RATE_LIMITED。',
+    code: 'AiRateLimitService.java',
+    tag: '保护' },
+  { id: 'replay', layer: 'entry', short: '确认重放',
+    label: '确认重放（ActPendingPlan）',
+    desc: 'confirmed + calls 命中时校验 Redis 凭据（hs:ai:plan:*，30 分钟），通过后直接 execute，不重跑模型；带 planId 时还会比对 calls 是否一致。',
+    code: 'AiActService.performAct · ActPendingPlan.java',
+    tag: '确认' },
+
+  // ③ 上下文
+  { id: 'facts', layer: 'ctx', short: '事实',
+    label: '本轮事实',
+    desc: 'today / weekday / familyName / memberCount，时区 Asia/Shanghai。',
+    code: 'ActContextBuilder.java',
+    tag: '上下文' },
+  { id: 'tree', layer: 'ctx', short: '家庭树',
+    label: '家庭结构',
+    desc: '只给空间 / 位置 / 标签名。落点必须落在这棵树里，否则 PLACE_UNGROUNDED。',
+    code: 'FamilyTreeService.renderTreeNames',
+    tag: '上下文' },
+  { id: 'history', layer: 'ctx', short: 'history',
+    label: '对话历史',
+    desc: '最近 user/assistant 消息；隔超过 1 小时插入「时间间隔」标记，避免把上一场当刚刚。',
+    code: 'ActPrompt.renderHistory',
+    tag: '上下文' },
+  { id: 'focus', layer: 'ctx', short: 'FOCUS',
+    label: '详情关注 F1',
+    desc: '详情页当前物资，短号仅本轮有效；用于「这个/它」的指代。',
+    code: 'ItemsProbe.loadFocus',
+    tag: '上下文' },
+  { id: 'recall', layer: 'ctx', short: 'RECALL',
+    label: '名称召回 P*',
+    desc: '本句出现的台账物资名，带短号。「无」只表示本句没对上现成名称，不是全库盘点。',
+    code: 'ItemsProbe.recallNamedInText',
+    tag: '上下文' },
+  { id: 'snapshot', layer: 'ctx', short: 'SNAPSHOT',
+    label: '开场台账',
+    desc: '本轮开始时最近物资，有条数上限，不是全库件数；无短号，要改先查。',
+    code: 'ItemsProbe.renderOpeningSnapshot',
+    tag: '上下文' },
+  { id: 'probe', layer: 'ctx', short: 'PROBE',
+    label: '本轮探查结果',
+    desc: 'item.search / listExpiring 的结果，循环中不断回填；写调用靠这些行拿短号和库存值。',
+    code: 'ActContextBuilder · probe',
+    tag: '上下文' },
+  { id: 'exec', layer: 'ctx', short: 'EXEC',
+    label: '执行回执',
+    desc: '本轮写工具的真实结果，重编排时回给模型；模型不能靠说话假装写入。',
+    code: 'ActContextBuilder · exec',
+    tag: '上下文' },
+  { id: 'habits', layer: 'ctx', short: 'HABITS',
+    label: '家庭习惯槽',
+    desc: '偏好事实，用于少问、说人话；标「服务端执行」的槽会改变落库，标「仅供措辞」的不改流程。',
+    code: 'FamilyHabitService · HabitSlots',
+    tag: '上下文' },
+  { id: 'knowledge', layer: 'ctx', short: 'KNOWLEDGE',
+    label: '知识包',
+    desc: '产品口径 / 页面 / 限额等，先取目录再取正文，不是向量检索。',
+    code: 'KnowledgePacks.java · KnowledgeService',
+    tag: '上下文' },
+  { id: 'caps', layer: 'ctx', short: '能力表',
+    label: '能力表（31 条）',
+    desc: '每个 use 的 action、参数、hint、是否 confirm。其中 9 条需确认：item.remove* / space.remove* / tag.remove* / item.merge。',
+    code: 'capability-seed-v48.json · CapabilityCatalog',
+    tag: '能力' },
+
+  // ④ 模型循环
+  { id: 'model', layer: 'loop', short: '模型',
+    label: 'ActPrompt 调模型',
+    desc: '家庭 BYOK 最多试 2 把 + 平台托管池故障转移；单次读超时 12 秒。',
+    code: 'ActPrompt.java · AiKeyService',
+    tag: '模型' },
+  { id: 'budget', layer: 'loop', short: '预算',
+    label: 'ActBudget',
+    desc: '一次 act 总预算 45 秒；剩余不足 1.5 秒不再开新一轮，返回已有结果。',
+    code: 'ActBudget.java',
+    tag: '保护' },
+  { id: 'tools', layer: 'loop', short: 'tool_calls',
+    label: 'tool_calls（≤6 步）',
+    desc: '模型返回的工具调用；MAX_STEPS=6（HEAD 为 4，工作区改动为 6）。无调用则收尾。',
+    code: 'ActToolLoop.java · ToolSchemas.MAX_STEPS',
+    tag: '循环' },
+  { id: 'allow', layer: 'loop', short: '白名单',
+    label: '能力表白名单',
+    desc: '未启用的工具模型看不到，也执行不了；这是第一道闸门。',
+    code: 'CapabilityCatalog',
+    tag: '闸门 1' },
+  { id: 'prov', layer: 'loop', short: 'Provenance',
+    label: 'Provenance · _src 申报',
+    desc: '落点/数量来源核验：user 的 quote 必须出现在原话；probe/inference 必须带有效短号；habit 必须匹配习惯槽。失败 PLACE_UNGROUNDED / QTY_UNGROUNDED / INFERENCE_NO_BASIS。',
+    code: 'Provenance.java',
+    tag: '闸门 2' },
+  { id: 'refs', layer: 'loop', short: '短号',
+    label: '短号核验',
+    desc: 'F*/P* 仅本轮有效；失效或编造 → REF_UNKNOWN，回给模型重取。',
+    code: 'ActRefs.java · refUnknown',
+    tag: '闸门 3' },
+  { id: 'place', layer: 'loop', short: '落点',
+    label: 'PlaceGrounding',
+    desc: '空间 / 位置必须在家庭结构里 → 否则 PLACE_UNGROUNDED。只核结构，不猜意图。',
+    code: 'PlaceGrounding.java',
+    tag: '闸门 4' },
+  { id: 'write', layer: 'loop', short: '数量/同名',
+    label: 'WriteGrounding',
+    desc: '同名多条没指明 → REF_AMBIGUOUS；整条删除与库存数量对不上 → QTY_UNGROUNDED（数量按被删对象所在分句归属）。',
+    code: 'WriteGrounding.java',
+    tag: '闸门 5' },
+  { id: 'held', layer: 'loop', short: '待确认',
+    label: 'WRITE_HELD → 确认卡',
+    desc: '能力表 confirm=true 的写不执行，进确认卡；同批其它写照常执行，已执行的进 executed 回执。',
+    code: 'ActToolLoop · held',
+    tag: '闸门 6' },
+  { id: 'domain', layer: 'loop', short: '执行',
+    label: 'DomainTools',
+    desc: '唯一写入口：item / space / tag / activity / habit / page；写成功后旁路记 activities（source=agent）。',
+    code: 'DomainTools.java',
+    tag: '执行' },
+  { id: 'feed', layer: 'loop', short: '回灌',
+    label: '结果回灌',
+    desc: '工具结果、新短号、回执反馈给模型；已见行重发，保持短号不变。',
+    code: 'ActToolLoop.ingest',
+    tag: '循环' },
+  { id: 'present', layer: 'loop', short: 'present',
+    label: 'present 工具',
+    desc: 'table / stats / bars / pie。字段值由服务端按 key 取，说明列由模型写；数字不许模型自己编。',
+    code: 'ToolSchemas · PresentResolver',
+    tag: '展示' },
+
+  // ⑤ 组装
+  { id: 'finish', layer: 'out', short: '收尾',
+    label: 'finishText',
+    desc: '丢弃 JSON 正文；丢弃没有写入凭据的「已记/已删」声明；空转走 degrade。',
+    code: 'ActToolLoop.finishText · unbackedWriteClaim',
+    tag: '收口' },
+  { id: 'guard', layer: 'out', short: '裁表',
+    label: 'ReplyTableGuard',
+    desc: '正文里手写的「名称 / 数量」表头与连续 · 行整块删掉，明细交给 present 表格。',
+    code: 'ReplyTableGuard.java',
+    tag: '收口' },
+  { id: 'done', layer: 'out', short: 'DONE',
+    label: 'buildDonePayload',
+    desc: 'lead + blocks + report + draft + focus；写过的带 executed / lines。',
+    code: 'AiActService.buildDonePayload',
+    tag: '出口' },
+  { id: 'ask', layer: 'out', short: 'ASK',
+    label: 'askPayload',
+    desc: '一问 + 选项；选项来自本轮召回，不凭空生成。',
+    code: 'AiActService · Kind.ASK',
+    tag: '出口' },
+  { id: 'confirm', layer: 'out', short: 'CONFIRM',
+    label: 'buildConfirmPayload',
+    desc: 'calls=待确认（客户端原样回传）；executed=本批已执行；planId 作为凭据；calls 不含已执行的，避免重复写。',
+    code: 'AiActService.buildConfirmPayload',
+    tag: '出口' },
+  { id: 'resolve', layer: 'out', short: 'Present',
+    label: 'PresentResolver',
+    desc: '列宽 / 裁剪 / 说明列清洗；过期列输出「已过期 N 天 / 今日到期 / 快过期 N 天」，不显示日期。',
+    code: 'PresentResolver.java',
+    tag: '展示' },
+  { id: 'receipt', layer: 'out', short: '回执',
+    label: 'attachExecutedReceipt',
+    desc: '确认卡响应补 executed：同批里已经改完的写也要让用户看见。',
+    code: 'AiActService.attachExecutedReceipt',
+    tag: '回执' },
+  { id: 'degrade', layer: 'out', short: '降级',
+    label: 'degrade 兜底',
+    desc: '空回执 / 超预算 / 模型空转时，返回一句可继续的兜底问句，而不是空白。',
+    code: 'AssistPromptTexts.DEGRADE_ASK',
+    tag: '兜底' },
+
+  // ⑥ 数据
+  { id: 'pg', layer: 'data', short: 'PostgreSQL',
+    label: 'PostgreSQL',
+    desc: 'items / spaces / locations / tags / activities / memberships / familyAiKeys / aiCapabilities。',
+    code: 'Flyway V1–V6',
+    tag: '存储' },
+  { id: 'redis', layer: 'data', short: 'Redis',
+    label: 'Redis',
+    desc: 'session、act 限流、确认凭据 hs:ai:plan:*（30 分钟）。',
+    code: 'SessionService · AiRateLimitService · ActPendingPlan',
+    tag: '存储' },
+  { id: 'minio', layer: 'data', short: 'MinIO',
+    label: 'MinIO',
+    desc: '物资 / 空间图片。',
+    code: 'storage 模块',
+    tag: '存储' },
+];
+
+const EDGES = [
+  // 端 → 接入
+  { a: 'chat', b: 'auth', kind: 'flow' },
+  { a: 'confirmUI', b: 'replay', kind: 'confirm' },
+  { a: 'askUI', b: 'chat', kind: 'flow' },
+
+  // 接入内部
+  { a: 'auth', b: 'rate', kind: 'flow' },
+  { a: 'rate', b: 'facts', kind: 'flow' },
+  { a: 'rate', b: 'redis', kind: 'read' },
+  { a: 'replay', b: 'redis', kind: 'read' },
+  { a: 'replay', b: 'domain', kind: 'write' },
+
+  // 上下文 → 模型
+  { a: 'facts', b: 'model', kind: 'flow' },
+  { a: 'tree', b: 'model', kind: 'flow' },
+  { a: 'history', b: 'model', kind: 'flow' },
+  { a: 'focus', b: 'model', kind: 'flow' },
+  { a: 'recall', b: 'model', kind: 'flow' },
+  { a: 'snapshot', b: 'model', kind: 'flow' },
+  { a: 'probe', b: 'model', kind: 'flow' },
+  { a: 'exec', b: 'model', kind: 'flow' },
+  { a: 'habits', b: 'model', kind: 'flow' },
+  { a: 'knowledge', b: 'model', kind: 'flow' },
+  { a: 'caps', b: 'model', kind: 'flow' },
+
+  // 模型循环
+  { a: 'model', b: 'budget', kind: 'flow' },
+  { a: 'model', b: 'tools', kind: 'flow' },
+  { a: 'tools', b: 'allow', kind: 'flow' },
+  { a: 'allow', b: 'prov', kind: 'flow' },
+  { a: 'prov', b: 'refs', kind: 'flow' },
+  { a: 'refs', b: 'place', kind: 'flow' },
+  { a: 'place', b: 'write', kind: 'flow' },
+  { a: 'write', b: 'held', kind: 'confirm' },
+  { a: 'write', b: 'domain', kind: 'write' },
+  { a: 'domain', b: 'feed', kind: 'read' },
+  { a: 'feed', b: 'model', kind: 'flow' },
+  { a: 'tools', b: 'present', kind: 'flow' },
+
+  // 闸门拦截回执（反向）
+  { a: 'prov', b: 'tools', kind: 'block', dir: -1 },
+  { a: 'refs', b: 'tools', kind: 'block', dir: -1 },
+  { a: 'place', b: 'tools', kind: 'block', dir: -1 },
+  { a: 'write', b: 'tools', kind: 'block', dir: -1 },
+
+  // 执行 → 数据
+  { a: 'domain', b: 'pg', kind: 'write' },
+  { a: 'domain', b: 'minio', kind: 'write' },
+  { a: 'domain', b: 'redis', kind: 'write' },
+
+  // 收尾 → 组装
+  { a: 'model', b: 'finish', kind: 'flow' },
+  { a: 'finish', b: 'guard', kind: 'flow' },
+  { a: 'finish', b: 'degrade', kind: 'block' },
+  { a: 'guard', b: 'done', kind: 'flow' },
+  { a: 'present', b: 'resolve', kind: 'flow' },
+  { a: 'held', b: 'confirm', kind: 'confirm' },
+  { a: 'resolve', b: 'done', kind: 'flow' },
+  { a: 'done', b: 'receipt', kind: 'flow' },
+  { a: 'degrade', b: 'ask', kind: 'flow' },
+
+  // 回端
+  { a: 'done', b: 'chat', kind: 'flow' },
+  { a: 'confirm', b: 'chat', kind: 'confirm' },
+  { a: 'ask', b: 'chat', kind: 'flow' },
+  { a: 'receipt', b: 'chat', kind: 'flow' },
+];
+
+const EDGE_COLORS = {
+  read: 0x4dd7e0,
+  write: 0xffb057,
+  confirm: 0xb28dff,
+  block: 0xff6b7a,
+  flow: 0x6f8bb0,
+};
+
+// ─────────────────────────────────────────────
+// 场景
+// ─────────────────────────────────────────────
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x05080f, 0.0026);
+
+const camera = new THREE.PerspectiveCamera(32, innerWidth / innerHeight, 0.1, 900);
+camera.position.set(0, 62, 112);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.setClearColor(0x05080f, 1);
+document.getElementById('scene').appendChild(renderer.domElement);
+
+const labelRenderer = new CSS2DRenderer();
+labelRenderer.setSize(innerWidth, innerHeight);
+labelRenderer.domElement.style.position = 'fixed';
+labelRenderer.domElement.style.inset = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+document.getElementById('labels').appendChild(labelRenderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 27, 0);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+controls.minDistance = 26;
+controls.maxDistance = 190;
+controls.maxPolarAngle = Math.PI * 0.52;
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.62));
+const keyLight = new THREE.DirectionalLight(0xffffff, 1.15);
+keyLight.position.set(26, 62, 38);
+scene.add(keyLight);
+const rimLight = new THREE.DirectionalLight(0x5a9eff, 0.55);
+rimLight.position.set(-42, 26, -30);
+scene.add(rimLight);
+
+// 星点背景
+(() => {
+  const count = 900;
+  const pos = new Float32Array(count * 3);
+  for (let i = 0; i < count; i += 1) {
+    const r = 180 + Math.random() * 220;
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+    pos[i * 3 + 1] = r * Math.cos(phi) * 0.6 + 20;
+    pos[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: 0x5f7ea8, size: 1.1, transparent: true, opacity: 0.5 });
+  scene.add(new THREE.Points(geo, mat));
+})();
+
+// ─────────────────────────────────────────────
+// 布局
+// ─────────────────────────────────────────────
+const NODE_SIZE = { w: 4.8, h: 1.4, d: 2.8 };
+const PER_ROW = { client: 3, entry: 3, ctx: 6, loop: 6, out: 4, data: 3 };
+const GAP_X = 11.5;
+const GAP_Z = 12;
+
+const layerById = Object.fromEntries(LAYERS.map((l) => [l.id, l]));
+const nodeById = {};
+
+for (const layer of LAYERS) {
+  const list = NODES.filter((n) => n.layer === layer.id);
+  const perRow = PER_ROW[layer.id] || 6;
+  const rows = Math.ceil(list.length / perRow);
+  list.forEach((node, index) => {
+    const row = Math.floor(index / perRow);
+    const col = index % perRow;
+    const inRow = Math.min(perRow, list.length - row * perRow);
+    node.pos = new THREE.Vector3(
+      (col - (inRow - 1) / 2) * GAP_X,
+      layer.y,
+      (row - (rows - 1) / 2) * GAP_Z
+    );
+  });
+}
+
+// ─────────────────────────────────────────────
+// 层平台
+// ─────────────────────────────────────────────
+function layerBounds(list) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+  for (const node of list) {
+    minX = Math.min(minX, node.pos.x - NODE_SIZE.w / 2);
+    maxX = Math.max(maxX, node.pos.x + NODE_SIZE.w / 2);
+    minZ = Math.min(minZ, node.pos.z - NODE_SIZE.d / 2);
+    maxZ = Math.max(maxZ, node.pos.z + NODE_SIZE.d / 2);
+  }
+  return { minX, maxX, minZ, maxZ, cx: (minX + maxX) / 2, cz: (minZ + maxZ) / 2 };
+}
+
+const PLATFORM_PAD = { x: 2.6, z: 2.2 };
+const PLATFORM_TONE = { data: { fill: 0.075, edge: 0.34 } };
+
+for (const layer of LAYERS) {
+  const list = NODES.filter((n) => n.layer === layer.id);
+  const box = layerBounds(list);
+  const width = box.maxX - box.minX + PLATFORM_PAD.x * 2;
+  const depth = box.maxZ - box.minZ + PLATFORM_PAD.z * 2;
+  const tone = PLATFORM_TONE[layer.id] || { fill: 0.035, edge: 0.22 };
+
+  const plane = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, depth, 1, 1),
+    new THREE.MeshBasicMaterial({
+      color: layer.color,
+      transparent: true,
+      opacity: tone.fill,
+      side: THREE.DoubleSide,
+    })
+  );
+  plane.rotation.x = -Math.PI / 2;
+  plane.position.set(box.cx, layer.y - 1.15, box.cz);
+  scene.add(plane);
+
+  const outline = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.PlaneGeometry(width, depth)),
+    new THREE.LineBasicMaterial({ color: layer.color, transparent: true, opacity: tone.edge })
+  );
+  outline.rotation.x = -Math.PI / 2;
+  outline.position.copy(plane.position);
+  scene.add(outline);
+
+  const div = document.createElement('div');
+  div.className = 'layer-label';
+  div.textContent = layer.name;
+  const label = new CSS2DObject(div);
+  label.position.set(box.cx - width / 2 - 1.4, layer.y - 1.0, box.cz + depth / 2 + 1.4);
+  scene.add(label);
+}
+
+// ─────────────────────────────────────────────
+// 节点
+// ─────────────────────────────────────────────
+const nodeMeshes = [];
+
+for (const node of NODES) {
+  const layer = layerById[node.layer];
+  const geo = new THREE.BoxGeometry(NODE_SIZE.w, NODE_SIZE.h, NODE_SIZE.d);
+  const mat = new THREE.MeshStandardMaterial({
+    color: layer.color,
+    emissive: layer.color,
+    emissiveIntensity: 0.28,
+    metalness: 0.42,
+    roughness: 0.38,
+    transparent: true,
+    opacity: 0.94,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.copy(node.pos);
+  mesh.userData = node;
+
+  const wire = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.22 })
+  );
+  mesh.add(wire);
+
+  const div = document.createElement('div');
+  div.className = 'node-label';
+  div.textContent = node.short;
+  const label = new CSS2DObject(div);
+  label.position.set(0, 2.0, 0);
+  mesh.add(label);
+
+  node.mesh = mesh;
+  node.labelDiv = div;
+  node.baseColor = new THREE.Color(layer.color);
+  nodeById[node.id] = node;
+  nodeMeshes.push(mesh);
+  scene.add(mesh);
+}
+
+// ─────────────────────────────────────────────
+// 连线
+// ─────────────────────────────────────────────
+function makeCurve(a, b, lift) {
+  const start = a.clone();
+  const end = b.clone();
+  const mid = start.clone().add(end).multiplyScalar(0.5);
+  if (Math.abs(start.y - end.y) < 0.01) {
+    const span = Math.abs(start.x - end.x) * 0.1 + Math.abs(start.z - end.z) * 0.06;
+    mid.y += Math.min(1.8, 0.8 + span);
+    return new THREE.CatmullRomCurve3([start, mid, end]);
+  }
+  const c1 = start.clone().lerp(end, 0.3);
+  const c2 = start.clone().lerp(end, 0.7);
+  c1.y += lift;
+  c2.y += lift;
+  return new THREE.CatmullRomCurve3([start, c1, c2, end]);
+}
+
+// 层间分道：按连线类型分配不同抬升通道，避免所有线共面堆叠
+const LANE_LIFT = { read: 2.6, flow: 3.4, write: 4.0, confirm: 4.6, block: 5.2 };
+const laneCount = {};
+
+const edgeList = [];
+
+for (const edge of EDGES) {
+  const from = nodeById[edge.a];
+  const to = nodeById[edge.b];
+  if (!from || !to) continue;
+
+  const fromPoint = from.pos.clone();
+  const toPoint = to.pos.clone();
+  fromPoint.y += 0.85;
+  toPoint.y += 0.85;
+
+  laneCount[edge.kind] = (laneCount[edge.kind] || 0) + 1;
+  const laneBase = LANE_LIFT[edge.kind] ?? LANE_LIFT.flow;
+  const lift = laneBase + ((laneCount[edge.kind] - 1) % 3) * 0.5;
+
+  const curve = makeCurve(fromPoint, toPoint, lift);
+  const color = EDGE_COLORS[edge.kind] || EDGE_COLORS.flow;
+  const opacity = 0.2;
+
+  const tube = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 40, edge.kind === 'block' ? 0.07 : 0.09, 6, false),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity,
+      depthWrite: false,
+    })
+  );
+  scene.add(tube);
+
+  const arrow = new THREE.Mesh(
+    new THREE.ConeGeometry(0.3, 0.85, 10),
+    new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: opacity + 0.1,
+      depthWrite: false,
+    })
+  );
+  const arrowAt = 0.62;
+  arrow.position.copy(curve.getPointAt(arrowAt));
+  arrow.quaternion.setFromUnitVectors(
+    new THREE.Vector3(0, 1, 0),
+    curve.getTangentAt(arrowAt).normalize()
+  );
+  scene.add(arrow);
+
+  edge.curve = curve;
+  edge.tube = tube;
+  edge.arrow = arrow;
+  edge.color = color;
+  edge.baseOpacity = opacity;
+  edgeList.push(edge);
+}
+
+// ─────────────────────────────────────────────
+// 粒子（数据流）
+// ─────────────────────────────────────────────
+const MAX_PARTICLES = 420;
+const particleGeo = new THREE.SphereGeometry(0.17, 8, 8);
+const particleMat = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.95 });
+const particleMesh = new THREE.InstancedMesh(particleGeo, particleMat, MAX_PARTICLES);
+particleMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+particleMesh.frustumCulled = false;
+scene.add(particleMesh);
+
+const particles = [];
+const dummy = new THREE.Object3D();
+const tmpColor = new THREE.Color();
+
+for (const edge of edgeList) {
+  const count = edge.kind === 'flow' ? 1 : 2;
+  for (let i = 0; i < count; i += 1) {
+    particles.push({
+      edge,
+      t: (i + Math.random()) / count,
+      speed: edge.kind === 'flow' ? 0.12 + Math.random() * 0.06 : 0.2 + Math.random() * 0.1,
+      dir: edge.dir === -1 ? -1 : 1,
+      boost: 0,
+    });
+  }
+}
+
+for (let i = 0; i < MAX_PARTICLES; i += 1) {
+  particleMesh.setColorAt(i, tmpColor.set(0x000000));
+}
+if (particleMesh.instanceColor) particleMesh.instanceColor.needsUpdate = true;
+
+const particleTotal = particles.length;
+function syncParticles(dt) {
+  for (let i = 0; i < MAX_PARTICLES; i += 1) {
+    const p = particles[i];
+    if (!p) {
+      dummy.position.set(0, -999, 0);
+      dummy.scale.setScalar(0.001);
+      dummy.updateMatrix();
+      particleMesh.setMatrixAt(i, dummy.matrix);
+      continue;
+    }
+    const speed = p.speed * (1 + p.boost * 3);
+    p.t += speed * dt * p.dir;
+    if (p.t > 1) p.t -= 1;
+    if (p.t < 0) p.t += 1;
+    p.boost = Math.max(0, p.boost - dt * 1.6);
+
+    const point = p.edge.curve.getPointAt(Math.min(Math.max(p.t, 0), 0.9999));
+    dummy.position.copy(point);
+    const scale = 0.85 + p.boost * 1.5;
+    dummy.scale.setScalar(scale);
+    dummy.updateMatrix();
+    particleMesh.setMatrixAt(i, dummy.matrix);
+    particleMesh.setColorAt(i, tmpColor.set(p.edge.color));
+  }
+  particleMesh.instanceMatrix.needsUpdate = true;
+  if (particleMesh.instanceColor) particleMesh.instanceColor.needsUpdate = true;
+}
+
+// ─────────────────────────────────────────────
+// 交互：点击节点
+// ─────────────────────────────────────────────
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let selectedId = null;
+let pointerDown = null;
+
+renderer.domElement.addEventListener('pointerdown', (event) => {
+  pointerDown = { x: event.clientX, y: event.clientY };
+});
+
+renderer.domElement.addEventListener('pointerup', (event) => {
+  if (!pointerDown) return;
+  const moved = Math.hypot(event.clientX - pointerDown.x, event.clientY - pointerDown.y);
+  pointerDown = null;
+  if (moved > 6) return;
+
+  pointer.x = (event.clientX / innerWidth) * 2 - 1;
+  pointer.y = -(event.clientY / innerHeight) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hits = raycaster.intersectObjects(nodeMeshes, false);
+  if (!hits.length) {
+    selectedId = null;
+    document.getElementById('panel').classList.remove('show');
+    return;
+  }
+  showPanel(hits[0].object.userData);
+});
+
+function showPanel(node) {
+  selectedId = node.id;
+  document.getElementById('panel-kind').textContent = node.tag || '模块';
+  document.getElementById('panel-title').textContent = node.label;
+  document.getElementById('panel-desc').textContent = node.desc;
+  document.getElementById('panel-code').textContent = node.code;
+  document.getElementById('panel-tag').textContent = `层：${layerById[node.layer].name}`;
+  document.getElementById('panel').classList.add('show');
+  setStatus(`已选：${node.label}`);
+}
+
+// ─────────────────────────────────────────────
+// 高亮 / 播放
+// ─────────────────────────────────────────────
+const SCRIPTS = [
+  {
+    id: 'query',
+    name: '厨房有什么',
+    duration: 7.2,
+    steps: [
+      { at: 0.0, nodes: ['chat', 'auth'], edges: [] },
+      { at: 0.7, nodes: ['rate', 'facts', 'tree', 'history'], edges: ['auth-rate', 'rate-facts'] },
+      { at: 1.4, nodes: ['recall', 'snapshot', 'caps', 'model'], edges: ['recall-model', 'snapshot-model', 'caps-model'] },
+      { at: 2.2, nodes: ['tools', 'allow'], edges: ['model-tools', 'tools-allow'] },
+      { at: 2.8, nodes: ['domain', 'pg'], edges: ['allow-prov', 'prov-refs', 'refs-place', 'place-write', 'write-domain', 'domain-pg'] },
+      { at: 3.6, nodes: ['domain', 'feed', 'probe'], edges: ['domain-feed', 'feed-model'] },
+      { at: 4.3, nodes: ['present', 'resolve'], edges: ['tools-present', 'present-resolve'] },
+      { at: 5.0, nodes: ['done', 'receipt', 'chat'], edges: ['resolve-done', 'done-receipt', 'receipt-chat'] },
+    ],
+  },
+  {
+    id: 'write',
+    name: '先改苹果再删电脑',
+    duration: 9.0,
+    steps: [
+      { at: 0.0, nodes: ['chat', 'auth', 'rate'], edges: ['chat-auth', 'auth-rate'] },
+      { at: 0.8, nodes: ['recall', 'model'], edges: ['recall-model'] },
+      { at: 1.5, nodes: ['tools', 'allow', 'prov'], edges: ['model-tools', 'tools-allow', 'allow-prov'] },
+      { at: 2.2, nodes: ['refs', 'place', 'write', 'domain', 'pg'], edges: ['prov-refs', 'refs-place', 'place-write', 'write-domain', 'domain-pg'] },
+      { at: 3.4, nodes: ['held', 'confirm', 'chat', 'confirmUI'], edges: ['write-held', 'held-confirm', 'confirm-chat'] },
+      { at: 4.6, nodes: ['auth', 'rate', 'replay'], edges: ['confirmUI-replay'] },
+      { at: 5.4, nodes: ['redis', 'domain', 'pg'], edges: ['replay-redis', 'replay-domain', 'domain-pg'] },
+      { at: 6.6, nodes: ['domain', 'feed', 'done', 'receipt'], edges: ['domain-feed', 'done-receipt', 'receipt-chat'] },
+    ],
+  },
+];
+
+let playState = { script: null, time: 0, playing: false };
+const hotNodes = new Set();
+const hotEdges = new Set();
+
+function edgeKey(a, b) { return `${a}-${b}`; }
+for (const edge of edgeList) edge.key = edgeKey(edge.a, edge.b);
+const edgeByKey = new Map(edgeList.map((edge) => [edge.key, edge]));
+
+function startScript(id) {
+  const script = SCRIPTS.find((s) => s.id === id);
+  if (!script) return;
+  playState = { script, time: 0, playing: true };
+  hotNodes.clear();
+  hotEdges.clear();
+  setStatus(`播放中：${script.name}`);
+}
+
+function tickPlay(dt) {
+  if (!playState.playing || !playState.script) return;
+  playState.time += dt * playSpeed;
+  if (playState.time > playState.script.duration) {
+    playState.playing = false;
+    hotNodes.clear();
+    hotEdges.clear();
+    setStatus('播放结束 · 可再选一个流程');
+    return;
+  }
+  hotNodes.clear();
+  hotEdges.clear();
+  let current = null;
+  for (const step of playState.script.steps) {
+    if (playState.time >= step.at) current = step;
+  }
+  if (!current) return;
+  for (const id of current.nodes) hotNodes.add(id);
+  for (const key of current.edges) {
+    hotEdges.add(key);
+    const edge = edgeByKey.get(key);
+    if (!edge) continue;
+    if (!hotNodes.has(edge.a) && !hotNodes.has(edge.b)) continue;
+    hotNodes.add(edge.a);
+    hotNodes.add(edge.b);
+  }
+  for (const particle of particles) {
+    if (hotEdges.has(particle.edge.key)) particle.boost = 1;
+  }
+  setStatus(`播放中：${playState.script.name} · ${hotNodes.size} 个环节`);
+}
+
+function updateHighlight(dt) {
+  for (const node of NODES) {
+    const mesh = node.mesh;
+    const hot = hotNodes.has(node.id) || selectedId === node.id;
+    const target = hot ? 1.15 : 0.28;
+    const mat = mesh.material;
+    mat.emissiveIntensity += (target - mat.emissiveIntensity) * Math.min(1, dt * 8);
+    const scale = hot ? 1.09 : 1;
+    mesh.scale.lerp(new THREE.Vector3(scale, scale, scale), Math.min(1, dt * 8));
+    node.labelDiv.classList.toggle('hot', hot);
+  }
+  for (const edge of edgeList) {
+    const hot = hotEdges.has(edge.key) || edge.a === selectedId || edge.b === selectedId;
+    const target = hot ? 0.65 : edge.baseOpacity;
+    edge.tube.material.opacity += (target - edge.tube.material.opacity) * Math.min(1, dt * 8);
+    edge.arrow.material.opacity = Math.min(1, edge.tube.material.opacity + 0.1);
+  }
+}
+
+// ─────────────────────────────────────────────
+// UI
+// ─────────────────────────────────────────────
+let labelsVisible = true;
+let autoRotate = false;
+let playSpeed = 0.2;
+
+const speedBtns = [...document.querySelectorAll('#hud .speed-row button')];
+for (const btn of speedBtns) {
+  btn.addEventListener('click', () => {
+    playSpeed = Number(btn.dataset.speed);
+    for (const other of speedBtns) other.classList.toggle('active', other === btn);
+    setStatus(`播放速度：${playSpeed}x`);
+  });
+}
+speedBtns[0].classList.add('active');
+
+const btnQuery = document.getElementById('btn-query');
+const btnWrite = document.getElementById('btn-write');
+const btnStop = document.getElementById('btn-stop');
+const btnRotate = document.getElementById('btn-rotate');
+const btnLabels = document.getElementById('btn-labels');
+
+btnQuery.addEventListener('click', () => startScript('query'));
+btnWrite.addEventListener('click', () => startScript('write'));
+btnStop.addEventListener('click', () => {
+  playState.playing = false;
+  hotNodes.clear();
+  hotEdges.clear();
+  setStatus('已停止');
+});
+btnRotate.addEventListener('click', () => {
+  autoRotate = !autoRotate;
+  controls.autoRotate = autoRotate;
+  controls.autoRotateSpeed = 0.55;
+  btnRotate.textContent = `⟳ 自动旋转：${autoRotate ? '开' : '关'}`;
+  btnRotate.classList.toggle('active', autoRotate);
+});
+btnLabels.addEventListener('click', () => {
+  labelsVisible = !labelsVisible;
+  labelRenderer.domElement.style.display = labelsVisible ? 'block' : 'none';
+  btnLabels.textContent = `🏷 标签：${labelsVisible ? '开' : '关'}`;
+  btnLabels.classList.toggle('active', labelsVisible);
+});
+btnLabels.classList.add('active');
+
+function setStatus(text) {
+  document.getElementById('status').textContent = text;
+}
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+});
+
+// ─────────────────────────────────────────────
+// 主循环
+// ─────────────────────────────────────────────
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  tickPlay(dt);
+  syncParticles(dt);
+  updateHighlight(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+
+animate();
+setStatus('空闲 · 点击节点查看细节，或播放一条流程');
+</script>
+</body>
+</html>

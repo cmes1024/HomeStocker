@@ -1,0 +1,25 @@
+{
+  "id": "curriculum-c9-unit-clash",
+  "perspective": "product",
+  "title": "C9 单位不同要另开一行",
+  "tags": ["curriculum", "create", "unit"],
+  "setup": {
+    "fixture": "home-unit-clash",
+    "notes": "厨房已有「苹果 1 斤」（不挂位置）和「苹果 5 斤」（冰箱）。家人要加的是 2 袋。"
+  },
+  "prompt": [
+    { "role": "user", "text": "加两袋苹果" },
+    { "role": "assistant", "text": "这两袋苹果放哪儿？" },
+    { "role": "user", "text": "厨房" }
+  ],
+  "expected": {
+    "outcome": "在厨房另记一条「苹果 2 袋」；1 斤那行不动。不许回「单位对不上 / 系统不让记」，也不许把家人劝到仓库或冰箱。",
+    "requiredToolsAny": ["item.create", "item.createMany"],
+    "callIncludes": [
+      { "name": "苹果", "quantity": 2, "unit": "袋", "spaceName": "厨房" }
+    ],
+    "callExcludes": [{ "use": "item.update", "name": "苹果" }],
+    "forbiddenTools": ["item.remove", "item.removeMany", "item.merge"],
+    "manual": "实跑后看台账：厨房应出现「苹果 1 斤」与「苹果 2 袋」两行并存。"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "id": "user-use-toilet-gone",
+  "perspective": "user",
+  "title": "用完：厕纸用完了",
+  "tags": [
+    "remove"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "厕纸用完了",
+  "expected": {
+    "outcome": "厕纸从家里账上拿掉（确认后），别留 0 卷",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.remove"
+    ]
+  }
+}

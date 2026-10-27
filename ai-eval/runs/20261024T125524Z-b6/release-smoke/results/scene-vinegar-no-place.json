@@ -1,0 +1,357 @@
+{
+  "id": "scene-vinegar-no-place",
+  "status": "fail",
+  "judgedAt": "2026-10-24T12:56:01.885Z",
+  "mode": "act",
+  "outcome": "没说放在哪，先问位置，先不写入",
+  "actual": {
+    "dialogue": {
+      "text": "记一瓶醋",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "酱油",
+          "use": "item.search"
+        },
+        {
+          "locationName": "橱柜",
+          "name": "醋",
+          "quantity": 1,
+          "spaceName": "厨房",
+          "unit": "瓶",
+          "use": "item.create"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.create",
+            "summary": "已记下 醋 1瓶（厨房 / 橱柜）",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "酱油 · 1瓶 · 厨房 / 橱柜",
+          "已记下 醋 1瓶（厨房 / 橱柜）"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "酱油",
+                "subtitle": "1瓶",
+                "facts": [
+                  "厨房 / 橱柜"
+                ],
+                "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "醋记好了，1瓶，放在厨房橱柜，跟酱油挨着。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "酱油",
+              "subtitle": "1瓶",
+              "facts": [
+                "厨房 / 橱柜"
+              ],
+              "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "tone": "ok",
+              "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "醋",
+        "quantity": 1,
+        "unit": "瓶",
+        "note": "",
+        "spaceName": "厨房",
+        "locationName": "橱柜",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.create"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "酱油",
+            "use": "item.search"
+          },
+          {
+            "locationName": "橱柜",
+            "name": "醋",
+            "quantity": 1,
+            "spaceName": "厨房",
+            "unit": "瓶",
+            "use": "item.create"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.create",
+              "summary": "已记下 醋 1瓶（厨房 / 橱柜）",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "酱油 · 1瓶 · 厨房 / 橱柜",
+            "已记下 醋 1瓶（厨房 / 橱柜）"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "酱油",
+                  "subtitle": "1瓶",
+                  "facts": [
+                    "厨房 / 橱柜"
+                  ],
+                  "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "tone": "ok",
+                  "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "醋记好了，1瓶，放在厨房橱柜，跟酱油挨着。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "酱油",
+                "subtitle": "1瓶",
+                "facts": [
+                  "厨房 / 橱柜"
+                ],
+                "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "tone": "ok",
+                "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "醋",
+          "quantity": 1,
+          "unit": "瓶",
+          "note": "",
+          "spaceName": "厨房",
+          "locationName": "橱柜",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "酱油",
+                "use": "item.search"
+              },
+              {
+                "locationName": "橱柜",
+                "name": "醋",
+                "quantity": 1,
+                "spaceName": "厨房",
+                "unit": "瓶",
+                "use": "item.create"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.create",
+                  "summary": "已记下 醋 1瓶（厨房 / 橱柜）",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "酱油 · 1瓶 · 厨房 / 橱柜",
+                "已记下 醋 1瓶（厨房 / 橱柜）"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "酱油",
+                      "subtitle": "1瓶",
+                      "facts": [
+                        "厨房 / 橱柜"
+                      ],
+                      "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "tone": "ok",
+                      "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "醋记好了，1瓶，放在厨房橱柜，跟酱油挨着。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "酱油",
+                    "subtitle": "1瓶",
+                    "facts": [
+                      "厨房 / 橱柜"
+                    ],
+                    "itemId": "0b347119-ede7-4eba-97a2-81377f388bc5"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "tone": "ok",
+                    "title": "已记下 醋 1瓶（厨房 / 橱柜）"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "醋",
+              "quantity": 1,
+              "unit": "瓶",
+              "note": "",
+              "spaceName": "厨房",
+              "locationName": "橱柜",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": false,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.createMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": false,
+      "detail": "no ask signal"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c4-record-existing",
+  "perspective": "product",
+  "title": "C4 记一笔撞上已有名",
+  "tags": ["curriculum", "create"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "记一笔，厨房鸡蛋 8 个",
+  "expected": {
+    "outcome": "先看见已有鸡蛋再记；同位置并入或问清楚，不声称家里没有鸡蛋",
+    "requiredToolsAny": ["item.create", "item.update"],
+    "forbiddenTools": ["item.remove"]
+  }
+}

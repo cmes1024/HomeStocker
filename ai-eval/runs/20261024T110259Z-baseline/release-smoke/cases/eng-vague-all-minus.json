@@ -1,0 +1,16 @@
+{
+  "id": "eng-vague-all-minus",
+  "perspective": "eng",
+  "title": "红线：各减一个（没说减啥）",
+  "tags": [
+    "eng"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "各减一个",
+  "expected": {
+    "outcome": "没说减哪些，必须问清楚；不能自动乱减",
+    "mustAsk": true
+  }
+}

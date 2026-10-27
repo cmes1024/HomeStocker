@@ -1,0 +1,380 @@
+{
+  "id": "user-list-kitchen",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:58:15.824Z",
+  "mode": "act",
+  "outcome": "把厨房里有的东西列出来给人看",
+  "actual": {
+    "dialogue": {
+      "text": "厨房有啥",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "spaceName": "厨房",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 7 件",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。"
+        ],
+        "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "厨房现有物资",
+        "columns": [
+          "名称",
+          "数量",
+          "位置",
+          "过期",
+          "说明"
+        ],
+        "widths": [
+          2,
+          1,
+          2,
+          2,
+          4
+        ],
+        "rows": [
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-26",
+            "冰箱里"
+          ],
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "2026-10-25",
+            "冰箱里"
+          ],
+          [
+            "牛奶",
+            "1箱",
+            "厨房",
+            "",
+            "常温未开"
+          ],
+          [
+            "鸡蛋",
+            "8个",
+            "厨房 / 冰箱",
+            "",
+            "冰箱里"
+          ],
+          [
+            "保鲜膜",
+            "1卷",
+            "厨房 / 橱柜",
+            "",
+            "橱柜里"
+          ],
+          [
+            "盐",
+            "2袋",
+            "厨房 / 橱柜",
+            "",
+            "橱柜里"
+          ],
+          [
+            "酱油",
+            "1瓶",
+            "厨房 / 橱柜",
+            "",
+            "橱柜里"
+          ]
+        ],
+        "caption": "酸奶明天到期，牛奶后天到期，这两样在冰箱。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "spaceName": "厨房",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 7 件",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。"
+          ],
+          "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "厨房现有物资",
+          "columns": [
+            "名称",
+            "数量",
+            "位置",
+            "过期",
+            "说明"
+          ],
+          "widths": [
+            2,
+            1,
+            2,
+            2,
+            4
+          ],
+          "rows": [
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-26",
+              "冰箱里"
+            ],
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "2026-10-25",
+              "冰箱里"
+            ],
+            [
+              "牛奶",
+              "1箱",
+              "厨房",
+              "",
+              "常温未开"
+            ],
+            [
+              "鸡蛋",
+              "8个",
+              "厨房 / 冰箱",
+              "",
+              "冰箱里"
+            ],
+            [
+              "保鲜膜",
+              "1卷",
+              "厨房 / 橱柜",
+              "",
+              "橱柜里"
+            ],
+            [
+              "盐",
+              "2袋",
+              "厨房 / 橱柜",
+              "",
+              "橱柜里"
+            ],
+            [
+              "酱油",
+              "1瓶",
+              "厨房 / 橱柜",
+              "",
+              "橱柜里"
+            ]
+          ],
+          "caption": "酸奶明天到期，牛奶后天到期，这两样在冰箱。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "spaceName": "厨房",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 7 件",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。"
+              ],
+              "lead": "厨房一共 7 样，酸奶明天到期、牛奶后天到期，先喝这两样吧。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "厨房现有物资",
+              "columns": [
+                "名称",
+                "数量",
+                "位置",
+                "过期",
+                "说明"
+              ],
+              "widths": [
+                2,
+                1,
+                2,
+                2,
+                4
+              ],
+              "rows": [
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-26",
+                  "冰箱里"
+                ],
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "2026-10-25",
+                  "冰箱里"
+                ],
+                [
+                  "牛奶",
+                  "1箱",
+                  "厨房",
+                  "",
+                  "常温未开"
+                ],
+                [
+                  "鸡蛋",
+                  "8个",
+                  "厨房 / 冰箱",
+                  "",
+                  "冰箱里"
+                ],
+                [
+                  "保鲜膜",
+                  "1卷",
+                  "厨房 / 橱柜",
+                  "",
+                  "橱柜里"
+                ],
+                [
+                  "盐",
+                  "2袋",
+                  "厨房 / 橱柜",
+                  "",
+                  "橱柜里"
+                ],
+                [
+                  "酱油",
+                  "1瓶",
+                  "厨房 / 橱柜",
+                  "",
+                  "橱柜里"
+                ]
+              ],
+              "caption": "酸奶明天到期，牛奶后天到期，这两样在冰箱。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.search",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

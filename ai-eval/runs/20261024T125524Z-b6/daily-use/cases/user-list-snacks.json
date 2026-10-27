@@ -1,0 +1,19 @@
+{
+  "id": "user-list-snacks",
+  "perspective": "user",
+  "title": "理一理：零食都有哪些",
+  "tags": [
+    "list"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "零食都有哪些",
+  "expected": {
+    "outcome": "列出零食相关的东西",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.search"
+    ]
+  }
+}

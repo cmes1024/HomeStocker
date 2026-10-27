@@ -47,6 +47,8 @@ public class FamilyHabitService {
           .append(HabitSlots.label(h.slot()))
           .append("(")
           .append(h.slot())
+          .append('；')
+          .append(HabitSlots.enforceNote(h.slot()))
           .append(")：")
           .append(h.text());
       if (HabitSlots.DEFAULT_SPACE.equals(h.slot())
@@ -63,6 +65,14 @@ public class FamilyHabitService {
     String text = textRaw == null ? "" : textRaw.trim();
     if (!HabitSlots.isKnown(slot)) {
       throw ApiException.of(ErrorCodes.INVALID_HABIT, "这类习惯我还不支持记，换个说法试试？");
+    }
+    if (HabitSlots.unsupported(slot)) {
+      throw ApiException.of(
+          ErrorCodes.INVALID_HABIT,
+          "「"
+              + HabitSlots.label(slot)
+              + "」这类偏好我记不了：系统不会因为它改变流程——撞名时同位置同名同单位仍会自动并入，"
+              + "不同位置另开一行，重复的会单独标出来。要是想改这个流程，得单独做。");
     }
     if (text.isEmpty()) {
       throw ApiException.of(ErrorCodes.INVALID_HABIT, "习惯内容不能为空，再说具体一点？");

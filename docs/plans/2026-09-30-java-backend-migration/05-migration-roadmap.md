@@ -127,7 +127,7 @@
 
 ## M7 — expireNotify
 
-- [x] 定时任务 cron（08:00 Asia/Shanghai）
+- [x] 定时任务 cron（默认每分钟扫描 Asia/Shanghai；按家庭配置的发送时分命中，`expire_notify_last_date` 保证一家一天一轮）
 - [x] 筛选：家庭总开关 + expireDate 今天/+1/+3 + item_expire_subs
 - [x] 调微信订阅消息发送；成功删订阅（无密钥时 dry-run 记日志）
 - [x] POST `/api/notify/expire/run`（成员可触发）

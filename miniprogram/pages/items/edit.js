@@ -652,7 +652,7 @@ Page({
       return
     }
     this.setData(patch)
-    wx.showToast({ title: copy.edit.captureFilled(changed.length), icon: 'success' })
+    wx.showToast({ title: copy.edit.captureFilled(changed.length), icon: 'none' })
   },
 
   onLocImageChange(e) {
@@ -717,7 +717,7 @@ Page({
         newLocationName: '',
         creatingLocation: false
       })
-      wx.showToast({ title: copy.edit.locCreatedToast, icon: 'success' })
+      wx.showToast({ title: copy.edit.locCreatedToast, icon: 'none' })
     } catch (e) {
       this.setData({
         creatingLocation: false,

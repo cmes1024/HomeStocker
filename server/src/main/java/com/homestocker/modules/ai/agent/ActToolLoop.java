@@ -188,37 +188,44 @@ public class ActToolLoop {
       Map<String, Object> report,
       Map<String, Object> present,
       Set<String> seenSearches) {
+    String ground = ActPrompt.groundText(ctx.history(), ctx.text(), System.currentTimeMillis());
     boolean asked = false;
-    boolean holdWrites = false;
     String askQuestion = "";
     List<String> askOptions = new ArrayList<>();
     for (ToolCall call : calls) {
-      if (ToolSchemas.ASK.equals(call.name())) {
-        asked = true;
-        Map<String, Object> args = parseArgs(call.arguments());
-        askQuestion = str(args.get("question"));
-        askOptions = stringList(args.get("options"));
+      if (!ToolSchemas.ASK.equals(call.name())) {
         continue;
       }
-      String use = ToolSchemas.capabilityId(call.name());
-      Map<String, Object> api = ctx.catalogMap() == null ? null : ctx.catalogMap().get(use);
-      if (api != null && Boolean.TRUE.equals(api.get("confirm"))) {
-        holdWrites = true;
-      }
+      log.info("[ai.act] tool ask");
+      asked = true;
+      Map<String, Object> args = parseArgs(call.arguments());
+      askQuestion = str(args.get("question"));
+      askOptions = stringList(args.get("options"));
     }
     List<Map<String, Object>> held = new ArrayList<>();
     for (ToolCall call : calls) {
       if (ToolSchemas.ASK.equals(call.name())) {
-        appendToolMessage(messages, call.id(), "已向家人提问，本轮不再改台账。");
+        appendToolMessage(
+            messages,
+            call.id(),
+            ToolFeedback.of(GroundingCodes.ASK_REQUIRED, "question", askQuestion)
+                .withCandidates(askOptions)
+                .toJson());
         continue;
       }
       if (ToolSchemas.PRESENT.equals(call.name())) {
-        Map<String, Object> spec = presentSpec(parseArgs(call.arguments()));
+        Map<String, Object> presentArgs = parseArgs(call.arguments());
+        Map<String, Object> spec = presentSpec(presentArgs);
+        log.info(
+            "[ai.act] tool present accepted={} spec={} args={}",
+            spec != null,
+            clip(String.valueOf(spec), 200),
+            clip(call.arguments(), 400));
         if (spec == null) {
-          appendToolMessage(messages, call.id(), "展示类型只能是 table、stats、bars、pie。");
+          appendToolMessage(messages, call.id(), presentRejected(presentArgs));
         } else {
           present = spec;
-          appendToolMessage(messages, call.id(), "已记下展示，本轮结束时画给家人。不要自己编数字。");
+          appendToolMessage(messages, call.id(), PRESENT_ACCEPTED);
         }
         continue;
       }
@@ -227,7 +234,7 @@ public class ActToolLoop {
           || CapabilityCatalog.isHardDenied(use)
           || ctx.catalogMap() == null
           || !ctx.catalogMap().containsKey(use)) {
-        appendToolMessage(messages, call.id(), "不能执行" + (use.isBlank() ? "" : "（" + use + "）"));
+        appendToolMessage(messages, call.id(), notAllowed(use));
         continue;
       }
       Map<String, Object> domainCall = new LinkedHashMap<>();
@@ -237,49 +244,80 @@ public class ActToolLoop {
       domainCall.put("use", use);
       Map<String, Object> api = ctx.catalogMap().get(use);
       boolean confirm = api != null && Boolean.TRUE.equals(api.get("confirm"));
-      String blocked =
-          PlaceGrounding.ungrounded(
-              ctx.userText(),
-              PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
-              ctx.tree(),
-              domainCall);
+      String habitSpace = PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits"));
+      ToolFeedback audit = Provenance.verify(ground, habitSpace, domainCall, rows);
+      if (audit != null) {
+        log.info(
+            "[ai.act] audit code={} field={} declared={} use={}",
+            audit.code(),
+            audit.field(),
+            audit.declared(),
+            use);
+        appendToolMessage(messages, call.id(), audit.toJson());
+        continue;
+      }
+      if (isMutation(use)) {
+        List<String> missing = Provenance.missingFields(domainCall);
+        String declared = Provenance.describe(domainCall);
+        if (!missing.isEmpty()) {
+          log.info("[ai.act] audit noSource={} use={}", String.join(",", missing), use);
+        } else if (!declared.isEmpty()) {
+          log.info("[ai.act] audit declared={} use={}", declared, use);
+        } else {
+          log.info("[ai.act] audit refOnly use={}", use);
+        }
+      }
+      ToolFeedback blocked = refUnknown(domainCall, ctx);
       if (blocked == null) {
-        blocked =
-            WriteGrounding.blocked(
-                ctx.userText(),
-                PlaceGrounding.habitDefaultSpace(ctx.vars() == null ? "" : ctx.vars().get("habits")),
-                ctx.tree(),
-                rows,
-                domainCall);
+        blocked = PlaceGrounding.check(ctx.tree(), domainCall);
+      }
+      if (blocked == null) {
+        blocked = WriteGrounding.check(ground, rows, domainCall);
       }
       if (blocked != null) {
-        appendToolMessage(messages, call.id(), blocked);
+        log.info("[ai.act] tool blocked use={} code={}", use, blocked.code());
+        appendToolMessage(messages, call.id(), blocked.toJson());
         continue;
       }
-      if (confirm || (isMutation(use) && (asked || holdWrites))) {
-        if (!asked) {
-          held.add(domainCall);
-        }
-        appendToolMessage(
-            messages,
-            call.id(),
-            asked ? "本轮改为提问，这项先不写入。" : "须家人确认后才执行，本轮先停住。");
+      if (confirm) {
+        held.add(domainCall);
+        log.info("[ai.act] tool held use={} asked={}", use, asked);
+        appendToolMessage(messages, call.id(), held(use).toJson());
         continue;
       }
+      long toolStart = System.currentTimeMillis();
+      // _src 只存在于请求与回执，不进写路径、不进活动日志。
+      domainCall.remove(Provenance.SRC);
       Map<String, Object> one = executor.execute(List.of(domainCall));
+      log.info(
+          "[ai.act] tool use={} ms={} args={}",
+          use,
+          System.currentTimeMillis() - toolStart,
+          clip(String.valueOf(domainCall), 160));
       report = mergeReports(report, one, ctx.tree());
       List<Map<String, Object>> fresh = ingest(one, ctx);
-      rows.addAll(fresh);
+      for (Map<String, Object> row : fresh) {
+        if (!containsRow(rows, row)) {
+          rows.add(row);
+        }
+      }
       allCalls.add(domainCall);
       String repeated =
           "item.search".equals(use) && !seenSearches.add(searchSignature(domainCall))
-              ? "相同条件本轮已经查过，下面仍是那些行。不要再用同一条件查。\n"
+              ? "相同条件本轮已经查过，下面仍是那些行。\n"
               : "";
       appendToolMessage(messages, call.id(), repeated + toolText(one, fresh));
       if (one != null && Boolean.TRUE.equals(one.get("subscribeUi"))) {
         return new BatchStep(
             new Outcome(Kind.SUBSCRIBE, "", List.of(), allCalls, rows, report, present), report, present);
       }
+    }
+    if (!held.isEmpty()) {
+      if (asked) {
+        log.info("[ai.act] ask and confirm in one batch, confirm wins q={}", clip(askQuestion, 60));
+      }
+      return new BatchStep(
+          new Outcome(Kind.CONFIRM, "", List.of(), held, rows, report, present), report, present);
     }
     if (asked) {
       String question = askQuestion.isBlank() ? AssistPromptTexts.DEGRADE_ASK : askQuestion;
@@ -290,10 +328,6 @@ public class ActToolLoop {
           askOptions.stream().map(label -> Map.<String, Object>of("label", label, "value", label)).toList());
       return new BatchStep(
           new Outcome(Kind.ASK, "", List.of(ask), allCalls, rows, report, present), report, present);
-    }
-    if (!held.isEmpty()) {
-      return new BatchStep(
-          new Outcome(Kind.CONFIRM, "", List.of(), held, rows, report, present), report, present);
     }
     return new BatchStep(null, report, present);
   }
@@ -336,6 +370,10 @@ public class ActToolLoop {
     return new Outcome(Kind.ASK, "", List.of(ask), List.of(), rows, null);
   }
 
+  /**
+   * 工具返回的库存行都回给模型：见过的行重发（短号不变），没见过的签发新短号。
+   * 隐藏已见行会让模型跨轮拿不到可引用的短号。
+   */
   private List<Map<String, Object>> ingest(Map<String, Object> report, ActContextBuilder.ActContext ctx) {
     if (report == null) {
       return List.of();
@@ -360,7 +398,12 @@ public class ActToolLoop {
         if (id.isBlank()) {
           id = str(itemMap.get("itemId"));
         }
-        if (id.isBlank() || already(ctx.refs(), id)) {
+        if (id.isBlank()) {
+          continue;
+        }
+        Map<String, Object> known = knownById(ctx.refs(), id);
+        if (known != null) {
+          rows.add(known);
           continue;
         }
         n++;
@@ -372,9 +415,59 @@ public class ActToolLoop {
     return rows;
   }
 
-  private static boolean already(Map<String, Map<String, Object>> refs, String itemId) {
+  /** 短号或 itemId 不存在/已失效时回 REF_UNKNOWN，不再让模型拿旧引用去写。 */
+  private static ToolFeedback refUnknown(Map<String, Object> call, ActContextBuilder.ActContext ctx) {
+    String use = str(call.get("use"));
+    if ("item.removeMany".equals(use) || "item.merge".equals(use)) {
+      return null;
+    }
+    String itemId = str(call.get("itemId"));
+    if (!itemId.isEmpty() && ActRefs.lookupRef(Map.of("itemId", itemId), ctx.refs()) == null) {
+      return ToolFeedback.of(GroundingCodes.REF_UNKNOWN, "itemId", itemId)
+          .withCandidates(knownRefs(ctx));
+    }
+    String ref = ActRefs.pickCallRef(call);
+    if (!ref.isEmpty() && ActRefs.lookupRef(Map.of("ref", ref), ctx.refs()) == null) {
+      return ToolFeedback.of(GroundingCodes.REF_UNKNOWN, "ref", ref).withCandidates(knownRefs(ctx));
+    }
+    return null;
+  }
+
+  private static List<String> knownRefs(ActContextBuilder.ActContext ctx) {
+    List<String> out = new ArrayList<>();
+    for (String key : ctx.refs().keySet()) {
+      if (out.size() >= 5) {
+        break;
+      }
+      out.add(key);
+    }
+    return out;
+  }
+
+  private static Map<String, Object> knownById(
+      Map<String, Map<String, Object>> refs, String itemId) {
+    if (itemId.isBlank()) {
+      return null;
+    }
     for (Map<String, Object> row : refs.values()) {
       if (row != null && itemId.equals(str(row.get("itemId")))) {
+        return row;
+      }
+    }
+    return null;
+  }
+
+  private static boolean containsRow(List<Map<String, Object>> rows, Map<String, Object> row) {
+    String id = str(row.get("itemId"));
+    String ref = str(row.get("ref"));
+    for (Map<String, Object> one : rows) {
+      if (one == null) {
+        continue;
+      }
+      if (!id.isEmpty() && id.equals(str(one.get("itemId")))) {
+        return true;
+      }
+      if (!ref.isEmpty() && ref.equals(str(one.get("ref")))) {
         return true;
       }
     }
@@ -463,6 +556,38 @@ public class ActToolLoop {
         .put("role", "tool")
         .put("tool_call_id", toolCallId == null ? "" : toolCallId)
         .put("content", content == null ? "" : content);
+  }
+
+  private static final String PRESENT_ACCEPTED = "{\"ok\":true,\"accepted\":true}";
+
+  /**
+   * 拒绝时把「收到的 type」和原因回给模型。只说 allowed 列表，模型就会连着瞎试，
+   * 一步 3 秒，6 步用完直接退化成文本。
+   */
+  private String presentRejected(Map<String, Object> args) {
+    String given = args == null ? "" : str(args.get("type")).trim();
+    ObjectNode node = objectMapper.createObjectNode();
+    node.put("ok", false);
+    node.put("accepted", false);
+    node.put(
+        "reason",
+        given.isEmpty()
+            ? "type 缺失：table/stats/bars/pie 选一个；统计件数或分布用 stats 并带 groupBy"
+            : "type 不在允许值内：收到「" + clip(given, 20) + "」，只能是 table/stats/bars/pie");
+    node.put("given", given);
+    ArrayNode allowed = node.putArray("allowed");
+    for (String type : List.of("table", "stats", "bars", "pie")) {
+      allowed.add(type);
+    }
+    return node.toString();
+  }
+
+  private static String notAllowed(String use) {
+    return "{\"ok\":false,\"allowed\":false,\"use\":\"" + (use == null ? "" : use) + "\"}";
+  }
+
+  private static ToolFeedback held(String use) {
+    return ToolFeedback.of(GroundingCodes.WRITE_HELD, "use", use);
   }
 
   private Map<String, Object> parseArgs(String arguments) {
@@ -594,20 +719,102 @@ public class ActToolLoop {
   }
 
   private static final Set<String> PRESENT_TYPES = Set.of("table", "stats", "bars", "pie");
+
+  /** 模型给的近义写法收敛到四种已知类型，别为一个词丢掉整张表。 */
+  private static final Map<String, String> PRESENT_TYPE_ALIASES =
+      Map.ofEntries(
+          Map.entry("bar", "bars"),
+          Map.entry("donut", "pie"),
+          Map.entry("stat", "stats"),
+          Map.entry("count", "stats"),
+          Map.entry("summary", "stats"),
+          Map.entry("统计", "stats"),
+          Map.entry("list", "table"),
+          Map.entry("text", "table"),
+          Map.entry("清单", "table"),
+          Map.entry("表格", "table"),
+          Map.entry("chart", "bars"),
+          Map.entry("柱状", "bars"),
+          Map.entry("柱状图", "bars"),
+          Map.entry("饼图", "pie"));
   private static final Set<String> PRESENT_GROUPS = Set.of("space", "tag", "location", "name");
+
+  /** 字段列：服务端按 key 取库值，模型不能改写。 */
+  private static final Map<String, String> PRESENT_FIELD_COLS =
+      Map.ofEntries(
+          Map.entry("名称", "name"),
+          Map.entry("name", "name"),
+          Map.entry("数量", "quantity"),
+          Map.entry("quantity", "quantity"),
+          Map.entry("位置", "place"),
+          Map.entry("地点", "place"),
+          Map.entry("place", "place"),
+          Map.entry("空间", "space"),
+          Map.entry("space", "space"),
+          Map.entry("过期", "expire"),
+          Map.entry("到期", "expire"),
+          Map.entry("expire", "expire"),
+          Map.entry("生产日期", "production"),
+          Map.entry("生产", "production"),
+          Map.entry("production", "production"),
+          Map.entry("备注", "note"),
+          Map.entry("note", "note"));
+
+  /**
+   * 说明列：内容由模型逐行写，服务端不填字段。
+   *
+   * <p>注意「备注」和「note」<b>不在</b>这里：它们指物资自带的 note 字段，由服务端按 key 取值。
+   * 要让模型自己写一段说明，用「说明 / 差异 / 提醒 / 注意 / comment / text」。
+   */
+  private static final Set<String> PRESENT_TEXT_COLS =
+      Set.of("说明", "差异", "提醒", "注意", "comment", "text");
+
+  private static final Map<String, Integer> PRESENT_DEFAULT_WIDTH =
+      Map.of(
+          "name", 2,
+          "quantity", 1,
+          "place", 2,
+          "space", 2,
+          "expire", 2,
+          "production", 2,
+          "note", 3);
+
+  /**
+   * 归一化 present 类型：近义词收敛，缺 type 时按参数形态推断
+   * （有 groupBy 或 items 视为统计，有 columns 视为表格）。推断不出来返回空串，交给调用方拒绝。
+   */
+  static String normalizePresentType(Map<String, Object> args) {
+    if (args == null || args.isEmpty()) {
+      return "";
+    }
+    String raw = str(args.get("type")).trim().toLowerCase(Locale.ROOT);
+    String mapped = PRESENT_TYPE_ALIASES.get(raw);
+    if (mapped != null) {
+      return mapped;
+    }
+    if (PRESENT_TYPES.contains(raw)) {
+      return raw;
+    }
+    if (!raw.isEmpty()) {
+      return raw;
+    }
+    if (!str(args.get("groupBy")).isBlank()) {
+      return "stats";
+    }
+    if (args.get("items") instanceof List<?> items && !items.isEmpty()) {
+      return "stats";
+    }
+    if (args.get("columns") != null) {
+      return "table";
+    }
+    return "";
+  }
 
   static Map<String, Object> presentSpec(Map<String, Object> args) {
     if (args == null || args.isEmpty()) {
       return null;
     }
-    String type = str(args.get("type")).trim().toLowerCase(Locale.ROOT);
-    type =
-        switch (type) {
-          case "bar" -> "bars";
-          case "donut" -> "pie";
-          case "stat" -> "stats";
-          default -> type;
-        };
+    String type = normalizePresentType(args);
     if (!PRESENT_TYPES.contains(type)) {
       return null;
     }
@@ -622,7 +829,100 @@ public class ActToolLoop {
     if (!title.isEmpty()) {
       spec.put("title", title.length() <= 24 ? title : title.substring(0, 24));
     }
+    List<Map<String, Object>> columns = new ArrayList<>();
+    if (args.get("columns") instanceof List<?> colList) {
+      for (Object o : colList) {
+        if (columns.size() >= PresentResolver.MAX_SPEC_COLS) {
+          break;
+        }
+        Map<String, Object> col =
+            o instanceof String s ? plainColumn(s) : o instanceof Map<?, ?> m ? specColumn(m) : null;
+        if (col != null) {
+          columns.add(col);
+        }
+      }
+    }
+    if (!columns.isEmpty()) {
+      spec.put("columns", columns);
+    }
+    List<Map<String, Object>> notes = new ArrayList<>();
+    if (args.get("notes") instanceof List<?> noteList) {
+      for (Object o : noteList) {
+        if (!(o instanceof Map<?, ?> m)) {
+          continue;
+        }
+        String ref = str(m.get("ref")).trim().toUpperCase(Locale.ROOT);
+        String text = str(m.get("text")).trim().replaceAll("\\s+", " ");
+        if (ref.isEmpty() || text.isEmpty()) {
+          continue;
+        }
+        Map<String, Object> note = new LinkedHashMap<>();
+        note.put("ref", ref);
+        note.put("text", text.length() <= 40 ? text : text.substring(0, 40));
+        notes.add(note);
+        if (notes.size() >= 40) {
+          break;
+        }
+      }
+    }
+    if (!notes.isEmpty()) {
+      spec.put("notes", notes);
+    }
+    String caption = str(args.get("caption")).trim().replaceAll("\\s+", " ");
+    if (!caption.isEmpty()) {
+      spec.put("caption", caption.length() <= 60 ? caption : caption.substring(0, 60));
+    }
     return spec;
+  }
+
+  /** 支持简写 ["名称","数量","位置","备注"]；「备注」类列按说明列处理。 */
+  private static Map<String, Object> plainColumn(String raw) {
+    String name = str(raw).trim();
+    if (name.isEmpty()) {
+      return null;
+    }
+    String key = PRESENT_FIELD_COLS.get(name);
+    boolean text = PRESENT_TEXT_COLS.contains(name) || PRESENT_TEXT_COLS.contains(name.toLowerCase(Locale.ROOT));
+    if (key == null && !text) {
+      return null;
+    }
+    Map<String, Object> col = new LinkedHashMap<>();
+    col.put("label", name.length() <= 6 ? name : name.substring(0, 6));
+    col.put("key", text ? "text" : key);
+    col.put("text", text);
+    col.put("width", text ? 4 : PRESENT_DEFAULT_WIDTH.getOrDefault(key, 2));
+    return col;
+  }
+
+  private static Map<String, Object> specColumn(Map<?, ?> m) {
+    String label = str(m.get("label")).trim();
+    String key = str(m.get("key")).trim().toLowerCase(Locale.ROOT);
+    if (key.isEmpty()) {
+      // 只给 label 的写法（如 {"label":"备注"}）按字段名补 key，避免整列被静默丢弃。
+      key = PRESENT_FIELD_COLS.getOrDefault(label, "");
+    }
+    boolean text = Boolean.TRUE.equals(m.get("text")) || PRESENT_TEXT_COLS.contains(label);
+    if (label.isEmpty()) {
+      label = text ? "说明" : str(m.get("key")).trim();
+    }
+    if (label.isEmpty() || (!text && !PRESENT_FIELD_COLS.containsValue(key))) {
+      return null;
+    }
+    int width = 0;
+    try {
+      width = (int) Math.round(Double.parseDouble(str(m.get("width")).trim()));
+    } catch (Exception ignored) {
+      width = 0;
+    }
+    if (width <= 0) {
+      width = text ? 4 : PRESENT_DEFAULT_WIDTH.getOrDefault(key, 2);
+    }
+    Map<String, Object> col = new LinkedHashMap<>();
+    col.put("label", label.length() <= 6 ? label : label.substring(0, 6));
+    col.put("key", text ? "text" : key);
+    col.put("text", text);
+    col.put("width", Math.min(5, Math.max(1, width)));
+    return col;
   }
 
   private static String visible(String text) {
@@ -660,6 +960,7 @@ public class ActToolLoop {
         str(call.get("spaceName")),
         str(call.get("locationName")),
         str(call.get("tagName")),
+        str(call.get("tagged")),
         str(call.get("maxQuantity")));
   }
 

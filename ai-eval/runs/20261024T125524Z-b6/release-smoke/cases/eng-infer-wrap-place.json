@@ -1,0 +1,19 @@
+{
+  "id": "eng-infer-wrap-place",
+  "perspective": "eng",
+  "title": "回归：保鲜膜推断落点（一轮办完）",
+  "tags": ["eng", "regression", "place", "B2"],
+  "status": "pending",
+  "setup": {
+    "fixture": "home-daily",
+    "notes": "台账里保鲜膜 1 卷在厨房/橱柜；「跟原来那卷放一起」就是该落点。B0 建骨架，B2 启用。"
+  },
+  "prompt": "保鲜膜又买了一卷，跟原来那卷放一起",
+  "expected": {
+    "outcome": "一轮内把保鲜膜改成 2 卷，落点沿用厨房/橱柜；不要反问「放哪儿」，也不要另开一条同名。",
+    "callIncludes": [{ "use": "item.update", "name": "保鲜膜" }],
+    "callExcludes": [{ "use": "item.create", "name": "保鲜膜" }],
+    "forbiddenTools": ["item.remove", "item.removeMany"],
+    "manual": "B2 启用后补断言：无 ask 信号；落点必须是厨房/橱柜。"
+  }
+}

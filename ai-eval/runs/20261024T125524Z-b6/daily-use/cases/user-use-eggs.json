@@ -1,0 +1,23 @@
+{
+  "id": "user-use-eggs",
+  "perspective": "user",
+  "title": "用掉：鸡蛋用了两个",
+  "tags": [
+    "update"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "鸡蛋用了两个",
+  "expected": {
+    "outcome": "鸡蛋数量减2，跟人说还剩几个；不要新开一条鸡蛋",
+    "mustProbe": true,
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.remove"
+    ]
+  }
+}

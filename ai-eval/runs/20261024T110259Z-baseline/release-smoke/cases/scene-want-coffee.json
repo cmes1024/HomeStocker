@@ -1,0 +1,25 @@
+{
+  "id": "scene-want-coffee",
+  "perspective": "product",
+  "title": "想喝咖啡不是进货",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "我想喝咖啡",
+  "expected": {
+    "outcome": "先看家里有没有咖啡，没有就说没有，不要记成新物资",
+    "requiredTools": [
+      "item.search"
+    ],
+    "forbiddenTools": [
+      "item.create",
+      "item.createMany",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

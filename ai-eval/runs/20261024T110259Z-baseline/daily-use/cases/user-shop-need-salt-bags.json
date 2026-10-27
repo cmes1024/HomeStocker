@@ -1,0 +1,16 @@
+{
+  "id": "user-shop-need-salt-bags",
+  "perspective": "user",
+  "title": "路过超市：盐和垃圾袋缺吗",
+  "tags": [
+    "query"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "盐和垃圾袋缺吗",
+  "expected": {
+    "outcome": "分别查盐、垃圾袋有没有；没有的说没有",
+    "mustProbe": true
+  }
+}

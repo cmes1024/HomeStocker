@@ -1,0 +1,19 @@
+{
+  "id": "user-use-chips-gone",
+  "perspective": "user",
+  "title": "用完：薯片没了去掉",
+  "tags": [
+    "remove"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "薯片没了去掉",
+  "expected": {
+    "outcome": "去掉薯片这条，要确认；别留 0 袋在账上",
+    "mustProbe": true,
+    "requiredTools": [
+      "item.remove"
+    ]
+  }
+}

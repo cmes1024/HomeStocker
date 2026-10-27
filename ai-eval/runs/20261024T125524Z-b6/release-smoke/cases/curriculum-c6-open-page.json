@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c6-open-page",
+  "perspective": "product",
+  "title": "C6 打开标签管理",
+  "tags": ["curriculum", "page"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "打开标签管理",
+  "expected": {
+    "outcome": "打开标签管理页，不回答还没学会",
+    "requiredTools": ["page.get"],
+    "forbiddenTools": ["item.create", "item.update", "item.remove"]
+  }
+}

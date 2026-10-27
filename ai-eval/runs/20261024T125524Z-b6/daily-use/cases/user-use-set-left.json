@@ -1,0 +1,34 @@
+{
+  "id": "user-use-set-left",
+  "perspective": "user",
+  "title": "用掉：改成还剩2",
+  "tags": [
+    "update"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "鸡蛋还剩几个"
+    },
+    {
+      "role": "assistant",
+      "text": "冰箱里鸡蛋还有 8 个"
+    },
+    {
+      "role": "user",
+      "text": "改成还剩2"
+    }
+  ],
+  "expected": {
+    "outcome": "把刚才说的鸡蛋改成 2 个",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.create"
+    ]
+  }
+}

@@ -1,0 +1,147 @@
+{
+  "id": "curriculum-c8-dissolve",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:23.349Z",
+  "mode": "act",
+  "outcome": "不执行解散，也不去删物资",
+  "actual": {
+    "dialogue": {
+      "text": "把这个家解散掉",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [],
+      "report": {
+        "executed": [],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。"
+        ],
+        "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+        "wrote": false,
+        "blocks": []
+      },
+      "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "blocks": []
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [],
+        "report": {
+          "executed": [],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。"
+          ],
+          "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+          "wrote": false,
+          "blocks": []
+        },
+        "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [],
+            "report": {
+              "executed": [],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。"
+              ],
+              "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+              "wrote": false,
+              "blocks": []
+            },
+            "lead": "这个我做不到，家不能解散。要是想清掉某些物资或空间，跟我说清是哪几样，我来帮你处理。",
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:family.dissolve",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

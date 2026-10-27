@@ -1,0 +1,32 @@
+{
+  "id": "user-undo-dont-reduce-milk",
+  "perspective": "user",
+  "title": "反悔：牛奶别减",
+  "tags": [
+    "undo"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "牛奶少一盒"
+    },
+    {
+      "role": "assistant",
+      "text": "冰箱牛奶准备改成 1 盒，要我改吗？"
+    },
+    {
+      "role": "user",
+      "text": "牛奶别减"
+    }
+  ],
+  "expected": {
+    "outcome": "不要减牛奶；账上牛奶数量保持原样",
+    "forbiddenTools": [
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

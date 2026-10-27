@@ -1,0 +1,241 @@
+{
+  "id": "user-cook-eggs",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:28.123Z",
+  "mode": "act",
+  "outcome": "先看家里账再答有没有、大概几个；不能瞎编",
+  "actual": {
+    "dialogue": {
+      "text": "家里还有鸡蛋吗",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "鸡蛋",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 1 件",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "有，鸡蛋 8 个，在厨房冰箱里。"
+        ],
+        "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "鸡蛋",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "鸡蛋",
+            "8个",
+            "厨房 / 冰箱"
+          ]
+        ],
+        "caption": "就这一条记录。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "鸡蛋",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 1 件",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "有，鸡蛋 8 个，在厨房冰箱里。"
+          ],
+          "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "鸡蛋",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "鸡蛋",
+              "8个",
+              "厨房 / 冰箱"
+            ]
+          ],
+          "caption": "就这一条记录。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "鸡蛋",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 1 件",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "有，鸡蛋 8 个，在厨房冰箱里。"
+              ],
+              "lead": "有，鸡蛋 8 个，在厨房冰箱里。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "鸡蛋",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "鸡蛋",
+                  "8个",
+                  "厨房 / 冰箱"
+                ]
+              ],
+              "caption": "就这一条记录。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

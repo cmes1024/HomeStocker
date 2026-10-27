@@ -1,0 +1,157 @@
+{
+  "id": "user-shop-water-no-place",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:52.347Z",
+  "mode": "act",
+  "outcome": "没说放哪就先问一句放哪/记到哪，不能瞎记到一个房间（用少见品名，避免并进旧账）",
+  "actual": {
+    "dialogue": {
+      "text": "刚买了6瓶气泡水",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "气泡水放哪儿？厨房冰箱还是客厅？",
+          "options": [
+            {
+              "label": "厨房冰箱",
+              "value": "厨房冰箱"
+            },
+            {
+              "label": "客厅",
+              "value": "客厅"
+            },
+            {
+              "label": "仓库",
+              "value": "仓库"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "气泡水放哪儿？厨房冰箱还是客厅？",
+            "options": [
+              {
+                "label": "厨房冰箱",
+                "value": "厨房冰箱"
+              },
+              {
+                "label": "客厅",
+                "value": "客厅"
+              },
+              {
+                "label": "仓库",
+                "value": "仓库"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "气泡水放哪儿？厨房冰箱还是客厅？",
+                "options": [
+                  {
+                    "label": "厨房冰箱",
+                    "value": "厨房冰箱"
+                  },
+                  {
+                    "label": "客厅",
+                    "value": "客厅"
+                  },
+                  {
+                    "label": "仓库",
+                    "value": "仓库"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

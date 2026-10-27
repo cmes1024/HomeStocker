@@ -60,6 +60,8 @@
         wx:key="id"
         id="msg-{{item.id}}"
         class="msg msg-{{item.role}}"
+        data-id="{{item.id}}"
+        bind:longpress="onMessageLongPress"
       >
         <view class="bubble bubble-pending" wx:if="{{item.kind === 'pending'}}">
           <text class="pending-label">{{copy.sendingLabel}}</text>
@@ -69,9 +71,9 @@
             <view class="pending-dot"></view>
           </view>
         </view>
+        <view class="bubble" wx:elif="{{item.segments && item.segments.length}}"><text wx:for="{{item.segments}}" wx:key="k" class="seg-{{item.t}}">{{item.v}}</text></view>
         <view class="bubble" wx:elif="{{item.bubbleText}}">{{item.bubbleText}}</view>
         <view class="bubble" wx:elif="{{!(item.blocks && item.blocks.length) && !item.present && item.text}}">{{item.text}}</view>
-        <view class="habit-applied" wx:if="{{item.habitAppliedText}}">{{item.habitAppliedText}}</view>
 
         <view class="blocks" wx:if="{{item.blocks && item.blocks.length}}">
           <view
@@ -120,6 +122,7 @@
             <view class="present-tr present-th">
               <view
                 class="present-td"
+                style="flex: {{item.present.widths[index]}}"
                 wx:for="{{item.present.columns}}"
                 wx:for-item="col"
                 wx:key="*this"
@@ -133,12 +136,14 @@
             >
               <view
                 class="present-td"
+                style="flex: {{item.present.widths[index]}}"
                 wx:for="{{row.cells}}"
                 wx:for-item="cell"
                 wx:key="*this"
               >{{cell}}</view>
             </view>
           </view>
+          <view class="present-caption" wx:if="{{item.present.type === 'table' && item.present.caption}}">{{item.present.caption}}</view>
           <view class="present-footer" wx:if="{{item.present.type === 'table' && item.present.footer}}">{{item.present.footer}}</view>
 
           <view class="present-stats" wx:if="{{item.present.type === 'stats'}}">
@@ -279,6 +284,20 @@
       </view>
       <view id="msg-bottom" class="msg-tail"></view>
     </scroll-view>
+
+    <view
+      class="copy-mask"
+      wx:if="{{copyMenu.show}}"
+      catchtap="onCloseCopyMenu"
+      catchtouchmove="onCloseCopyMenu"
+    ></view>
+    <view
+      class="copy-menu"
+      wx:if="{{copyMenu.show}}"
+      style="left: {{copyMenu.x}}px; top: {{copyMenu.y}}px;"
+    >
+      <view class="copy-item" catchtap="onCopyMessage">{{copy.copyMsg}}</view>
+    </view>
 
     <ChatComposer
       value="{{text}}"

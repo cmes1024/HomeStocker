@@ -17,6 +17,48 @@ const { callItem, callFamily, invalidateItemDomain } = require('../../utils/clou
 const { requestExpireSubscribe } = require('../../utils/subscribeExpire')
 const copy = require('../../utils/copy')
 
+/**
+ * 服务端分段只覆盖正文首句；拼接进来的其余部分按普通文字接在后面。
+ * 首句对不上（被改写或裁掉）就返回 null，回退纯文本渲染。
+ */
+function attachSegments(segments, mainText, fullText) {
+  const segs = Array.isArray(segments) ? segments.filter((seg) => seg && seg.v) : []
+  if (!segs.length || !mainText || !fullText) return null
+  if (fullText.indexOf(mainText) !== 0) return null
+  const tail = fullText.slice(mainText.length)
+  const list = tail ? segs.concat([{ t: 'text', v: tail }]) : segs
+  return list.map((seg, i) => ({
+    k: `g${i}`,
+    t: seg.t === 'num' || seg.t === 'warn' ? seg.t : 'text',
+    v: String(seg.v)
+  }))
+}
+
+/** 长按复制菜单尺寸（px），用于按触点定位并做屏幕边界收敛。 */
+const COPY_MENU_W = 96
+const COPY_MENU_H = 44
+const COPY_MENU_GAP = 12
+
+function clampPx(value, min, max) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return min
+  return Math.min(Math.max(n, min), Math.max(min, max))
+}
+
+/** 用户气泡的可复制原文：优先 text，老数据可能只有分段。 */
+function messageCopyText(msg) {
+  if (!msg) return ''
+  const text = String(msg.text || '').trim()
+  if (text) return text
+  if (Array.isArray(msg.segments) && msg.segments.length) {
+    return msg.segments
+      .map((seg) => String((seg && seg.v) || ''))
+      .join('')
+      .trim()
+  }
+  return ''
+}
+
 function decodeOpt(value) {
   if (value == null || value === '') return ''
   try {
@@ -158,31 +200,7 @@ function pickPresentation(data) {
     (data && data.blocks) || report.blocks || []
   )
   const present = normalizePresent(data && data.present)
-  const habitApplied = normalizeHabitApplied(
-    (data && data.habitApplied) || report.habitApplied
-  )
-  return { lead, blocks, report, present, habitApplied }
-}
-
-function normalizeHabitApplied(raw) {
-  const list = asArray(raw)
-    .map((row) => {
-      if (!row || typeof row !== 'object') return null
-      const label = String(row.label || '').trim()
-      const text = String(row.text || '').trim()
-      const slot = String(row.slot || '').trim()
-      if (!label && !slot) return null
-      return { slot, label: label || slot, text }
-    })
-    .filter(Boolean)
-  return list.length ? list : null
-}
-
-function habitAppliedLine(habitApplied) {
-  if (!habitApplied || !habitApplied.length) return ''
-  const labels = habitApplied.map((h) => h.label).filter(Boolean)
-  if (!labels.length) return ''
-  return '根据习惯：' + labels.join('、')
+  return { lead, blocks, report, present }
 }
 
 /** 服务端 present 白名单：table / stats / bars / pie */
@@ -197,6 +215,12 @@ function normalizePresent(raw) {
       .map((c) => String(c || '').trim())
       .filter(Boolean)
       .slice(0, 6)
+    const rawWidths = asArray(raw.widths)
+    const widths = columns.map((_, i) => {
+      const n = Math.round(Number(rawWidths[i]) || 0)
+      return Math.min(5, Math.max(1, n || 1))
+    })
+    const caption = String(raw.caption || '').trim()
     const rows = asArray(raw.rows)
       .map((row, ri) => {
         const cellsSrc = Array.isArray(row)
@@ -217,6 +241,8 @@ function normalizePresent(raw) {
       type: 'table',
       title,
       columns,
+      widths,
+      caption,
       rows,
       footer: String(raw.footer || '').trim(),
       colCount: columns.length
@@ -391,6 +417,7 @@ Page({
     keyboardHeight: 0,
     transcriptCapped: false,
     canClear: false,
+    copyMenu: { show: false, x: 0, y: 0 },
     loadingColors: ['#C4A484', '#8B6914']
   },
 
@@ -486,6 +513,26 @@ Page({
     const turns = loadTurns(familyId)
     const restored = turnsToMessages(turns, () => this.nextId())
     const messages = [helloMessage()].concat(restored)
+    // 上次离开时还挂着一张确认卡：恢复后它已经不能点了，说清楚，别让家人以为还等着点
+    let staleConfirm = false
+    try {
+      staleConfirm = !!wx.getStorageSync(this.confirmFlagKey())
+    } catch (e) {
+      staleConfirm = false
+    }
+    if (staleConfirm) {
+      messages.push(
+        stampMessage({
+          id: this.nextId(),
+          role: 'assistant',
+          kind: 'result',
+          text: copy.assist.confirmExpired,
+          askList: [],
+          confirmList: []
+        })
+      )
+      this.clearPendingConfirm()
+    }
     this._messages = messages
     this._pendingId = ''
     this.setData({
@@ -521,6 +568,27 @@ Page({
     if (capped !== this.data.transcriptCapped) patch.transcriptCapped = capped
     if (canClear !== this.data.canClear) patch.canClear = canClear
     if (Object.keys(patch).length) this.setData(patch)
+  },
+
+  confirmFlagKey() {
+    return `hs_assist_confirm_pending_${this._familyId || ''}`
+  },
+
+  /** 记住「有一张确认卡没处理」，冷启动时据此告知家人它已失效。 */
+  markPendingConfirm() {
+    try {
+      wx.setStorageSync(this.confirmFlagKey(), 1)
+    } catch (e) {
+      // 本地存储不可用就不提示，不影响主流程
+    }
+  },
+
+  clearPendingConfirm() {
+    try {
+      wx.removeStorageSync(this.confirmFlagKey())
+    } catch (e) {
+      // ignore
+    }
   },
 
   commitMessages(messages, extra) {
@@ -670,9 +738,12 @@ Page({
     // 先收起确认卡，避免合并项无 ref / WXML join 在列表 diff 时炸 weui
     const cleared = clearConfirmCards(this._messages || this.data.messages || [])
     this.commitMessages(cleared)
+    this.clearPendingConfirm()
     this.submit({
       resetRound: false,
       confirmed: true,
+      // 确认不是家人说的话：不往对话里塞一条假的 user 气泡，只用 confirmed + planId 表达
+      skipUserBubble: true,
       turnId: confirmTurnId,
       text: isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes,
       actText: this.data.originalText || (isMerge ? copy.assist.confirmMergeYes : copy.assist.confirmYes),
@@ -684,6 +755,7 @@ Page({
 
   onCancelConfirm() {
     this._confirmTurnId = ''
+    this.clearPendingConfirm()
     const pending = this.data.pendingCalls || []
     const isMerge = pending.some((c) => c && c.use === 'item.merge')
     const heldWrite = pending.some(
@@ -796,6 +868,65 @@ Page({
       url,
       fail: () => wx.showToast({ title: copy.assist.navOpenFail, icon: 'none' })
     })
+  },
+
+  /** 长按自己发的消息：浮出「复制」。助手消息不处理（卡片/表格复制原文意义不大）。 */
+  onMessageLongPress(e) {
+    const ds = (e && e.currentTarget && e.currentTarget.dataset) || {}
+    const id = ds.id
+    if (!id) return
+    const messages = this._messages || this.data.messages || []
+    const msg = messages.find((m) => m && m.id === id)
+    if (!msg || msg.role !== 'user' || msg.kind === 'pending') return
+    const text = messageCopyText(msg)
+    if (!text) return
+    const touch =
+      (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || {}
+    const win = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()) || {}
+    const winW = Number(win.windowWidth || 375)
+    const winH = Number(win.windowHeight || 667)
+    const touchX = Number(touch.clientX || 0)
+    const touchY = Number(touch.clientY || 0)
+    this._copyText = text
+    this.setData({
+      copyMenu: {
+        show: true,
+        x: clampPx(
+          touchX - COPY_MENU_W / 2,
+          COPY_MENU_GAP,
+          winW - COPY_MENU_W - COPY_MENU_GAP
+        ),
+        // 默认弹出在手指上方，避免被手指和键盘挡住
+        y: clampPx(
+          touchY - COPY_MENU_H - COPY_MENU_GAP,
+          COPY_MENU_GAP,
+          winH - COPY_MENU_H - COPY_MENU_GAP
+        )
+      }
+    })
+    if (wx.vibrateShort) {
+      wx.vibrateShort({ type: 'light', fail: () => {} })
+    }
+  },
+
+  onCopyMessage() {
+    const text = this._copyText || ''
+    if (!text) {
+      this.onCloseCopyMenu()
+      return
+    }
+    // setClipboardData 自带「内容已复制」系统提示，不再叠一个 toast
+    wx.setClipboardData({
+      data: text,
+      complete: () => this.onCloseCopyMenu()
+    })
+  },
+
+  onCloseCopyMenu() {
+    this._copyText = ''
+    const menu = this.data.copyMenu
+    if (!menu || !menu.show) return
+    this.setData({ copyMenu: { show: false, x: 0, y: 0 } })
   },
 
   async submit(options = {}) {
@@ -965,6 +1096,11 @@ Page({
     } else if (next.bubbleText == null) {
       next.bubbleText = bubbleTextWithoutBlockDup(next.text, next.blocks)
     }
+    // 去重/改写过正文后分段可能对不上，宁可纯文本也不画错位置
+    if (next.segments && next.segments.length) {
+      const joined = next.segments.map((seg) => seg.v).join('')
+      if (!next.bubbleText || joined !== next.bubbleText) next.segments = null
+    }
     next = stampMessage(next)
     if (realIdx >= 0) messages[realIdx] = next
     else messages.push(next)
@@ -999,6 +1135,8 @@ Page({
           text,
           blocks,
           present,
+          // 提问分支的正文也是模型写的，同样分段上色
+          segments: present ? null : attachSegments(data && data.replySegments, reply, text),
           askList,
           hasChips,
           goSpaces,
@@ -1036,9 +1174,12 @@ Page({
         (confirmKind === 'removeUpdated' ? copy.assist.confirmHintUpdated : '')
       // 新的确认卡 = 新的确认动作，不能复用上一张卡的 turnId（否则会回放旧结果）
       this._confirmTurnId = ''
+      const confirmLead = String((data && data.lead) || '').trim()
+      this.markPendingConfirm()
       this.replacePending(
         {
-          text: title,
+          // 模型这一轮说的话（lead）不能因为要出确认卡就丢掉
+          text: [confirmLead, title].filter(Boolean).join('\n'),
           confirmHint,
           askList: [],
           confirmList,
@@ -1082,6 +1223,7 @@ Page({
 
     const { lead, blocks, report, present } = pickPresentation(data)
     const lines = asArray(report.lines).filter(Boolean)
+    const modelReply = String((data && data.reply) || '').trim()
     if (
       !blocks.length &&
       report.possibleDuplicates &&
@@ -1098,12 +1240,9 @@ Page({
             .join('；')
       )
     }
-    const habitApplied = normalizeHabitApplied(
-      (data && data.habitApplied) || report.habitApplied
-    )
-    const habitLine = habitAppliedLine(habitApplied)
+    // 模型自己说的话优先，回执拼接只作兜底
     const textParts = [
-      buildResultText(lead, blocks, lines, !!(data && data.wrote)),
+      modelReply || buildResultText(lead, blocks, lines, !!(data && data.wrote)),
       presentToHistoryText(present)
     ].filter(Boolean)
     // 有结构化展示时，丢掉空操作占位文案
@@ -1113,20 +1252,18 @@ Page({
       .map((l) => l.trim())
       .filter((l) => l && l !== copy.assist.doneEmpty && l !== '没有需要执行的操作')
       .join('\n')
-    if (habitLine && text.includes(habitLine)) {
-      text = text
-        .split('\n')
-        .filter((l) => l.trim() !== habitLine)
-        .join('\n')
-        .trim()
-    }
+    const bubbleText = text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty)
     this.replacePending(
       {
-        text: text || (present ? presentToHistoryText(present) : copy.assist.doneEmpty),
+        text: bubbleText,
         blocks: present ? [] : blocks,
         present,
-        habitApplied,
-        habitAppliedText: habitLine,
+        // 表格/图与正文是两块，正文里与表格重复的行已被 bubbleText 去重，可照常上色
+        segments: attachSegments(
+          data && data.leadSegments,
+          String((data && data.lead) || '').trim(),
+          bubbleText
+        ),
         askList: [],
         confirmList: [],
         subscribeItems: [],

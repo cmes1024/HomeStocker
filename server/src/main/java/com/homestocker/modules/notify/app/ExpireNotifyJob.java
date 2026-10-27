@@ -16,11 +16,15 @@ public class ExpireNotifyJob {
     this.expireNotifyService = expireNotifyService;
   }
 
-  /** Default 08:00 Asia/Shanghai — cron from config is not wired yet; keep simple. */
-  @Scheduled(cron = "0 0 8 * * *", zone = "Asia/Shanghai")
-  public void daily() {
+  /**
+   * 每分钟扫一次，是否该发由各家庭自己配置的「发送时间」决定（含 2 小时补发窗口）。
+   *
+   * <p>cron 走 {@code homestocker.expire-notify.cron}；本地/测试可用 {@code -} 关闭。
+   */
+  @Scheduled(cron = "${homestocker.expire-notify.cron:0 * * * * *}", zone = "Asia/Shanghai")
+  public void scan() {
     try {
-      expireNotifyService.run();
+      expireNotifyService.runScheduled();
     } catch (Exception e) {
       log.error("expireNotify scheduled run failed", e);
     }

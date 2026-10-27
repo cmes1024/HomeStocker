@@ -1,0 +1,34 @@
+{
+  "id": "user-undo-revoke",
+  "perspective": "user",
+  "title": "反悔：撤销刚才",
+  "tags": [
+    "undo"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "鸡蛋用了两个"
+    },
+    {
+      "role": "assistant",
+      "text": "已改 鸡蛋（厨房 / 冰箱）：8个→6"
+    },
+    {
+      "role": "user",
+      "text": "撤销"
+    }
+  ],
+  "expected": {
+    "outcome": "鸡蛋改回刚才加之前的数量，不是把鸡蛋整条删掉",
+    "requiredTools": [
+      "item.update"
+    ],
+    "forbiddenTools": [
+      "item.remove"
+    ]
+  }
+}

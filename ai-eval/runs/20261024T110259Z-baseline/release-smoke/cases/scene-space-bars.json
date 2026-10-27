@@ -1,0 +1,26 @@
+{
+  "id": "scene-space-bars",
+  "perspective": "product",
+  "title": "各空间柱状图",
+  "tags": [
+    "scene",
+    "wide"
+  ],
+  "setup": {
+    "fixture": "home-wide"
+  },
+  "prompt": "每个空间有多少件，画成柱状图",
+  "expected": {
+    "outcome": "按空间给出件数并画出柱状图，不改账",
+    "requiredToolsAny": [
+      "item.stats",
+      "item.search"
+    ],
+    "mustPresent": "bars",
+    "forbiddenTools": [
+      "item.create",
+      "item.update",
+      "item.remove"
+    ]
+  }
+}

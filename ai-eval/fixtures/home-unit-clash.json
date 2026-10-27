@@ -1,0 +1,15 @@
+{
+  "id": "home-unit-clash",
+  "spaces": [
+    { "name": "厨房", "locations": ["冰箱", "橱柜"] },
+    { "name": "客厅", "locations": ["零食柜"] }
+  ],
+  "tags": ["零食"],
+  "items": [
+    { "name": "苹果", "quantity": 1, "unit": "斤", "spaceName": "厨房" },
+    { "name": "苹果", "quantity": 5, "unit": "斤", "spaceName": "厨房", "locationName": "冰箱" },
+    { "name": "牛奶", "quantity": 2, "unit": "盒", "spaceName": "厨房", "locationName": "冰箱" },
+    { "name": "挂面", "quantity": 3, "unit": "把", "spaceName": "厨房", "locationName": "橱柜" },
+    { "name": "纸巾", "quantity": 3, "unit": "包", "spaceName": "客厅" }
+  ]
+}

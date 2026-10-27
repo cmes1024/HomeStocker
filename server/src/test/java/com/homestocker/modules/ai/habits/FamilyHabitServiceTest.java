@@ -42,13 +42,17 @@ class FamilyHabitServiceTest {
     FamilyHabitService svc = new FamilyHabitService(repo, new ObjectMapper());
 
     for (String slot : HabitSlots.all()) {
+      if (HabitSlots.unsupported(slot)) {
+        continue;
+      }
       svc.upsert("f1", slot, "v-" + slot);
     }
-    assertEquals(7, svc.list("f1").size());
+    assertEquals(6, svc.list("f1").size());
 
     svc.upsert("f1", HabitSlots.DEFAULT_SPACE, "厨房");
-    assertEquals(7, svc.list("f1").size());
+    assertEquals(6, svc.list("f1").size());
     assertTrue(svc.renderForPrompt("f1").contains("厨房"));
+    assertTrue(svc.renderForPrompt("f1").contains("服务端执行"));
 
     ApiException bad = assertThrows(ApiException.class, () -> svc.upsert("f1", "nope", "x"));
     assertEquals(ErrorCodes.INVALID_HABIT, bad.getCode());
@@ -57,8 +61,14 @@ class FamilyHabitServiceTest {
         assertThrows(ApiException.class, () -> svc.upsert("f1", HabitSlots.TONE, "  "));
     assertEquals(ErrorCodes.INVALID_HABIT, empty.getCode());
 
+    ApiException unsupported =
+        assertThrows(
+            ApiException.class,
+            () -> svc.upsert("f1", HabitSlots.DUPLICATE_NAME, "撞名先落库再问要不要放一起"));
+    assertEquals(ErrorCodes.INVALID_HABIT, unsupported.getCode());
+
     svc.remove("f1", HabitSlots.FOCUS);
-    assertEquals(6, svc.list("f1").size());
+    assertEquals(5, svc.list("f1").size());
   }
 
   @Test

@@ -1,0 +1,18 @@
+{
+  "id": "user-list-medicine",
+  "perspective": "user",
+  "title": "理一理：西药还剩什么",
+  "tags": [
+    "list"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "西药还剩什么",
+  "expected": {
+    "outcome": "列出西药相关还剩什么",
+    "requiredToolsAny": [
+      "item.search"
+    ]
+  }
+}

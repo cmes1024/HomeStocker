@@ -9,20 +9,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 改现有物资时，只拦对不上本轮事实的写入：同名多条却没指明哪条、数量对不上这句话、
- * 落点不是这件现在的位置也不是本句说的、日期和标签本句没提到。
- * 不把句子改写成另一个动作。
+ * 改现有物资时只核对机器事实：同名几条却没指明哪条、整条删除与库存行数对不上。
+ * 落点与数量的来源由 {@link Provenance} 按申报核验，这里不比对句子用词。
  */
 public final class WriteGrounding {
 
   private WriteGrounding() {}
 
-  public static String blocked(
-      String userText,
-      String habitSpace,
-      Map<String, Object> tree,
-      List<Map<String, Object>> rows,
-      Map<String, Object> call) {
+  public static ToolFeedback check(
+      String userText, List<Map<String, Object>> rows, Map<String, Object> call) {
     if (call == null) {
       return null;
     }
@@ -33,33 +28,15 @@ public final class WriteGrounding {
       return null;
     }
     List<Map<String, Object>> pool = dedupe(rows);
-    String same = sameName(userText, pool, call);
+    ToolFeedback same = sameName(userText, pool, call);
     if (same != null) {
       return same;
     }
-    String mismatch = removeMismatch(userText, pool, call);
-    if (mismatch != null) {
-      return mismatch;
-    }
-    if (!"item.update".equals(use)) {
-      return null;
-    }
-    String place = placeChange(userText, habitSpace, tree, pool, call);
-    if (place != null) {
-      return place;
-    }
-    String quantity = quantity(userText, pool, call);
-    if (quantity != null) {
-      return quantity;
-    }
-    String dates = dates(userText, call);
-    if (dates != null) {
-      return dates;
-    }
-    return tags(userText, call);
+    return removeMismatch(userText, pool, call);
   }
 
-  static String sameName(String userText, List<Map<String, Object>> rows, Map<String, Object> call) {
+  static ToolFeedback sameName(
+      String userText, List<Map<String, Object>> rows, Map<String, Object> call) {
     String name = targetName(rows, call);
     if (name.isEmpty()) {
       return null;
@@ -73,37 +50,46 @@ public final class WriteGrounding {
     if (siblings.size() < 2) {
       return null;
     }
+    if (pickedByRef(rows, call)) {
+      return null;
+    }
     Map<String, Object> target = findRow(rows, call);
     if (target != null && uniquely(userText, target, siblings)) {
       return null;
     }
-    return "「" + name + "」有 " + siblings.size() + " 条，各条是不同的几件。先问是哪一条，不要挑一条改。";
+    List<String> candidates = new ArrayList<>();
+    for (Map<String, Object> sibling : siblings) {
+      candidates.add(summary(sibling));
+    }
+    return ToolFeedback.of(GroundingCodes.REF_AMBIGUOUS, "name", name).withCandidates(candidates);
   }
 
-  static String placeChange(
-      String userText,
-      String habitSpace,
-      Map<String, Object> tree,
-      List<Map<String, Object>> rows,
-      Map<String, Object> call) {
-    String space = str(call.get("spaceName"));
-    String loc = str(call.get("locationName"));
-    if (space.isEmpty() && loc.isEmpty()) {
-      return null;
+  /** 本轮短号 / itemId 唯一命中一条：模型已经点明是哪一条，不再要求本句里有文字线索。 */
+  private static boolean pickedByRef(List<Map<String, Object>> rows, Map<String, Object> call) {
+    String ref = ActRefs.pickCallRef(call);
+    if (!ref.isEmpty() && hits(rows, "ref", ref)) {
+      return true;
     }
-    Map<String, Object> row = findRow(rows, call);
-    if (row != null && !placeMoved(row, space, loc)) {
-      return null;
-    }
-    String spaceForCheck = space.isEmpty() && row != null ? str(row.get("spaceName")) : space;
-    return PlaceGrounding.one(userText, habitSpace, tree, spaceForCheck, loc);
+    String itemId = str(call.get("itemId"));
+    return !itemId.isEmpty() && hits(rows, "itemId", itemId);
   }
+
+  private static boolean hits(List<Map<String, Object>> rows, String key, String want) {
+    int n = 0;
+    for (Map<String, Object> row : rows) {
+      if (want.equalsIgnoreCase(str(row.get(key)))) {
+        n++;
+      }
+    }
+    return n == 1;
+  }
+
 
   /**
    * 整条删除只对应「现有这么多、这句话也是这么多」或没写数量。
    * 名称旁边的数量比库存大，或对不上现有数量时，不删。返回给家人的问句。
    */
-  public static String removeMismatch(
+  public static ToolFeedback removeMismatch(
       String userText, List<Map<String, Object>> rows, Map<String, Object> call) {
     if (call == null) {
       return null;
@@ -117,7 +103,7 @@ public final class WriteGrounding {
       if (prev == null) {
         continue;
       }
-      List<BigDecimal> stated = quantitiesNear(userText, str(row.get("name")));
+      List<BigDecimal> stated = quantitiesNear(userText, str(row.get("name")), rows);
       if (stated.isEmpty()) {
         continue;
       }
@@ -136,92 +122,14 @@ public final class WriteGrounding {
       if (exact) {
         continue;
       }
-      String name = str(row.get("name"));
-      if (name.isEmpty()) {
-        name = "这项";
-      }
-      String unit = str(row.get("unit"));
-      String have = plain(prev) + unit;
-      if (larger != null) {
-        return name + "只有 " + have + "，不够 " + plain(larger) + unit + "。没有删掉。要改成多少，还是先不动？";
-      }
-      if (other != null) {
-        return name
-            + "现有 "
-            + have
-            + "，和这句话里的 "
-            + plain(other)
-            + " 对不上。整条删除会把账清掉。要改成多少？";
-      }
+      BigDecimal shown = larger != null ? larger : other;
+      return ToolFeedback.of(
+              GroundingCodes.QTY_UNGROUNDED, "quantity", shown == null ? "" : plain(shown))
+          .withCandidates(List.of(summary(row)));
     }
     return null;
   }
 
-  static String quantity(String userText, List<Map<String, Object>> rows, Map<String, Object> call) {
-    if (!call.containsKey("quantity")) {
-      return null;
-    }
-    BigDecimal next = decimal(call.get("quantity"));
-    if (next == null) {
-      return null;
-    }
-    Map<String, Object> row = findRow(rows, call);
-    if (row == null) {
-      return null;
-    }
-    BigDecimal prev = decimal(row.get("quantity"));
-    if (prev != null && prev.compareTo(next) == 0) {
-      return null;
-    }
-    if (mentioned(userText, next)) {
-      return null;
-    }
-    if (prev != null && mentioned(userText, next.subtract(prev).abs())) {
-      return null;
-    }
-    return "要写成的数量对不上这句话。先问改成多少，不要自己定一个数。";
-  }
-
-  static String dates(String userText, Map<String, Object> call) {
-    boolean expire = filled(call.get("expireDate"));
-    boolean production = filled(call.get("productionDate"));
-    if (!expire && !production) {
-      return null;
-    }
-    String text = userText == null ? "" : userText;
-    if (text.contains("过期") || text.contains("到期") || text.contains("保质") || text.contains("日期")) {
-      return null;
-    }
-    return "本句没说改保质期或生产日期。不要自己改日期。";
-  }
-
-  static String tags(String userText, Map<String, Object> call) {
-    if (!(call.get("tagNames") instanceof List<?> tags) || tags.isEmpty()) {
-      return null;
-    }
-    boolean any = false;
-    for (Object tag : tags) {
-      if (!str(tag).isEmpty()) {
-        any = true;
-        break;
-      }
-    }
-    if (!any) {
-      return null;
-    }
-    String text = userText == null ? "" : userText;
-    if (text.contains("标签") || text.contains("标成")) {
-      return null;
-    }
-    return "本句没说改标签。不要自己加标签。";
-  }
-
-  private static boolean placeMoved(Map<String, Object> row, String space, String loc) {
-    if (!space.isEmpty() && !space.equals(str(row.get("spaceName")))) {
-      return true;
-    }
-    return !loc.isEmpty() && !loc.equals(str(row.get("locationName")));
-  }
 
   private static boolean uniquely(
       String userText, Map<String, Object> target, List<Map<String, Object>> siblings) {
@@ -322,70 +230,6 @@ public final class WriteGrounding {
     return new ArrayList<>(byId.values());
   }
 
-  static boolean mentioned(String userText, BigDecimal number) {
-    if (userText == null || number == null) {
-      return false;
-    }
-    BigDecimal abs = number.abs().stripTrailingZeros();
-    String plain = abs.toPlainString();
-    if (containsNumber(userText, plain)) {
-      return true;
-    }
-    if (abs.compareTo(new BigDecimal("0.5")) == 0) {
-      return userText.contains("半");
-    }
-    if (abs.scale() > 0) {
-      return false;
-    }
-    int value = abs.intValue();
-    if (value == 2 && (userText.contains("两") || userText.contains("二"))) {
-      return true;
-    }
-    String cn =
-        switch (value) {
-          case 1 -> "一";
-          case 2 -> "两";
-          case 3 -> "三";
-          case 4 -> "四";
-          case 5 -> "五";
-          case 6 -> "六";
-          case 7 -> "七";
-          case 8 -> "八";
-          case 9 -> "九";
-          case 10 -> "十";
-          default -> "";
-        };
-    if (cn.isEmpty() || !userText.contains(cn)) {
-      return false;
-    }
-    if (value == 1) {
-      return userText.replace("一半", "").contains("一");
-    }
-    return true;
-  }
-
-  private static boolean containsNumber(String text, String plain) {
-    int from = 0;
-    while (from < text.length()) {
-      int at = text.indexOf(plain, from);
-      if (at < 0) {
-        return false;
-      }
-      boolean before = at > 0 && isNumChar(text.charAt(at - 1));
-      int end = at + plain.length();
-      boolean after = end < text.length() && isNumChar(text.charAt(end));
-      if (!before && !after) {
-        return true;
-      }
-      from = at + 1;
-    }
-    return false;
-  }
-
-  private static boolean isNumChar(char c) {
-    return (c >= '0' && c <= '9') || c == '.';
-  }
-
   private static BigDecimal decimal(Object value) {
     if (value == null) {
       return null;
@@ -407,8 +251,31 @@ public final class WriteGrounding {
     }
   }
 
-  private static boolean filled(Object value) {
-    return value != null && !str(value).isEmpty();
+
+  /** 回执候选行：`P1 酱油 1瓶 厨房/橱柜`。 */
+  static String summary(Map<String, Object> row) {
+    if (row == null) {
+      return "";
+    }
+    StringBuilder sb = new StringBuilder();
+    String ref = str(row.get("ref"));
+    if (!ref.isEmpty()) {
+      sb.append(ref).append(' ');
+    }
+    sb.append(str(row.get("name")));
+    String qty = plain(decimal(row.get("quantity")));
+    if (!qty.isEmpty()) {
+      sb.append(' ').append(qty).append(str(row.get("unit")));
+    }
+    String space = str(row.get("spaceName"));
+    if (!space.isEmpty()) {
+      sb.append(' ').append(space);
+      String loc = str(row.get("locationName"));
+      if (!loc.isEmpty()) {
+        sb.append('/').append(loc);
+      }
+    }
+    return sb.toString().trim();
   }
 
   private static String str(Object value) {
@@ -447,16 +314,95 @@ public final class WriteGrounding {
   }
 
   /**
-   * 从用户文本中提取物品名附近出现的所有数量（阿拉伯数字 + 常用中文数字）。
+   * 取被删物品名所在分句里的数量（阿拉伯数字 + 常用中文数字）。
+   * 同一句里别的对象带的数字不算（「苹果改成3，再把电脑删掉」的 3 归苹果）；
+   * 名称落在更长的别的物品名里也不算（「米」在「大米」里）。
    * 用户没提数量或解析失败时返回空列表，调用方会放行。
    */
-  private static List<BigDecimal> quantitiesNear(String userText, String name) {
+  private static List<BigDecimal> quantitiesNear(
+      String userText, String name, List<Map<String, Object>> rows) {
     List<BigDecimal> result = new ArrayList<>();
-    if (userText == null || userText.isEmpty()) {
+    if (userText == null || userText.isEmpty() || name == null || name.isEmpty()) {
       return result;
     }
-    // 全文阿拉伯数字
-    Matcher m = Pattern.compile("\\d+(\\.\\d+)?").matcher(userText);
+    List<int[]> clauses = clauseRanges(userText);
+    List<String> longerNames = longerNames(rows, name);
+    int from = 0;
+    while (true) {
+      int at = userText.indexOf(name, from);
+      if (at < 0) {
+        break;
+      }
+      int end = at + name.length();
+      from = end;
+      if (insideLongerName(userText, at, end, longerNames)) {
+        continue;
+      }
+      int[] clause = clauseAt(clauses, at);
+      result.addAll(numbersIn(userText.substring(clause[0], clause[1])));
+    }
+    return distinct(result);
+  }
+
+  /** 文本里出现过的、比 name 更长且包含 name 的物品名。 */
+  private static List<String> longerNames(List<Map<String, Object>> rows, String name) {
+    List<String> out = new ArrayList<>();
+    for (Map<String, Object> row : rows) {
+      String other = str(row.get("name"));
+      if (other.length() > name.length() && other.contains(name) && !out.contains(other)) {
+        out.add(other);
+      }
+    }
+    return out;
+  }
+
+  /** 名称这次出现在哪个更长的物品名里，就不算在说这一条。 */
+  private static boolean insideLongerName(
+      String text, int start, int end, List<String> longerNames) {
+    for (String longer : longerNames) {
+      int from = 0;
+      while (true) {
+        int at = text.indexOf(longer, from);
+        if (at < 0) {
+          break;
+        }
+        if (at <= start && at + longer.length() >= end) {
+          return true;
+        }
+        from = at + 1;
+      }
+    }
+    return false;
+  }
+
+  /** 按中文/英文标点切句，返回每句的 [起, 止) 下标。 */
+  private static List<int[]> clauseRanges(String text) {
+    List<int[]> out = new ArrayList<>();
+    int start = 0;
+    for (int i = 0; i < text.length(); i++) {
+      if ("，。；;,.!！?？、\n".indexOf(text.charAt(i)) >= 0) {
+        out.add(new int[] {start, i});
+        start = i + 1;
+      }
+    }
+    out.add(new int[] {start, text.length()});
+    return out;
+  }
+
+  private static int[] clauseAt(List<int[]> clauses, int index) {
+    for (int[] clause : clauses) {
+      if (index >= clause[0] && index < clause[1]) {
+        return clause;
+      }
+    }
+    int[] last = clauses.get(clauses.size() - 1);
+    return last;
+  }
+
+  /** 一段话里的数量：阿拉伯数字、"半"、以及带量词的中文数字。 */
+  private static List<BigDecimal> numbersIn(String text) {
+    List<BigDecimal> result = new ArrayList<>();
+    Matcher m = Pattern.compile("\\d+(\\.\\d+)?").matcher(text);
     while (m.find()) {
       try {
         BigDecimal n = new BigDecimal(m.group()).stripTrailingZeros();
@@ -464,39 +410,41 @@ public final class WriteGrounding {
       } catch (NumberFormatException ignored) {
       }
     }
-    // 半 → 0.5
-    if (userText.contains("半")) {
+    if (text.contains("半")) {
       result.add(new BigDecimal("0.5"));
     }
-    // 中文数字（只匹配独立出现，避免把物品名里的"一""二"算进去）
-    // 先尝试"X个""X盒"等量化词的量词前 X
     String[] cnDigits = {"零", "一", "两", "二", "三", "四", "五", "六", "七", "八", "九", "十"};
     int[] values = {0, 1, 2, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     for (int i = 0; i < cnDigits.length; i++) {
       String token = cnDigits[i];
-      if (!userText.contains(token)) {
+      if (!text.contains(token)) {
         continue;
       }
       // 简单判定：该中文数字后面紧跟"个/盒/瓶/包/袋/只/支/张/本/把/件/箱/盒"之一
       // 或者它是"每X"、"X件"的一部分
       int from = 0;
       while (true) {
-        int at = userText.indexOf(token, from);
+        int at = text.indexOf(token, from);
         if (at < 0) {
           break;
         }
         int end = at + token.length();
         boolean followedByQuantifier =
-            end < userText.length() && "个盒瓶包袋只支张本把件箱次套片块颗根".indexOf(userText.charAt(end)) >= 0;
+            end < text.length()
+                && "个盒瓶包袋只支张本把件箱次套片块颗根".indexOf(text.charAt(end)) >= 0;
         if (followedByQuantifier) {
           result.add(new BigDecimal(values[i]));
         }
         from = end;
       }
     }
-    // 去重保持顺序
+    return result;
+  }
+
+  /** 去重保持顺序。 */
+  private static List<BigDecimal> distinct(List<BigDecimal> values) {
     List<BigDecimal> deduped = new ArrayList<>();
-    for (BigDecimal n : result) {
+    for (BigDecimal n : values) {
       boolean already = false;
       for (BigDecimal exist : deduped) {
         if (exist.compareTo(n) == 0) {

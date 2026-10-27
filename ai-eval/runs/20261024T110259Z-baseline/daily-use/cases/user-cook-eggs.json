@@ -1,0 +1,20 @@
+{
+  "id": "user-cook-eggs",
+  "perspective": "user",
+  "title": "做饭：家里还有鸡蛋吗",
+  "tags": [
+    "query"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "家里还有鸡蛋吗",
+  "expected": {
+    "outcome": "先看家里账再答有没有、大概几个；不能瞎编",
+    "mustProbe": true,
+    "forbiddenTools": [
+      "item.create",
+      "item.remove"
+    ]
+  }
+}

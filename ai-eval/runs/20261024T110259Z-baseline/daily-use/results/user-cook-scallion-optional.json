@@ -1,0 +1,170 @@
+{
+  "id": "user-cook-scallion-optional",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:42.459Z",
+  "mode": "act",
+  "outcome": "查一下葱；没有就短说没有，别硬推销去记一笔",
+  "actual": {
+    "dialogue": {
+      "text": "葱还有吗，没有就算了",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "葱",
+          "use": "item.search"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "家里台账没查到葱，那就先不记了。"
+        ],
+        "lead": "家里台账没查到葱，那就先不记了。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "lead": "家里台账没查到葱，那就先不记了。",
+      "blocks": []
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "葱",
+            "use": "item.search"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "家里台账没查到葱，那就先不记了。"
+          ],
+          "lead": "家里台账没查到葱，那就先不记了。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "lead": "家里台账没查到葱，那就先不记了。",
+        "blocks": []
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "葱",
+                "use": "item.search"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "家里台账没查到葱，那就先不记了。"
+              ],
+              "lead": "家里台账没查到葱，那就先不记了。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "lead": "家里台账没查到葱，那就先不记了。",
+            "blocks": []
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}

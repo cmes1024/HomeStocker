@@ -1,0 +1,244 @@
+{
+  "id": "user-expire-soon",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:04:51.163Z",
+  "mode": "act",
+  "outcome": "列快过期的东西，别把全屋库存当临期念一遍",
+  "actual": {
+    "dialogue": {
+      "text": "什么快过期了",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "use": "item.listExpiring"
+        }
+      ],
+      "blocks": [],
+      "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+      "report": {
+        "executed": [
+          {
+            "summary": "临期/过期：找到 2 件",
+            "step": 1,
+            "use": "item.listExpiring"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。"
+        ],
+        "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "快过期的物资",
+        "columns": [
+          "名称",
+          "数量",
+          "位置"
+        ],
+        "widths": [
+          2,
+          1,
+          2
+        ],
+        "rows": [
+          [
+            "酸奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ],
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱"
+          ]
+        ],
+        "caption": "两件都在冰箱，酸奶明天到期，牛奶后天到期。"
+      }
+    },
+    "tools": [
+      "item.listExpiring",
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "use": "item.listExpiring"
+          }
+        ],
+        "blocks": [],
+        "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+        "report": {
+          "executed": [
+            {
+              "summary": "临期/过期：找到 2 件",
+              "step": 1,
+              "use": "item.listExpiring"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。"
+          ],
+          "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "快过期的物资",
+          "columns": [
+            "名称",
+            "数量",
+            "位置"
+          ],
+          "widths": [
+            2,
+            1,
+            2
+          ],
+          "rows": [
+            [
+              "酸奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ],
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱"
+            ]
+          ],
+          "caption": "两件都在冰箱，酸奶明天到期，牛奶后天到期。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "use": "item.listExpiring"
+              }
+            ],
+            "blocks": [],
+            "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+            "report": {
+              "executed": [
+                {
+                  "summary": "临期/过期：找到 2 件",
+                  "step": 1,
+                  "use": "item.listExpiring"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。"
+              ],
+              "lead": "就两样快到期，都在冰箱，酸奶明天到期，牛奶后天到期。",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "快过期的物资",
+              "columns": [
+                "名称",
+                "数量",
+                "位置"
+              ],
+              "widths": [
+                2,
+                1,
+                2
+              ],
+              "rows": [
+                [
+                  "酸奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ],
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱"
+                ]
+              ],
+              "caption": "两件都在冰箱，酸奶明天到期，牛奶后天到期。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.listExpiring",
+      "ok": true,
+      "detail": "present"
+    }
+  ],
+  "notes": ""
+}

@@ -233,15 +233,61 @@ public class ItemsProbe {
       java.math.BigDecimal maxQuantity,
       List<String> keywords,
       int limit) {
+    return listItemsCompact(
+        familyId,
+        spaceId,
+        locationId,
+        tagId,
+        maxQuantity,
+        ItemRepository.TagFilter.ANY,
+        keywords,
+        limit);
+  }
+
+  public List<ItemRow> listItemsCompact(
+      String familyId,
+      String spaceId,
+      String locationId,
+      String tagId,
+      java.math.BigDecimal maxQuantity,
+      ItemRepository.TagFilter tagFilter,
+      List<String> keywords,
+      int limit) {
     int fetchLimit = Math.min(Math.max(limit, 1), 100);
     boolean hasKeywords = keywords != null && !keywords.isEmpty();
     // 有关键字时把名称条件下推：先取 100 行再内存过滤，家庭超 100 件会把新物资漏掉
-    List<ItemRow> list =
-        hasKeywords
-            ? itemRepository.searchAny(
-                familyId, blankToNull(spaceId), blankToNull(tagId), maxQuantity, keywords, fetchLimit)
-            : itemRepository.list(
-                familyId, blankToNull(spaceId), blankToNull(tagId), maxQuantity, fetchLimit);
+    List<ItemRow> list;
+    if (tagFilter == ItemRepository.TagFilter.UNTAGGED) {
+      list =
+          hasKeywords
+              ? itemRepository.searchAnyUntagged(
+                  familyId, blankToNull(spaceId), maxQuantity, keywords, fetchLimit)
+              : itemRepository.listUntagged(
+                  familyId, blankToNull(spaceId), maxQuantity, fetchLimit);
+    } else if (tagFilter == ItemRepository.TagFilter.TAGGED) {
+      list =
+          hasKeywords
+              ? itemRepository.searchAnyTagged(
+                  familyId, blankToNull(spaceId), maxQuantity, keywords, fetchLimit)
+              : itemRepository.listTagged(
+                  familyId, blankToNull(spaceId), maxQuantity, fetchLimit);
+    } else {
+      list =
+          hasKeywords
+              ? itemRepository.searchAny(
+                  familyId,
+                  blankToNull(spaceId),
+                  blankToNull(tagId),
+                  maxQuantity,
+                  keywords,
+                  fetchLimit)
+              : itemRepository.list(
+                  familyId,
+                  blankToNull(spaceId),
+                  blankToNull(tagId),
+                  maxQuantity,
+                  fetchLimit);
+    }
     if (locationId != null && !locationId.isBlank()) {
       list = list.stream().filter(i -> locationId.equals(i.locationId())).toList();
     }

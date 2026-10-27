@@ -11,6 +11,9 @@ public record FamilyRow(
     Integer itemCount,
     String backgroundJson,
     boolean expireReminderEnabled,
+    int expireReminderDays,
+    int expireReminderHour,
+    int expireReminderMinute,
     Timestamp tagsSeededAt,
     String entitlementJson,
     Timestamp createdAt) {}

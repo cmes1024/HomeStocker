@@ -1,0 +1,15 @@
+{
+  "id": "home-dup-soy",
+  "spaces": [
+    { "name": "厨房", "locations": ["冰箱", "橱柜"] },
+    { "name": "客厅", "locations": ["零食柜"] }
+  ],
+  "tags": ["调料"],
+  "items": [
+    { "name": "酱油", "quantity": 1, "unit": "瓶", "spaceName": "厨房", "locationName": "橱柜", "tagNames": ["调料"] },
+    { "name": "酱油", "quantity": 1, "unit": "瓶", "spaceName": "厨房", "locationName": "冰箱", "tagNames": ["调料"] },
+    { "name": "醋", "quantity": 1, "unit": "瓶", "spaceName": "厨房", "locationName": "橱柜", "tagNames": ["调料"] },
+    { "name": "盐", "quantity": 2, "unit": "袋", "spaceName": "厨房", "locationName": "橱柜" },
+    { "name": "纸巾", "quantity": 3, "unit": "包", "spaceName": "客厅" }
+  ]
+}

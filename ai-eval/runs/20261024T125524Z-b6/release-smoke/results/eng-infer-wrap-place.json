@@ -1,0 +1,243 @@
+{
+  "id": "eng-infer-wrap-place",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:35.609Z",
+  "mode": "act",
+  "outcome": "一轮内把保鲜膜改成 2 卷，落点沿用厨房/橱柜；不要反问「放哪儿」，也不要另开一条同名。",
+  "actual": {
+    "dialogue": {
+      "text": "保鲜膜又买了一卷，跟原来那卷放一起",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "quantity": 2,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.update",
+            "summary": "已改 保鲜膜（厨房 / 橱柜）：1卷→2",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已改 保鲜膜（厨房 / 橱柜）：1卷→2"
+        ],
+        "lead": "",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 保鲜膜（厨房 / 橱柜）",
+                "subtitle": "1卷→2",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "保鲜膜现在记成 2 卷了，还在厨房橱柜。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "已改 保鲜膜（厨房 / 橱柜）",
+              "subtitle": "1卷→2",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "",
+        "quantity": 2,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "quantity": 2,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.update",
+              "summary": "已改 保鲜膜（厨房 / 橱柜）：1卷→2",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已改 保鲜膜（厨房 / 橱柜）：1卷→2"
+          ],
+          "lead": "",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "已改 保鲜膜（厨房 / 橱柜）",
+                  "subtitle": "1卷→2",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "保鲜膜现在记成 2 卷了，还在厨房橱柜。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 保鲜膜（厨房 / 橱柜）",
+                "subtitle": "1卷→2",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "",
+          "quantity": 2,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "quantity": 2,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.update",
+                  "summary": "已改 保鲜膜（厨房 / 橱柜）：1卷→2",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已改 保鲜膜（厨房 / 橱柜）：1卷→2"
+              ],
+              "lead": "",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "已改 保鲜膜（厨房 / 橱柜）",
+                      "subtitle": "1卷→2",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "保鲜膜现在记成 2 卷了，还在厨房橱柜。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "已改 保鲜膜（厨房 / 橱柜）",
+                    "subtitle": "1卷→2",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "",
+              "quantity": 2,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.removeMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "callIncludes:item.update:保鲜膜:",
+      "ok": true,
+      "detail": "matched"
+    },
+    {
+      "name": "callExcludes:item.create:保鲜膜",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": "B2 启用后补断言：无 ask 信号；落点必须是厨房/橱柜。"
+}

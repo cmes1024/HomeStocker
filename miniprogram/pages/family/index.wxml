@@ -30,17 +30,13 @@
           <text class="key-title">{{copy.keyTitle}}</text>
           <image class="key-icon" src="{{keyIcon}}" mode="aspectFit" aria-hidden="true" />
         </view>
-        <view class="push-row">
-          <text class="push-label">{{copy.reminderTitle}}</text>
-          <view class="push-switch">
-            <switch
-              checked="{{reminderEnabled}}"
-              color="{{theme.themeColor}}"
-              disabled="{{acting}}"
-              bindchange="onTogglePush"
-            />
-          </view>
-        </view>
+        <view
+          class="push-btn"
+          hover-class="press"
+          bind:tap="openReminderSheet"
+          aria-role="button"
+          aria-label="{{reminderButtonText}}"
+        >{{reminderButtonText}}</view>
       </view>
       <view class="key-code-row">
         <text class="key-code">{{codeDisplay}}</text>
@@ -352,6 +348,63 @@
         hover-class="press"
         bind:tap="onSaveProfile"
       >{{copy.profileSave}}</view>
+    </view>
+  </view>
+
+  <view class="sheet" wx:elif="{{sheetKind === 'reminder'}}" style="{{theme.cssVarStyle}}">
+    <view class="sheet-hd">
+      <view class="sheet-title">{{copy.reminderTitle}}</view>
+      <view class="sheet-close" bind:tap="closeSheet">×</view>
+    </view>
+    <scroll-view class="sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="reminder-row">
+        <view class="reminder-main">
+          <view class="reminder-name">{{copy.reminderSwitchLabel}}</view>
+          <view class="reminder-hint">{{copy.reminderSwitchHint}}</view>
+        </view>
+        <switch
+          checked="{{reminderDraft.enabled}}"
+          color="{{theme.themeColor}}"
+          disabled="{{acting}}"
+          bindchange="onReminderToggle"
+        />
+      </view>
+
+      <view class="label reminder-label">{{copy.reminderTimeline}}</view>
+      <view class="reminder-chips">
+        <view
+          wx:for="{{reminderDayOptions}}"
+          wx:key="value"
+          class="reminder-chip {{reminderDraft.days === item.value ? 'on' : ''}} {{reminderDraft.enabled ? '' : 'off'}}"
+          data-days="{{item.value}}"
+          bind:tap="onPickReminderDays"
+        >{{item.label}}</view>
+      </view>
+
+      <view class="reminder-row">
+        <view class="reminder-main">
+          <view class="reminder-name">{{copy.reminderSendAt}}</view>
+          <view class="reminder-hint">{{copy.reminderSendAtHint}}</view>
+        </view>
+        <picker
+          mode="time"
+          value="{{reminderTime}}"
+          disabled="{{!reminderDraft.enabled || acting}}"
+          bindchange="onPickReminderTime"
+        >
+          <view class="reminder-time {{reminderDraft.enabled ? '' : 'off'}}">{{reminderTime}}</view>
+        </picker>
+      </view>
+
+      <view class="reminder-note">{{copy.reminderOnceHint}}</view>
+      <view class="sheet-pad"></view>
+    </scroll-view>
+    <view class="sheet-actions">
+      <view
+        class="reminder-save theme-btn {{acting ? 'busy' : ''}}"
+        hover-class="press"
+        bind:tap="saveReminder"
+      >{{copy.reminderSave}}</view>
     </view>
   </view>
 </page-container>

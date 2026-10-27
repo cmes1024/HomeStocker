@@ -1,0 +1,142 @@
+{
+  "id": "eng-vague-all-minus",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:32.080Z",
+  "mode": "act",
+  "outcome": "没说减哪些，必须问清楚；不能自动乱减",
+  "actual": {
+    "dialogue": {
+      "text": "各减一个",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "牛奶有两笔，减哪一笔？",
+          "options": [
+            {
+              "label": "冰箱里那2盒",
+              "value": "冰箱里那2盒"
+            },
+            {
+              "label": "厨房那1箱",
+              "value": "厨房那1箱"
+            },
+            {
+              "label": "两笔都减",
+              "value": "两笔都减"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "牛奶有两笔，减哪一笔？",
+            "options": [
+              {
+                "label": "冰箱里那2盒",
+                "value": "冰箱里那2盒"
+              },
+              {
+                "label": "厨房那1箱",
+                "value": "厨房那1箱"
+              },
+              {
+                "label": "两笔都减",
+                "value": "两笔都减"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "牛奶有两笔，减哪一笔？",
+                "options": [
+                  {
+                    "label": "冰箱里那2盒",
+                    "value": "冰箱里那2盒"
+                  },
+                  {
+                    "label": "厨房那1箱",
+                    "value": "厨房那1箱"
+                  },
+                  {
+                    "label": "两笔都减",
+                    "value": "两笔都减"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

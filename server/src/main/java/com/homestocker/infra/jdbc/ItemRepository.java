@@ -63,13 +63,52 @@ public class ItemRepository {
     return hydrateAll(list);
   }
 
+  /** 标签有无筛选：ANY=不限，UNTAGGED=一件没挂，TAGGED=至少挂一件。 */
+  public enum TagFilter {
+    ANY,
+    UNTAGGED,
+    TAGGED
+  }
+
   public List<ItemRow> list(String familyId, String spaceId, String tagId, int limit) {
-    return query(familyId, spaceId, tagId, null, null, limit);
+    return query(familyId, spaceId, tagId, null, null, TagFilter.ANY, limit);
   }
 
   public List<ItemRow> list(
       String familyId, String spaceId, String tagId, BigDecimal maxQuantity, int limit) {
-    return query(familyId, spaceId, tagId, maxQuantity, null, limit);
+    return query(familyId, spaceId, tagId, maxQuantity, null, TagFilter.ANY, limit);
+  }
+
+  /** 只列没挂任何标签的行（tagged=untagged）。 */
+  public List<ItemRow> listUntagged(
+      String familyId, String spaceId, BigDecimal maxQuantity, int limit) {
+    return query(familyId, spaceId, null, maxQuantity, null, TagFilter.UNTAGGED, limit);
+  }
+
+  /** 只列至少挂了一个标签的行（tagged=tagged）。 */
+  public List<ItemRow> listTagged(
+      String familyId, String spaceId, BigDecimal maxQuantity, int limit) {
+    return query(familyId, spaceId, null, maxQuantity, null, TagFilter.TAGGED, limit);
+  }
+
+  /** 没挂任何标签 + 名称关键字（OR）下推。 */
+  public List<ItemRow> searchAnyUntagged(
+      String familyId,
+      String spaceId,
+      BigDecimal maxQuantity,
+      List<String> keywords,
+      int limit) {
+    return query(familyId, spaceId, null, maxQuantity, keywords, TagFilter.UNTAGGED, limit);
+  }
+
+  /** 至少挂一个标签 + 名称关键字（OR）下推。 */
+  public List<ItemRow> searchAnyTagged(
+      String familyId,
+      String spaceId,
+      BigDecimal maxQuantity,
+      List<String> keywords,
+      int limit) {
+    return query(familyId, spaceId, null, maxQuantity, keywords, TagFilter.TAGGED, limit);
   }
 
   /**
@@ -78,7 +117,14 @@ public class ItemRepository {
    */
   public List<ItemRow> search(
       String familyId, String spaceId, String tagId, String keyword, int limit) {
-    return query(familyId, spaceId, tagId, null, keyword == null ? List.of() : List.of(keyword), limit);
+    return query(
+        familyId,
+        spaceId,
+        tagId,
+        null,
+        keyword == null ? List.of() : List.of(keyword),
+        TagFilter.ANY,
+        limit);
   }
 
   /** 多个名称关键字（OR）下推，管家 probe 一次问「牛奶」「鸡蛋」时用。 */
@@ -89,7 +135,7 @@ public class ItemRepository {
       BigDecimal maxQuantity,
       List<String> keywords,
       int limit) {
-    return query(familyId, spaceId, tagId, maxQuantity, keywords, limit);
+    return query(familyId, spaceId, tagId, maxQuantity, keywords, TagFilter.ANY, limit);
   }
 
   /** LIKE 模式串：转义用户输入里的 % / _ / \，按字面量匹配（ESCAPE '\'）。 */
@@ -104,6 +150,7 @@ public class ItemRepository {
       String tagId,
       BigDecimal maxQuantity,
       List<String> keywords,
+      TagFilter tagFilter,
       int limit) {
     String today = ShanghaiDates.todayYmd();
     String soonEnd = ShanghaiDates.addDaysYmd(today, EXPIRE_SOON_WINDOW_DAYS);
@@ -123,6 +170,12 @@ public class ItemRepository {
       sql.append(
           " AND EXISTS (SELECT 1 FROM item_tags t WHERE t.item_id = i.id AND t.tag_id = ?)");
       args.add(tagId);
+    }
+    if (tagFilter == TagFilter.UNTAGGED) {
+      sql.append(
+          " AND NOT EXISTS (SELECT 1 FROM item_tags ut WHERE ut.item_id = i.id)");
+    } else if (tagFilter == TagFilter.TAGGED) {
+      sql.append(" AND EXISTS (SELECT 1 FROM item_tags tt WHERE tt.item_id = i.id)");
     }
     if (maxQuantity != null) {
       sql.append(" AND i.quantity <= ?");
@@ -170,6 +223,20 @@ public class ItemRepository {
     return hydrateAll(jdbc.query(sql.toString(), BASE_ROW, args.toArray()));
   }
 
+  /** 精确取某一天到期的物资：临期提醒按家庭配置的「提前天数」算目标日后用它取候选。 */
+  public List<ItemRow> listByExpireDate(String familyId, String ymd) {
+    return hydrateAll(
+        jdbc.query(
+            """
+            SELECT * FROM items
+            WHERE family_id = ? AND expire_date = CAST(? AS date)
+            ORDER BY created_at ASC, id ASC
+            """,
+            BASE_ROW,
+            familyId,
+            ymd));
+  }
+
   public List<ItemRow> listExpiring(String familyId, String windowEndYmd, int limit) {
     return hydrateAll(
         jdbc.query(
@@ -183,6 +250,20 @@ public class ItemRepository {
             familyId,
             windowEndYmd,
             limit));
+  }
+
+  /** 一件标签都没挂的台账行数。 */
+  public int countUntagged(String familyId) {
+    Integer n =
+        jdbc.queryForObject(
+            """
+            SELECT COUNT(1) FROM items i
+            WHERE i.family_id = ?
+              AND NOT EXISTS (SELECT 1 FROM item_tags ut WHERE ut.item_id = i.id)
+            """,
+            Integer.class,
+            familyId);
+    return n == null ? 0 : n;
   }
 
   public int countByFamily(String familyId) {

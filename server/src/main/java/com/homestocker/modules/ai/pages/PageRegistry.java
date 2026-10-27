@@ -82,7 +82,7 @@ public final class PageRegistry {
           return ResolveResult.fail(
               "短号 "
                   + refRaw.toUpperCase()
-                  + " 本轮无效，请先 probe/search 或带详情关注");
+                  + " 本轮无效，请先 item.search 或带详情关注");
         }
         query.put("id", String.valueOf(row.get("itemId")));
       }

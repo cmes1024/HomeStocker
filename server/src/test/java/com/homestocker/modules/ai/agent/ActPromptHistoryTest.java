@@ -54,6 +54,45 @@ class ActPromptHistoryTest {
     assertEquals("system", model.get(1).get("role"));
   }
 
+  @Test
+  void groundTextKeepsWhatTheFamilyHimselfSaidInShortAnswers() {
+    List<Map<String, String>> history =
+        ActPrompt.sanitizeHistory(
+            List.of(
+                turn("user", "加两袋苹果", NOW - 3 * 60_000L),
+                turn("assistant", "这两袋苹果放哪儿？", NOW - 2 * 60_000L),
+                turn("user", "厨房", NOW - 2 * 60_000L),
+                turn("assistant", "要我在厨房单独记一条「苹果 2 袋」吗？", NOW - 60_000L)));
+
+    String ground = ActPrompt.groundText(history, "是的", NOW);
+    assertEquals(true, ground.contains("厨房"));
+    assertEquals(true, ground.contains("加两袋苹果"));
+  }
+
+  @Test
+  void groundTextDoesNotTakePlacesFromTheAssistantOptions() {
+    List<Map<String, String>> history =
+        ActPrompt.sanitizeHistory(
+            List.of(
+                turn("user", "加两袋苹果", NOW - 3 * 60_000L),
+                turn("assistant", "放哪儿？厨房 / 仓库 / 客厅 / 零食柜", NOW - 2 * 60_000L)));
+
+    String ground = ActPrompt.groundText(history, "是的", NOW);
+    assertFalse(ground.contains("仓库"));
+    assertFalse(ground.contains("零食柜"));
+  }
+
+  @Test
+  void groundTextDropsLastSessionWhenTheGapIsTooLong() {
+    List<Map<String, String>> history =
+        ActPrompt.sanitizeHistory(
+            List.of(
+                turn("user", "放仓库", NOW - 3 * HOUR),
+                turn("assistant", "记好了", NOW - 3 * HOUR + 5_000)));
+
+    assertEquals("再加两袋", ActPrompt.groundText(history, "再加两袋", NOW));
+  }
+
   private static Map<String, Object> turn(String role, String text, long at) {
     return Map.of("role", role, "text", text, "at", Long.toString(at));
   }

@@ -1,0 +1,356 @@
+{
+  "id": "user-day-home",
+  "status": "fail",
+  "judgedAt": "2026-10-24T11:06:33.977Z",
+  "mode": "act",
+  "outcome": "把面包改到厨房橱柜，别再多记一条面包",
+  "actual": {
+    "dialogue": {
+      "text": "面包放错了，在厨房橱柜",
+      "history": [
+        {
+          "role": "user",
+          "text": "牛奶两盒冰箱，面包一袋"
+        },
+        {
+          "role": "assistant",
+          "text": "记上了：牛奶进冰箱两盒；面包一袋先挂厨房"
+        }
+      ]
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "牛奶",
+          "use": "item.search"
+        },
+        {
+          "name": "面包",
+          "use": "item.search"
+        }
+      ],
+      "blocks": [],
+      "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+      "report": {
+        "executed": [
+          {
+            "summary": "查询：找到 2 件",
+            "step": 1,
+            "use": "item.search"
+          },
+          {
+            "summary": "查询：没有找到匹配的物品",
+            "step": 1,
+            "use": "item.search"
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？"
+        ],
+        "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+        "blocks": [],
+        "wrote": false,
+        "replanned": null
+      },
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false,
+      "present": {
+        "type": "table",
+        "title": "牛奶现有记录",
+        "columns": [
+          "名称",
+          "数量",
+          "位置",
+          "说明"
+        ],
+        "widths": [
+          2,
+          1,
+          2,
+          4
+        ],
+        "rows": [
+          [
+            "牛奶",
+            "1箱",
+            "厨房",
+            "常温未开"
+          ],
+          [
+            "牛奶",
+            "2盒",
+            "厨房 / 冰箱",
+            "10月26日到期"
+          ]
+        ],
+        "caption": "冰箱那两盒26号到期，箱装那件在厨房没挂位置。"
+      }
+    },
+    "tools": [
+      "item.search"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "牛奶",
+            "use": "item.search"
+          },
+          {
+            "name": "面包",
+            "use": "item.search"
+          }
+        ],
+        "blocks": [],
+        "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+        "report": {
+          "executed": [
+            {
+              "summary": "查询：找到 2 件",
+              "step": 1,
+              "use": "item.search"
+            },
+            {
+              "summary": "查询：没有找到匹配的物品",
+              "step": 1,
+              "use": "item.search"
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？"
+          ],
+          "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+          "blocks": [],
+          "wrote": false,
+          "replanned": null
+        },
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false,
+        "present": {
+          "type": "table",
+          "title": "牛奶现有记录",
+          "columns": [
+            "名称",
+            "数量",
+            "位置",
+            "说明"
+          ],
+          "widths": [
+            2,
+            1,
+            2,
+            4
+          ],
+          "rows": [
+            [
+              "牛奶",
+              "1箱",
+              "厨房",
+              "常温未开"
+            ],
+            [
+              "牛奶",
+              "2盒",
+              "厨房 / 冰箱",
+              "10月26日到期"
+            ]
+          ],
+          "caption": "冰箱那两盒26号到期，箱装那件在厨房没挂位置。"
+        }
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "刚才没办妥，你再说具体一点？查家里有什么、记一笔或改数量都可以～",
+                "options": [
+                  {
+                    "label": "牛奶 2盒（厨房 / 冰箱）",
+                    "value": "牛奶 2盒（厨房 / 冰箱）"
+                  },
+                  {
+                    "label": "牛奶 1箱（厨房）",
+                    "value": "牛奶 1箱（厨房）"
+                  },
+                  {
+                    "label": "酸奶 2盒（厨房 / 冰箱）",
+                    "value": "酸奶 2盒（厨房 / 冰箱）"
+                  },
+                  {
+                    "label": "鸡蛋 8个（厨房 / 冰箱）",
+                    "value": "鸡蛋 8个（厨房 / 冰箱）"
+                  },
+                  {
+                    "label": "保鲜膜 1卷（厨房 / 橱柜）",
+                    "value": "保鲜膜 1卷（厨房 / 橱柜）"
+                  },
+                  {
+                    "label": "盐 2袋（厨房 / 橱柜）",
+                    "value": "盐 2袋（厨房 / 橱柜）"
+                  },
+                  {
+                    "label": "酱油 1瓶（厨房 / 橱柜）",
+                    "value": "酱油 1瓶（厨房 / 橱柜）"
+                  },
+                  {
+                    "label": "相关记录都改",
+                    "value": "相关记录都改"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      },
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "牛奶",
+                "use": "item.search"
+              },
+              {
+                "name": "面包",
+                "use": "item.search"
+              }
+            ],
+            "blocks": [],
+            "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+            "report": {
+              "executed": [
+                {
+                  "summary": "查询：找到 2 件",
+                  "step": 1,
+                  "use": "item.search"
+                },
+                {
+                  "summary": "查询：没有找到匹配的物品",
+                  "step": 1,
+                  "use": "item.search"
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？"
+              ],
+              "lead": "牛奶现在有两条记录：冰箱里两盒，26号到期；厨房还有一箱，常温没开。面包我这边没查到，刚才那袋没记上，要我现在补记到橱柜吗？",
+              "blocks": [],
+              "wrote": false,
+              "replanned": null
+            },
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false,
+            "present": {
+              "type": "table",
+              "title": "牛奶现有记录",
+              "columns": [
+                "名称",
+                "数量",
+                "位置",
+                "说明"
+              ],
+              "widths": [
+                2,
+                1,
+                2,
+                4
+              ],
+              "rows": [
+                [
+                  "牛奶",
+                  "1箱",
+                  "厨房",
+                  "常温未开"
+                ],
+                [
+                  "牛奶",
+                  "2盒",
+                  "厨房 / 冰箱",
+                  "10月26日到期"
+                ]
+              ],
+              "caption": "冰箱那两盒26号到期，箱装那件在厨房没挂位置。"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.update",
+      "ok": false,
+      "detail": "missing; got [item.search]"
+    }
+  ],
+  "notes": ""
+}

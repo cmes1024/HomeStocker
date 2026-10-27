@@ -1,0 +1,27 @@
+{
+  "id": "release-smoke",
+  "title": "上线必跑",
+  "description": "每次上线前至少跑这一组：记录/改量/删除/同名/单位/落点/撤销/查询/页面/知识/拒绝/图表/红线各一条。题库不测家庭习惯（见 ai-eval/README.md）",
+  "cases": [
+    "curriculum-c4-record-existing",
+    "curriculum-c3-same-name",
+    "curriculum-c9-unit-clash",
+    "curriculum-c10-short-answer-place",
+    "curriculum-c5-add-existing",
+    "curriculum-c1-undo",
+    "edge-update-qty",
+    "scene-vinegar-no-place",
+    "scene-toilet-gone",
+    "scene-want-coffee",
+    "scene-space-bars",
+    "curriculum-c6-open-page",
+    "curriculum-c7-knowledge",
+    "curriculum-c8-dissolve",
+    "chat-computer-room",
+    "eng-vague-all-minus"
+  ],
+  "copiedAt": "2026-10-24T11:02:59.512Z",
+  "mode": "act",
+  "actUrl": "http://127.0.0.1:8080/api/ai/act",
+  "apiBase": "http://127.0.0.1:8080"
+}

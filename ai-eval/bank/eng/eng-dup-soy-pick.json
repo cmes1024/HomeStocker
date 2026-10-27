@@ -1,0 +1,19 @@
+{
+  "id": "eng-dup-soy-pick",
+  "perspective": "eng",
+  "title": "回归：同名两条酱油要指明",
+  "tags": ["eng", "regression", "ref", "B3"],
+  "status": "pending",
+  "setup": {
+    "fixture": "home-dup-soy",
+    "notes": "两条「酱油」：橱柜 1 瓶、冰箱 1 瓶。「冰箱那瓶」必须落到冰箱那条 itemId；未指明位置时应返回 REF_AMBIGUOUS 而不是随手挑一条。B0 建骨架，B3 启用。"
+  },
+  "prompt": "冰箱那瓶酱油用完了，删掉",
+  "expected": {
+    "outcome": "删掉冰箱那条酱油；橱柜那瓶必须还在。",
+    "callIncludes": [{ "use": "item.remove", "name": "酱油" }],
+    "callExcludes": [{ "use": "item.removeMany" }, { "use": "item.remove", "name": "醋" }],
+    "forbiddenTools": ["item.removeMany"],
+    "manual": "B3 启用后补断言：callIncludes 命中冰箱那条 itemId；措辞含位置但未指明时应返回 REF_AMBIGUOUS，不得凭空挑一条。"
+  }
+}

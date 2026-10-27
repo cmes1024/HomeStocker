@@ -62,7 +62,7 @@
 | switchFamily | `/api/family/switchFamily` | done（待联调） |
 | updateBackground | `/api/family/updateBackground` | done（待联调） |
 | updateName | `/api/family/updateName` | done（待联调） |
-| updateExpireReminder | `/api/family/updateExpireReminder` | done（待联调） |
+| updateExpireReminder | `/api/family/updateExpireReminder`（可选入参 `enabled` / `days` / `hour` / `minute`；缺省字段保持原值） | done（待联调） |
 | recordSubscribeExpire | `/api/family/recordSubscribeExpire` | done（待联调） |
 | getEntitlement | `/api/family/getEntitlement` | done（待联调） |
 | redeem | `/api/family/redeem` | done（待联调） |
@@ -194,10 +194,10 @@
 
 | 能力 | 形式 | 状态 |
 |------|------|------|
-| 每日临期扫描发送 | Scheduled job | done（待联调） |
+| 临期扫描发送 | Scheduled job（默认每分钟 tick；按家庭 `expire_reminder_hour`/`minute` 命中，`expire_notify_last_date` 占位保证一家一天一轮） | done（待联调） |
 | 手动「立即检查提醒」 | POST `/api/notify/expire/run`（成员可触发；家庭页已接） | done（待联调） |
 
-发送成功删 `item_expire_subs` 对应行；无微信密钥时 dry-run（不消费订阅）；模板字段对齐 collections.md。
+发送成功删 `item_expire_subs` 对应行；无微信密钥时 dry-run（不消费订阅）；模板字段对齐 collections.md。候选日期用家庭 `expire_reminder_days` 推算；手动端点不按发送时间过滤、也不写 `expire_notify_last_date`，便于联调反复跑。
 
 ---
 

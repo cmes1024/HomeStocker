@@ -1,0 +1,17 @@
+{
+  "id": "user-cook-rice-rough",
+  "perspective": "user",
+  "title": "做饭：米还有吗大概",
+  "tags": [
+    "query",
+    "vague"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "米还有吗大概",
+  "expected": {
+    "outcome": "有就说大概多少，没有就说没有；夹具里可能没有大米——如实说",
+    "mustProbe": true
+  }
+}

@@ -1,0 +1,812 @@
+[
+  {
+    "id": "item.search",
+    "fn": "item",
+    "action": "search",
+    "enabled": true,
+    "confirm": false,
+    "args": "name?, spaceName?, locationName?, tagName?, tagged?, maxQuantity?",
+    "hint": "只读：按条件列出当前家物资行（每次最多 100 行，按过期/新增排序；返回行数≠全库总数，回执会带 truncated 提示）。name 模糊匹配名称；空 name 则只按空间/位置/标签/数量筛（都空=尽量全家列表）。tagName 必须是家庭结构里的标签名；要查「哪些没挂标签」用 tagged=untagged、「哪些挂了标签」用 tagged=tagged（与 tagName 互斥），别把「无标签」塞进 tagName。maxQuantity 为数量≤该值。不是临期列表，不是家庭消息；全库件数用 item.stats。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "按名称模糊匹配，优先精确同名；只查某件东西时给。"
+      },
+      {
+        "name": "spaceName",
+        "type": "string",
+        "description": "空间名，必须是家庭结构里已有的空间；只查某个空间的货才给。"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "description": "位置名，必须在该空间下；给了就只查该位置的行。"
+      },
+      {
+        "name": "tagName",
+        "type": "string",
+        "description": "标签名，必须在家庭结构里。表示「挂了该标签的行」。不能填「无标签」「未分类」这类描述，那用 tagged=untagged。"
+      },
+      {
+        "name": "tagged",
+        "type": "string",
+        "enum": ["any", "untagged", "tagged"],
+        "description": "any=不限（默认）；untagged=只列一件标签都没挂的；tagged=只列至少挂了一个标签的。与 tagName 互斥。"
+      },
+      {
+        "name": "maxQuantity",
+        "type": "number",
+        "minimum": 0,
+        "description": "只列数量≤该值的行；用来找快用完的。"
+      }
+    ]
+  },
+  {
+    "id": "item.listExpiring",
+    "fn": "item",
+    "action": "listExpiring",
+    "enabled": true,
+    "confirm": false,
+    "args": "",
+    "hint": "只读：临期+已过期子集（过期日≤今天+3天，Asia/Shanghai；最多约50条）。空结果只说明没有临期/过期行，不代表家里没货；不能代替全库盘点或今日动静。",
+    "params": []
+  },
+  {
+    "id": "activity.list",
+    "fn": "activity",
+    "action": "list",
+    "enabled": true,
+    "confirm": false,
+    "args": "day?, days?, action?",
+    "hint": "只读：家庭消息明细（物资新建/改动/删除事件，Asia/Shanghai）。day=today|yesterday|recent（默认 today）；days=1～7（recent 默认按3天）；action=create|update|remove（空=全部）。最多返回40条（新在前）；truncated=true 表示还有未返回。回执是事件明细，须自行计数/去重；不是当前库存快照，也不是临期列表。",
+    "params": [
+      {
+        "name": "day",
+        "type": "string",
+        "enum": ["today", "yesterday", "recent"],
+        "description": "时间窗：今天 / 昨天 / 近几天（配 days，缺省 3 天）。默认 today。"
+      },
+      {
+        "name": "days",
+        "type": "number",
+        "minimum": 1,
+        "maximum": 7,
+        "description": "窗宽天数，1～7；day=recent 时缺省 3。"
+      },
+      {
+        "name": "action",
+        "type": "string",
+        "enum": ["create", "update", "remove"],
+        "description": "只看某类事件；不传=全部。"
+      }
+    ]
+  },
+  {
+    "id": "item.stats",
+    "fn": "item",
+    "action": "stats",
+    "enabled": true,
+    "confirm": false,
+    "args": "groupBy?",
+    "hint": "只读：聚合行数，不返回物资名称。groupBy=total|space|tag（缺省 total）。total=台账行数（非名称去重种数）；space=各空间行数；tag=各标签挂签次数，另单列一桶「未挂签」（一件挂多个标签会进多个桶，故各桶相加≠全库）。桶的 label 是空间名、标签名或「全库」，不是物资名。要具体哪些物资用 item.search；未挂签清单用 item.search 的 tagged=untagged。",
+    "params": [
+      {
+        "name": "groupBy",
+        "type": "string",
+        "enum": ["total", "space", "tag"],
+        "description": "聚合维度：全库总量 / 各空间 / 各标签（含「未挂签」桶）。缺省 total。"
+      }
+    ]
+  },
+  {
+    "id": "item.create",
+    "fn": "item",
+    "action": "create",
+    "enabled": true,
+    "confirm": false,
+    "args": "name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note?, _src?",
+    "hint": "写：新开一条台账，须 spaceName。quantity 为该行绝对值（默认1，须>0，可为小数如0.5）。仅当同空间同位置同名且单位一致时写路径自动并入数量；单位不同或位置不同会另开一行（同空间允许同名多条），不会失败。已有行要改位置或数量须 item.update（ref=本轮 F*/P*），不要对已有行再 create。本句的意思里没有给出空间或位置、且这家习惯有「默认落点」时：直接用该习惯空间名作 spaceName，勿再为落点单独追问；习惯空间名不在家庭结构则仍 ask。 locationName 可空：留空表示只记在该空间、不挂位置，可以直接调用。tagNames 只能写家庭结构里已有的标签名，写了不存在会整条失败并回可用标签。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "物品名称，用台账里的叫法。"
+      },
+      {
+        "name": "quantity",
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "description": "这一行的数量绝对值，缺省 1；可为小数（0.5）。不是增量。"
+      },
+      {
+        "name": "unit",
+        "type": "string",
+        "description": "单位（瓶/袋/斤）；留空沿用同名物资的常用单位。"
+      },
+      {
+        "name": "spaceName",
+        "type": "string",
+        "required": true,
+        "description": "空间名，必须是家庭结构里已有的空间；不存在不会自动新建。"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "description": "空间下的位置名，可空；留空表示只记在该空间、不挂位置。"
+      },
+      {
+        "name": "tagNames",
+        "type": "array",
+        "items": "string",
+        "description": "标签名数组，每个都必须是家庭结构里已有的标签；不确定就先 tag.create 或不传。"
+      },
+      {
+        "name": "expireDate",
+        "type": "string",
+        "format": "date",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "description": "过期日，格式 YYYY-MM-DD；不知道就留空。"
+      },
+      {
+        "name": "productionDate",
+        "type": "string",
+        "format": "date",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "description": "生产日期，格式 YYYY-MM-DD；不知道就留空。"
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "description": "备注，家人说过才写。"
+      }
+    ]
+  },
+  {
+    "id": "item.createMany",
+    "fn": "item",
+    "action": "createMany",
+    "enabled": true,
+    "confirm": false,
+    "args": "items[{ name, quantity?, unit?, spaceName, locationName?, tagNames?, expireDate?, productionDate?, note? }], _src?",
+    "hint": "写：一次新开2～20条；每条须 spaceName。同位置同名且单位一致才自动并入数量；单位不同或位置不同另开一行，不会失败。quantity 为绝对值。已有行改位置或数量走 item.update。本句的意思里没有给出落点且有默认落点习惯时：各条可用该习惯空间名，勿再逐条追问落点。",
+    "params": [
+      {
+        "name": "items",
+        "type": "array",
+        "required": true,
+        "description": "2～20 条新物资。",
+        "items": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "物品名称。"
+          },
+          {
+            "name": "quantity",
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "description": "这条的数量绝对值，缺省 1；可为小数。"
+          },
+          {
+            "name": "unit",
+            "type": "string",
+            "description": "单位；留空沿用同名常用单位。"
+          },
+          {
+            "name": "spaceName",
+            "type": "string",
+            "required": true,
+            "description": "空间名，必须在家庭结构里。"
+          },
+          {
+            "name": "locationName",
+            "type": "string",
+            "description": "位置名，可空。"
+          },
+          {
+            "name": "tagNames",
+            "type": "array",
+            "items": "string",
+            "description": "标签名数组，必须都是已有标签。"
+          },
+          {
+            "name": "expireDate",
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "过期日 YYYY-MM-DD，可空。"
+          },
+          {
+            "name": "productionDate",
+            "type": "string",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "description": "生产日期 YYYY-MM-DD，可空。"
+          },
+          {
+            "name": "note",
+            "type": "string",
+            "description": "备注，说过才写。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "item.update",
+    "fn": "item",
+    "action": "update",
+    "enabled": true,
+    "confirm": false,
+    "args": "ref?, itemId?, name?, quantity?, unit?, spaceName?, locationName?, tagNames?, expireDate?, productionDate?, note?, _src?",
+    "hint": "写：改已有物资（含改数量绝对值、换空间/位置）。ref 用本轮 F*/P*。quantity 为改成后的绝对值（不是加减增量），须>0。家人的意思是改变已有行的数量时：先 probe/search 拿到短号再 update；勿因缺空间信息改去追问落点或改用 create。quantity 可为小数（如0.5）。tagNames 是整组覆盖：只写这次要挂的标签。",
+    "params": [
+      {
+        "name": "ref",
+        "type": "string",
+        "description": "本轮短号 F*/P*（首选）。和 itemId 二选一。"
+      },
+      {
+        "name": "itemId",
+        "type": "string",
+        "description": "物资 id；有短号时不要用这个。"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "description": "改成的新名称。不是查找用的名字；查找用 ref/itemId，或先 item.search。"
+      },
+      {
+        "name": "quantity",
+        "type": "number",
+        "exclusiveMinimum": 0,
+        "description": "改成后的数量绝对值，须>0；可为小数。不是增量。"
+      },
+      {
+        "name": "unit",
+        "type": "string",
+        "description": "新单位。"
+      },
+      {
+        "name": "spaceName",
+        "type": "string",
+        "description": "换到哪个空间，必须已有；不带就不换。"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "description": "换到该空间下的哪个位置；配合 spaceName 使用。"
+      },
+      {
+        "name": "tagNames",
+        "type": "array",
+        "items": "string",
+        "description": "整组覆盖标签：只列这次要挂的；传空数组=清空标签。名字必须已有。"
+      },
+      {
+        "name": "expireDate",
+        "type": "string",
+        "format": "date",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "description": "新的过期日 YYYY-MM-DD。"
+      },
+      {
+        "name": "productionDate",
+        "type": "string",
+        "format": "date",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+        "description": "新的生产日期 YYYY-MM-DD。"
+      },
+      {
+        "name": "note",
+        "type": "string",
+        "description": "新的备注；不改就不传。"
+      }
+    ]
+  },
+  {
+    "id": "item.remove",
+    "fn": "item",
+    "action": "remove",
+    "enabled": true,
+    "confirm": true,
+    "args": "ref?, itemId?",
+    "hint": "写：删除一件。ref=本轮短号。执行前须用户确认。",
+    "params": [
+      {
+        "name": "ref",
+        "type": "string",
+        "description": "本轮短号 F*/P*。"
+      },
+      {
+        "name": "itemId",
+        "type": "string",
+        "description": "物资 id；有短号时不要用。"
+      }
+    ]
+  },
+  {
+    "id": "item.removeMany",
+    "fn": "item",
+    "action": "removeMany",
+    "enabled": true,
+    "confirm": true,
+    "args": "refs[]",
+    "hint": "写：一次删除2～20件。refs=本轮短号。执行前须用户确认。",
+    "params": [
+      {
+        "name": "refs",
+        "type": "array",
+        "items": "string",
+        "required": true,
+        "description": "2～20 个本轮短号。"
+      }
+    ]
+  },
+  {
+    "id": "space.create",
+    "fn": "space",
+    "action": "create",
+    "enabled": true,
+    "confirm": false,
+    "args": "name",
+    "hint": "写：新建空间。本版不能改已有空间名。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "新空间名。"
+      }
+    ]
+  },
+  {
+    "id": "space.createMany",
+    "fn": "space",
+    "action": "createMany",
+    "enabled": true,
+    "confirm": false,
+    "args": "spaces[{ name }]",
+    "hint": "写：一次新建2～20个空间。本版不能改名。",
+    "params": [
+      {
+        "name": "spaces",
+        "type": "array",
+        "required": true,
+        "description": "2～20 个空间。",
+        "items": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "空间名。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "space.createLocation",
+    "fn": "space",
+    "action": "createLocation",
+    "enabled": true,
+    "confirm": false,
+    "args": "spaceName, locationName",
+    "hint": "写：在已有空间下新建位置，须 spaceName。",
+    "params": [
+      {
+        "name": "spaceName",
+        "type": "string",
+        "required": true,
+        "description": "已有空间名。"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "required": true,
+        "description": "新位置名。"
+      }
+    ]
+  },
+  {
+    "id": "space.createLocationMany",
+    "fn": "space",
+    "action": "createLocationMany",
+    "enabled": true,
+    "confirm": false,
+    "args": "locations[{ spaceName, locationName }]",
+    "hint": "写：一次新建2～20个位置。",
+    "params": [
+      {
+        "name": "locations",
+        "type": "array",
+        "required": true,
+        "description": "2～20 个位置。",
+        "items": [
+          {
+            "name": "spaceName",
+            "type": "string",
+            "required": true,
+            "description": "所属空间名。"
+          },
+          {
+            "name": "locationName",
+            "type": "string",
+            "required": true,
+            "description": "位置名。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "space.remove",
+    "fn": "space",
+    "action": "remove",
+    "enabled": true,
+    "confirm": true,
+    "args": "spaceName",
+    "hint": "写：删空间。默认仓库不能删。执行前须确认。",
+    "params": [
+      {
+        "name": "spaceName",
+        "type": "string",
+        "required": true,
+        "description": "要删的空间名。"
+      }
+    ]
+  },
+  {
+    "id": "space.removeMany",
+    "fn": "space",
+    "action": "removeMany",
+    "enabled": true,
+    "confirm": true,
+    "args": "names[]",
+    "hint": "写：一次删2～20个空间。默认仓库不能删。须确认。",
+    "params": [
+      {
+        "name": "names",
+        "type": "array",
+        "items": "string",
+        "required": true,
+        "description": "2～20 个要删的空间名。"
+      }
+    ]
+  },
+  {
+    "id": "space.removeLocation",
+    "fn": "space",
+    "action": "removeLocation",
+    "enabled": true,
+    "confirm": true,
+    "args": "spaceName, locationName",
+    "hint": "写：删位置；物资留在该空间。须确认。",
+    "params": [
+      {
+        "name": "spaceName",
+        "type": "string",
+        "required": true,
+        "description": "位置所属空间名。"
+      },
+      {
+        "name": "locationName",
+        "type": "string",
+        "required": true,
+        "description": "要删的位置名。"
+      }
+    ]
+  },
+  {
+    "id": "space.removeLocationMany",
+    "fn": "space",
+    "action": "removeLocationMany",
+    "enabled": true,
+    "confirm": true,
+    "args": "locations[{ spaceName, locationName }]",
+    "hint": "写：一次删2～20个位置。须确认。",
+    "params": [
+      {
+        "name": "locations",
+        "type": "array",
+        "required": true,
+        "description": "2～20 个要删的位置。",
+        "items": [
+          {
+            "name": "spaceName",
+            "type": "string",
+            "required": true,
+            "description": "所属空间名。"
+          },
+          {
+            "name": "locationName",
+            "type": "string",
+            "required": true,
+            "description": "位置名。"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "tag.create",
+    "fn": "tag",
+    "action": "create",
+    "enabled": true,
+    "confirm": false,
+    "args": "name",
+    "hint": "写：新建家庭级标签名。给物资挂签用 item.update 的 tagNames，不是再建同名标签。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "新标签名。"
+      }
+    ]
+  },
+  {
+    "id": "tag.createMany",
+    "fn": "tag",
+    "action": "createMany",
+    "enabled": true,
+    "confirm": false,
+    "args": "tags[{ name }] 或 names[]",
+    "hint": "写：一次新建2～20个标签名。挂签走 item.update。tags 与 names 二选一。",
+    "params": [
+      {
+        "name": "tags",
+        "type": "array",
+        "description": "2～20 个标签对象。与 names 二选一。",
+        "items": [
+          {
+            "name": "name",
+            "type": "string",
+            "required": true,
+            "description": "标签名。"
+          }
+        ]
+      },
+      {
+        "name": "names",
+        "type": "array",
+        "items": "string",
+        "description": "2～20 个标签名。与 tags 二选一。"
+      }
+    ]
+  },
+  {
+    "id": "tag.remove",
+    "fn": "tag",
+    "action": "remove",
+    "enabled": true,
+    "confirm": true,
+    "args": "name",
+    "hint": "写：删标签。本版不能改名。须确认。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "required": true,
+        "description": "要删的标签名。"
+      }
+    ]
+  },
+  {
+    "id": "tag.removeMany",
+    "fn": "tag",
+    "action": "removeMany",
+    "enabled": true,
+    "confirm": true,
+    "args": "names[]",
+    "hint": "写：一次删2～20个标签。须确认。",
+    "params": [
+      {
+        "name": "names",
+        "type": "array",
+        "items": "string",
+        "required": true,
+        "description": "2～20 个要删的标签名。"
+      }
+    ]
+  },
+  {
+    "id": "item.merge",
+    "fn": "item",
+    "action": "merge",
+    "enabled": true,
+    "confirm": true,
+    "args": "refs[], name?",
+    "hint": "写：把≥2条合成一条并加总数量。同空间、单位须一致。执行前须用户确认。",
+    "params": [
+      {
+        "name": "refs",
+        "type": "array",
+        "items": "string",
+        "required": true,
+        "description": "2 个以上本轮短号。"
+      },
+      {
+        "name": "name",
+        "type": "string",
+        "description": "合并后的名称，可空（沿用其中一条）。"
+      }
+    ]
+  },
+  {
+    "id": "item.expireSubscribePanel",
+    "fn": "ai",
+    "action": "expireSubscribePanel",
+    "enabled": true,
+    "confirm": false,
+    "args": "",
+    "hint": "打开临期订阅面板。不能代开微信订阅授权。",
+    "params": []
+  },
+  {
+    "id": "knowledge.get",
+    "fn": "ai",
+    "action": "knowledgeGet",
+    "enabled": true,
+    "confirm": false,
+    "args": "topicId",
+    "hint": "只读：按目录 topicId 取正文。目录里只有标题，解释这些条目时先取正文再回答。勿编目录外内容，勿用来写库。",
+    "params": [
+      {
+        "name": "topicId",
+        "type": "string",
+        "required": true,
+        "enum": ["product", "role", "ledger", "capacity"],
+        "description": "知识主题 id，只能取目录里列出的这四个。"
+      }
+    ]
+  },
+  {
+    "id": "page.get",
+    "fn": "ai",
+    "action": "pageGet",
+    "enabled": true,
+    "confirm": false,
+    "args": "pageId?, query?, open?, label?, ref?",
+    "hint": "只读/导航：取页面目录或契约。未知 pageId 回目录。真正跳转须 open:true。目录含 family.tags（标签管理）、ai.keys（密钥设置）等；打开密钥页只是带家人去自己设置，不是代填/代删密钥。禁止臆造 path。",
+    "params": [
+      {
+        "name": "pageId",
+        "type": "string",
+        "description": "目录里的页面 id（如 family.tags、ai.keys）；不知道就先不传取目录。"
+      },
+      {
+        "name": "query",
+        "type": "string",
+        "description": "取契约时想问的字段或用途，可空。"
+      },
+      {
+        "name": "open",
+        "type": "boolean",
+        "description": "true=真的跳到该页并给跳转按钮；只查目录/契约不要传 true。"
+      },
+      {
+        "name": "label",
+        "type": "string",
+        "description": "跳转按钮上的文字，可空。"
+      },
+      {
+        "name": "ref",
+        "type": "string",
+        "description": "本轮短号，可空。"
+      }
+    ]
+  },
+  {
+    "id": "habit.list",
+    "fn": "habit",
+    "action": "list",
+    "enabled": true,
+    "confirm": false,
+    "args": "",
+    "hint": "只读：返回本家已存习惯事实（最多7条，含 slot/label/text）。一条=一个槽。对家人说话可用 reply 和/或 present。",
+    "params": []
+  },
+  {
+    "id": "habit.observe",
+    "fn": "habit",
+    "action": "observe",
+    "enabled": true,
+    "confirm": false,
+    "args": "",
+    "hint": "只读：根据本家近窗物资 create/update 记录聚合习惯候选统计（默认落点占比、同名常落点、同名常单位；含 strong 门槛标记）。返回事实供编排参考，不写入习惯、不进用户气泡。",
+    "params": []
+  },
+  {
+    "id": "habit.upsert",
+    "fn": "habit",
+    "action": "upsert",
+    "enabled": true,
+    "confirm": false,
+    "args": "slot, text",
+    "hint": "写：按槽位写入/覆盖本家习惯（同槽整段覆盖）。slot=default_space|naming|unit|summarize|duplicate_name|tone|focus；每种至多1条，全家最多7条；text≤80字。default_space 的 text 必须是家庭结构里已有的空间名；按品类另放哪儿用 focus 另记。超限须先 habit.remove。习惯是偏好事实，不是 NL→接口路由。",
+    "params": [
+      {
+        "name": "slot",
+        "type": "string",
+        "required": true,
+        "enum": [
+          "default_space",
+          "naming",
+          "unit",
+          "summarize",
+          "duplicate_name",
+          "tone",
+          "focus"
+        ],
+        "description": "槽位；每槽最多 1 条。"
+      },
+      {
+        "name": "text",
+        "type": "string",
+        "description": "这条习惯的事实，≤80 字；default_space 必须是已有空间名。"
+      }
+    ]
+  },
+  {
+    "id": "habit.remove",
+    "fn": "habit",
+    "action": "remove",
+    "enabled": true,
+    "confirm": false,
+    "args": "slot",
+    "hint": "写：按槽位删除本家一条习惯。",
+    "params": [
+      {
+        "name": "slot",
+        "type": "string",
+        "required": true,
+        "enum": [
+          "default_space",
+          "naming",
+          "unit",
+          "summarize",
+          "duplicate_name",
+          "tone",
+          "focus"
+        ],
+        "description": "要删的槽位。"
+      }
+    ]
+  },
+  {
+    "id": "space.update",
+    "fn": "space",
+    "action": "update",
+    "enabled": false,
+    "confirm": false,
+    "args": "name",
+    "hint": "改空间名。本版关闭。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "新空间名。"
+      }
+    ]
+  },
+  {
+    "id": "tag.update",
+    "fn": "tag",
+    "action": "update",
+    "enabled": false,
+    "confirm": false,
+    "args": "name",
+    "hint": "改标签名。本版关闭。",
+    "params": [
+      {
+        "name": "name",
+        "type": "string",
+        "description": "新标签名。"
+      }
+    ]
+  }
+]

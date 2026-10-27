@@ -1,0 +1,18 @@
+{
+  "id": "user-list-baby",
+  "perspective": "user",
+  "title": "理一理：宝宝的东西列一下",
+  "tags": [
+    "list"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "宝宝的东西列一下",
+  "expected": {
+    "outcome": "列出宝宝房/宝宝相关物资",
+    "requiredToolsAny": [
+      "item.search"
+    ]
+  }
+}

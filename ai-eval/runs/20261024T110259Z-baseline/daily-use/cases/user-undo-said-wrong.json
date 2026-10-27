@@ -1,0 +1,29 @@
+{
+  "id": "user-undo-said-wrong",
+  "perspective": "user",
+  "title": "反悔：不对刚才说错了",
+  "tags": [
+    "undo"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": [
+    {
+      "role": "user",
+      "text": "牛奶少一盒"
+    },
+    {
+      "role": "assistant",
+      "text": "冰箱里的牛奶我先按减一盒记了，还剩 1 盒"
+    },
+    {
+      "role": "user",
+      "text": "不对，刚才说错了"
+    }
+  ],
+  "expected": {
+    "outcome": "接住「说错了」：问要改回什么/撤销哪步，或按回执改回；别继续乱改别的",
+    "mustAsk": true
+  }
+}

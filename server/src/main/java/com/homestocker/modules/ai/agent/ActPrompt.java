@@ -30,6 +30,8 @@ public class ActPrompt {
   private static final int HISTORY_TEXT_MAX = 800;
   /** 相邻发言超过此时长，视为上一场，仍保留原文，只在中间插入时间间隔。 */
   static final long SESSION_GAP_MS = 60L * 60L * 1000L;
+  /** 闸门回看几条家人发言（不含本句）。 */
+  static final int GROUND_RECENT_USER = 3;
 
   private final DeepSeekClient deepSeekClient;
   private final ObjectMapper objectMapper;
@@ -132,6 +134,37 @@ public class ActPrompt {
       out.add(gapNote(prevAt));
     }
     return out;
+  }
+
+  /**
+   * 闸门（落点 / 数量）看的事实文本 = 本句 + 最近几条**家人自己**的发言。
+   * 短答（「是的」「厨房」）是对上一轮的回应，事实在上文里；不带助手的话，避免把选项气泡里的地点当成家人说的。
+   * 距上一场已超 {@link #SESSION_GAP_MS} 时只留本句，不沿用上一场的地点与数字。
+   */
+  static String groundText(List<Map<String, String>> history, String text, long nowMs) {
+    String current = text == null ? "" : text.trim();
+    if (history == null || history.isEmpty()) {
+      return current;
+    }
+    Map<String, String> last = history.get(history.size() - 1);
+    Long at = last == null ? null : parseAtMs(last.get("at"));
+    if (at != null && nowMs - at > SESSION_GAP_MS) {
+      return current;
+    }
+    List<String> said = new ArrayList<>();
+    for (int i = history.size() - 1; i >= 0 && said.size() < GROUND_RECENT_USER; i--) {
+      Map<String, String> row = history.get(i);
+      if (row == null || !"user".equals(row.get("role"))) {
+        continue;
+      }
+      String saidText = row.get("text");
+      if (saidText == null || saidText.isBlank()) {
+        continue;
+      }
+      said.add(0, saidText.trim());
+    }
+    said.add(current);
+    return String.join("\n", said);
   }
 
   private static Map<String, String> gapNote(long previousAtMs) {

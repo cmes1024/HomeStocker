@@ -52,7 +52,8 @@ homestocker:
     bucket: homestocker
   expire-notify:
     tmpl-id: ${EXPIRE_SUBSCRIBE_TMPL_ID:X4rf9mfFUtUksbg6hHM1fYS3Cu1nzMX5m9IWbktlj9g}
-    cron: "0 0 8 * * *"
+    # 每分钟扫一次；各家庭按自己的 expire_reminder_hour/minute 命中。填 - 可关闭。
+    cron: "${EXPIRE_NOTIFY_CRON:0 * * * * *}"
   admin:
     # Comma-separated WeChat openids allowed to issue capacity redeem codes.
     openids: ${ADMIN_OPENIDS:${ADMIN_OPENID:}}

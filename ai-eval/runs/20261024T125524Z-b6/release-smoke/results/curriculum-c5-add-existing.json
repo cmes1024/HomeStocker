@@ -1,0 +1,306 @@
+{
+  "id": "curriculum-c5-add-existing",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:55:48.764Z",
+  "mode": "act",
+  "outcome": "改已有鸡蛋和盐的数量，不新开行",
+  "actual": {
+    "dialogue": {
+      "text": "鸡蛋和盐各加一个",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "ref": "P1",
+          "quantity": 9,
+          "use": "item.update"
+        },
+        {
+          "ref": "P2",
+          "quantity": 3,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.update",
+            "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 盐（厨房 / 橱柜）：2袋→3",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+          "已改 盐（厨房 / 橱柜）：2袋→3"
+        ],
+        "lead": "完成 2 项",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→9",
+                "tone": "ok"
+              },
+              {
+                "title": "已改 盐（厨房 / 橱柜）",
+                "subtitle": "2袋→3",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "改好了：鸡蛋 9 个，盐 3 袋。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "已改 鸡蛋（厨房 / 冰箱）",
+              "subtitle": "8个→9",
+              "tone": "ok"
+            },
+            {
+              "title": "已改 盐（厨房 / 橱柜）",
+              "subtitle": "2袋→3",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "",
+        "quantity": 9,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "ref": "P1",
+            "quantity": 9,
+            "use": "item.update"
+          },
+          {
+            "ref": "P2",
+            "quantity": 3,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.update",
+              "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 盐（厨房 / 橱柜）：2袋→3",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+            "已改 盐（厨房 / 橱柜）：2袋→3"
+          ],
+          "lead": "完成 2 项",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "已改 鸡蛋（厨房 / 冰箱）",
+                  "subtitle": "8个→9",
+                  "tone": "ok"
+                },
+                {
+                  "title": "已改 盐（厨房 / 橱柜）",
+                  "subtitle": "2袋→3",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "改好了：鸡蛋 9 个，盐 3 袋。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "已改 鸡蛋（厨房 / 冰箱）",
+                "subtitle": "8个→9",
+                "tone": "ok"
+              },
+              {
+                "title": "已改 盐（厨房 / 橱柜）",
+                "subtitle": "2袋→3",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "",
+          "quantity": 9,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "ref": "P1",
+                "quantity": 9,
+                "use": "item.update"
+              },
+              {
+                "ref": "P2",
+                "quantity": 3,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.update",
+                  "summary": "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 盐（厨房 / 橱柜）：2袋→3",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "已改 鸡蛋（厨房 / 冰箱）：8个→9",
+                "已改 盐（厨房 / 橱柜）：2袋→3"
+              ],
+              "lead": "完成 2 项",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "已改 鸡蛋（厨房 / 冰箱）",
+                      "subtitle": "8个→9",
+                      "tone": "ok"
+                    },
+                    {
+                      "title": "已改 盐（厨房 / 橱柜）",
+                      "subtitle": "2袋→3",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "改好了：鸡蛋 9 个，盐 3 袋。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "已改 鸡蛋（厨房 / 冰箱）",
+                    "subtitle": "8个→9",
+                    "tone": "ok"
+                  },
+                  {
+                    "title": "已改 盐（厨房 / 橱柜）",
+                    "subtitle": "2袋→3",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "",
+              "quantity": 9,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredTool:item.update",
+      "ok": true,
+      "detail": "present"
+    },
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.createMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,162 @@
+{
+  "id": "scene-vinegar-no-place",
+  "status": "pass",
+  "judgedAt": "2026-10-24T11:03:28.731Z",
+  "mode": "act",
+  "outcome": "没说放在哪，先问位置，先不写入",
+  "actual": {
+    "dialogue": {
+      "text": "记一瓶醋",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "ask",
+      "ask": [
+        {
+          "question": "醋放哪儿？厨房橱柜还是别处？",
+          "options": [
+            {
+              "label": "厨房 / 橱柜",
+              "value": "厨房 / 橱柜"
+            },
+            {
+              "label": "厨房 / 冰箱",
+              "value": "厨房 / 冰箱"
+            },
+            {
+              "label": "仓库",
+              "value": "仓库"
+            }
+          ]
+        }
+      ],
+      "probe": null,
+      "calls": [],
+      "draft": {
+        "name": "",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": false
+    },
+    "tools": [],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "ask",
+        "ask": [
+          {
+            "question": "醋放哪儿？厨房橱柜还是别处？",
+            "options": [
+              {
+                "label": "厨房 / 橱柜",
+                "value": "厨房 / 橱柜"
+              },
+              {
+                "label": "厨房 / 冰箱",
+                "value": "厨房 / 冰箱"
+              },
+              {
+                "label": "仓库",
+                "value": "仓库"
+              }
+            ]
+          }
+        ],
+        "probe": null,
+        "calls": [],
+        "draft": {
+          "name": "",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": false
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "ask",
+            "ask": [
+              {
+                "question": "醋放哪儿？厨房橱柜还是别处？",
+                "options": [
+                  {
+                    "label": "厨房 / 橱柜",
+                    "value": "厨房 / 橱柜"
+                  },
+                  {
+                    "label": "厨房 / 冰箱",
+                    "value": "厨房 / 冰箱"
+                  },
+                  {
+                    "label": "仓库",
+                    "value": "仓库"
+                  }
+                ]
+              }
+            ],
+            "probe": null,
+            "calls": [],
+            "draft": {
+              "name": "",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": false
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "forbiddenTool:item.create",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.createMany",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.update",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "forbiddenTool:item.remove",
+      "ok": true,
+      "detail": "absent"
+    },
+    {
+      "name": "mustAsk",
+      "ok": true,
+      "detail": "ask-like"
+    }
+  ],
+  "notes": ""
+}

@@ -1,0 +1,19 @@
+{
+  "id": "user-list-kitchen",
+  "perspective": "user",
+  "title": "理一理：厨房有啥",
+  "tags": [
+    "list"
+  ],
+  "setup": {
+    "fixture": "home-daily"
+  },
+  "prompt": "厨房有啥",
+  "expected": {
+    "outcome": "把厨房里有的东西列出来给人看",
+    "mustProbe": true,
+    "requiredToolsAny": [
+      "item.search"
+    ]
+  }
+}

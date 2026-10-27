@@ -107,7 +107,15 @@ public class DomainTools {
     if (!tagName.isEmpty()) {
       Map<String, Object> tag = TreeMatch.matchTag(ctx.tree, tagName);
       if (tag == null) {
-        return ToolResult.fail("第 " + step + " 步失败：标签「" + tagName + "」不在家庭结构里").build();
+        return ToolResult.fail(
+                "第 "
+                    + step
+                    + " 步失败：标签「"
+                    + tagName
+                    + "」不在家庭结构里；"
+                    + tagHint(ctx)
+                    + "。若家人问的是没挂标签的物品，改用未挂标签筛选，别用这个参数名回答")
+            .build();
       }
       tagId = ToolHelpers.str(tag.get("id"));
     }
@@ -122,22 +130,53 @@ public class DomainTools {
         return ToolResult.fail("第 " + step + " 步失败：maxQuantity 无效").build();
       }
     }
+    String tagged = ToolHelpers.str(call.get("tagged")).trim().toLowerCase(Locale.ROOT);
+    ItemRepository.TagFilter tagFilter = ItemRepository.TagFilter.ANY;
+    if (!tagged.isEmpty()) {
+      if ("untagged".equals(tagged)
+          || "none".equals(tagged)
+          || "无".equals(tagged)
+          || "未挂签".equals(tagged)) {
+        tagFilter = ItemRepository.TagFilter.UNTAGGED;
+      } else if ("tagged".equals(tagged)
+          || "has".equals(tagged)
+          || "有".equals(tagged)
+          || "已挂签".equals(tagged)) {
+        tagFilter = ItemRepository.TagFilter.TAGGED;
+      } else if (!"any".equals(tagged) && !"all".equals(tagged)) {
+        return ToolResult.fail("第 " + step + " 步失败：tagged 只支持 any / untagged / tagged")
+            .build();
+      }
+    }
+    if (tagFilter != ItemRepository.TagFilter.ANY && !tagName.isEmpty()) {
+      return ToolResult.fail("第 " + step + " 步失败：tagName 与 tagged 二选一，别同时给").build();
+    }
     List<ItemRow> list =
         itemsProbe.listItemsCompact(
-            ctx.familyId, spaceId, locationId, tagId, maxQuantity, keywords, 100);
+            ctx.familyId, spaceId, locationId, tagId, maxQuantity, tagFilter, keywords, 100);
     List<Map<String, Object>> capped = new ArrayList<>();
     for (ItemRow row : list) {
       capped.add(itemRowMap(row));
     }
-    String prefix = "查询";
+    String prefix;
     if (maxQuantity != null) {
       prefix = "数量≤" + maxQuantity.stripTrailingZeros().toPlainString();
+    } else if (tagFilter == ItemRepository.TagFilter.UNTAGGED) {
+      prefix = "未挂标签";
+    } else if (tagFilter == ItemRepository.TagFilter.TAGGED) {
+      prefix = "已挂标签";
     } else if (!tagName.isEmpty()) {
       prefix = "标签「" + tagName + "」";
+    } else {
+      prefix = "查询";
     }
     Presentation.PresentationView inv =
         Presentation.buildInventoryPresentation(capped, ctx.tree, prefix, null);
-    return ToolResult.ok(inv.lead()).inventory(capped).build();
+    String lead = inv.lead();
+    if (list.size() >= 100) {
+      lead = lead + "（本次最多 100 行，可能还有未列出的行；全库件数用 item.stats）";
+    }
+    return ToolResult.ok(lead).inventory(capped).build();
   }
 
   private ToolResult activityList(ToolContext ctx, Map<String, Object> call, int step) {
@@ -312,7 +351,8 @@ public class DomainTools {
       }
     } else if ("tag".equals(groupBy)) {
       List<Map<String, Object>> rows = itemRepository.countByTag(ctx.familyId);
-      sb.append(" groupBy=tag（仅统计已挂签物资；无标签物资不计入各标签）");
+      int untagged = itemRepository.countUntagged(ctx.familyId);
+      sb.append(" groupBy=tag（每件可挂多个标签，各桶相加≠全库；未挂签单列一桶）");
       if (rows.isEmpty()) {
         sb.append(" buckets=0");
       } else {
@@ -326,6 +366,8 @@ public class DomainTools {
           buckets.add(Map.of("label", tagName, "value", count));
         }
       }
+      sb.append("\n未挂签=").append(untagged);
+      buckets.add(Map.of("label", "未挂签", "value", (long) untagged));
     } else {
       sb.append(" groupBy=total（全库台账行数，非名称去重种数）");
       buckets.add(Map.of("label", "全库", "value", (long) total));
@@ -403,11 +445,16 @@ public class DomainTools {
     if (call.get("quantity") != null && "0".equals(String.valueOf(call.get("quantity")))) {
       return ToolResult.fail("第 " + step + " 步：新开物资数量不能是 0").build();
     }
+    List<String> wantedTags = tagNames(call.get("tagNames"));
+    ToolResult badTags = unknownTags(ctx, wantedTags, step);
+    if (badTags != null) {
+      return badTags;
+    }
     ToolResult folded = foldCreateIntoExisting(ctx, space, loc, name, call, step);
     if (folded != null) {
       return folded;
     }
-    TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames")));
+    TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, wantedTags);
     String unit = ToolHelpers.str(call.get("unit")).trim();
     if (unit.isEmpty()) {
       unit = inferSharedUnit(ctx.familyId, name);
@@ -486,6 +533,11 @@ public class DomainTools {
       if (row.get("quantity") != null && "0".equals(String.valueOf(row.get("quantity")))) {
         return ToolResult.fail("第 " + step + " 步：第 " + (i + 1) + " 件数量不能是 0").build();
       }
+      List<String> wantedTags = tagNames(row.get("tagNames"));
+      ToolResult badTags = unknownTags(ctx, wantedTags, step);
+      if (badTags != null) {
+        return badTags;
+      }
       ToolResult folded = foldCreateIntoExisting(ctx, space, loc, name, row, step);
       if (folded != null) {
         if (!folded.ok) {
@@ -503,7 +555,7 @@ public class DomainTools {
         }
         continue;
       }
-      TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, tagNames(row.get("tagNames")));
+      TreeMatch.TagResolve tags = TreeMatch.resolveTagIds(ctx.tree, wantedTags);
       String unit = ToolHelpers.str(row.get("unit")).trim();
       if (unit.isEmpty()) {
         unit = inferSharedUnit(ctx.familyId, name);
@@ -581,8 +633,16 @@ public class DomainTools {
     if (call.containsKey("note")) payload.put("note", call.get("note"));
     if (call.containsKey("expireDate")) payload.put("expireDate", call.get("expireDate"));
     if (call.containsKey("productionDate")) payload.put("productionDate", call.get("productionDate"));
-    if (call.get("tagNames") instanceof List<?>) {
-      payload.put("tagIds", TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames"))).tagIds());
+    if (call.get("tagNames") != null) {
+      List<String> wantedTags = tagNames(call.get("tagNames"));
+      // 只有显式给数组（含空数组=清空标签）才动标签；空串/解析不出名字视为没提。
+      if (!wantedTags.isEmpty() || call.get("tagNames") instanceof List<?>) {
+        ToolResult badTags = unknownTags(ctx, wantedTags, step);
+        if (badTags != null) {
+          return badTags;
+        }
+        payload.put("tagIds", TreeMatch.resolveTagIds(ctx.tree, wantedTags).tagIds());
+      }
     }
     if (call.get("spaceName") != null || call.get("locationName") != null) {
       Map<String, Object> space =
@@ -609,16 +669,38 @@ public class DomainTools {
       return ToolResult.fail("第 " + step + " 步失败：" + row.get("name") + " — " + ToolHelpers.msg(res)).build();
     }
     String summary = buildUpdateSummary(row, call);
-    return ToolResult.ok(summary)
-        .wrote(true)
-        .remember(
-            ToolResult.rememberItem(
-                ToolHelpers.str(row.get("itemId")),
-                ToolHelpers.str(row.get("name")),
-                "update",
-                row.get("quantity"),
-                call.containsKey("quantity") ? call.get("quantity") : row.get("quantity")))
-        .build();
+    Map<String, Object> remember =
+        ToolResult.rememberItem(
+            ToolHelpers.str(row.get("itemId")),
+            ToolHelpers.str(row.get("name")),
+            "update",
+            row.get("quantity"),
+            call.containsKey("quantity") ? call.get("quantity") : row.get("quantity"));
+    // 写后把同一行（同 itemId，refs 里就是这一份）就地更新：短号行、卡片、正文分段都用写后的值
+    applyWrittenFields(row, call);
+    return ToolResult.ok(summary).wrote(true).remember(remember).build();
+  }
+
+  /** 只用写成功的入参覆盖已知行，空值不动，避免把没提交的字段清空。 */
+  private static void applyWrittenFields(Map<String, Object> row, Map<String, Object> call) {
+    if (row == null || call == null) {
+      return;
+    }
+    applyField(row, call, "name");
+    applyField(row, call, "unit");
+    applyField(row, call, "note");
+    if (call.get("quantity") != null) {
+      row.put("quantity", call.get("quantity"));
+    }
+    applyField(row, call, "expireDate");
+    applyField(row, call, "productionDate");
+  }
+
+  private static void applyField(Map<String, Object> row, Map<String, Object> call, String key) {
+    String value = ToolHelpers.str(call.get(key));
+    if (!value.isEmpty()) {
+      row.put(key, value);
+    }
   }
 
   private ToolResult itemRemove(ToolContext ctx, Map<String, Object> call, int step) {
@@ -940,6 +1022,8 @@ public class DomainTools {
           .append(HabitSlots.label(h.slot()))
           .append('(')
           .append(h.slot())
+          .append('；')
+          .append(HabitSlots.enforceNote(h.slot()))
           .append(")：")
           .append(h.text());
       if (!defaultSpaceOk) {
@@ -1033,7 +1117,8 @@ public class DomainTools {
       liveFacts.stream().limit(3).forEach(shortBits::add);
     }
     if (shortBits.size() < 2) {
-      shortBits.add("已取回产品说明，请用短句回答家人。");
+      // 摘要会被模型看到，模型正文为空时也可能被当成正文显示：只写事实，不写指令
+      shortBits.add("已取回正文");
     }
     Map<String, Object> knowledge =
         Map.of(
@@ -1115,9 +1200,11 @@ public class DomainTools {
   }
 
   /**
-   * 记入意图：同位置同名已有行则并入数量（多行先收成一条），直接告知，不先 ask。
+   * 记入意图：同位置同名且单位一致时并入数量（多行先收成一条），直接告知，不先 ask。
+   * 单位不一致时不并入、也不挡着：返回 null 让 create 另开一行（同空间允许同名多条），
+   * 否则会写出「斤 + 袋」这种合计数。
    *
-   * @return 已并入的结果；无同名则 null（继续 create）
+   * @return 已并入的结果；无同名或单位不一致则 null（继续 create）
    */
   private ToolResult foldCreateIntoExisting(
       ToolContext ctx,
@@ -1140,21 +1227,27 @@ public class DomainTools {
     if (addUnit.isEmpty()) {
       addUnit = inferSharedUnit(ctx.familyId, name);
     }
+    String existingUnit = "";
+    boolean mixedExisting = false;
     for (ItemRow row : existing) {
       String u = row.unit() == null ? "" : row.unit().trim();
-      if (!addUnit.isEmpty() && !u.isEmpty() && !addUnit.equals(u)) {
-        return ToolResult.fail(
-                "第 "
-                    + step
-                    + " 步：同位置「"
-                    + name
-                    + "」单位不一致（已有 "
-                    + u
-                    + "，本次 "
-                    + addUnit
-                    + "），未合并也未新建")
-            .build();
+      if (u.isEmpty()) {
+        continue;
       }
+      if (existingUnit.isEmpty()) {
+        existingUnit = u;
+      } else if (!existingUnit.equals(u)) {
+        mixedExisting = true;
+        break;
+      }
+    }
+    if (mixedExisting) {
+      return null;
+    }
+    if (addUnit.isEmpty()) {
+      addUnit = existingUnit;
+    } else if (!existingUnit.isEmpty() && !addUnit.equals(existingUnit)) {
+      return null;
     }
 
     BigDecimal before =
@@ -1215,9 +1308,16 @@ public class DomainTools {
     if (call.get("productionDate") != null) {
       payload.put("productionDate", call.get("productionDate"));
     }
-    if (call.get("tagNames") instanceof List<?>) {
-      payload.put(
-          "tagIds", TreeMatch.resolveTagIds(ctx.tree, tagNames(call.get("tagNames"))).tagIds());
+    if (call.get("tagNames") != null) {
+      List<String> wantedTags = tagNames(call.get("tagNames"));
+      ToolResult badTags = unknownTags(ctx, wantedTags, step);
+      if (badTags != null) {
+        return badTags;
+      }
+      // 并入已有行时，空数组表示「没提标签」，不能顺手把原有标签清掉。
+      if (!wantedTags.isEmpty()) {
+        payload.put("tagIds", TreeMatch.resolveTagIds(ctx.tree, wantedTags).tagIds());
+      }
     }
     Map<String, Object> upd =
         ToolHelpers.runService(() -> ctx.itemService.update(payload));
@@ -1273,17 +1373,58 @@ public class DomainTools {
     return q.stripTrailingZeros().toPlainString();
   }
 
+  /**
+   * 标签名入参：schema 是数组，但为兼容历史/手写调用，也接受逗号、顿号、斜杠分隔的字符串。
+   * 以前只认数组，模型按字符串传时会被静默丢掉（物资没挂签，回执却成功）。
+   */
   private static List<String> tagNames(Object raw) {
     List<String> out = new ArrayList<>();
     if (raw instanceof List<?> list) {
       for (Object o : list) {
         String s = ToolHelpers.str(o).trim();
-        if (!s.isEmpty()) {
+        if (!s.isEmpty() && !out.contains(s)) {
+          out.add(s);
+        }
+      }
+      return out;
+    }
+    if (raw instanceof String text) {
+      for (String piece : text.split("[,，、;；/|]")) {
+        String s = piece.trim();
+        if (!s.isEmpty() && !out.contains(s)) {
           out.add(s);
         }
       }
     }
     return out;
+  }
+
+  /** 可用标签名提示，最多列 10 个，避免撑爆回执。 */
+  private static String tagHint(ToolContext ctx) {
+    List<String> available = TreeMatch.allTagNames(ctx.tree);
+    if (available.isEmpty()) {
+      return "本家还没有标签，可用 tag.create 先建";
+    }
+    List<String> shown =
+        available.size() <= 10 ? available : new ArrayList<>(available.subList(0, 10));
+    return "可用标签：" + String.join("、", shown) + (available.size() > shown.size() ? " 等" : "");
+  }
+
+  /** 申报了家庭结构里没有的标签名时直接失败并给候选项，不再静默忽略。 */
+  private static ToolResult unknownTags(ToolContext ctx, List<String> wanted, int step) {
+    List<String> missing = TreeMatch.missingTags(ctx.tree, wanted);
+    if (missing.isEmpty()) {
+      return null;
+    }
+    return ToolResult.fail(
+            "第 "
+                + step
+                + " 步失败：标签「"
+                + String.join("」「", missing)
+                + "」不在家庭结构里；"
+                + tagHint(ctx)
+                + "。没有对应标签就先 tag.create，或本次不带 tagNames")
+        .build();
   }
 
   @SuppressWarnings("unchecked")

@@ -1,0 +1,13 @@
+{
+  "id": "curriculum-c5-add-existing",
+  "perspective": "product",
+  "title": "C5 已有行各加一个",
+  "tags": ["curriculum", "update"],
+  "setup": { "fixture": "home-daily" },
+  "prompt": "鸡蛋和盐各加一个",
+  "expected": {
+    "outcome": "改已有鸡蛋和盐的数量，不新开行",
+    "requiredTools": ["item.update"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.remove"]
+  }
+}

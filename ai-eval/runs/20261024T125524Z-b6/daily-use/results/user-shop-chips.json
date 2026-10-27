@@ -1,0 +1,357 @@
+{
+  "id": "user-shop-chips",
+  "status": "pass",
+  "judgedAt": "2026-10-24T12:56:44.789Z",
+  "mode": "act",
+  "outcome": "薯片记到零食柜，数量对得上",
+  "actual": {
+    "dialogue": {
+      "text": "薯片三袋，零食柜",
+      "history": []
+    },
+    "httpStatus": 200,
+    "act": {
+      "status": "done",
+      "ask": [],
+      "confirm": [],
+      "calls": [
+        {
+          "name": "薯片",
+          "use": "item.search"
+        },
+        {
+          "ref": "P1",
+          "quantity": 3,
+          "use": "item.update"
+        }
+      ],
+      "report": {
+        "executed": [
+          {
+            "use": "item.search",
+            "summary": "查询：找到 1 件",
+            "step": 1
+          },
+          {
+            "use": "item.update",
+            "summary": "已改 薯片（客厅 / 零食柜）：2袋→3",
+            "step": 1
+          }
+        ],
+        "failed": [],
+        "possibleDuplicates": [],
+        "lines": [
+          "查询：找到 1 件",
+          "薯片 · 2袋 · 客厅 / 零食柜",
+          "已改 薯片（客厅 / 零食柜）：2袋→3"
+        ],
+        "lead": "查询：找到 1 件",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "薯片",
+                "subtitle": "2袋",
+                "facts": [
+                  "客厅 / 零食柜"
+                ],
+                "tags": [
+                  "零食"
+                ],
+                "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 薯片（客厅 / 零食柜）",
+                "subtitle": "2袋→3",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "wrote": true,
+        "replanned": null
+      },
+      "lead": "薯片改成3袋了，还在客厅零食柜。",
+      "blocks": [
+        {
+          "cards": [
+            {
+              "title": "薯片",
+              "subtitle": "2袋",
+              "facts": [
+                "客厅 / 零食柜"
+              ],
+              "tags": [
+                "零食"
+              ],
+              "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+            }
+          ]
+        },
+        {
+          "cards": [
+            {
+              "title": "已改 薯片（客厅 / 零食柜）",
+              "subtitle": "2袋→3",
+              "tone": "ok"
+            }
+          ]
+        }
+      ],
+      "draft": {
+        "name": "薯片",
+        "quantity": null,
+        "unit": "",
+        "note": "",
+        "spaceName": "",
+        "locationName": "",
+        "expireDate": "",
+        "productionDate": ""
+      },
+      "focus": null,
+      "wrote": true
+    },
+    "tools": [
+      "item.search",
+      "item.update"
+    ],
+    "envelope": {
+      "ok": true,
+      "data": {
+        "status": "done",
+        "ask": [],
+        "confirm": [],
+        "calls": [
+          {
+            "name": "薯片",
+            "use": "item.search"
+          },
+          {
+            "ref": "P1",
+            "quantity": 3,
+            "use": "item.update"
+          }
+        ],
+        "report": {
+          "executed": [
+            {
+              "use": "item.search",
+              "summary": "查询：找到 1 件",
+              "step": 1
+            },
+            {
+              "use": "item.update",
+              "summary": "已改 薯片（客厅 / 零食柜）：2袋→3",
+              "step": 1
+            }
+          ],
+          "failed": [],
+          "possibleDuplicates": [],
+          "lines": [
+            "查询：找到 1 件",
+            "薯片 · 2袋 · 客厅 / 零食柜",
+            "已改 薯片（客厅 / 零食柜）：2袋→3"
+          ],
+          "lead": "查询：找到 1 件",
+          "blocks": [
+            {
+              "cards": [
+                {
+                  "title": "薯片",
+                  "subtitle": "2袋",
+                  "facts": [
+                    "客厅 / 零食柜"
+                  ],
+                  "tags": [
+                    "零食"
+                  ],
+                  "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+                }
+              ]
+            },
+            {
+              "cards": [
+                {
+                  "title": "已改 薯片（客厅 / 零食柜）",
+                  "subtitle": "2袋→3",
+                  "tone": "ok"
+                }
+              ]
+            }
+          ],
+          "wrote": true,
+          "replanned": null
+        },
+        "lead": "薯片改成3袋了，还在客厅零食柜。",
+        "blocks": [
+          {
+            "cards": [
+              {
+                "title": "薯片",
+                "subtitle": "2袋",
+                "facts": [
+                  "客厅 / 零食柜"
+                ],
+                "tags": [
+                  "零食"
+                ],
+                "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+              }
+            ]
+          },
+          {
+            "cards": [
+              {
+                "title": "已改 薯片（客厅 / 零食柜）",
+                "subtitle": "2袋→3",
+                "tone": "ok"
+              }
+            ]
+          }
+        ],
+        "draft": {
+          "name": "薯片",
+          "quantity": null,
+          "unit": "",
+          "note": "",
+          "spaceName": "",
+          "locationName": "",
+          "expireDate": "",
+          "productionDate": ""
+        },
+        "focus": null,
+        "wrote": true
+      }
+    },
+    "turns": [
+      {
+        "httpStatus": 200,
+        "body": {
+          "ok": true,
+          "data": {
+            "status": "done",
+            "ask": [],
+            "confirm": [],
+            "calls": [
+              {
+                "name": "薯片",
+                "use": "item.search"
+              },
+              {
+                "ref": "P1",
+                "quantity": 3,
+                "use": "item.update"
+              }
+            ],
+            "report": {
+              "executed": [
+                {
+                  "use": "item.search",
+                  "summary": "查询：找到 1 件",
+                  "step": 1
+                },
+                {
+                  "use": "item.update",
+                  "summary": "已改 薯片（客厅 / 零食柜）：2袋→3",
+                  "step": 1
+                }
+              ],
+              "failed": [],
+              "possibleDuplicates": [],
+              "lines": [
+                "查询：找到 1 件",
+                "薯片 · 2袋 · 客厅 / 零食柜",
+                "已改 薯片（客厅 / 零食柜）：2袋→3"
+              ],
+              "lead": "查询：找到 1 件",
+              "blocks": [
+                {
+                  "cards": [
+                    {
+                      "title": "薯片",
+                      "subtitle": "2袋",
+                      "facts": [
+                        "客厅 / 零食柜"
+                      ],
+                      "tags": [
+                        "零食"
+                      ],
+                      "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+                    }
+                  ]
+                },
+                {
+                  "cards": [
+                    {
+                      "title": "已改 薯片（客厅 / 零食柜）",
+                      "subtitle": "2袋→3",
+                      "tone": "ok"
+                    }
+                  ]
+                }
+              ],
+              "wrote": true,
+              "replanned": null
+            },
+            "lead": "薯片改成3袋了，还在客厅零食柜。",
+            "blocks": [
+              {
+                "cards": [
+                  {
+                    "title": "薯片",
+                    "subtitle": "2袋",
+                    "facts": [
+                      "客厅 / 零食柜"
+                    ],
+                    "tags": [
+                      "零食"
+                    ],
+                    "itemId": "a71ddd1e-80c9-4020-afc8-bbe8bfdd03e2"
+                  }
+                ]
+              },
+              {
+                "cards": [
+                  {
+                    "title": "已改 薯片（客厅 / 零食柜）",
+                    "subtitle": "2袋→3",
+                    "tone": "ok"
+                  }
+                ]
+              }
+            ],
+            "draft": {
+              "name": "薯片",
+              "quantity": null,
+              "unit": "",
+              "note": "",
+              "spaceName": "",
+              "locationName": "",
+              "expireDate": "",
+              "productionDate": ""
+            },
+            "focus": null,
+            "wrote": true
+          }
+        }
+      }
+    ]
+  },
+  "checks": [
+    {
+      "name": "requiredToolsAny:item.create|item.update",
+      "ok": true,
+      "detail": "hit"
+    },
+    {
+      "name": "mustProbe",
+      "ok": true,
+      "detail": "probe/search-like"
+    }
+  ],
+  "notes": ""
+}
