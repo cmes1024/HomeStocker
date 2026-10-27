@@ -296,16 +296,20 @@ public class AiActService {
     List<Map<String, Object>> calls = outcome.calls() == null ? List.of() : outcome.calls();
     List<Map<String, Object>> rows = outcome.rows() == null ? List.of() : outcome.rows();
     Map<String, Object> report = outcome.report();
+    boolean wrote = report != null && Boolean.TRUE.equals(report.get("wrote"));
+    boolean hasNavLinks =
+        report != null && report.get("navLinks") instanceof List<?> links && !links.isEmpty();
+    Map<String, Object> present = outcome.present();
+    // 正文里的手写表格只有在别处真出了表格时才删；否则删完只剩一句冒号引子，明细全丢
+    boolean hasTable = rendersTable(wrote || hasNavLinks, present, rows, report);
     String reply = outcome.reply() == null ? "" : outcome.reply().trim();
-    ReplyTableGuard.Result guarded = ReplyTableGuard.strip(reply);
+    ReplyTableGuard.Result guarded = ReplyTableGuard.strip(reply, hasTable);
     if (guarded.stripped()) {
       log.warn("[ai.act] dropped handwritten table in reply");
       reply = guarded.text();
     }
-    boolean wrote = report != null && Boolean.TRUE.equals(report.get("wrote"));
-    Map<String, Object> present = outcome.present();
     Map<String, Object> payload;
-    if (wrote || (report != null && report.get("navLinks") instanceof List<?> links && !links.isEmpty())) {
+    if (wrote || hasNavLinks) {
       payload = buildDonePayload(calls, report, actCtx.focus());
       if (!reply.isEmpty()) {
         payload.put("lead", reply);
@@ -335,6 +339,28 @@ public class AiActService {
       payload.put("calls", calls);
     }
     return payload;
+  }
+
+  /**
+   * 这一轮最终会不会给家人出表格/图。用于决定正文里手写的表格能不能删：
+   * 没有表格卡片可看时删掉，明细就没有别处展示了。
+   */
+  private static boolean rendersTable(
+      boolean wroteOrNav,
+      Map<String, Object> presentSpec,
+      List<Map<String, Object>> rows,
+      Map<String, Object> report) {
+    if (wroteOrNav) {
+      return presentSpec != null && PresentResolver.resolve(presentSpec, rows, report) != null;
+    }
+    if (HabitReply.habitOnly(report)) {
+      return HabitReply.habitsOf(report).size() >= HabitReply.TABLE_MIN;
+    }
+    if (presentSpec != null) {
+      return PresentResolver.resolve(presentSpec, rows, report) != null;
+    }
+    // 没给 present：finishToolDone 会在有查库行时自动补一张 table
+    return !rows.isEmpty();
   }
 
 

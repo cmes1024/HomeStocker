@@ -48,6 +48,31 @@ class ReplyTableGuardTest {
   }
 
   @Test
+  void keepsHandwrittenTableWhenNoCardIsRendered() {
+    // 没有表格卡片可看时删掉表体，只剩「…都在厨房：」，家人就再也看不到明细
+    String text =
+        """
+        今天新增 12 样，都在厨房：
+        牛奶·2盒·冰箱
+        鸡蛋·8个·冰箱""";
+    ReplyTableGuard.Result out = ReplyTableGuard.strip(text, false);
+    assertFalse(out.stripped());
+    assertEquals(text, out.text());
+  }
+
+  @Test
+  void stillStripsWhenCardIsRendered() {
+    String text =
+        """
+        今天新增 2 样，都在厨房：
+        牛奶·2盒·冰箱
+        鸡蛋·8个·冰箱""";
+    ReplyTableGuard.Result out = ReplyTableGuard.strip(text, true);
+    assertTrue(out.stripped());
+    assertEquals("今天新增 2 样，都在厨房：", out.text());
+  }
+
+  @Test
   void twoDotLinesWithoutHeaderAreStripped() {
     String text =
         """

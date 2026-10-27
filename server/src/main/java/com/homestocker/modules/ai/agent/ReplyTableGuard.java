@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 正文里手写的表格不算展示：删掉整块，明细交给 present 表格。
+ * 正文里手写的表格不算展示：有其他表格卡片时就删掉整块，明细交给 present 表格。
  *
  * <p>只认两种形态，避免误伤正常句子：含「名称」「数量」且带 / 或 | 的表头；连续两行以上各带 ≥2 个「·」的表体。
+ *
+ * <p><b>本轮没有表格卡片时不能删</b>：删完只剩「今天新增 12 样，都在厨房：」这种冒号引子，
+ * 明细就彻底没了。是否删由调用方按「会不会出表格」决定。
  */
 public final class ReplyTableGuard {
 
@@ -24,9 +27,20 @@ public final class ReplyTableGuard {
     }
   }
 
+  /** 默认按「本轮有表格卡片」处理，和旧行为一致。 */
   public static Result strip(String text) {
+    return strip(text, true);
+  }
+
+  /**
+   * @param hasTable 本轮是否会渲染表格/图。false 时原样保留，避免把明细删成一句冒号引子。
+   */
+  public static Result strip(String text, boolean hasTable) {
     if (text == null || text.isBlank()) {
       return Result.keep(text == null ? "" : text);
+    }
+    if (!hasTable) {
+      return Result.keep(text);
     }
     String[] lines = text.split("\n", -1);
     int start = headerLine(lines);
