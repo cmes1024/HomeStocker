@@ -47,41 +47,11 @@ public final class ModelCatalog {
               model("kimi-k3", "Kimi K3（可看图）", true, true, true),
               model("kimi-k2.6", "Kimi K2.6（可看图）", true, false, true)),
           provider(
-              "zhipu",
-              "智谱",
-              "https://open.bigmodel.cn/api/paas/v4",
-              "https://open.bigmodel.cn/usercenter/apikeys",
-              // 官方定价页（bigmodel.cn/pricing）：GLM-5.3-Flash 为原生多模态（图片/视频/文件/文本）；
-              // 不收录 glm-5.3：multi-provider-ai-keys 决策已排除「必须额外关闭思考才能返回 JSON」的模型
-              model("glm-5.3-flash", "GLM-5.3 Flash（可看图）", true, true, true),
-              model("glm-4.7-flash", "GLM-4.7 Flash（旧版）", true, false),
-              model("glm-4.5-flash", "GLM-4.5 Flash（旧版）", true, false),
-              model("glm-4v-plus", "GLM-4V Plus（可看图·旧版）", false, false, true)),
-          provider(
-              "qwen",
-              "通义千问",
-              "https://dashscope.aliyuncs.com/compatible-mode/v1",
-              "https://bailian.console.aliyun.com/",
-              // 官方模型列表（help.aliyun.com/zh/model-studio/models）：
-              // qwen3.7-plus / qwen3.8-max 同属文本生成与图像理解；qwen3.8-flash 为文本生成
-              model("qwen3.7-plus", "Qwen3.7 Plus（可看图）", true, true, true),
-              model("qwen3.8-max", "Qwen3.8 Max（可看图）", true, false, true),
-              model("qwen3.8-flash", "Qwen3.8 Flash", true, false),
-              model("qwen-plus", "Qwen Plus（旧版）", true, false),
-              model("qwen-turbo", "Qwen Turbo（旧版）", true, false),
-              model("qwen-vl-plus", "Qwen VL Plus（可看图·旧版）", false, false, true)),
-          provider(
               "stepfun",
               "阶跃星辰",
               "https://api.stepfun.com/v1",
               "https://platform.stepfun.com/",
               model("step-3.5-flash", "Step 3.5 Flash", true, true)),
-          provider(
-              "minimax",
-              "MiniMax",
-              "https://api.minimaxi.com/v1",
-              "https://platform.minimaxi.com/",
-              model("MiniMax-M2", "MiniMax M2", true, true)),
           provider(
               "mimo",
               "小米 MiMo",

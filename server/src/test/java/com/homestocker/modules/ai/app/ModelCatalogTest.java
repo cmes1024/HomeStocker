@@ -37,9 +37,9 @@ class ModelCatalogTest {
 
   @Test
   void clientBaseUrlIsNotPartOfResolve() {
-    ModelCatalog.Resolved resolved = ModelCatalog.resolve("zhipu", "");
-    assertEquals("https://open.bigmodel.cn/api/paas/v4", resolved.baseUrl());
-    assertEquals("glm-5.3-flash", resolved.model());
+    ModelCatalog.Resolved resolved = ModelCatalog.resolve("stepfun", "");
+    assertEquals("https://api.stepfun.com/v1", resolved.baseUrl());
+    assertEquals("step-3.5-flash", resolved.model());
   }
 
   @Test
@@ -55,10 +55,10 @@ class ModelCatalogTest {
   }
 
   @Test
-  void zhipuPathDoesNotGainExtraV1() {
-    String url = ModelCatalog.completionsUrl("https://open.bigmodel.cn/api/paas/v4");
-    assertEquals("https://open.bigmodel.cn/api/paas/v4/chat/completions", url);
-    assertFalse(url.contains("/v4/v1"));
+  void stepfunPathDoesNotGainExtraV1() {
+    String url = ModelCatalog.completionsUrl("https://api.stepfun.com/v1");
+    assertEquals("https://api.stepfun.com/v1/chat/completions", url);
+    assertFalse(url.contains("/v1/v1"));
   }
 
   @Test
@@ -69,7 +69,7 @@ class ModelCatalogTest {
   @Test
   void presetsOmitBaseUrl() {
     var presets = ModelCatalog.clientPresets();
-    assertEquals(7, presets.size());
+    assertEquals(4, presets.size());
     assertTrue(presets.stream().noneMatch(row -> row.containsKey("baseUrl")));
   }
 

@@ -42,11 +42,15 @@
   line-height: 1.45;
 }
 
-.add-btn {
+.text-btn.add-btn {
   flex-shrink: 0;
-  padding-top: 4rpx;
-  font-size: 28rpx;
+  padding: 10rpx 28rpx;
+  border-radius: 999rpx;
+  font-size: 26rpx;
   font-weight: 600;
+  line-height: 1.4;
+  color: #ffffff;
+  background: var(--theme-primary);
 }
 
 .input {
@@ -96,10 +100,30 @@
 }
 
 .badge {
+  display: inline-block;
   margin-left: 10rpx;
-  font-size: 22rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 999rpx;
+  font-size: 20rpx;
   font-weight: 600;
-  color: var(--theme-primary);
+  line-height: 1.6;
+  color: #ffffff;
+  background: var(--theme-primary);
+  vertical-align: 4rpx;
+}
+
+/* 当前使用的模型：左侧色条 + 向右淡出的浅底，避免整行重色块 */
+.row.active {
+  background: linear-gradient(
+    90deg,
+    var(--theme-primary-30) 0%,
+    rgba(255, 255, 255, 0) 46%
+  );
+  box-shadow: inset 6rpx 0 0 var(--theme-primary);
+}
+
+.row.active .row-name {
+  font-weight: 600;
 }
 
 .row-hint {

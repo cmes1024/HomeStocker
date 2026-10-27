@@ -14,14 +14,6 @@ class ModelCatalogVisionTest {
 
   @Test
   void visionModelsResolveWithFlag() {
-    ModelCatalog.Resolved qwen = ModelCatalog.resolve("qwen", "qwen-vl-plus");
-    assertEquals("qwen-vl-plus", qwen.model());
-    assertTrue(qwen.vision());
-
-    ModelCatalog.Resolved zhipu = ModelCatalog.resolve("zhipu", "glm-4v-plus");
-    assertEquals("glm-4v-plus", zhipu.model());
-    assertTrue(zhipu.vision());
-
     ModelCatalog.Resolved dsFlash = ModelCatalog.resolve("deepseek", "deepseek-flash");
     assertEquals("deepseek-flash", dsFlash.model());
     assertTrue(dsFlash.vision());
@@ -31,36 +23,30 @@ class ModelCatalogVisionTest {
     // 官方：Kimi K3 / K2.6 均支持图片输入
     assertTrue(ModelCatalog.resolve("kimi", "kimi-k3").vision());
     assertTrue(ModelCatalog.resolve("kimi", "kimi-k2.6").vision());
-
-    // 官方：GLM-5.3-Flash 原生多模态；qwen3.7-plus / qwen3.8-max 支持图像理解
-    assertTrue(ModelCatalog.resolve("zhipu", "glm-5.3-flash").vision());
-    assertTrue(ModelCatalog.resolve("qwen", "qwen3.7-plus").vision());
-    assertTrue(ModelCatalog.resolve("qwen", "qwen3.8-max").vision());
   }
 
   @Test
   void textModelsAreNotVision() {
     assertFalse(ModelCatalog.resolve("deepseek", "deepseek-chat").vision());
     assertFalse(ModelCatalog.resolve("deepseek", "deepseek-v4-pro").vision());
-    assertFalse(ModelCatalog.resolve("qwen", "qwen3.8-flash").vision());
-    assertFalse(ModelCatalog.resolve("qwen", "qwen-plus").vision());
     assertFalse(ModelCatalog.resolve("mimo", "mimo-v2.6-pro").vision());
+    assertFalse(ModelCatalog.resolve("stepfun", "step-3.5-flash").vision());
   }
 
   @Test
   void unknownModelStillRejected() {
-    assertThrows(ApiException.class, () -> ModelCatalog.resolve("qwen", "qwen-vl-turbo-x"));
-    assertThrows(ApiException.class, () -> ModelCatalog.resolve("qwen", "qwen-vl-plusx"));
-    assertThrows(ApiException.class, () -> ModelCatalog.resolve("not-a-platform", "qwen-vl-plus"));
+    assertThrows(ApiException.class, () -> ModelCatalog.resolve("kimi", "kimi-vl-turbo-x"));
+    assertThrows(ApiException.class, () -> ModelCatalog.resolve("kimi", "kimi-k3x"));
+    assertThrows(ApiException.class, () -> ModelCatalog.resolve("not-a-platform", "kimi-k3"));
   }
 
   @Test
   void isVisionChecksStoredPairs() {
-    assertTrue(ModelCatalog.isVision("qwen", "qwen-vl-plus"));
-    assertTrue(ModelCatalog.isVision("zhipu", "glm-4v-plus"));
-    assertFalse(ModelCatalog.isVision("qwen", "qwen-plus"));
+    assertTrue(ModelCatalog.isVision("kimi", "kimi-k3"));
+    assertTrue(ModelCatalog.isVision("mimo", "mimo-v2.6-flash"));
+    assertFalse(ModelCatalog.isVision("deepseek", "deepseek-v4-pro"));
     assertFalse(ModelCatalog.isVision("deepseek", "deepseek-chat"));
-    assertFalse(ModelCatalog.isVision("qwen", "retired-model"));
+    assertFalse(ModelCatalog.isVision("kimi", "retired-model"));
     assertFalse(ModelCatalog.isVision("unknown", "unknown"));
     assertFalse(ModelCatalog.isVision(null, null));
   }
@@ -68,23 +54,31 @@ class ModelCatalogVisionTest {
   @Test
   void clientPresetsCarryVisionFlag() {
     List<Map<String, Object>> presets = ModelCatalog.clientPresets();
-    Map<String, Object> qwen =
-        presets.stream().filter(p -> "qwen".equals(p.get("id"))).findFirst().orElseThrow();
+    Map<String, Object> kimi =
+        presets.stream().filter(p -> "kimi".equals(p.get("id"))).findFirst().orElseThrow();
     @SuppressWarnings("unchecked")
-    List<Map<String, Object>> models = (List<Map<String, Object>>) qwen.get("models");
-    Map<String, Object> vl =
-        models.stream().filter(m -> "qwen-vl-plus".equals(m.get("id"))).findFirst().orElseThrow();
-    assertEquals(Boolean.TRUE, vl.get("vision"));
-    Map<String, Object> plus =
-        models.stream().filter(m -> "qwen-plus".equals(m.get("id"))).findFirst().orElseThrow();
-    assertEquals(Boolean.FALSE, plus.get("vision"));
+    List<Map<String, Object>> models = (List<Map<String, Object>>) kimi.get("models");
+    Map<String, Object> k3 =
+        models.stream().filter(m -> "kimi-k3".equals(m.get("id"))).findFirst().orElseThrow();
+    assertEquals(Boolean.TRUE, k3.get("vision"));
+
+    Map<String, Object> deepseek =
+        presets.stream().filter(p -> "deepseek".equals(p.get("id"))).findFirst().orElseThrow();
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> dsModels = (List<Map<String, Object>>) deepseek.get("models");
+    Map<String, Object> chat =
+        dsModels.stream()
+            .filter(m -> "deepseek-chat".equals(m.get("id")))
+            .findFirst()
+            .orElseThrow();
+    assertEquals(Boolean.FALSE, chat.get("vision"));
   }
 
   @Test
-  void visionModelsOptOutOfJsonObject() {
-    // capture 与 act 都不给视觉模型强制 response_format，靠 prompt 约束 + repair
-    assertFalse(ModelCatalog.resolve("qwen", "qwen-vl-plus").jsonObject());
-    assertFalse(ModelCatalog.resolve("zhipu", "glm-4v-plus").jsonObject());
+  void jsonObjectFlagFollowsModelConfig() {
+    // 智谱 / 千问下线后，在售视觉模型均允许 response_format；
+    // 这里只保证非视觉模型仍带回 json_object 能力标记
     assertTrue(ModelCatalog.resolve("deepseek", "deepseek-chat").jsonObject());
+    assertTrue(ModelCatalog.resolve("kimi", "kimi-k3").jsonObject());
   }
 }

@@ -145,7 +145,9 @@ Page({
         apiKey,
         label: String(this.data.label || '').trim(),
         provider: provider.id,
-        model: model.id
+        model: model.id,
+        // 新增即切换使用：不再要求用户手动再点一次「设为默认」
+        isDefault: true
       })
       this.setData({ apiKey: '', label: '', acting: false, showAdd: false })
       wx.showToast({ title: copy.ai.keyAdded, icon: 'none' })

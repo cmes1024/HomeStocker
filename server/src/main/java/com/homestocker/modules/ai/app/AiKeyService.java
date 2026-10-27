@@ -178,6 +178,9 @@ public class AiKeyService {
     if (makeDefault) {
       jdbc.update(
           "UPDATE family_ai_keys SET is_default = FALSE WHERE family_id = ?", ctx.familyId());
+      // 新增即生效：会员模型在档时 hosted 仍是默认来源，这里一并把来源切回家庭密钥，
+      // 否则刚加的密钥要再手点一次「设为默认」才会被使用。
+      subscriptionRepository.updateModelSource(ctx.familyId(), "family");
     }
     String id = UUID.randomUUID().toString();
     jdbc.update(

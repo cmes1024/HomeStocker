@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class AiCaptureKeySelectTest {
 
   private static KeyRow familyVision() {
-    return key("k1", "fam-1", "qwen", "qwen-vl-plus");
+    return key("k1", "fam-1", "kimi", "kimi-k3");
   }
 
   private static KeyRow familyText() {
@@ -19,7 +19,7 @@ class AiCaptureKeySelectTest {
   }
 
   private static KeyRow hostedVision() {
-    return key("k3", "", "zhipu", "glm-4v-plus");
+    return key("k3", "", "mimo", "mimo-v2.6-flash");
   }
 
   private static KeyRow hostedText() {
@@ -74,7 +74,7 @@ class AiCaptureKeySelectTest {
         AiCaptureService.visionKeys(
             new ActKeyResolver.Selection(
                 List.of(
-                    familyVision(), hostedVision(), key("k9", "fam-1", "qwen", "qwen-vl-plus")),
+                    familyVision(), hostedVision(), key("k9", "fam-1", "kimi", "kimi-k2.6")),
                 false,
                 false));
     // 家庭视觉密钥排他优先：两把家庭视觉 key 后不再混入 hosted
