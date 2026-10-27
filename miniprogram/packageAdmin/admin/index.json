@@ -1,0 +1,6 @@
+{
+  "navigationBarTitleText": "运营",
+  "usingComponents": {
+    "AppShell": "/components/AppShell/index"
+  }
+}

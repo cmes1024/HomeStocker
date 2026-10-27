@@ -16,7 +16,13 @@ const TTL_STRUCT_MS = 45 * 1000
 
 /** 可缓存的读。未登记的 action 一律做出网写，成功后默认整表清空。 */
 const READ_ACTIONS = {
-  family: { getMyFamily: true, listMyFamilies: true, listMembers: true, page: true },
+  family: {
+    getMyFamily: true,
+    listMyFamilies: true,
+    listMembers: true,
+    page: true,
+    listRedeemCodes: true
+  },
   item: {
     get: true,
     detail: true,

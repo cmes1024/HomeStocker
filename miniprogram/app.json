@@ -26,6 +26,13 @@
       ]
     },
     {
+      "root": "packageAdmin",
+      "name": "admin",
+      "pages": [
+        "admin/index"
+      ]
+    },
+    {
       "root": "packageAiAssist",
       "name": "aiAssist",
       "pages": [

@@ -1,0 +1,239 @@
+<AppShell
+  wx:if="{{theme}}"
+  title="{{headerTitle}}"
+  subtitle="{{adminCopy.sub}}"
+  back="{{true}}"
+  plainBack="{{true}}"
+  primary="{{theme.primary}}"
+  secondary="{{theme.secondary}}"
+  shadow="{{theme.shadow}}"
+  lightHeader="{{theme.lightHeader}}"
+>
+  <loading show="{{loading}}" glass ballColor="{{loadingColors}}" />
+
+  <view class="ops-error" wx:if="{{!loading && error}}">
+    <text class="ops-error-text">{{error}}</text>
+    <view class="ops-retry theme-btn" bind:tap="onRetry">{{common.retry}}</view>
+  </view>
+
+  <view class="page" wx:elif="{{!loading && isAdmin}}">
+    <view class="ops-grid">
+      <view class="ops-cell" hover-class="ops-cell-hover" bind:tap="openIssue">
+        <text class="ops-name">{{adminCopy.issueCell}}</text>
+        <text class="ops-sub">{{adminCopy.issueCellSub}}</text>
+      </view>
+      <view class="ops-cell" hover-class="ops-cell-hover" bind:tap="openPlatformKeys">
+        <text class="ops-name">{{adminCopy.platformCell}}</text>
+        <text class="ops-sub">{{adminCopy.platformCellSub}}</text>
+      </view>
+      <view class="ops-cell" hover-class="ops-cell-hover" bind:tap="onJumpRecords">
+        <text class="ops-name">{{adminCopy.recordsCell}}</text>
+        <text class="ops-sub">{{adminCopy.recordsCellSub}}</text>
+      </view>
+    </view>
+
+    <view class="ops-card">
+      <view class="sum-row">
+        <view class="sum-cell">
+          <text class="sum-num">{{summary.total}}</text>
+          <text class="sum-label">{{adminCopy.sumTotal}}</text>
+        </view>
+        <view class="sum-cell">
+          <text class="sum-num accent">{{summary.used}}</text>
+          <text class="sum-label">{{adminCopy.sumUsed}}</text>
+        </view>
+        <view class="sum-cell">
+          <text class="sum-num">{{summary.unused}}</text>
+          <text class="sum-label">{{adminCopy.sumUnused}}</text>
+        </view>
+        <view class="sum-cell">
+          <text class="sum-num">{{summary.used7d}}</text>
+          <text class="sum-label">{{adminCopy.sumUsed7d}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view id="records" class="rec-hd">
+      <text class="rec-title">{{adminCopy.recordsTitle}}</text>
+      <view class="filter-row">
+        <view
+          wx:for="{{filters}}"
+          wx:key="key"
+          class="filter-chip {{statusFilter === item.key ? 'on' : ''}}"
+          data-key="{{item.key}}"
+          bind:tap="onFilter"
+        >{{item.label}}</view>
+      </view>
+    </view>
+
+    <view class="rec-empty" wx:if="{{!batches.length}}">
+      {{statusFilter ? adminCopy.recordsEmptyFiltered : adminCopy.recordsEmpty}}
+    </view>
+
+    <view class="batch" wx:for="{{batches}}" wx:key="key">
+      <view class="batch-hd" hover-class="ops-cell-hover" data-key="{{item.key}}" bind:tap="onToggleBatch">
+        <view class="batch-main">
+          <view class="batch-title-row">
+            <text class="batch-time">{{item.timeText}}</text>
+            <text class="batch-days">{{item.daysText}}</text>
+            <text class="batch-hosted" wx:if="{{item.hosted}}">{{adminCopy.batchHosted}}</text>
+          </view>
+          <text class="batch-note" wx:if="{{item.noteText}}">{{item.noteText}}</text>
+          <text class="batch-line">{{item.lineText}}</text>
+        </view>
+        <text class="batch-chevron">{{item.open ? '⌃' : '⌄'}}</text>
+      </view>
+
+      <view class="batch-body" wx:if="{{item.open}}">
+        <view class="code-row" wx:for="{{item.rows}}" wx:for-item="row" wx:key="key">
+          <view class="code-main">
+            <text class="code-text">{{row.codeText}}</text>
+            <text class="code-detail" wx:if="{{row.detailText}}">{{row.detailText}}</text>
+          </view>
+          <text class="code-state {{row.used ? 'used' : 'idle'}}">{{row.stateText}}</text>
+        </view>
+        <view class="use-row muted" wx:if="{{item.legacyUnusedText}}">
+          <text class="use-who">{{item.legacyUnusedText}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="page-tail"></view>
+  </view>
+</AppShell>
+
+<view
+  class="issue-mask"
+  wx:if="{{showIssueForm}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closeIssueForm"
+>
+  <view class="issue-card" catch:tap="noop">
+    <view class="issue-title">{{copy.issueModalTitle}}</view>
+    <view class="issue-row">
+      <view class="issue-field issue-field-narrow">
+        <text class="issue-label">{{copy.issueCountLabel}}</text>
+        <input
+          class="issue-input issue-input-count"
+          type="number"
+          value="{{issueCount}}"
+          maxlength="2"
+          placeholder="{{copy.issuePlaceholder}}"
+          bindinput="onIssueCountInput"
+        />
+      </view>
+      <view class="issue-check {{issueHostedModel ? 'on' : ''}}" bind:tap="onToggleIssueHosted">
+        <view class="issue-check-box">
+          <text class="issue-check-tick" wx:if="{{issueHostedModel}}">✓</text>
+        </view>
+        <view class="issue-check-main">
+          <text class="issue-check-label">{{copy.issueHostedLabel}}</text>
+          <text class="issue-check-hint">{{copy.issueHostedHint}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.issueDurationLabel}}</text>
+      <view class="issue-duration-row">
+        <input
+          class="issue-input issue-input-sm"
+          type="number"
+          value="{{issueDurationAmount}}"
+          maxlength="4"
+          placeholder="{{copy.issueDurationPlaceholder}}"
+          bindinput="onIssueDurationInput"
+        />
+        <view class="issue-unit-row">
+          <view
+            class="issue-unit {{issueDurationUnit === 'day' ? 'on' : ''}}"
+            data-unit="day"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitDay}}</view>
+          <view
+            class="issue-unit {{issueDurationUnit === 'month' ? 'on' : ''}}"
+            data-unit="month"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitMonth}}</view>
+          <view
+            class="issue-unit {{issueDurationUnit === 'year' ? 'on' : ''}}"
+            data-unit="year"
+            bind:tap="onIssueUnitPick"
+          >{{copy.issueUnitYear}}</view>
+        </view>
+      </view>
+    </view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.issueNoteLabel}}</text>
+      <input
+        class="issue-input"
+        value="{{issueNote}}"
+        maxlength="40"
+        placeholder="{{copy.issueNotePlaceholder}}"
+        bindinput="onIssueNoteInput"
+      />
+    </view>
+    <view class="issue-error" wx:if="{{issueFormError}}">{{issueFormError}}</view>
+    <view class="issue-actions">
+      <view class="issue-btn issue-btn-ghost" bind:tap="closeIssueForm">{{copy.issueCancel}}</view>
+      <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onIssueCodes">{{copy.issueSubmit}}</view>
+    </view>
+  </view>
+</view>
+
+<view
+  class="issue-mask"
+  wx:if="{{issuedCodes.length}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closeIssued"
+>
+  <view class="issue-card" catch:tap="noop">
+    <view class="issue-title">{{copy.issueResultTitle}}</view>
+    <view class="issue-days" wx:if="{{issuedDaysText}}">{{issuedDaysText}}</view>
+    <view class="issue-code" wx:for="{{issuedCodes}}" wx:key="*this">{{item}}</view>
+    <view class="issue-copy theme-btn" bind:tap="copyIssued">{{copy.issueCopyAll}}</view>
+  </view>
+</view>
+
+<view
+  class="issue-mask"
+  wx:if="{{showPlatformPanel}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closePlatformPanel"
+>
+  <view class="issue-card platform-card" catch:tap="noop">
+    <view class="issue-title">{{copy.platformModalTitle}}</view>
+    <picker mode="selector" range="{{platformProviderNames}}" value="{{platformProviderIndex}}" bindchange="onPlatformProviderChange">
+      <view class="issue-input picker">{{platformProviderNames[platformProviderIndex] || '选择平台'}}</view>
+    </picker>
+    <picker
+      wx:if="{{platformModelNames.length > 1}}"
+      mode="selector"
+      range="{{platformModelNames}}"
+      value="{{platformModelIndex}}"
+      bindchange="onPlatformModelChange"
+    >
+      <view class="issue-input picker">{{platformModelNames[platformModelIndex]}}</view>
+    </picker>
+    <view class="issue-input model-line" wx:else>{{platformModelNames[platformModelIndex] || ''}}</view>
+    <input class="issue-input" password placeholder="{{copy.platformKeyPlaceholder}}" value="{{platformApiKey}}" bindinput="onPlatformKeyInput" />
+    <input class="issue-input" placeholder="{{copy.platformLabelPlaceholder}}" value="{{platformLabel}}" maxlength="20" bindinput="onPlatformLabelInput" />
+    <view class="issue-error" wx:if="{{platformError}}">{{platformError}}</view>
+    <view class="issue-actions">
+      <view class="issue-btn issue-btn-ghost" bind:tap="closePlatformPanel">{{copy.issueCancel}}</view>
+      <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onAddPlatformKey">{{copy.platformAdd}}</view>
+    </view>
+    <view class="platform-empty" wx:if="{{!platformKeys.length}}">{{copy.platformEmpty}}</view>
+    <view class="platform-row" wx:for="{{platformKeys}}" wx:key="_id">
+      <view class="platform-main">
+        <view class="platform-name">{{item.label}}<text wx:if="{{!item.enabled}}"> · 已停用</text></view>
+        <view class="platform-hint">{{item.providerLabel}} · {{item.model}} · {{item.apiKeyMasked}}</view>
+      </view>
+      <view class="platform-actions">
+        <view class="text-link" data-id="{{item._id}}" data-direction="up" bind:tap="onMovePlatformKey">{{copy.platformUp}}</view>
+        <view class="text-link" data-id="{{item._id}}" data-direction="down" bind:tap="onMovePlatformKey">{{copy.platformDown}}</view>
+        <view class="text-link" data-id="{{item._id}}" data-enabled="{{item.enabled}}" bind:tap="onTogglePlatformKey">{{item.enabled ? copy.platformDisable : copy.platformEnable}}</view>
+        <view class="text-link danger" data-id="{{item._id}}" bind:tap="onRemovePlatformKey">{{copy.platformRemove}}</view>
+      </view>
+    </view>
+  </view>
+</view>

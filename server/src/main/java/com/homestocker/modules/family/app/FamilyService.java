@@ -596,7 +596,13 @@ public class FamilyService {
     for (int i = 0; i < count; i++) {
       String plain = generatePlainCode();
       redeemCodeRepository.insert(
-          CapacityPlans.hashCode(plain), productId, days, product.planId(), hostedModel, note);
+          CapacityPlans.hashCode(plain),
+          productId,
+          days,
+          product.planId(),
+          hostedModel,
+          note,
+          maskPlainCode(plain));
       codes.add(formatPlainCode(plain));
     }
     Map<String, Object> out = new LinkedHashMap<>();
@@ -607,6 +613,77 @@ public class FamilyService {
     out.put("count", count);
     out.put("codes", codes);
     return out;
+  }
+
+  /**
+   * 运营：兑换码发放与核销记录。只读，仅发码管理员可用。
+   *
+   * <p>库里只存 code_hash，明文发完即弃，故不返回码本身；未使用的码也无法逐张标识。
+   */
+  public Map<String, Object> listRedeemCodes(Map<String, Object> body) {
+    if (!entitlementService.isCapacityAdmin(openid())) {
+      throw ApiException.of(ErrorCodes.FORBIDDEN, "无权限");
+    }
+    String status = str(body.get("status")).trim().toLowerCase();
+    if (!"unused".equals(status) && !"used".equals(status) && !"revoked".equals(status)) {
+      status = "";
+    }
+    int limit = 100;
+    if (body.get("limit") != null) {
+      try {
+        limit = Integer.parseInt(String.valueOf(body.get("limit")));
+      } catch (NumberFormatException e) {
+        limit = 100;
+      }
+    }
+    limit = Math.max(1, Math.min(limit, 200));
+
+    List<Map<String, Object>> items = new ArrayList<>();
+    for (RedeemCodeRepository.AdminRedeemRow row :
+        redeemCodeRepository.listForAdmin(status, limit)) {
+      Map<String, Object> m = new LinkedHashMap<>();
+      m.put("product", row.product());
+      m.put("days", row.days());
+      m.put("planId", row.planId());
+      m.put("status", row.status());
+      m.put("hostedModel", row.hostedModel());
+      m.put("createdAt", TimeJson.toEpochMs(row.createdAt()));
+      m.put("usedAt", TimeJson.toEpochMs(row.usedAt()));
+      m.put("familyName", row.familyName() == null ? "" : row.familyName());
+      m.put("familyIdShort", shortId(row.usedByFamilyId()));
+      m.put("usedByName", row.nickname() == null ? "" : row.nickname());
+      m.put("note", row.note() == null ? "" : row.note());
+      m.put("codeMask", row.codeMask() == null ? "" : row.codeMask());
+      items.add(m);
+    }
+
+    Map<String, Long> counts = redeemCodeRepository.countByStatus();
+    long unused = counts.getOrDefault("unused", 0L);
+    long used = counts.getOrDefault("used", 0L);
+    long revoked = counts.getOrDefault("revoked", 0L);
+    long used7d =
+        redeemCodeRepository.countUsedSince(
+            new Timestamp(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7)));
+
+    Map<String, Object> summary = new LinkedHashMap<>();
+    summary.put("total", unused + used + revoked);
+    summary.put("unused", unused);
+    summary.put("used", used);
+    summary.put("revoked", revoked);
+    summary.put("used7d", used7d);
+
+    Map<String, Object> out = new LinkedHashMap<>();
+    out.put("items", items);
+    out.put("summary", summary);
+    return out;
+  }
+
+  /** 对外只给 id 前 8 位，够人工区分即可。 */
+  private static String shortId(String id) {
+    if (id == null || id.isBlank()) {
+      return "";
+    }
+    return id.length() <= 8 ? id : id.substring(0, 8);
   }
 
   @Transactional
@@ -705,5 +782,10 @@ public class FamilyService {
   private static String formatPlainCode(String plain) {
     // XXXX-XXXX-XXXX
     return plain.substring(0, 4) + "-" + plain.substring(4, 8) + "-" + plain.substring(8, 12);
+  }
+
+  /** 展示用掩码：XXXX-****-XXXX。缺中间 4 位，仅供人工对码，不能用于兑换。 */
+  private static String maskPlainCode(String plain) {
+    return plain.substring(0, 4) + "-****-" + plain.substring(8, 12);
   }
 }

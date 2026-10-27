@@ -98,6 +98,11 @@ public class FamilyController {
     return ApiResponse.success(familyService.issueCodes(body == null ? Map.of() : body));
   }
 
+  @PostMapping("/listRedeemCodes")
+  public ApiResponse<?> listRedeemCodes(@RequestBody(required = false) Map<String, Object> body) {
+    return ApiResponse.success(familyService.listRedeemCodes(body == null ? Map.of() : body));
+  }
+
   @PostMapping("/leave")
   public ApiResponse<?> leave() {
     return ApiResponse.success(familyService.leave());
