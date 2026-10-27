@@ -133,6 +133,15 @@
   box-sizing: border-box;
 }
 
+.input.textarea {
+  width: 100%;
+  height: 132rpx;
+  min-height: 132rpx;
+  line-height: 1.45;
+  padding: 12rpx 24rpx;
+  font-size: 28rpx;
+}
+
 .qty-row {
   display: flex;
   gap: 20rpx;

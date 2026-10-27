@@ -4,6 +4,8 @@ const { ensureSession } = require('../../utils/session')
 const { bindThemeToPage, setAppFamily } = require('../../utils/theme')
 const copy = require('../../utils/copy')
 
+const DAY_MS = 24 * 3600 * 1000
+
 const STATUS_FILTERS = [
   { key: '', label: copy.admin.filterAll },
   { key: 'used', label: copy.admin.filterUsed },
@@ -72,13 +74,22 @@ function groupBatches(items, statusFilter) {
     const codeText = row.codeMask || '—'
     if (row.status === 'used') {
       batch.used += 1
+      // 到期 ≈ 兑换时刻 + 该码天数；家庭若有剩余时长会顺延，这里只反映这张码本身带来的时长
+      const usedMs = Number(row.usedAt)
+      const expireMs = usedMs > 0 && row.days > 0 ? usedMs + row.days * DAY_MS : 0
       batch.rows.push({
         key: `${key}-u${batch.used}`,
         codeText,
         used: true,
         order: 0,
         stateText: copy.admin.stateUsed,
-        detailText: [formatTime(row.usedAt), whoText(row)].filter(Boolean).join(' · ')
+        detailText: [
+          formatTime(row.usedAt),
+          whoText(row),
+          expireMs ? copy.admin.expireAt(formatTime(expireMs)) : ''
+        ]
+          .filter(Boolean)
+          .join(' · ')
       })
     } else if (row.status === 'revoked') {
       batch.revoked += 1
@@ -99,7 +110,7 @@ function groupBatches(items, statusFilter) {
           used: false,
           order: 1,
           stateText: copy.admin.stateUnused,
-          detailText: ''
+          detailText: row.days > 0 ? copy.admin.afterRedeem(row.days) : ''
         })
       } else {
         // 掩码之前发放的旧记录，无法逐张标识，按张数合并

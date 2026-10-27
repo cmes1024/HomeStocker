@@ -532,6 +532,20 @@
   font-weight: 500;
 }
 
+.expire-row-side {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.expire-row-remove {
+  padding: 8rpx 12rpx;
+  margin-right: -12rpx;
+  font-size: 24rpx;
+  color: #fa5151;
+}
+
 .space-chips {
   display: flex;
   flex-wrap: wrap;

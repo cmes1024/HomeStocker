@@ -67,7 +67,7 @@
 .nav-inner {
   display: flex;
   align-items: center;
-  padding-left: 50rpx;
+  padding-left: 32rpx;
   box-sizing: border-box;
 }
 

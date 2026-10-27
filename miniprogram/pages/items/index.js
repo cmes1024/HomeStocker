@@ -209,6 +209,7 @@ Page({
     sheetKind: '',
     expireSheetLoading: false,
     expireSheetError: '',
+    removingExpire: false,
     expireList: [],
     spaceLoading: false,
     pageColHeight: 0,
@@ -829,16 +830,18 @@ Page({
     this.loadExpireSheetList()
   },
 
-  async loadExpireSheetList() {
+  async loadExpireSheetList(silent) {
     try {
       const { list } = await listExpiringItems({ limit: 50 })
       const rows = (list || []).map((item) => {
         const place = [item.spaceName, item.locationName].filter(Boolean).join('-')
+        const days = daysUntilExpire(item.expireDate)
         return {
           _id: item._id,
           name: String(item.name || '').trim() || '物品',
           place,
           dueLabel: dueLabel(item.expireDate),
+          expired: days != null && days < 0,
           expireDate: item.expireDate || '',
           spaceId: item.spaceId || '',
           spaceName: item.spaceName || '',
@@ -856,11 +859,52 @@ Page({
       if (top) this.applyExpireBanner(top, rows.length)
       else this.setData({ expireBanner: null })
     } catch (e) {
+      if (silent) return
       this.setData({
         expireSheetLoading: false,
         expireSheetError: (e && e.message) || copy.items.expiringSheetFail
       })
     }
+  },
+
+  /** 弹框里直接删掉已过期物品：二次确认 → item.remove → 本地移除 + 静默刷新首页与角标。 */
+  async onRemoveExpireItem(e) {
+    if (this.data.removingExpire) return
+    const id = e.currentTarget.dataset.id
+    if (!id) return
+    const confirm = await new Promise((resolve) => {
+      wx.showModal({
+        title: copy.items.removeTitle,
+        content: copy.items.removeContent,
+        confirmText: copy.items.removeConfirm,
+        confirmColor: '#FA5151',
+        success: (res) => resolve(!!res.confirm)
+      })
+    })
+    if (!confirm) return
+
+    this.setData({ removingExpire: true })
+    let ok = true
+    try {
+      await callItem('remove', { itemId: id })
+      wx.showToast({ title: copy.items.removedToast, icon: 'success' })
+    } catch (err) {
+      // 已被家人删掉：按成功处理，本地照样移除
+      if (!err || err.code !== 'NOT_FOUND') {
+        ok = false
+        wx.showToast({ title: (err && err.message) || copy.common.opFailed, icon: 'none' })
+      }
+    }
+    this.setData({ removingExpire: false })
+    if (!ok) return
+
+    const rows = (this.data.expireList || []).filter((it) => it && it._id !== id)
+    this.setData({
+      expireList: rows,
+      expireSheetError: rows.length ? '' : copy.items.expiringSheetEmpty
+    })
+    this.loadExpireSheetList(true)
+    this.loadHomeBoard({ silent: true })
   },
 
   onExpireRowTap(e) {

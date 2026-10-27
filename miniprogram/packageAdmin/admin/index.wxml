@@ -81,7 +81,7 @@
           <text class="batch-note" wx:if="{{item.noteText}}">{{item.noteText}}</text>
           <text class="batch-line">{{item.lineText}}</text>
         </view>
-        <text class="batch-chevron">{{item.open ? '⌃' : '⌄'}}</text>
+        <view class="batch-chevron {{item.open ? 'up' : ''}}"></view>
       </view>
 
       <view class="batch-body" wx:if="{{item.open}}">

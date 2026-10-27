@@ -188,10 +188,21 @@
   line-height: 1.35;
 }
 
+/* 用边框画 chevron，避免 Unicode 箭头字符在不同机型上变形 */
 .batch-chevron {
-  font-size: 28rpx;
-  color: rgba(26, 26, 26, 0.35);
-  line-height: 1;
+  flex-shrink: 0;
+  width: 16rpx;
+  height: 16rpx;
+  margin-top: -8rpx;
+  border-right: 3rpx solid rgba(26, 26, 26, 0.35);
+  border-bottom: 3rpx solid rgba(26, 26, 26, 0.35);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease, margin-top 0.18s ease;
+}
+
+.batch-chevron.up {
+  margin-top: 8rpx;
+  transform: rotate(-135deg);
 }
 
 .batch-body {

@@ -236,7 +236,15 @@
           <text class="expire-row-name">{{item.name}}</text>
           <text class="expire-row-place" wx:if="{{item.place}}">{{item.place}}</text>
         </view>
-        <text class="expire-row-due" style="color: {{theme.themeColor}};">{{item.dueLabel}}</text>
+        <view class="expire-row-side">
+          <text class="expire-row-due" style="color: {{theme.themeColor}};">{{item.dueLabel}}</text>
+          <view
+            class="expire-row-remove"
+            wx:if="{{item.expired}}"
+            data-id="{{item._id}}"
+            catch:tap="onRemoveExpireItem"
+          >删除</view>
+        </view>
       </view>
     </scroll-view>
   </view>

@@ -280,7 +280,6 @@ Page({
       if (prefill.expireDate) patch.expireDate = prefill.expireDate
       if (prefill.productionDate) patch.productionDate = prefill.productionDate
     }
-    this.lastLocalPath = ''
     this.touched = {}
     this.setData(patch)
     if (item) this.hydrateImageSlots()
@@ -527,7 +526,6 @@ Page({
       this.setData({
         imageSlots: (this.data.imageSlots || []).concat(added).slice(0, MAX_ITEM_IMAGES)
       })
-      this.lastLocalPath = paths[paths.length - 1]
     } catch (e) {
       if (e && (e.errMsg || '').indexOf('cancel') >= 0) return
       if (e && e.code === 'NO_IMAGE') return
@@ -539,21 +537,35 @@ Page({
     const idx = Number(e.currentTarget.dataset.index)
     const slots = (this.data.imageSlots || []).slice()
     if (idx < 0 || idx >= slots.length) return
-    const removed = slots[idx]
     slots.splice(idx, 1)
     this.setData({ imageSlots: slots })
-    if (removed && removed.localPath && removed.localPath === this.lastLocalPath) {
-      this.lastLocalPath = ''
-    }
   },
 
-  /** 识别用图：优先最近一次新选/新拍的本地图；没有则退回第一张本地图，再退回第一张槽位。 */
-  pickCaptureSlot(slots) {
-    if (this.lastLocalPath) {
-      const hit = slots.find((s) => s.localPath === this.lastLocalPath)
-      if (hit) return hit
-    }
-    return slots.find((s) => s.localPath) || slots[0] || null
+  /**
+   * 已有图片时选识别哪一张：单张给「识别当前图片」，多张逐张列出；
+   * 槽位未满（< 3 张）时额外给「换一张图片识别」。
+   *
+   * @returns {Promise<{index:number}|{pickNew:true}|null>} null 表示取消
+   */
+  askCaptureSource(slots) {
+    const list = slots || []
+    const canAddMore = list.length < MAX_ITEM_IMAGES
+    const items =
+      list.length === 1
+        ? [copy.edit.captureUseCurrent]
+        : list.map((_, i) => copy.edit.captureNth(i + 1))
+    const slotChoices = items.length
+    if (canAddMore) items.push(copy.edit.capturePickNew)
+    return new Promise((resolve) => {
+      wx.showActionSheet({
+        itemList: items,
+        success: (res) => {
+          const i = res.tapIndex
+          resolve(i >= 0 && i < slotChoices ? { index: i } : { pickNew: true })
+        },
+        fail: () => resolve(null)
+      })
+    })
   },
 
   /**
@@ -564,7 +576,13 @@ Page({
   async onCapturePrefill() {
     if (this.data.capturing) return
     const slots = this.data.imageSlots || []
-    let slot = this.pickCaptureSlot(slots)
+    let slot = null
+    if (slots.length) {
+      // 已有图时先选识别哪一张（满 3 张也能指定），或换一张新的来认
+      const choice = await this.askCaptureSource(slots)
+      if (!choice) return
+      if (!choice.pickNew) slot = slots[choice.index] || null
+    }
     if (!slot) {
       try {
         const paths = await chooseLocalImages(1)
@@ -577,7 +595,6 @@ Page({
           localPath: path
         }
         this.setData({ imageSlots: slots.concat([added]) })
-        this.lastLocalPath = path
         slot = added
       } catch (e) {
         if (e && (e.code === 'NO_IMAGE' || (e.errMsg || '').indexOf('cancel') >= 0)) return

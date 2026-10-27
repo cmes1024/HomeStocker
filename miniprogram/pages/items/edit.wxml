@@ -16,6 +16,13 @@
     ballColor="{{loadingColors}}"
   />
 
+  <loading
+    show="{{capturing}}"
+    text="{{copy.captureLoading}}"
+    glass
+    ballColor="{{loadingColors}}"
+  />
+
   <block wx:if="{{!loading}}">
     <view class="edit-page">
       <scroll-view class="slip" scroll-y enhanced show-scrollbar="{{false}}">
@@ -159,14 +166,15 @@
 
         <view class="field last">
           <view class="label">{{copy.labelNote}}</view>
-          <input
-            class="input"
+          <textarea
+            class="input textarea"
             placeholder="{{copy.notePlaceholder}}"
             placeholder-class="input-placeholder"
-            placeholder-style="color: rgba(26, 26, 26, 0.35);"
             value="{{note}}"
             bindinput="onNote"
             maxlength="100"
+            show-confirm-bar="{{false}}"
+            cursor-spacing="40"
           />
         </view>
 
