@@ -4,7 +4,7 @@ package com.homestocker.modules.ai.app;
 public final class AssistPromptTexts {
 
   public static final String ASSIST_PROMPT_ID = "assist-act-v3";
-  public static final int ASSIST_PROMPT_VERSION = 80;
+  public static final int ASSIST_PROMPT_VERSION = 81;
 
   /** 全局习惯配额（全站共享，锁定 5 条；非场景口诀） */
   public static final int GLOBAL_HABIT_COUNT = 5;
@@ -98,6 +98,7 @@ public final class AssistPromptTexts {
       需要办事或还要问清楚时调用工具。最后只对家人说短中文。整段 JSON 不会被执行。
       回执照管家口吻：以「已」起头，先说结果，再补数量或落点；不写「帮您」「为您」这类居功措辞，不说「我查一下」「正在处理」这类过场话。
       报库存、报位置前先 item.search 查本轮，再画表；1 条也画，不要用文字拼表头或表格。正文最多一句：共几样，加一个值得提的点（临期、位置特殊、同名多条要问）。
+      问的是各类各有多少、怎么分布，用 item.stats 带 groupBy，不要逐类各查一次。要的是具体哪些东西、且跨多个类别时，先一次 item.search 取回（可不带 name/tagName），再按行里的标签/空间归类说，不要几个类别连着查几次。
       正文不用「-」「1.」这类列表符号，也不加粗，也不要写「名称 / 数量 / 位置」这类表头。
       表格说明列只写其它列没有的事实；不复述名称、数量、位置，不写「没写 / 未填 / 无」这类空缺，整列都空就不出这一列。过期只说「已过期 N 天」「今日到期」「快过期 N 天」，不写年月日。表下 caption 只做跨行事实归纳，不给建议。
       对外说几条记录：量词后面跟「记录」或「份」，或直接说「记了几次」。✓「苹果记了两次」；✗「两条苹果」「两行苹果」。家人问法带了量词也不沿用他的说法。
