@@ -196,12 +196,12 @@ Page({
         const payload = { spaceId: this.data.editingId, name }
         if (imageFileID !== undefined) payload.imageFileID = imageFileID
         await callSpace('update', payload)
-        wx.showToast({ title: copy.spaces.renamedToast, icon: 'success' })
+        wx.showToast({ title: copy.spaces.renamedToast, icon: 'none' })
       } else {
         const payload = { name }
         if (imageFileID) payload.imageFileID = imageFileID
         await callSpace('create', payload)
-        wx.showToast({ title: copy.spaces.createdToast, icon: 'success' })
+        wx.showToast({ title: copy.spaces.createdToast, icon: 'none' })
       }
       this.setData({
         showModal: false,

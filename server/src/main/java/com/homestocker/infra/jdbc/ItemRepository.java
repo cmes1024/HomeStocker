@@ -223,6 +223,20 @@ public class ItemRepository {
     return hydrateAll(jdbc.query(sql.toString(), BASE_ROW, args.toArray()));
   }
 
+  /** 精确取某一天到期的物资：临期提醒按家庭配置的「提前天数」算目标日后用它取候选。 */
+  public List<ItemRow> listByExpireDate(String familyId, String ymd) {
+    return hydrateAll(
+        jdbc.query(
+            """
+            SELECT * FROM items
+            WHERE family_id = ? AND expire_date = CAST(? AS date)
+            ORDER BY created_at ASC, id ASC
+            """,
+            BASE_ROW,
+            familyId,
+            ymd));
+  }
+
   public List<ItemRow> listExpiring(String familyId, String windowEndYmd, int limit) {
     return hydrateAll(
         jdbc.query(

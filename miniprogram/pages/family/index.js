@@ -42,6 +42,18 @@ function themeColor(themeOrColor) {
     : '#FF5D00'
 }
 
+/** 解析后端下发的整数字段；非法或越界时回落到默认值，避免脏数据渲染成怪时间。 */
+function pickInt(value, min, max, fallback) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return fallback
+  const v = Math.round(n)
+  return v >= min && v <= max ? v : fallback
+}
+
+function formatHm(hour, minute) {
+  return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`
+}
+
 function tintSvg(svg, color) {
   const fill = themeColor(color)
   return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(
@@ -161,7 +173,10 @@ Page({
     profileDraftAvatar: '',
     profileDraftInitial: '家',
     profilePendingPath: '',
-    reminderEnabled: true,
+    reminderButtonText: '',
+    reminderDraft: { enabled: true, days: 3, hour: 8, minute: 0 },
+    reminderTime: '08:00',
+    reminderDayOptions: copy.family.reminderDayOptions,
     keyIcon: '',
     editIcon: '',
     aiIcon: '',
@@ -336,7 +351,7 @@ Page({
         ...this.syncCodeDisplay(family, codeVisible),
         ...this.buildCapacityTexts(family),
         headerTitle: family.name || '家庭',
-        reminderEnabled: family.expireReminderEnabled !== false
+        ...this.reminderView(family)
       })
     } catch (e) {
       if (e.code === 'NO_FAMILY') {
@@ -388,7 +403,7 @@ Page({
       ...this.buildCapacityTexts(family),
       headerTitle: family.name || '家庭',
       loading: false,
-      reminderEnabled: family.expireReminderEnabled !== false
+      ...this.reminderView(family)
     })
   },
 
@@ -403,7 +418,7 @@ Page({
     if (!code) return
     wx.setClipboardData({
       data: code,
-      success: () => wx.showToast({ title: copy.family.inviteCopied, icon: 'success' })
+      success: () => wx.showToast({ title: copy.family.inviteCopied, icon: 'none' })
     })
   },
 
@@ -439,7 +454,12 @@ Page({
 
   closeSheet() {
     if (!this.data.sheetShow) return
-    if (this.data.acting && this.data.sheetKind === 'profile') return
+    if (
+      this.data.acting &&
+      (this.data.sheetKind === 'profile' || this.data.sheetKind === 'reminder')
+    ) {
+      return
+    }
     this.setData({ sheetShow: false, sheetKind: '', profilePendingPath: '' })
   },
 
@@ -447,7 +467,8 @@ Page({
     const heights = {
       mood: '56vh',
       members: '52vh',
-      profile: '48vh'
+      profile: '48vh',
+      reminder: '60vh'
     }
     this.setData({
       sheetKind: kind,
@@ -525,36 +546,83 @@ Page({
     this.openSheet('mood')
   },
 
-  onTogglePush(e) {
-    const next = !!(e.detail && e.detail.value)
-    this.applyExpireReminder(next)
+  reminderView(family) {
+    const enabled = !!family && family.expireReminderEnabled !== false
+    const hour = pickInt(family && family.expireReminderHour, 0, 23, 8)
+    const minute = pickInt(family && family.expireReminderMinute, 0, 59, 0)
+    return {
+      reminderButtonText: copy.family.reminderButton(enabled, hour, minute)
+    }
   },
 
-  async applyExpireReminder(next) {
-    const current = this.data.family && this.data.family.expireReminderEnabled !== false
-    if (this.data.acting || !this.data.family) {
-      this.setData({ reminderEnabled: !!current })
-      return
-    }
-    if (next === current) return
-    this.setData({ acting: true, reminderEnabled: next })
+  openReminderSheet() {
+    if (this.data.acting || !this.data.family) return
+    const family = this.data.family
+    const days = copy.family.reminderDayOptions.some(
+      (opt) => opt.value === family.expireReminderDays
+    )
+      ? family.expireReminderDays
+      : 3
+    const hour = pickInt(family.expireReminderHour, 0, 23, 8)
+    const minute = pickInt(family.expireReminderMinute, 0, 59, 0)
+    this.setData({
+      reminderDraft: {
+        enabled: family.expireReminderEnabled !== false,
+        days,
+        hour,
+        minute
+      },
+      reminderTime: formatHm(hour, minute)
+    })
+    this.openSheet('reminder')
+  },
+
+  onReminderToggle(e) {
+    this.setData({ 'reminderDraft.enabled': !!(e.detail && e.detail.value) })
+  },
+
+  onPickReminderDays(e) {
+    if (!this.data.reminderDraft.enabled) return
+    const days = Number(e.currentTarget.dataset.days)
+    if (!Number.isFinite(days)) return
+    this.setData({ 'reminderDraft.days': days })
+  },
+
+  onPickReminderTime(e) {
+    if (!this.data.reminderDraft.enabled) return
+    const [h, m] = String((e.detail && e.detail.value) || '').split(':')
+    const hour = Number(h)
+    const minute = Number(m)
+    if (!Number.isFinite(hour) || !Number.isFinite(minute)) return
+    this.setData({
+      reminderDraft: { ...this.data.reminderDraft, hour, minute },
+      reminderTime: formatHm(hour, minute)
+    })
+  },
+
+  /** 弹框内一次性保存：只发一次请求，避免边点边打接口。 */
+  async saveReminder() {
+    if (this.data.acting || !this.data.family) return
+    const draft = this.data.reminderDraft
+    this.setData({ acting: true })
     try {
-      const family = await callFamily('updateExpireReminder', { enabled: next })
+      const family = await callFamily('updateExpireReminder', {
+        enabled: !!draft.enabled,
+        days: draft.days,
+        hour: draft.hour,
+        minute: draft.minute
+      })
       setAppFamily(family)
       this.setData({
         family,
         acting: false,
-        reminderEnabled: family.expireReminderEnabled !== false
+        sheetShow: false,
+        sheetKind: '',
+        ...this.reminderView(family)
       })
-      wx.showToast({
-        title: next ? copy.family.reminderOn : copy.family.reminderOff,
-        icon: 'none'
-      })
+      wx.showToast({ title: copy.family.reminderSaved, icon: 'none' })
     } catch (e) {
-      this.setData({
-        acting: false,
-        reminderEnabled: current
-      })
+      this.setData({ acting: false })
       wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
     }
   },
@@ -648,7 +716,7 @@ Page({
     wx.setClipboardData({
       data: text,
       success: () => {
-        wx.showToast({ title: copy.family.issueCopied, icon: 'success' })
+        wx.showToast({ title: copy.family.issueCopied, icon: 'none' })
       }
     })
   },
@@ -783,7 +851,7 @@ Page({
         model: model.id
       })
       this.setData({ acting: false, platformApiKey: '', platformLabel: '' })
-      wx.showToast({ title: copy.family.platformAdded, icon: 'success' })
+      wx.showToast({ title: copy.family.platformAdded, icon: 'none' })
       await this.loadPlatformKeys()
     } catch (e) {
       this.setData({ acting: false, platformError: e.message || copy.common.opFailed })
@@ -921,7 +989,7 @@ Page({
       const family = await callFamily('create', { name })
       setAppFamily(family)
       this.setData({ showModal: false, modalValue: '', acting: false })
-      wx.showToast({ title: '已创建', icon: 'success' })
+      wx.showToast({ title: copy.family.createdToast, icon: 'none' })
       await this.load()
     } catch (e) {
       this.setData({ acting: false, modalError: e.message || '创建失败' })
@@ -961,7 +1029,7 @@ Page({
         patch.headerTitle = family.name || '家庭'
       }
       this.setData(patch)
-      wx.showToast({ title: copy.family.renamedToast, icon: 'success' })
+      wx.showToast({ title: copy.family.renamedToast, icon: 'none' })
     } catch (e) {
       this.setData({ acting: false, modalError: e.message || copy.common.opFailed })
     }
@@ -979,7 +1047,7 @@ Page({
       const family = await callFamily('join', { inviteCode })
       setAppFamily(family)
       this.setData({ showModal: false, modalValue: '', acting: false })
-      wx.showToast({ title: '已加入', icon: 'success' })
+      wx.showToast({ title: copy.family.joinedToast, icon: 'success' })
       await this.load()
     } catch (e) {
       let msg = e.message || '加入失败'
@@ -1005,7 +1073,7 @@ Page({
         })
       }
       this.setData({ acting: false, switching: false })
-      wx.showToast({ title: '已切换', icon: 'success' })
+      wx.showToast({ title: copy.family.switchedToast, icon: 'none' })
     } catch (err) {
       this.setData({ acting: false, switching: false })
       wx.showToast({ title: err.message || '切换失败', icon: 'none' })
@@ -1026,7 +1094,7 @@ Page({
         ...this.syncCodeDisplay(family),
         headerTitle: family.name || '家庭'
       })
-      wx.showToast({ title: '已更新氛围', icon: 'success' })
+      wx.showToast({ title: copy.family.moodUpdatedToast, icon: 'none' })
     } catch (e) {
       wx.showToast({ title: e.message || '设置失败', icon: 'none' })
     } finally {

@@ -37,6 +37,8 @@ public class FamilyService {
 
   private static final String INVITE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   private static final SecureRandom RANDOM = new SecureRandom();
+  /** 临期提醒时间线可选档位（提前天数）；与小程序家庭页弹框一致。 */
+  private static final List<Integer> EXPIRE_REMINDER_DAY_OPTIONS = List.of(0, 1, 3, 7, 14);
 
   private final UserRepository userRepository;
   private final FamilyRepository familyRepository;
@@ -111,6 +113,9 @@ public class FamilyService {
     m.put("createdAt", TimeJson.toEpochMs(family.createdAt()));
     m.put("background", ThemeIds.normalizeBackground(parseJsonMap(family.backgroundJson())));
     m.put("expireReminderEnabled", family.expireReminderEnabled());
+    m.put("expireReminderDays", family.expireReminderDays());
+    m.put("expireReminderHour", family.expireReminderHour());
+    m.put("expireReminderMinute", family.expireReminderMinute());
     m.put("isOwner", family.ownerOpenid().equals(openid));
     m.put("isAdmin", entitlementService.isCapacityAdmin(openid));
     m.put(
@@ -441,17 +446,41 @@ public class FamilyService {
     return familySummary(fam, openid);
   }
 
+  /**
+   * 临期提醒配置（家庭级）：总开关、提醒时间线（提前天数）、每日发送时间（时/分）。
+   *
+   * <p>入参可只传其一：缺省字段保持库中原值，便于旧客户端只传 {@code enabled} 仍然可用。
+   */
   @Transactional
   public Map<String, Object> updateExpireReminder(Map<String, Object> body) {
     String openid = openid();
     UserRow user = userRepository.ensureUser(openid);
     String familyId = requireCurrentFamilyId(user);
-    boolean enabled = asTruthy(body.get("enabled"));
-    familyRepository.updateExpireReminder(familyId, enabled);
-    FamilyRow fam =
+    FamilyRow before =
         familyRepository
             .findById(familyId)
             .orElseThrow(() -> ApiException.of(ErrorCodes.NO_FAMILY, "家庭不存在"));
+    boolean enabled =
+        body.containsKey("enabled")
+            ? asTruthy(body.get("enabled"))
+            : before.expireReminderEnabled();
+    int days =
+        body.containsKey("days")
+            ? intInRange(body.get("days"), 0, 30, "提醒时间线无效")
+            : before.expireReminderDays();
+    if (!EXPIRE_REMINDER_DAY_OPTIONS.contains(days)) {
+      throw ApiException.of(ErrorCodes.INVALID_TEXT, "提醒时间线无效");
+    }
+    int hour =
+        body.containsKey("hour")
+            ? intInRange(body.get("hour"), 0, 23, "发送时间无效")
+            : before.expireReminderHour();
+    int minute =
+        body.containsKey("minute")
+            ? intInRange(body.get("minute"), 0, 59, "发送时间无效")
+            : before.expireReminderMinute();
+    familyRepository.updateExpireReminder(familyId, enabled, days, hour, minute);
+    FamilyRow fam = familyRepository.findById(familyId).orElse(before);
     return familySummary(fam, openid);
   }
 
@@ -692,6 +721,24 @@ public class FamilyService {
     }
     String s = str(v).trim().toLowerCase();
     return "true".equals(s) || "1".equals(s);
+  }
+
+  /** 解析整数并校验闭区间；null / 小数 / 越界一律按非法配置处理。 */
+  private static int intInRange(Object v, int min, int max, String message) {
+    int n;
+    if (v instanceof Number num) {
+      n = num.intValue();
+    } else {
+      try {
+        n = Integer.parseInt(str(v).trim());
+      } catch (NumberFormatException e) {
+        throw ApiException.of(ErrorCodes.INVALID_TEXT, message);
+      }
+    }
+    if (n < min || n > max) {
+      throw ApiException.of(ErrorCodes.INVALID_TEXT, message);
+    }
+    return n;
   }
 
   private static String generatePlainCode() {

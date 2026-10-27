@@ -60,6 +60,8 @@
         wx:key="id"
         id="msg-{{item.id}}"
         class="msg msg-{{item.role}}"
+        data-id="{{item.id}}"
+        bind:longpress="onMessageLongPress"
       >
         <view class="bubble bubble-pending" wx:if="{{item.kind === 'pending'}}">
           <text class="pending-label">{{copy.sendingLabel}}</text>
@@ -282,6 +284,20 @@
       </view>
       <view id="msg-bottom" class="msg-tail"></view>
     </scroll-view>
+
+    <view
+      class="copy-mask"
+      wx:if="{{copyMenu.show}}"
+      catchtap="onCloseCopyMenu"
+      catchtouchmove="onCloseCopyMenu"
+    ></view>
+    <view
+      class="copy-menu"
+      wx:if="{{copyMenu.show}}"
+      style="left: {{copyMenu.x}}px; top: {{copyMenu.y}}px;"
+    >
+      <view class="copy-item" catchtap="onCopyMessage">{{copy.copyMsg}}</view>
+    </view>
 
     <ChatComposer
       value="{{text}}"

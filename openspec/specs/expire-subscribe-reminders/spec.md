@@ -24,7 +24,9 @@ The system MUST only send an expiry notification for an item to a member when: t
 - **THEN** the system MUST NOT send expiry notifications for items in that family
 
 ### Requirement: Toggle switches in product UI
-Members MUST be able to toggle **their own** per-item reminder switch on create/edit (and see it on detail). Turning the switch on or off MUST NOT change other members’ subscription records for that item. Members MUST be able to toggle the family master reminder switch from the family settings surface.
+Members MUST be able to toggle **their own** per-item reminder switch on create/edit (and see it on detail). Turning the switch on or off MUST NOT change other members’ subscription records for that item. Members MUST be able to open a family reminder settings panel from the family settings surface and, in a single save, change the family master switch, the reminder lead time, and the send time.
+
+When the family master switch is off but a member still has a subscription record for an item, the item detail surface MUST distinguish that state (subscribed, muted by the family switch) instead of showing plain "subscribed", so members are not misled into expecting a push.
 
 #### Scenario: Enable item reminder
 - **WHEN** a member turns on expire reminder for an item that has an expire date and saves
@@ -41,24 +43,36 @@ Before the product treats a member as able to receive expiry subscribe messages,
 - **WHEN** a member enables item reminder but declines the subscribe-message prompt
 - **THEN** the system still saves that member’s subscription record and does not fail the item write
 
-### Requirement: Timed reminders at 3 days, 1 day, and day-of
-A scheduled server job MUST evaluate candidate items once per day and send subscribe messages to members who subscribed to each item whose expire date is exactly 3 days ahead, 1 day ahead, or today (relative to a documented timezone rule for the job). The job MUST skip families whose master switch is off, items that lack an expire date, and members who have no subscription for that item or no WeChat grant.
+### Requirement: Family-configurable lead time and send time
+Each family MUST be able to configure, from the family settings surface, a single reminder lead time (whole days before the expire date, one of 0 / 1 / 3 / 7 / 14) and a daily send time (hour and minute, Asia/Shanghai). Defaults MUST be 3 days ahead and 08:00, which keeps pre-configuration behavior for existing families. These settings are family-wide and MUST NOT alter per-member item subscriptions.
 
-#### Scenario: Notify three days before expiry
-- **WHEN** the daily job runs and an item expires in exactly 3 days
+The scheduled job MUST run at least once per minute, and for each enabled family whose configured send time has been reached that day it MUST send at most one round of reminders per family per run date. The job MUST skip families whose master switch is off, items whose expire date is not exactly the configured lead time ahead of the run date, and members who have no subscription for that item or no WeChat grant.
+
+Because WeChat once-type subscribe templates yield a single message per accept, multi-day lead time MUST NOT be offered as an option: a family picks one lead time, and each subscribed member receives at most one reminder for that item.
+
+#### Scenario: Family chooses day-of and 09:07
+- **WHEN** a family enables reminders with lead time 0 days and send time 09:07
+- **THEN** on a day when an item expires that same day, the job attempts the reminder at 09:07 Asia/Shanghai, or within the documented grace window if that minute was missed
+
+#### Scenario: Notify on the configured lead time
+- **WHEN** the job reaches the configured send time and an item's expire date is exactly the family's configured lead time ahead of the run date
 - **THEN** the system attempts to send the expiry subscribe message for that item only to members who subscribed to it (and have granted authorization)
 
-#### Scenario: No duplicate class of notify outside windows
-- **WHEN** an eligible item expires in 5 days
-- **THEN** the daily job MUST NOT send an expiry subscribe message for the 3-day / 1-day / day-of windows for that item on that run
+#### Scenario: No notify outside the configured lead time
+- **WHEN** an item's expire date is not exactly the family's configured lead time ahead of the run date
+- **THEN** the job MUST NOT send an expiry subscribe message for that item on that run
+
+#### Scenario: One round per family per day
+- **WHEN** the job runs multiple times inside the configured send window (restart or multiple instances)
+- **THEN** the family MUST NOT receive more than one round of reminders for the same run date
 
 ### Requirement: Successful send consumes the item subscription
 WeChat once-type subscribe templates yield a single outbound message per accept. After the system **successfully** sends an expiry subscribe message to a member for an item, it MUST delete that member’s subscription record for that item. Failed sends MUST leave the record in place. The member’s detail/edit views MUST then show unsubscribed until they subscribe again.
 
 #### Scenario: Detail shows unsubscribed after a delivered reminder
-- **WHEN** the daily job successfully sends an expiry message to a member for an item
+- **WHEN** the scheduled job successfully sends an expiry message to a member for an item
 - **THEN** that member’s reminder status for the item MUST become unsubscribed
 
 #### Scenario: Failed send keeps subscription
-- **WHEN** the daily job attempts to send an expiry message and the send fails
+- **WHEN** the scheduled job attempts to send an expiry message and the send fails
 - **THEN** the member’s subscription record for that item MUST remain

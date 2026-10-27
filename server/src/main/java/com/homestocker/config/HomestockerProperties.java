@@ -126,7 +126,11 @@ public class HomestockerProperties {
 
   public static class ExpireNotify {
     private String tmplId = "";
-    private String cron = "0 0 8 * * *";
+    /**
+     * 扫描频率；具体某个家庭几点发由 {@code families.expire_reminder_hour/minute} 决定。
+     * 每分钟扫、按分钟匹配，故默认每分钟一次；填 {@code -} 可关闭（本地/测试）。
+     */
+    private String cron = "0 * * * * *";
 
     public String getTmplId() {
       return tmplId;

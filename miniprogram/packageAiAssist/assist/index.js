@@ -34,6 +34,31 @@ function attachSegments(segments, mainText, fullText) {
   }))
 }
 
+/** 长按复制菜单尺寸（px），用于按触点定位并做屏幕边界收敛。 */
+const COPY_MENU_W = 96
+const COPY_MENU_H = 44
+const COPY_MENU_GAP = 12
+
+function clampPx(value, min, max) {
+  const n = Number(value)
+  if (!Number.isFinite(n)) return min
+  return Math.min(Math.max(n, min), Math.max(min, max))
+}
+
+/** 用户气泡的可复制原文：优先 text，老数据可能只有分段。 */
+function messageCopyText(msg) {
+  if (!msg) return ''
+  const text = String(msg.text || '').trim()
+  if (text) return text
+  if (Array.isArray(msg.segments) && msg.segments.length) {
+    return msg.segments
+      .map((seg) => String((seg && seg.v) || ''))
+      .join('')
+      .trim()
+  }
+  return ''
+}
+
 function decodeOpt(value) {
   if (value == null || value === '') return ''
   try {
@@ -392,6 +417,7 @@ Page({
     keyboardHeight: 0,
     transcriptCapped: false,
     canClear: false,
+    copyMenu: { show: false, x: 0, y: 0 },
     loadingColors: ['#C4A484', '#8B6914']
   },
 
@@ -842,6 +868,65 @@ Page({
       url,
       fail: () => wx.showToast({ title: copy.assist.navOpenFail, icon: 'none' })
     })
+  },
+
+  /** 长按自己发的消息：浮出「复制」。助手消息不处理（卡片/表格复制原文意义不大）。 */
+  onMessageLongPress(e) {
+    const ds = (e && e.currentTarget && e.currentTarget.dataset) || {}
+    const id = ds.id
+    if (!id) return
+    const messages = this._messages || this.data.messages || []
+    const msg = messages.find((m) => m && m.id === id)
+    if (!msg || msg.role !== 'user' || msg.kind === 'pending') return
+    const text = messageCopyText(msg)
+    if (!text) return
+    const touch =
+      (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]) || {}
+    const win = (wx.getWindowInfo ? wx.getWindowInfo() : wx.getSystemInfoSync()) || {}
+    const winW = Number(win.windowWidth || 375)
+    const winH = Number(win.windowHeight || 667)
+    const touchX = Number(touch.clientX || 0)
+    const touchY = Number(touch.clientY || 0)
+    this._copyText = text
+    this.setData({
+      copyMenu: {
+        show: true,
+        x: clampPx(
+          touchX - COPY_MENU_W / 2,
+          COPY_MENU_GAP,
+          winW - COPY_MENU_W - COPY_MENU_GAP
+        ),
+        // 默认弹出在手指上方，避免被手指和键盘挡住
+        y: clampPx(
+          touchY - COPY_MENU_H - COPY_MENU_GAP,
+          COPY_MENU_GAP,
+          winH - COPY_MENU_H - COPY_MENU_GAP
+        )
+      }
+    })
+    if (wx.vibrateShort) {
+      wx.vibrateShort({ type: 'light', fail: () => {} })
+    }
+  },
+
+  onCopyMessage() {
+    const text = this._copyText || ''
+    if (!text) {
+      this.onCloseCopyMenu()
+      return
+    }
+    // setClipboardData 自带「内容已复制」系统提示，不再叠一个 toast
+    wx.setClipboardData({
+      data: text,
+      complete: () => this.onCloseCopyMenu()
+    })
+  },
+
+  onCloseCopyMenu() {
+    this._copyText = ''
+    const menu = this.data.copyMenu
+    if (!menu || !menu.show) return
+    this.setData({ copyMenu: { show: false, x: 0, y: 0 } })
   },
 
   async submit(options = {}) {

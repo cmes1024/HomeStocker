@@ -88,8 +88,8 @@
         </view>
         <view class="field" wx:if="{{item.expireDate}}">
           <view class="label">{{copy.labelReminder}}</view>
-          <view class="value {{item.expireReminderEnabled ? '' : 'muted'}}">
-            {{item.expireReminderEnabled ? copy.reminderOn : copy.reminderOff}}
+          <view class="value {{item.expireReminderEnabled && item.familyReminderEnabled !== false ? '' : 'muted'}}">
+            {{item.expireReminderEnabled ? (item.familyReminderEnabled === false ? copy.reminderMuted : copy.reminderOn) : copy.reminderOff}}
           </view>
         </view>
         <view class="field last">

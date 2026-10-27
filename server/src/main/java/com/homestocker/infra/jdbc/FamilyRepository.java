@@ -21,6 +21,9 @@ public class FamilyRepository {
               (Integer) rs.getObject("item_count"),
               rs.getString("background_json"),
               rs.getBoolean("expire_reminder_enabled"),
+              rs.getInt("expire_reminder_days"),
+              rs.getInt("expire_reminder_hour"),
+              rs.getInt("expire_reminder_minute"),
               rs.getTimestamp("tags_seeded_at"),
               rs.getString("entitlement_json"),
               rs.getTimestamp("created_at"));
@@ -79,8 +82,36 @@ public class FamilyRepository {
         "UPDATE families SET background_json = CAST(? AS jsonb) WHERE id = ?", backgroundJson, id);
   }
 
-  public void updateExpireReminder(String id, boolean enabled) {
-    jdbc.update("UPDATE families SET expire_reminder_enabled = ? WHERE id = ?", enabled, id);
+  public void updateExpireReminder(String id, boolean enabled, int days, int hour, int minute) {
+    jdbc.update(
+        """
+        UPDATE families
+           SET expire_reminder_enabled = ?,
+               expire_reminder_days = ?,
+               expire_reminder_hour = ?,
+               expire_reminder_minute = ?
+         WHERE id = ?
+        """,
+        enabled,
+        days,
+        hour,
+        minute,
+        id);
+  }
+
+  /** 当天发送占位：返回 true 表示本实例抢到该家庭当天的发送权（防多实例重复推送）。 */
+  public boolean claimExpireNotify(String id, String ymd) {
+    return jdbc.update(
+            """
+            UPDATE families
+               SET expire_notify_last_date = CAST(? AS date)
+             WHERE id = ?
+               AND (expire_notify_last_date IS NULL OR expire_notify_last_date < CAST(? AS date))
+            """,
+            ymd,
+            id,
+            ymd)
+        > 0;
   }
 
   public void updateTagsSeededAt(String id, Timestamp at) {

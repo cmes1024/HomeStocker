@@ -16,7 +16,7 @@
 | 云开发集合 | 表 | 备注 |
 |------------|-----|------|
 | `users` | `users` | PK=`openid` |
-| `families` | `families` | `background`→`background_json`；`entitlement`→`entitlement_json` |
+| `families` | `families` | `background`→`background_json`；`entitlement`→`entitlement_json`；临期提醒配置 → `expire_reminder_enabled` / `expire_reminder_days` / `expire_reminder_hour` / `expire_reminder_minute`，当天发送幂等标记 `expire_notify_last_date` |
 | `memberships` | `memberships` | 复合主键 `(openid, family_id)` |
 | `spaces` | `spaces` | `imageFileID`→`image_key` |
 | `locations` | `locations` | 同上 |

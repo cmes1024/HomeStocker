@@ -27,6 +27,7 @@ const ITEM_COMPARE_KEYS = [
   'productionDate',
   'expireDate',
   'expireReminderEnabled',
+  'familyReminderEnabled',
   'imageFileID',
   'imageFileIDs',
   'updatedAt',

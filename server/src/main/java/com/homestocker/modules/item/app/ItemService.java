@@ -7,6 +7,7 @@ import com.homestocker.common.ShanghaiDates;
 import com.homestocker.common.TimeJson;
 import com.homestocker.infra.jdbc.ActivityRepository;
 import com.homestocker.infra.jdbc.FamilyRepository;
+import com.homestocker.infra.jdbc.FamilyRow;
 import com.homestocker.infra.jdbc.ItemRepository;
 import com.homestocker.infra.jdbc.ItemRow;
 import com.homestocker.infra.jdbc.MembershipRepository;
@@ -944,11 +945,32 @@ public class ItemService {
     return view;
   }
 
+  /**
+   * 首页/临期列表的窗口 = 今天 + 家庭配置的提前天数，与订阅推送时间线保持一致。
+   * 推送与首页参考同一档，避免「已提醒但首页看不到」。
+   */
+  private int expireWindowDays(String familyId) {
+    return familyRepository
+        .findById(familyId)
+        .map(FamilyRow::expireReminderDays)
+        .orElse(3);
+  }
+
+  /** 家庭临期提醒总开关；关掉时个人订阅仍然存在，只是不会推送。 */
+  private boolean familyReminderEnabled(String familyId) {
+    return familyRepository
+        .findById(familyId)
+        .map(FamilyRow::expireReminderEnabled)
+        .orElse(true);
+  }
+
   public Map<String, Object> get(Map<String, Object> body) {
     FamilyCtx ctx = requireFamily();
     ItemRow item = requireItemInFamily(str(body.get("itemId")).trim(), ctx.familyId());
     boolean mine = itemRepository.hasExpireSub(item.id(), ctx.openid());
-    return toView(item, mine);
+    Map<String, Object> view = toView(item, mine);
+    view.put("familyReminderEnabled", familyReminderEnabled(ctx.familyId()));
+    return view;
   }
 
   public Map<String, Object> detail(Map<String, Object> body) {
@@ -977,8 +999,10 @@ public class ItemService {
         }
       }
     }
+    Map<String, Object> view = toView(item, mine);
+    view.put("familyReminderEnabled", familyReminderEnabled(ctx.familyId()));
     Map<String, Object> out = new LinkedHashMap<>();
-    out.put("item", toView(item, mine));
+    out.put("item", view);
     out.put("spaceName", place.get("spaceName"));
     out.put("locationName", place.get("locationName"));
     out.put("tagNames", structureRepository.tagNames(ctx.familyId(), item.tagIds()));
@@ -1099,7 +1123,7 @@ public class ItemService {
     FamilyCtx ctx = requireFamily();
     int limit = clamp(body.get("limit"), 50, 1, 100);
     String today = ShanghaiDates.todayYmd();
-    String end = ShanghaiDates.addDaysYmd(today, 3);
+    String end = ShanghaiDates.addDaysYmd(today, expireWindowDays(ctx.familyId()));
     Set<String> subs = itemRepository.subscribedItemIds(ctx.familyId(), ctx.openid());
     List<ItemRow> rows = itemRepository.listExpiring(ctx.familyId(), end, limit);
     List<Map<String, Object>> list = attachPlaces(ctx.familyId(), rows, subs);
@@ -1117,7 +1141,7 @@ public class ItemService {
     int limit = clamp(body.get("limit"), 100, 1, 600);
     String spaceId = str(body.get("spaceId")).trim();
     String today = ShanghaiDates.todayYmd();
-    String end = ShanghaiDates.addDaysYmd(today, 3);
+    String end = ShanghaiDates.addDaysYmd(today, expireWindowDays(ctx.familyId()));
     Set<String> subs = itemRepository.subscribedItemIds(ctx.familyId(), ctx.openid());
 
     List<ItemRow> listRows =

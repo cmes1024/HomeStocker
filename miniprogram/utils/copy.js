@@ -97,6 +97,7 @@ const copy = {
     labelReminder: '过期提醒',
     reminderOn: '已订阅',
     reminderOff: '未订阅',
+    reminderMuted: '已订阅 · 家庭提醒关闭',
     locationNone: '不指定位置',
     noteEmpty: '无',
     tagsEmpty: '无',
@@ -191,7 +192,7 @@ const copy = {
     locLoadFailed: '加载位置失败',
     captureBtn: '按图预填',
     captureBusy: '看图…',
-    captureFilled: (n) => `已按图更新 ${n} 项，请核对`,
+    captureFilled: (n) => `已填入 ${n} 项，请核对`,
     captureNone: '没认出物资，手动填吧',
     captureFailed: '这次没认出来，再试一次'
   },
@@ -236,10 +237,41 @@ const copy = {
     tagsTitle: '物品标签',
     messagesTitle: '消息中心',
     reminderTitle: '临期提醒',
-    reminderOn: '已开',
-    reminderOff: '已关',
     reminderTurnOn: '开启提醒',
     reminderTurnOff: '关闭提醒',
+    reminderSwitchLabel: '开启临期提醒',
+    reminderSwitchHint: '关掉后全家都收不到临期推送',
+    reminderTimeline: '提醒时间线',
+    reminderSendAt: '发送时间',
+    reminderSendAtHint: '按北京时间，每天到点发一次',
+    reminderOnceHint: '微信订阅提醒每条只能发一次：到点推送后需重新订阅该物品',
+    reminderSave: '保存',
+    reminderSaved: '已保存',
+    reminderDayOptions: [
+      { value: 0, label: '当天' },
+      { value: 1, label: '提前1天' },
+      { value: 3, label: '提前3天' },
+      { value: 7, label: '提前7天' },
+      { value: 14, label: '提前14天' }
+    ],
+    /** 家庭页开关按钮文案：临期提醒·上午9点 / 临期提醒·上午9:07 / 临期提醒关闭 */
+    reminderButton: (enabled, hour, minute) => {
+      if (!enabled) return '临期提醒已关闭'
+      const h = Number(hour)
+      const m = Number(minute)
+      const safeH = Number.isFinite(h) ? ((Math.round(h) % 24) + 24) % 24 : 8
+      const safeM = Number.isFinite(m) ? ((Math.round(m) % 60) + 60) % 60 : 0
+      let word = '晚上'
+      if (safeH <= 5) word = '凌晨'
+      else if (safeH <= 11) word = '上午'
+      else if (safeH === 12) word = '中午'
+      else if (safeH <= 17) word = '下午'
+      const tail =
+        safeM === 0
+          ? `${safeH}点`
+          : `${safeH}:${String(safeM).padStart(2, '0')}`
+      return `临期提醒·${word}${tail}`
+    },
     wallTitle: '家庭氛围',
     myHomes: '我加入的家庭',
     chipHere: '正在用',
@@ -255,6 +287,10 @@ const copy = {
     renamePlaceholder: '例如：老家、出租屋',
     renameSubmit: '保存',
     renamedToast: '已改名',
+    createdToast: '已创建',
+    joinedToast: '已加入',
+    switchedToast: '已切换',
+    moodUpdatedToast: '已更新氛围',
     joinCodeLabel: '家人给的邀请码',
     joinCodePlaceholder: '6位邀请码',
     joinSubmit: '加入并切换过去',
@@ -420,6 +456,7 @@ const copy = {
     subscribeFail: '订阅状态没改成功',
     historyCapTip: '本地只保留最近 20 条对话，更早的已清除',
     clearChat: '清空聊天',
+    copyMsg: '复制',
     clearChatTitle: '清空聊天记录？',
     clearChatContent: '只清本机上的对话，不影响家里的物资台账。',
     clearChatConfirm: '清空',
@@ -440,6 +477,7 @@ const copy = {
     setDefault: '设为默认',
     defaultBadge: '默认',
     removeKey: '删除',
+    keyAdded: '已添加',
     maxKeys: '每家最多 3 把密钥',
     keyRequired: '先粘贴密钥',
     noKeys: '还没有密钥',

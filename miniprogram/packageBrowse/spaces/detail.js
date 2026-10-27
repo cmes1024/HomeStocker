@@ -338,12 +338,12 @@ Page({
         }
         if (imageFileID !== undefined) payload.imageFileID = imageFileID
         await callSpace('updateLocation', payload)
-        wx.showToast({ title: copy.spaces.locRenamedToast, icon: 'success' })
+        wx.showToast({ title: copy.spaces.locRenamedToast, icon: 'none' })
       } else {
         const payload = { spaceId, name }
         if (imageFileID) payload.imageFileID = imageFileID
         await callSpace('createLocation', payload)
-        wx.showToast({ title: copy.spaces.locCreatedToast, icon: 'success' })
+        wx.showToast({ title: copy.spaces.locCreatedToast, icon: 'none' })
       }
       this.setData({
         showLocModal: false,

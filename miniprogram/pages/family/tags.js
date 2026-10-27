@@ -121,10 +121,10 @@ Page({
     try {
       if (this.data.modalMode === 'rename') {
         await callTag('update', { tagId: this.data.editingTagId, name })
-        wx.showToast({ title: copy.tags.renamedToast, icon: 'success' })
+        wx.showToast({ title: copy.tags.renamedToast, icon: 'none' })
       } else {
         await callTag('create', { name })
-        wx.showToast({ title: copy.tags.createdToast, icon: 'success' })
+        wx.showToast({ title: copy.tags.createdToast, icon: 'none' })
       }
       this.setData({
         showModal: false,
