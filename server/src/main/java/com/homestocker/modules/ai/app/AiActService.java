@@ -300,13 +300,22 @@ public class AiActService {
     boolean hasNavLinks =
         report != null && report.get("navLinks") instanceof List<?> links && !links.isEmpty();
     Map<String, Object> present = outcome.present();
-    // 正文里的手写表格只有在别处真出了表格时才删；否则删完只剩一句冒号引子，明细全丢
-    boolean hasTable = rendersTable(wrote || hasNavLinks, present, rows, report);
-    String reply = outcome.reply() == null ? "" : outcome.reply().trim();
-    ReplyTableGuard.Result guarded = ReplyTableGuard.strip(reply, hasTable);
+    String rawReply = outcome.reply() == null ? "" : outcome.reply().trim();
+    // 正文里的手写表格一律不展示；本轮没有卡片时，用正文提到的物资名从库里召回行补一张表，
+    // 不再把表头漏给家人，也不让明细凭空消失。
+    ReplyTableGuard.Result guarded = ReplyTableGuard.strip(rawReply);
+    String reply = guarded.text();
     if (guarded.stripped()) {
       log.warn("[ai.act] dropped handwritten table in reply");
-      reply = guarded.text();
+      if (present == null && rows.isEmpty()) {
+        List<Map<String, Object>> recalled =
+            itemsProbe.recallNamedInText(
+                actCtx.familyId(), actCtx.tree(), rawReply, actCtx.refs());
+        if (!recalled.isEmpty()) {
+          rows = recalled;
+          log.info("[ai.act] rebuilt table from recalled rows={}", rows.size());
+        }
+      }
     }
     Map<String, Object> payload;
     if (wrote || hasNavLinks) {
@@ -340,31 +349,6 @@ public class AiActService {
     }
     return payload;
   }
-
-  /**
-   * 这一轮最终会不会给家人出表格/图。用于决定正文里手写的表格能不能删：
-   * 没有表格卡片可看时删掉，明细就没有别处展示了。
-   */
-  private static boolean rendersTable(
-      boolean wroteOrNav,
-      Map<String, Object> presentSpec,
-      List<Map<String, Object>> rows,
-      Map<String, Object> report) {
-    if (wroteOrNav) {
-      return presentSpec != null && PresentResolver.resolve(presentSpec, rows, report) != null;
-    }
-    if (HabitReply.habitOnly(report)) {
-      return HabitReply.habitsOf(report).size() >= HabitReply.TABLE_MIN;
-    }
-    if (presentSpec != null) {
-      return PresentResolver.resolve(presentSpec, rows, report) != null;
-    }
-    // 没给 present：finishToolDone 会在有查库行时自动补一张 table
-    return !rows.isEmpty();
-  }
-
-
-
 
   private Map<String, Object> execute(
       String familyId,

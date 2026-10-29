@@ -1,0 +1,17 @@
+{
+  "id": "query-no-expiry-lecture",
+  "perspective": "user",
+  "title": "问家里有什么：别每次都念过期清单",
+  "tags": ["query", "regression", "mixed"],
+  "setup": { "fixture": "home-food-mixed" },
+  "prompt": "家里都有什么",
+  "expected": {
+    "outcome": "列清单（表格），正文最多一句；不把「哪些已过期」当成回答的主体",
+    "requiredToolsAny": ["item.search"],
+    "mustPresent": "table",
+    "presentMinRows": 5,
+    "replyMustNotContain": ["已过期"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"],
+    "manual": "过期只在家人问到、或与所问相关时提一句"
+  }
+}

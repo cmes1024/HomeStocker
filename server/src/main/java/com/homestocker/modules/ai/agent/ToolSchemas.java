@@ -104,7 +104,7 @@ public final class ToolSchemas {
     fn.put("name", PRESENT);
     fn.put(
         "description",
-        "把本轮已经查到的物资行画给家人。type 用 table、stats、bars 或 pie。对比或占比用 bars 或 pie，并带 groupBy（space、tag、location 或 name）。table 的列由你决定：字段列的值由服务端按 key 取，不要自己写数字；说明列由你在 notes 里逐行写，放差异、状态、来源、提醒等事实，不给饮食、健康、购买、处理建议。不要自己编数字。");
+        "把本轮已经查到的物资行画给家人。type 用 table、stats、bars 或 pie。对比或占比用 bars 或 pie，并带 groupBy（space、tag、location 或 name）。table 的列由你决定：字段列的值由服务端按 key 取，不要自己写数字；说明列由你在 notes 里逐行写，放差异、状态、来源、提醒等事实，不给饮食、健康、购买、处理建议。不传 refs 时画本轮查到的全部行；只画其中一部分（例如只画能吃的）就传 refs 列本轮短号。不要自己编数字。");
     ObjectNode params = fn.putObject("parameters");
     params.put("type", "object");
     ObjectNode props = params.putObject("properties");
@@ -117,6 +117,12 @@ public final class ToolSchemas {
     typeEnum.add("bars");
     typeEnum.add("pie");
     props.putObject("groupBy").put("type", "string").put("description", "space、tag、location 或 name");
+    ObjectNode refs = props.putObject("refs");
+    refs.put("type", "array");
+    refs.put(
+        "description",
+        "只画本轮其中几行时传本轮短号（P* 或 F*），按数组顺序出；不传=本轮查到的全部行。只用本轮真出现过的短号。");
+    refs.putObject("items").put("type", "string");
     props.putObject("title").put("type", "string").put("description", "表上方短标题，不超过 24 字");
     ObjectNode cols = props.putObject("columns");
     cols.put("type", "array");

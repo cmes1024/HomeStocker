@@ -1,0 +1,16 @@
+{
+  "id": "query-single-item",
+  "perspective": "user",
+  "title": "只有一条也要出表格",
+  "tags": ["query", "regression", "present"],
+  "setup": { "fixture": "home-wide" },
+  "prompt": "家里有酱油吗",
+  "expected": {
+    "outcome": "出表格卡片（哪怕只有一条酱油），正文不写表头、不复述位置以外的空话",
+    "mustPresent": "table",
+    "presentMinRows": 1,
+    "presentMustInclude": ["酱油"],
+    "replyMustNotContain": ["名称 /", "名称/", "名称 |"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"]
+  }
+}

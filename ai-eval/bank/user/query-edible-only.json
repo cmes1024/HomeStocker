@@ -1,0 +1,18 @@
+{
+  "id": "query-edible-only",
+  "perspective": "user",
+  "title": "有吃的吗：只列能吃的，不把厨房整套端出来",
+  "tags": ["query", "regression", "mixed"],
+  "setup": { "fixture": "home-food-mixed" },
+  "prompt": "有吃的吗",
+  "expected": {
+    "outcome": "只列可入口的东西（鸡蛋、牛奶、酱油、大米、酸奶、苹果、薯片之类），锅碗洗洁精保鲜膜纸巾药品不算；不写饮食建议",
+    "requiredToolsAny": ["item.search"],
+    "mustPresent": "table",
+    "presentMinRows": 2,
+    "presentMustInclude": ["鸡蛋"],
+    "presentMustExclude": ["鸳鸯锅", "洗洁精", "保鲜膜", "纸巾", "布洛芬"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"],
+    "manual": "卡片行必须是能吃的子集；把空间当品类（厨房全套）就算错"
+  }
+}

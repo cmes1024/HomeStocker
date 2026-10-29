@@ -318,6 +318,35 @@ function presentMatches(present, want) {
   return type === want;
 }
 
+/** 卡片里所有给人看的字：标题、caption、表格行、统计桶。 */
+function presentTextOf(present) {
+  if (!present || typeof present !== "object") return "";
+  const parts = [];
+  const push = (v) => {
+    if (v != null && String(v).trim()) parts.push(String(v));
+  };
+  push(present.title);
+  push(present.caption);
+  for (const row of Array.isArray(present.rows) ? present.rows : []) {
+    if (Array.isArray(row)) row.forEach(push);
+    else push(row);
+  }
+  for (const it of Array.isArray(present.items) ? present.items : []) {
+    if (it && typeof it === "object") {
+      push(it.label);
+      push(it.value);
+    } else push(it);
+  }
+  return parts.join(" ");
+}
+
+function presentRowCount(present) {
+  if (!present || typeof present !== "object") return 0;
+  if (Array.isArray(present.rows)) return present.rows.length;
+  if (Array.isArray(present.items)) return present.items.length;
+  return 0;
+}
+
 function hasPresentInventory(act) {
   const present = act?.present;
   if (!present || typeof present !== "object") return false;
@@ -435,6 +464,60 @@ function judgeExpected(caze, actual, mode) {
       detail: hit ? `type=${hit.present?.type || ""}` : "no matching present",
     });
   }
+  const cardText = actPayloads(actual)
+    .map((p) => presentTextOf(p?.present))
+    .join(" ");
+  for (const s of expected.presentMustInclude || []) {
+    const ok = cardText.includes(String(s));
+    checks.push({
+      name: `presentMustInclude:${s}`,
+      ok,
+      detail: ok ? "hit" : "card 里没有",
+    });
+  }
+  for (const s of expected.presentMustExclude || []) {
+    const ok = !cardText.includes(String(s));
+    checks.push({
+      name: `presentMustExclude:${s}`,
+      ok,
+      detail: ok ? "absent" : "card 里出现了",
+    });
+  }
+  if (expected.presentMinRows != null) {
+    const want = Number(expected.presentMinRows) || 0;
+    const got = Math.max(0, ...actPayloads(actual).map((p) => presentRowCount(p?.present)));
+    const ok = got >= want;
+    checks.push({
+      name: `presentMinRows:${want}`,
+      ok,
+      detail: ok ? `${got} 行` : `只有 ${got} 行`,
+    });
+  }
+  if (expected.mustHold) {
+    const st = String(actual?.act?.status || actual?.status || "");
+    const ok = st === "ask" || st === "confirm";
+    checks.push({ name: "mustHold", ok, detail: ok ? st : `status=${st || "?"}` });
+  }
+  const replyText = actPayloads(actual)
+    .map((p) => [p?.reply, p?.message, p?.lead, p?.report?.lead].filter(Boolean).join(" "))
+    .join(" ");
+  for (const s of expected.replyMustNotContain || []) {
+    const ok = !replyText.includes(String(s));
+    checks.push({
+      name: `replyMustNotContain:${s}`,
+      ok,
+      detail: ok ? "absent" : "正文里出现了",
+    });
+  }
+  if (Array.isArray(expected.replyMustContainAny) && expected.replyMustContainAny.length) {
+    const hit = expected.replyMustContainAny.find((s) => replyText.includes(String(s)));
+    checks.push({
+      name: "replyMustContainAny",
+      ok: Boolean(hit),
+      detail: hit ? `hit:${hit}` : `正文里一个都没有`,
+    });
+  }
+
   const seenCalls = collectActCalls(actual);
   const receipts = receiptChunks(actual);
   for (const want of expected.callIncludes || []) {
@@ -530,7 +613,20 @@ async function applyFixture(apiBase, token, fixtureId) {
   const fx = loadFixture(fixtureId);
   const spaces = await apiPost(apiBase, token, "/api/space/list", {});
   const spaceList = spaces?.list || spaces?.spaces || [];
-  const spaceByName = new Map(spaceList.map((s) => [s.name, s]));
+  // 空间不清理就会累积：上一轮用例自己建的「玄关」、反复新建的同名「阳台」会残留，
+  // 让后面「家里没有玄关，先问」这类用例直接跑偏。落 fixture 前先删掉多余空间
+  // （remove 会把物资迁到默认空间，随后按 fixture 清物资）。
+  const wantedSpaces = new Set((fx.spaces || []).map((s) => s.name));
+  const spaceByName = new Map();
+  let prunedSpaces = 0;
+  for (const s of spaceList) {
+    if (!s.isDefault && (!wantedSpaces.has(s.name) || spaceByName.has(s.name))) {
+      await apiPost(apiBase, token, "/api/space/remove", { spaceId: s._id || s.id });
+      prunedSpaces++;
+      continue;
+    }
+    if (!spaceByName.has(s.name)) spaceByName.set(s.name, s);
+  }
 
   for (const sp of fx.spaces || []) {
     if (!spaceByName.has(sp.name)) {
@@ -659,7 +755,7 @@ async function applyFixture(apiBase, token, fixtureId) {
       created++;
     }
   }
-  return { fixtureId, created, updated, removed, spaces: spaceByName.size };
+  return { fixtureId, created, updated, removed, spaces: spaceByName.size, prunedSpaces };
 }
 
 function pickAskAffirm(askList, userText = "", optsCfg = {}) {
@@ -763,8 +859,8 @@ async function callAct(actUrl, token, text, history, opts = {}) {
   let data = body?.data ?? body;
   const turns = [{ httpStatus, body }];
 
-  // confirm gate: execute once
-  if (data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
+  // confirm gate: execute once（用例显式要看确认卡时跳过，避免自动确认把闸门测没了）
+  if (!opts.noAutoConfirm && data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
     const again = await post({
       text,
       history,
@@ -799,7 +895,7 @@ async function callAct(actUrl, token, text, history, opts = {}) {
     httpStatus = again.httpStatus;
     body = again.body;
     data = body?.data ?? body;
-    if (data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
+    if (!opts.noAutoConfirm && data?.status === "confirm" && Array.isArray(data.calls) && data.calls.length) {
       const done = await post({
         text: pick,
         history: hist,
@@ -909,7 +1005,7 @@ async function main() {
         const info = await applyFixture(args.apiBase, args.token, fxId);
         fixtureLog.push(info);
         console.log(
-          `fixture ${fxId}: created=${info.created} updated=${info.updated} removed=${info.removed} spaces=${info.spaces}`,
+          `fixture ${fxId}: created=${info.created} updated=${info.updated} removed=${info.removed} spaces=${info.spaces} prunedSpaces=${info.prunedSpaces ?? 0}`,
         );
       } catch (e) {
         console.error(`fixture ${fxId} failed:`, e?.message || e);
@@ -987,6 +1083,7 @@ async function main() {
             {
               followAsk,
               forbiddenTools: caze.expected?.forbiddenTools || [],
+              noAutoConfirm: Boolean(caze.expected?.noAutoConfirm),
             },
           );
           const data = body?.data ?? body;
