@@ -51,6 +51,25 @@
         "forbiddenTools": { "type": "array", "items": { "type": "string" } },
         "mustAsk": { "type": "boolean" },
         "mustProbe": { "type": "boolean" },
+        "presentMustInclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "卡片（标题/caption/表格行/统计桶）里必须出现的字"
+        },
+        "presentMustExclude": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "卡片里不许出现的字（例如问能吃的却画出了锅）"
+        },
+        "presentMinRows": {
+          "type": "number",
+          "description": "卡片至少几行/几个桶（防止只报条数不出清单）"
+        },
+        "replyMustNotContain": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "正文里不许出现的字（例如没问过期却念过期清单）"
+        },
         "manual": { "type": "string" },
         "mockPlan": {
           "description": "可选：mock 模式下的确定性计划",

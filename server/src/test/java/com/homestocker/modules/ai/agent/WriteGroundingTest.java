@@ -27,12 +27,25 @@ class WriteGroundingTest {
   }
 
   @Test
-  void refFromThisTurnPointsAtWhichOne() {
+  void refAloneDoesNotPickAmongSameNames() {
+    // 模型从本轮两行牛奶里随手挑 P2，但家人没说哪一条：仍要问，不能直接改
+    List<Map<String, Object>> rows =
+        List.of(milk("P1", "2", "冰箱", ""), milk("P2", "1", "", "常温未开"));
+    ToolFeedback why =
+        WriteGrounding.check(
+            "牛奶改成一盒", rows, Map.of("use", "item.update", "ref", "P2", "quantity", 1));
+    assertEquals(GroundingCodes.REF_AMBIGUOUS, why.code());
+  }
+
+  @Test
+  void callThatNamesThePlacePicksOne() {
     List<Map<String, Object>> rows =
         List.of(milk("P1", "2", "冰箱", ""), milk("P2", "1", "", "常温未开"));
     assertNull(
         WriteGrounding.check(
-            "牛奶改成一盒", rows, Map.of("use", "item.update", "ref", "P2", "quantity", 1)));
+            "牛奶改成一盒",
+            rows,
+            Map.of("use", "item.update", "ref", "P2", "quantity", 1, "note", "常温未开")));
   }
 
   @Test

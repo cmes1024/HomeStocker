@@ -48,28 +48,28 @@ class ReplyTableGuardTest {
   }
 
   @Test
-  void keepsHandwrittenTableWhenNoCardIsRendered() {
-    // 没有表格卡片可看时删掉表体，只剩「…都在厨房：」，家人就再也看不到明细
+  void stripsEvenWhenNoCardWasRendered() {
+    // 没有卡片时也要删表体：明细由调用方改用库里召回的行补一张表，不能把表头漏给家人
     String text =
         """
         今天新增 12 样，都在厨房：
         牛奶·2盒·冰箱
         鸡蛋·8个·冰箱""";
-    ReplyTableGuard.Result out = ReplyTableGuard.strip(text, false);
-    assertFalse(out.stripped());
-    assertEquals(text, out.text());
+    ReplyTableGuard.Result out = ReplyTableGuard.strip(text);
+    assertTrue(out.stripped());
+    assertEquals("今天新增 12 样，都在厨房：", out.text());
   }
 
   @Test
-  void stillStripsWhenCardIsRendered() {
+  void wholeReplyThatIsOnlyATableBecomesEmpty() {
     String text =
         """
-        今天新增 2 样，都在厨房：
+        名称 / 数量 / 位置
         牛奶·2盒·冰箱
         鸡蛋·8个·冰箱""";
-    ReplyTableGuard.Result out = ReplyTableGuard.strip(text, true);
+    ReplyTableGuard.Result out = ReplyTableGuard.strip(text);
     assertTrue(out.stripped());
-    assertEquals("今天新增 2 样，都在厨房：", out.text());
+    assertEquals("", out.text());
   }
 
   @Test

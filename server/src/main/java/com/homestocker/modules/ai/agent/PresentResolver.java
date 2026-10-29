@@ -54,6 +54,16 @@ public final class PresentResolver {
     }
     String source = str(raw.get("source")).trim().toLowerCase(Locale.ROOT);
     List<Map<String, Object>> rowsFromSource = rowsFromSource(source, probeRows, inventoryReport);
+    // 模型只画其中几行时给 refs：按本轮短号挑行；一个都没对上就忽略，退回本轮全部行。
+    List<String> refs = refList(raw.get("refs"));
+    boolean subset = false;
+    if (!refs.isEmpty()) {
+      List<Map<String, Object>> picked = byRefs(rowsFromSource, refs);
+      if (!picked.isEmpty()) {
+        rowsFromSource = picked;
+        subset = true;
+      }
+    }
     String title = str(raw.get("title")).trim();
     String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
 
@@ -70,10 +80,28 @@ public final class PresentResolver {
             "bars".equals(type) || "bar".equals(type)
                 ? "bars"
                 : "pie".equals(type) || "donut".equals(type) ? "pie" : "stats";
-        yield resolveStatsOrBars(view, raw, rowsFromSource, inventoryReport, title);
+        yield resolveStatsOrBars(view, raw, rowsFromSource, inventoryReport, title, subset);
       }
       default -> null;
     };
+  }
+
+  /** 按短号挑行，保持 refs 给出的顺序；没对上任何一行就返回空。 */
+  private static List<Map<String, Object>> byRefs(
+      List<Map<String, Object>> rows, List<String> refs) {
+    List<Map<String, Object>> out = new ArrayList<>();
+    for (String want : refs) {
+      for (Map<String, Object> row : rows) {
+        if (want.equalsIgnoreCase(str(row.get("ref")).trim())) {
+          out.add(row);
+          if (out.size() >= MAX_ROWS) {
+            return out;
+          }
+          break;
+        }
+      }
+    }
+    return out;
   }
 
   private static Map<String, Object> resolveTable(
@@ -341,15 +369,18 @@ public final class PresentResolver {
       Map<String, Object> raw,
       List<Map<String, Object>> sourceRows,
       Map<String, Object> inventoryReport,
-      String title) {
+      String title,
+      boolean subset) {
     List<Map<String, Object>> items = itemList(raw.get("items"));
     String groupBy = str(raw.get("groupBy")).trim().toLowerCase(Locale.ROOT);
+    // item.stats 的桶是全库口径：先用它，别拿本轮顺手查到的几行冒充分布。
+    // 只取与 groupBy 一致的桶；未写分组时不从空间桶补格子。
+    if (!groupBy.isEmpty() && items.isEmpty() && !subset) {
+      items = itemsFromStatsReport(inventoryReport, groupBy);
+    }
+    // 没有 stats 桶（或模型只画 refs 子集）时，才按本轮行数聚合。
     if (!groupBy.isEmpty() && items.isEmpty() && !sourceRows.isEmpty()) {
       items = aggregate(sourceRows, groupBy);
-    }
-    // 只取与 groupBy 一致的 stats 桶。未写分组时不从空间桶补格子。
-    if (items.isEmpty() && !groupBy.isEmpty()) {
-      items = itemsFromStatsReport(inventoryReport, groupBy);
     }
     if (items.isEmpty()) {
       return null;
@@ -513,9 +544,13 @@ public final class PresentResolver {
     return List.of();
   }
 
+  /**
+   * 按桶数记录数，不按数量求和：一件 5 斤大米和一件 1 瓶酱油相加没有意义，
+   * 也和 {@code item.stats} 的口径对不上（同一个「各空间多少」不该出现两种数）。
+   */
   private static List<Map<String, Object>> aggregate(
       List<Map<String, Object>> sourceRows, String groupBy) {
-    Map<String, Double> sums = new LinkedHashMap<>();
+    Map<String, Integer> counts = new LinkedHashMap<>();
     for (Map<String, Object> item : sourceRows) {
       String key;
       if ("location".equals(groupBy) || "place".equals(groupBy)) {
@@ -531,17 +566,13 @@ public final class PresentResolver {
           key = "未分组";
         }
       }
-      double qty = toDouble(item.get("quantity"));
-      if (qty <= 0) {
-        qty = 1;
-      }
-      sums.merge(key, qty, Double::sum);
+      counts.merge(key, 1, Integer::sum);
     }
     List<Map<String, Object>> items = new ArrayList<>();
-    for (Map.Entry<String, Double> e : sums.entrySet()) {
+    for (Map.Entry<String, Integer> e : counts.entrySet()) {
       Map<String, Object> row = new LinkedHashMap<>();
       row.put("label", e.getKey());
-      row.put("value", stripNumber(e.getValue()));
+      row.put("value", e.getValue());
       items.add(row);
       if (items.size() >= MAX_ITEMS) {
         break;
@@ -659,6 +690,24 @@ public final class PresentResolver {
 
   private static String placeLabel(Map<String, Object> item) {
     return TreeMatch.placeLabel(str(item.get("spaceName")), str(item.get("locationName")));
+  }
+
+  /** refs 上限按行数算（表格最多 {@link #MAX_ROWS} 行），不按列数。 */
+  private static List<String> refList(Object raw) {
+    List<String> out = new ArrayList<>();
+    if (!(raw instanceof List<?> list)) {
+      return out;
+    }
+    for (Object o : list) {
+      String s = str(o).trim().toUpperCase(Locale.ROOT);
+      if (!s.isEmpty() && !out.contains(s)) {
+        out.add(s);
+      }
+      if (out.size() >= MAX_ROWS) {
+        break;
+      }
+    }
+    return out;
   }
 
   private static List<String> stringList(Object raw) {

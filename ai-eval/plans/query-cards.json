@@ -1,0 +1,14 @@
+{
+  "id": "query-cards",
+  "title": "查库与卡片口径",
+  "description": "问「有什么」要看清单、问「能吃的」别把厨房整套端出来、卡片数字不能和正文打架、别每轮念过期。改 prompt / present 后必跑",
+  "cases": [
+    "query-whats-home",
+    "query-edible-only",
+    "query-pot-not-food",
+    "query-no-expiry-lecture",
+    "query-drink-word",
+    "query-single-item",
+    "scene-space-bars"
+  ]
+}

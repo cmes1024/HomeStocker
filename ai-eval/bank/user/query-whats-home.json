@@ -1,0 +1,16 @@
+{
+  "id": "query-whats-home",
+  "perspective": "user",
+  "title": "家里有什么：要看清单，不是只报条数",
+  "tags": ["query", "regression", "wide"],
+  "setup": { "fixture": "home-wide" },
+  "prompt": "家里有什么",
+  "expected": {
+    "outcome": "给出物资清单（表格），不只报总条数或空间分布；正文最多一句",
+    "requiredToolsAny": ["item.search"],
+    "mustPresent": "table",
+    "presentMinRows": 5,
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"],
+    "manual": ""
+  }
+}

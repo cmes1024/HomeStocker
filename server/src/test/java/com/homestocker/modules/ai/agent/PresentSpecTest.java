@@ -45,6 +45,24 @@ class PresentSpecTest {
   }
 
   @Test
+  void refsAreForwardedDedupedAndUppercased() {
+    Map<String, Object> a = args("type", "table");
+    a.put("refs", List.of("p2", "P1", "P2", " "));
+    Map<String, Object> spec = ActToolLoop.presentSpec(a);
+    assertNotNull(spec);
+    assertEquals(List.of("P2", "P1"), spec.get("refs"));
+  }
+
+  @Test
+  void blankRefsAreNotForwarded() {
+    Map<String, Object> a = args("type", "table");
+    a.put("refs", List.of());
+    Map<String, Object> spec = ActToolLoop.presentSpec(a);
+    assertNotNull(spec);
+    assertNull(spec.get("refs"));
+  }
+
+  @Test
   void presentTypeDeclaresEnum() {
     ArrayNode tools = ToolSchemas.openAiTools(new ObjectMapper(), null);
     JsonNode typeNode = null;

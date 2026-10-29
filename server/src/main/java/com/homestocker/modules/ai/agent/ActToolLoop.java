@@ -810,6 +810,12 @@ public class ActToolLoop {
     return "";
   }
 
+  /**
+   * 只转交「怎么画」，行内容一律由服务端按本轮查到的行取。
+   *
+   * <p>{@code refs}：模型只画其中几行时传本轮短号，服务端按短号挑行；不传就是本轮全部行。
+   * 不转交 {@code items}/{@code rows}：格子里的数字和文字只能来自库，不能由模型自填。
+   */
   static Map<String, Object> presentSpec(Map<String, Object> args) {
     if (args == null || args.isEmpty()) {
       return null;
@@ -824,6 +830,10 @@ public class ActToolLoop {
     String groupBy = str(args.get("groupBy")).trim().toLowerCase(Locale.ROOT);
     if (PRESENT_GROUPS.contains(groupBy)) {
       spec.put("groupBy", groupBy);
+    }
+    List<String> refs = presentRefs(args.get("refs"));
+    if (!refs.isEmpty()) {
+      spec.put("refs", refs);
     }
     String title = str(args.get("title")).trim();
     if (!title.isEmpty()) {
@@ -873,6 +883,25 @@ public class ActToolLoop {
       spec.put("caption", caption.length() <= 60 ? caption : caption.substring(0, 60));
     }
     return spec;
+  }
+
+  /** refs 入参：本轮短号数组（P1 / F1）；只收形状对的，去重、封顶。 */
+  static List<String> presentRefs(Object raw) {
+    List<String> out = new ArrayList<>();
+    if (!(raw instanceof List<?> list)) {
+      return out;
+    }
+    for (Object o : list) {
+      String ref = str(o).trim().toUpperCase(Locale.ROOT);
+      if (ref.isEmpty() || out.contains(ref)) {
+        continue;
+      }
+      out.add(ref);
+      if (out.size() >= PresentResolver.MAX_ROWS) {
+        break;
+      }
+    }
+    return out;
   }
 
   /** 支持简写 ["名称","数量","位置","备注"]；「备注」类列按说明列处理。 */

@@ -1,0 +1,21 @@
+{
+  "id": "query-pot-not-food",
+  "perspective": "user",
+  "title": "被反问「锅也能吃」：认错并把锅从能吃的里拿掉",
+  "tags": ["query", "regression", "mixed"],
+  "setup": { "fixture": "home-food-mixed" },
+  "prompt": [
+    { "role": "user", "text": "有吃的吗" },
+    {
+      "role": "assistant",
+      "text": "共 11 件可入口的，厨房 10 件、客厅 1 件。酸奶已过期 5 天，牛奶快过期 2 天。"
+    },
+    { "role": "user", "text": "锅也能吃？" }
+  ],
+  "expected": {
+    "outcome": "承认锅具不入口，纠正只算能吃的东西；不把鸳鸯锅/洗洁精等再列进来，不写饮食建议",
+    "presentMustExclude": ["鸳鸯锅", "洗洁精", "保鲜膜", "纸巾"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"],
+    "manual": "可以不重新出卡片；出卡片就必须是不含锅具的子集"
+  }
+}

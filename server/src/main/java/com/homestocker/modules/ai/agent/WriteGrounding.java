@@ -50,11 +50,16 @@ public final class WriteGrounding {
     if (siblings.size() < 2) {
       return null;
     }
-    if (pickedByRef(rows, call)) {
+    // itemId 来自回执/查询的机器事实，比短号更硬，直接放行。
+    String itemId = str(call.get("itemId"));
+    if (!itemId.isEmpty() && hits(rows, "itemId", itemId)) {
       return null;
     }
     Map<String, Object> target = findRow(rows, call);
-    if (target != null && uniquely(userText, target, siblings)) {
+    // 本句里有区分线索，或这次调用自己点名了落点/备注/日期（且同级里唯一），才算点明是哪一条。
+    // 只给短号不够：模型从本轮几行里随手挑一条，家人其实没说是哪条。
+    if (target != null
+        && (uniquely(userText, target, siblings) || narrowedByCall(call, target, siblings))) {
       return null;
     }
     List<String> candidates = new ArrayList<>();
@@ -64,14 +69,25 @@ public final class WriteGrounding {
     return ToolFeedback.of(GroundingCodes.REF_AMBIGUOUS, "name", name).withCandidates(candidates);
   }
 
-  /** 本轮短号 / itemId 唯一命中一条：模型已经点明是哪一条，不再要求本句里有文字线索。 */
-  private static boolean pickedByRef(List<Map<String, Object>> rows, Map<String, Object> call) {
-    String ref = ActRefs.pickCallRef(call);
-    if (!ref.isEmpty() && hits(rows, "ref", ref)) {
-      return true;
+  /** 调用自己点名了落点/备注/日期，且同级里只有这一条符合，说明确实指定了是哪条。 */
+  private static boolean narrowedByCall(
+      Map<String, Object> call, Map<String, Object> target, List<Map<String, Object>> siblings) {
+    for (String key : List.of("spaceName", "locationName", "note", "productionDate", "expireDate")) {
+      String want = str(call.get(key));
+      if (want.isEmpty() || !want.equals(str(target.get(key)))) {
+        continue;
+      }
+      int hits = 0;
+      for (Map<String, Object> sibling : siblings) {
+        if (want.equals(str(sibling.get(key)))) {
+          hits++;
+        }
+      }
+      if (hits == 1) {
+        return true;
+      }
     }
-    String itemId = str(call.get("itemId"));
-    return !itemId.isEmpty() && hits(rows, "itemId", itemId);
+    return false;
   }
 
   private static boolean hits(List<Map<String, Object>> rows, String key, String want) {

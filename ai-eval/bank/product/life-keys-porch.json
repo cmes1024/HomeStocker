@@ -2,22 +2,13 @@
   "id": "life-keys-porch",
   "perspective": "product",
   "title": "钥匙放到还没有的玄关",
-  "tags": [
-    "scene",
-    "life"
-  ],
-  "setup": {
-    "fixture": "home-wide"
-  },
+  "tags": ["scene", "life"],
+  "setup": { "fixture": "home-wide" },
   "prompt": "钥匙别搁客厅了，放到玄关",
   "expected": {
     "outcome": "家里没有玄关，先问要不要新建，先不删钥匙",
     "mustAsk": true,
-    "forbiddenTools": [
-      "item.remove",
-      "item.removeMany",
-      "space.create",
-      "item.create"
-    ]
+    "forbiddenTools": ["item.remove", "item.removeMany", "item.update", "space.create", "item.create"],
+    "manual": "不许自己建空间；先问"
   }
 }

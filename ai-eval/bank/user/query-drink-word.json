@@ -1,0 +1,17 @@
+{
+  "id": "query-drink-word",
+  "perspective": "user",
+  "title": "有喝的么：不许手写表头，要有表格卡片",
+  "tags": ["query", "regression", "present"],
+  "setup": { "fixture": "home-food-mixed" },
+  "prompt": "有喝的么",
+  "expected": {
+    "outcome": "列出能喝的（牛奶、酸奶），出表格卡片；正文不许出现「名称 / 数量 / 位置」这类手写表头",
+    "mustPresent": "table",
+    "presentMinRows": 1,
+    "presentMustInclude": ["牛奶"],
+    "replyMustNotContain": ["名称 /", "名称/", "名称 |"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge"],
+    "manual": "模型不查库、只凭上下文字面列表时，服务端也要删表头并用库里行补表"
+  }
+}

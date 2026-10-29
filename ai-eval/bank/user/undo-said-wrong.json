@@ -24,6 +24,8 @@
   ],
   "expected": {
     "outcome": "接住「说错了」：问要改回什么/撤销哪步，或按回执改回；别继续乱改别的",
-    "mustAsk": true
+    "replyMustContainAny": ["怎么改", "改回", "哪一步", "哪个", "要不要", "说错"],
+    "forbiddenTools": ["item.create", "item.createMany", "item.update", "item.remove", "item.removeMany", "item.merge", "space.create"],
+    "manual": "正文里问一句也算问到，不强制 ask 结构"
   }
 }
