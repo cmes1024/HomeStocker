@@ -170,7 +170,14 @@ Page({
     platformModelIndex: 0,
     platformApiKey: '',
     platformLabel: '',
-    platformError: ''
+    platformError: '',
+    showInvitePanel: false,
+    inviteEnabled: true,
+    inviteRewardDays: '',
+    inviteMaxActivations: '',
+    inviteWindowDays: 30,
+    inviteMaxHint: '',
+    inviteError: ''
   },
 
   onLoad() {
@@ -507,6 +514,87 @@ Page({
       await this.loadPlatformKeys()
     } catch (err) {
       this.setData({ acting: false, platformError: err.message || copy.common.opFailed })
+    }
+  },
+
+  /* ---------- 分享邀请奖励设置（平台级） ---------- */
+
+  async openInviteSettings() {
+    if (this.data.acting) return
+    this.setData({ showInvitePanel: true, inviteError: '' })
+    await this.loadInviteSettings()
+  },
+
+  closeInvitePanel() {
+    if (this.data.acting) return
+    this.setData({ showInvitePanel: false, inviteError: '' })
+  },
+
+  async loadInviteSettings() {
+    try {
+      const data = await callFamily('getInviteSettings', {})
+      // 窗口期只在服务端配置，这里取回来是为了把「30 天内」写进说明
+      const windowDays = Number(data && data.windowDays) || 30
+      this.setData({
+        inviteEnabled: !!(data && data.enabled),
+        inviteRewardDays: data && data.rewardDays != null ? String(data.rewardDays) : '',
+        inviteMaxActivations:
+          data && data.maxActivations != null ? String(data.maxActivations) : '',
+        inviteWindowDays: windowDays,
+        inviteMaxHint: copy.admin.inviteMaxHint(windowDays),
+        inviteError: ''
+      })
+    } catch (e) {
+      this.setData({ inviteError: e.message || copy.common.loadFailed })
+    }
+  },
+
+  onToggleInviteEnabled() {
+    this.setData({ inviteEnabled: !this.data.inviteEnabled, inviteError: '' })
+  },
+
+  onInviteDaysInput(e) {
+    this.setData({ inviteRewardDays: (e.detail && e.detail.value) || '', inviteError: '' })
+  },
+
+  onInviteMaxInput(e) {
+    this.setData({ inviteMaxActivations: (e.detail && e.detail.value) || '', inviteError: '' })
+  },
+
+  async onSaveInviteSettings() {
+    if (this.data.acting) return
+    const days = Number(String(this.data.inviteRewardDays || '').trim())
+    if (!Number.isFinite(days) || days < 1 || days > 365) {
+      this.setData({ inviteError: copy.admin.inviteDaysInvalid })
+      return
+    }
+    // 0 表示不限次数，清空不算 0，按非法处理
+    const maxText = String(
+      this.data.inviteMaxActivations == null ? '' : this.data.inviteMaxActivations
+    ).trim()
+    const max = Number(maxText)
+    if (maxText === '' || !Number.isFinite(max) || max < 0 || max > 100) {
+      this.setData({ inviteError: copy.admin.inviteMaxInvalid })
+      return
+    }
+    this.setData({ acting: true, inviteError: '' })
+    try {
+      const data = await callFamily('updateInviteSettings', {
+        enabled: !!this.data.inviteEnabled,
+        rewardDays: Math.floor(days),
+        maxActivations: Math.floor(max)
+      })
+      this.setData({
+        acting: false,
+        showInvitePanel: false,
+        inviteEnabled: !!(data && data.enabled),
+        inviteRewardDays: data && data.rewardDays != null ? String(data.rewardDays) : '',
+        inviteMaxActivations:
+          data && data.maxActivations != null ? String(data.maxActivations) : ''
+      })
+      wx.showToast({ title: copy.admin.inviteSaved, icon: 'none' })
+    } catch (e) {
+      this.setData({ acting: false, inviteError: e.message || copy.common.opFailed })
     }
   }
 })

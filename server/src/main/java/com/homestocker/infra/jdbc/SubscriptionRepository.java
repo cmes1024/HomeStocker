@@ -62,6 +62,30 @@ public class SubscriptionRepository {
         lastRedeemCodeId);
   }
 
+  /**
+   * 只延长到期时间：已有记录时不动 plan_id / product / source / last_redeem_code_id。
+   *
+   * <p>邀请奖励是「加时长」，不是「换套餐」，不能把兑换码开通留下的来源信息冲掉。
+   */
+  public void extendOrCreate(
+      String familyId, String planId, String product, String source, Timestamp expiresAt) {
+    jdbc.update(
+        """
+        INSERT INTO family_subscriptions (
+          family_id, plan_id, product, source, expires_at, limits_override,
+          last_redeem_code_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, NULL, NULL, now(), now())
+        ON CONFLICT (family_id) DO UPDATE SET
+          expires_at = EXCLUDED.expires_at,
+          updated_at = now()
+        """,
+        familyId,
+        planId,
+        product,
+        source,
+        expiresAt);
+  }
+
   public void delete(String familyId) {
     jdbc.update("DELETE FROM family_subscriptions WHERE family_id = ?", familyId);
   }
