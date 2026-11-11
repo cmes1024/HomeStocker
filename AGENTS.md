@@ -22,6 +22,7 @@
 - **AI 助手上下文优化（已落地）：** `docs/plans/2026-09-22-ai-assist-context-retrieval/` + 归档 `openspec/changes/archive/2026-09-22-ai-assist-context-retrieval/` — 查库召回 / history 保回执 / prompt 瘦身
 - **按图预填（进行中）：** `openspec/changes/ai-photo-prefill/` — 编辑页拍照后 `ai.capture` 一次性视觉抽取（只读、不写账、人核对后照旧 `item.create/update`）；视觉预设在 `ModelCatalog`（vision 标记），密钥复用家庭 BYOK + hosted 池
 - **页面直达（`page.get`，已落地）：** Java `PageRegistry` + 能力 `page.get`；归档 `openspec/changes/archive/2026-09-23-ai-page-nav/`
+- **分享体系（已落地）：** `docs/plans/2026-11-11-share-invite-reward/`（PRD / 场景测试 / 待决策）；OpenSpec `share-invite-reward` — 一条长期链接可被多个「从未拥有过家庭」的新人激活，奖励落在生成链接时冻结的家庭；新人标记不可逆、发奖与建家分事务
 - OpenSpec：`openspec/`；变更用 openspec 工作流，勿手建 `changes/` 目录
 
 ## 产品范围（已锁定）
@@ -50,6 +51,13 @@
 - 小程序运行时配置：`miniprogram/config/index.js`
 - 去掉产品路径上的 `pages/demo/*`、`pages/chat/*`（可留目录）
 
+### 本机环境约束（硬禁）
+
+- 本机**只有 Docker**，没有 JDK / Maven / Java 运行时，也没有其他语言运行时。
+- **严禁**执行 `mvn`、`./mvnw`、`mvn test`、`mvn package`、`mvn compile`，也**严禁**用 `docker run maven:...` 之类的方式在容器里跑 Maven 目标。跑一次要几分钟，纯属浪费时间和 token。
+- 判断后端改动是否可用，只用 `docker compose build api`：编译通过即算验证结束，**不跑单元测试**。
+- 确实需要跑测试时，先说明理由并取得用户明确同意，不得自行启动。
+
 ## 数据模型（领域）
 
 ```
@@ -63,6 +71,8 @@ items (familyId, name, quantity, unit?, note, spaceId, locationId?, tagIds[], pr
 itemExpireSubs (_id=`itemId_openid`, familyId, itemId, openid, createdAt)
 activities (familyId, itemId, action, actorOpenid, itemName, spaceName?, locationName?, changedFields?, summary?, source, createdAt)
 familyAiKeys / aiPrompts / familyTrees / aiCapabilities（AI 助手；客户端写 deny）
+users.has_ever_had_family（不可逆新人标记，分享奖励用）
+invite_links / invite_activations（长期分享链接 + 一人一次的激活记录；奖励仍写 family_subscriptions）
 ```
 
 - **禁止**把成员、物资或空间树嵌进 `families` 大数组
