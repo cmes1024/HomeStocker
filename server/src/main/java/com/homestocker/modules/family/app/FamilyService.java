@@ -48,6 +48,7 @@ public class FamilyService {
   private final StructureRepository structureRepository;
   private final FamilySeedService familySeedService;
   private final EntitlementService entitlementService;
+  private final InviteRewardService inviteRewardService;
   private final ObjectMapper objectMapper;
 
   public FamilyService(
@@ -59,6 +60,7 @@ public class FamilyService {
       StructureRepository structureRepository,
       FamilySeedService familySeedService,
       EntitlementService entitlementService,
+      InviteRewardService inviteRewardService,
       ObjectMapper objectMapper) {
     this.userRepository = userRepository;
     this.familyRepository = familyRepository;
@@ -68,6 +70,7 @@ public class FamilyService {
     this.structureRepository = structureRepository;
     this.familySeedService = familySeedService;
     this.entitlementService = entitlementService;
+    this.inviteRewardService = inviteRewardService;
     this.objectMapper = objectMapper;
   }
 
@@ -174,6 +177,7 @@ public class FamilyService {
       throw ApiException.of(ErrorCodes.INVALID_NAME, "请输入家庭名称");
     }
     assertUserFamilyCapacity(openid);
+    boolean firstFamily = userRepository.markHadFamilyIfFirst(openid);
 
     Map<String, Object> background = ThemeIds.DEFAULT_BACKGROUND;
     if (body.get("background") != null) {
@@ -187,6 +191,9 @@ public class FamilyService {
     membershipRepository.insert(openid, familyId, now);
     userRepository.setCurrentFamily(openid, familyId);
     familySeedService.seedStructureTree(familyId);
+    if (firstFamily) {
+      inviteRewardService.recordFirstFamilyPending(openid, str(body.get("inviteToken")));
+    }
 
     FamilyRow family = familyRepository.findById(familyId).orElseThrow();
     return withCapacity(family, openid);
@@ -212,6 +219,7 @@ public class FamilyService {
 
     Timestamp now = TimeJson.nowTs();
     membershipRepository.insert(openid, family.id(), now);
+    userRepository.markHadFamilyIfFirst(openid);
     familyRepository.incrementMemberCount(family.id(), 1);
     userRepository.setCurrentFamily(openid, family.id());
 
@@ -280,6 +288,9 @@ public class FamilyService {
       Map<String, Object> item = familySummary(fam, openid);
       item.put("joinedAt", TimeJson.toEpochMs(joinedAt.get(id)));
       item.put("isCurrent", id.equals(currentFamilyId));
+      item.put(
+          "entitlement",
+          CapacityPlans.toEntitlementMap(entitlementService.resolveForFamily(id)));
       list.add(item);
     }
 

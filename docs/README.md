@@ -39,6 +39,7 @@
 10. [AI 上下文 / 查库 / prompt](./plans/2026-09-22-ai-assist-context-retrieval/README.md) — 已落地  
 11. [管家素养课表](./plans/2026-09-23-ai-assist-curriculum/README.md) — 实施中（`ai-assist-curriculum`）  
 12. [AI 拍照录入 V1](./plans/2026-09-16-package-ai-capture/README.md) — **已退役**；历史见 archive `2026-09-17-package-ai-item-capture`  
+13. [分享体系 PRD](./plans/2026-11-11-share-invite-reward/PRD.md) — 邀请从未拥有过家庭的新用户建家，给邀请者家庭叠加加强版；含 [场景测试与用例](./plans/2026-11-11-share-invite-reward/场景测试与用例.md) 与 [待决策事项](./plans/2026-11-11-share-invite-reward/待决策事项.md)；OpenSpec `share-invite-reward`  
 
 ## 愿景（不要当本阶段范围）
 

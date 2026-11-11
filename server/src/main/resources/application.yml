@@ -57,5 +57,11 @@ homestocker:
   admin:
     # Comma-separated WeChat openids allowed to issue capacity redeem codes.
     openids: ${ADMIN_OPENIDS:${ADMIN_OPENID:}}
+  invite:
+    # 分享奖励。注意：reward-days / max-activations 以 invite_settings 表为准，
+    # 这里只是表为空时的兜底；window-days 仅来自本配置（DB 不可改）。
+    reward-days: ${INVITE_REWARD_DAYS:7}
+    max-activations: ${INVITE_MAX_ACTIVATIONS:5}
+    window-days: ${INVITE_WINDOW_DAYS:30}
   ai:
     act-rate-per-minute: ${AI_ACT_RATE_PER_MINUTE:30}

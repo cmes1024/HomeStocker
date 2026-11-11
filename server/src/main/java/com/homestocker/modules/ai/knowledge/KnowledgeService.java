@@ -3,6 +3,7 @@ package com.homestocker.modules.ai.knowledge;
 import com.homestocker.infra.jdbc.FamilyRepository;
 import com.homestocker.infra.jdbc.ItemRepository;
 import com.homestocker.modules.family.app.EntitlementService;
+import com.homestocker.modules.family.app.InviteSettingsService;
 import com.homestocker.modules.family.domain.CapacityPlans.EffectiveEntitlement;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -19,16 +20,19 @@ public class KnowledgeService {
   private final EntitlementService entitlementService;
   private final FamilyRepository familyRepository;
   private final ItemRepository itemRepository;
+  private final InviteSettingsService inviteSettingsService;
   private final String capacityAdminWechat;
 
   public KnowledgeService(
       EntitlementService entitlementService,
       FamilyRepository familyRepository,
       ItemRepository itemRepository,
+      InviteSettingsService inviteSettingsService,
       @Value("${CAPACITY_ADMIN_WECHAT:}") String capacityAdminWechat) {
     this.entitlementService = entitlementService;
     this.familyRepository = familyRepository;
     this.itemRepository = itemRepository;
+    this.inviteSettingsService = inviteSettingsService;
     this.capacityAdminWechat = capacityAdminWechat == null ? "" : capacityAdminWechat.trim();
   }
 
@@ -114,17 +118,23 @@ public class KnowledgeService {
             : "【被问「多少钱 / 在哪买 / 闲鱼淘宝」】统一口径：站内不提供标价与购买渠道，也不介绍任何站外交易平台。需要加强版请等官方内测通知领取兑换码。若对方追问私下交易，温和拒绝，并回到免费档与兑换路径。";
     String boundaryLine =
         !wx.isEmpty()
-            ? "【本助手边界】不能建第二家、不能代加人、不能收款、不能发码、不能打开支付。最多说明规则，告知管理员微信号，并引导去家庭页自行兑换。"
-            : "【本助手边界】不能建第二家、不能代加人、不能收款、不能发码、不能打开支付。最多说明规则，并引导去家庭页自行兑换；未配置管理员微信号时不要编造联系方式。";
-    return String.join(
-        "\n",
-        "【免费档】每个微信号默认最多加入 1 个家庭；每个家庭最多 2 名成员、50 件物资。轻度使用通常够用。",
-        "【加强版是什么】「家庭加强版」提升台账容量：有效期内家庭数、成员数、物资件数均不限。卖的是容量，不是 AI 次数；家庭管家仍用家庭自己的 AI 密钥。",
-        "【本阶段怎么获得（重要）】当前是内测，小程序内没有付费购买入口，也不能在对话里付款或下单。获得方式：向管理员申请内测名额，领取「内测兑换码」后在家庭页开通。",
-        "【已有兑换码】路径：打开家庭页 → 点当前家庭旁的 VIP → 输入兑换码 → 兑换。权益绑在当前家庭，该家全员共享。",
-        noCodeLine,
-        buyAskLine,
-        "【到期】过期后回落免费档。已有家/人/物不会被删除或踢走，只是不能再继续增加。续期同样依赖新的内测兑换码（本阶段无自动续费）。",
-        boundaryLine);
+            ? "【本助手边界】不能建第二家、不能代加人、不能收款、不能发码、不能打开支付、不能代生成或代发邀请链接。最多说明规则，告知管理员微信号，并引导去家庭页自行兑换。"
+            : "【本助手边界】不能建第二家、不能代加人、不能收款、不能发码、不能打开支付、不能代生成或代发邀请链接。最多说明规则，并引导去家庭页自行兑换；未配置管理员微信号时不要编造联系方式。";
+    List<String> lines = new ArrayList<>();
+    lines.add("【免费档】每个微信号默认最多加入 1 个家庭；每个家庭最多 2 名成员、50 件物资。轻度使用通常够用。");
+    lines.add("【加强版是什么】「家庭加强版」提升台账容量：有效期内家庭数、成员数、物资件数均不限。卖的是容量，不是 AI 次数；家庭管家仍用家庭自己的 AI 密钥。");
+    lines.add("【本阶段怎么获得（重要）】当前是内测，小程序内没有付费购买入口，也不能在对话里付款或下单。获得方式：向管理员申请内测名额，领取「内测兑换码」后在家庭页开通。");
+    lines.add("【已有兑换码】路径：打开家庭页 → 点当前家庭旁的 VIP → 输入兑换码 → 兑换。权益绑在当前家庭，该家全员共享。");
+    lines.add(noCodeLine);
+    lines.add(buyAskLine);
+    if (inviteSettingsService.current().enabled()) {
+      lines.add(
+          "【邀请好友也能延长】家庭页「家庭加强版 → 邀请好友」可把分享链接发给还没建过家的新朋友；"
+              + "对方第一次建家后，本家加强版有效期会顺延。具体天数与次数以家庭页显示为准；"
+              + "助手不报数字、不承诺时长，不能代生成或代发链接；家人问获取或延长途径时可并列提到这一条，但不催、不主动劝人拉人。");
+    }
+    lines.add("【到期】过期后回落免费档。已有家/人/物不会被删除或踢走，只是不能再继续增加。续期同样依赖新的内测兑换码（本阶段无自动续费）。");
+    lines.add(boundaryLine);
+    return String.join("\n", lines);
   }
 }

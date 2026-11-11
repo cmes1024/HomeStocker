@@ -53,6 +53,18 @@ public class UserRepository {
     return findByOpenid(openid).orElseGet(() -> upsertOnLogin(openid));
   }
 
+  /** CAS：首次拥有家庭时返回 true，之后永远为 false；leave 不会把它改回去。 */
+  public boolean markHadFamilyIfFirst(String openid) {
+    int n =
+        jdbc.update(
+            """
+            UPDATE users SET has_ever_had_family = TRUE, updated_at = now()
+            WHERE openid = ? AND has_ever_had_family = FALSE
+            """,
+            openid);
+    return n == 1;
+  }
+
   public void setCurrentFamily(String openid, String familyIdOrNull) {
     jdbc.update(
         "UPDATE users SET current_family_id = ?, updated_at = now() WHERE openid = ?",
