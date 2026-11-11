@@ -21,7 +21,9 @@ const READ_ACTIONS = {
     listMyFamilies: true,
     listMembers: true,
     page: true,
-    listRedeemCodes: true
+    listRedeemCodes: true,
+    getInviteLink: true,
+    getInviteSettings: true
   },
   item: {
     get: true,

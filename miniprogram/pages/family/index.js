@@ -185,8 +185,15 @@ Page({
     codeVisible: false,
     codeDisplay: '',
     capacityStatusText: '',
+    capacityVipStatusText: copy.family.capacityVipStatusIdle,
     capacityProgressText: '',
-    capacityActive: false
+    capacityActive: false,
+    inviteToken: '',
+    inviteEnabled: false,
+    inviteReady: false,
+    inviteNeedsRegenerate: false,
+    inviteSummary: '',
+    inviteRuleText: ''
   },
 
   onShow() {
@@ -239,31 +246,51 @@ Page({
     return `${y}-${m}-${day}`
   },
 
+  decorateFamilies(list) {
+    return (list || []).map((item) => ({ ...item, ...this.capacityOf(item) }))
+  },
+
+  capacityOf(family) {
+    const ent = (family && family.entitlement) || {}
+    const ymd =
+      ent.active && ent.expiresAt ? this.formatExpireYmd(ent.expiresAt) : ''
+    return {
+      capacityActive: !!ymd,
+      capacityText: ymd
+        ? copy.family.capacityActive(ymd)
+        : copy.family.capacityInactive
+    }
+  },
+
   buildCapacityTexts(family) {
     const ent = (family && family.entitlement) || {}
     const itemCount = family && family.itemCount
     const memberCount = family && family.memberCount
     const active = !!(ent.active && ent.expiresAt)
-    let capacityStatusText = copy.family.capacityInactive
-    if (active) {
-      const ymd = this.formatExpireYmd(ent.expiresAt)
-      capacityStatusText = ymd
-        ? copy.family.capacityActive(ymd)
-        : copy.family.capacityInactive
-    }
+    const ymd = active ? this.formatExpireYmd(ent.expiresAt) : ''
     return {
-      capacityActive: active && capacityStatusText !== copy.family.capacityInactive,
-      capacityStatusText,
-      capacityProgressText: copy.family.capacityProgress(
-        itemCount,
-        ent.itemLimit,
-        memberCount,
-        ent.memberLimit
-      )
+      capacityActive: !!ymd,
+      capacityStatusText: ymd
+        ? copy.family.capacityActive(ymd)
+        : copy.family.capacityInactive,
+      capacityVipStatusText: ymd
+        ? copy.family.capacityVipStatusActive(ymd)
+        : copy.family.capacityVipStatusIdle,
+      capacityProgressText: copy.family.capacityProgress(itemCount, memberCount)
     }
   },
 
-  onShareAppMessage() {
+  onShareAppMessage(res) {
+    const rewardShare =
+      res && res.from === 'button' && res.target && res.target.dataset &&
+      res.target.dataset.shareType === 'reward'
+    if (rewardShare && this.data.inviteToken) {
+      return {
+        title: copy.family.inviteRewardShareTitle,
+        path: `/pages/onboarding/index?inviteToken=${this.data.inviteToken}`,
+        imageUrl: share.imageUrl
+      }
+    }
     const family = this.data.family
     const code = family && family.inviteCode
     if (code) {
@@ -277,6 +304,64 @@ Page({
       title: appName,
       path: share.path,
       imageUrl: share.imageUrl
+    }
+  },
+
+  async loadInviteLink() {
+    try {
+      const link = await callFamily('getInviteLink')
+      this.applyInviteLink(link)
+    } catch (e) {
+      this.setData({
+        inviteToken: '',
+        inviteEnabled: false,
+        inviteReady: false,
+        inviteNeedsRegenerate: true,
+        inviteSummary: '',
+        inviteRuleText: ''
+      })
+    }
+  },
+
+  applyInviteLink(link) {
+    // 次数上限 0 = 不限；累计奖励天数不封顶，不再看已下线的 maxDays
+    const rawMax = link && link.maxActivations
+    const max = Number(rawMax == null ? 5 : rawMax)
+    const count = Number((link && link.grantedCount) || 0)
+    const rewardDays = Number((link && link.rewardDays) || 7)
+    const windowDays = Number((link && link.windowDays) || 30)
+    const needsRegenerate = !!(link && link.needsRegenerate)
+    let summary =
+      max > 0
+        ? copy.family.inviteRewardReady(count, max)
+        : copy.family.inviteRewardUnlimited(count)
+    if (max > 0 && count >= max) summary = copy.family.inviteRewardLimit
+    if (needsRegenerate) summary = copy.family.inviteRewardNeedRegenerate
+    const ruleText =
+      max > 0
+        ? copy.family.inviteRewardRule(rewardDays, windowDays, max)
+        : copy.family.inviteRewardRuleUnlimited(rewardDays)
+    this.setData({
+      inviteToken: (link && link.token) || '',
+      inviteEnabled: !!(link && link.enabled),
+      inviteReady: !!(link && link.token) && !needsRegenerate,
+      inviteNeedsRegenerate: needsRegenerate,
+      inviteSummary: summary,
+      inviteRuleText: ruleText
+    })
+  },
+
+  async onRegenerateInviteLink() {
+    if (this.data.acting) return
+    this.setData({ acting: true })
+    try {
+      const link = await callFamily('createInviteLink')
+      this.applyInviteLink(link)
+      wx.showToast({ title: copy.family.inviteRewardRegenerated, icon: 'success' })
+    } catch (e) {
+      wx.showToast({ title: e.message || copy.common.opFailed, icon: 'none' })
+    } finally {
+      this.setData({ acting: false })
     }
   },
 
@@ -296,7 +381,7 @@ Page({
           err.code = 'NO_FAMILY'
           throw err
         }
-        families = page.list || []
+        families = this.decorateFamilies(page.list || [])
         members = mapMembers(page.members || [])
         profile = page.profile || { nickname: '', avatarUrl: '' }
       } catch (e) {
@@ -307,7 +392,7 @@ Page({
           callFamily('listMembers').catch(() => ({ list: [], profile: null }))
         ])
         family = await this.currentFamilyFromList(listed)
-        families = listed.list || []
+        families = this.decorateFamilies(listed.list || [])
         members = mapMembers((membersRes && membersRes.list) || [])
         profile =
           (membersRes && membersRes.profile) ||
@@ -332,6 +417,7 @@ Page({
         headerTitle: family.name || '家庭',
         ...this.reminderView(family)
       })
+      this.loadInviteLink()
     } catch (e) {
       if (e.code === 'NO_FAMILY') {
         setAppFamily(null)
@@ -369,9 +455,11 @@ Page({
       family,
       families: source.map((item) => {
         const current = item._id === family._id
+        const merged = current ? { ...item, ...family } : item
         return {
-          ...(current ? { ...item, ...family } : item),
-          isCurrent: current
+          ...merged,
+          isCurrent: current,
+          ...this.capacityOf(merged)
         }
       }),
       theme,
@@ -445,6 +533,7 @@ Page({
   openSheet(kind) {
     const heights = {
       mood: '56vh',
+      capacity: '72vh',
       members: '52vh',
       profile: '48vh',
       reminder: '60vh'
@@ -648,6 +737,16 @@ Page({
     if (this.data.acting) return
     if (!this.data.family || !this.data.family.isAdmin) return
     wx.navigateTo({ url: '/packageAdmin/admin/index' })
+  },
+
+  openCapacitySheet() {
+    if (this.data.acting) return
+    this.openSheet('capacity')
+  },
+
+  openCapacityRedeemFromSheet() {
+    this.closeSheet()
+    this.openCapacityRedeem()
   },
 
   openCapacityRedeem() {

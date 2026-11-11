@@ -116,9 +116,9 @@
             <view class="home-name-row">
               <text class="home-name">{{item.name}}</text>
               <text
-                wx:if="{{item.isCurrent && capacityStatusText}}"
-                class="home-capacity {{capacityActive ? 'on' : ''}}"
-              >{{capacityStatusText}}</text>
+                wx:if="{{item.capacityText}}"
+                class="home-capacity {{item.capacityActive ? 'on' : ''}}"
+              >{{item.capacityText}}</text>
             </view>
             <view class="home-sub">
               <block wx:if="{{item.isCurrent}}">
@@ -157,7 +157,7 @@
             wx:if="{{item.isCurrent}}"
             class="home-ico-btn"
             hover-class="press"
-            catch:tap="openCapacityRedeem"
+            catch:tap="openCapacitySheet"
             aria-role="button"
             aria-label="{{copy.capacityTitle}}"
           >
@@ -262,6 +262,87 @@
             aria-hidden="true"
           ></view>
         </view>
+      </view>
+      <view class="sheet-pad"></view>
+    </scroll-view>
+  </view>
+
+  <view class="sheet" wx:elif="{{sheetKind === 'capacity'}}" style="{{theme.cssVarStyle}}">
+    <view class="sheet-hd">
+      <view class="vip-head-main">
+        <view class="vip-title-row">
+          <view class="sheet-title">{{copy.capacityTitle}}</view>
+          <text class="vip-entry-badge {{capacityActive ? 'on' : ''}}">{{capacityVipStatusText}}</text>
+        </view>
+        <text class="vip-head-family" wx:if="{{family && family.name}}">{{family.name}}</text>
+      </view>
+      <view class="sheet-close" bind:tap="closeSheet">×</view>
+    </view>
+    <scroll-view class="sheet-body" scroll-y enhanced show-scrollbar="{{false}}">
+      <view class="vip-table">
+        <view class="vip-table-row head">
+          <view class="vip-table-cell vip-table-key"></view>
+          <view class="vip-table-cell">{{copy.capacityVipFamilyRow}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipMemberRow}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipItemRow}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipMessageRow}}</view>
+        </view>
+        <view class="vip-table-row">
+          <view class="vip-table-cell vip-table-key">
+            <text>{{copy.capacityVipFreeName}}</text>
+            <text wx:if="{{!capacityActive}}" class="vip-table-now">{{copy.capacityVipNowLabel}}</text>
+          </view>
+          <view class="vip-table-cell">{{copy.capacityVipFreeFamily}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipFreeMember}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipFreeItem}}</view>
+          <view class="vip-table-cell">{{copy.capacityVipFreeMessage}}</view>
+        </view>
+        <view class="vip-table-row">
+          <view class="vip-table-cell vip-table-key plus">
+            <text>{{copy.capacityVipPlusName}}</text>
+            <text wx:if="{{capacityActive}}" class="vip-table-now">{{copy.capacityVipNowLabel}}</text>
+          </view>
+          <view class="vip-table-cell plus">{{copy.capacityVipPlusFamily}}</view>
+          <view class="vip-table-cell plus">{{copy.capacityVipPlusMember}}</view>
+          <view class="vip-table-cell plus">{{copy.capacityVipPlusItem}}</view>
+          <view class="vip-table-cell plus">{{copy.capacityVipPlusMessage}}</view>
+        </view>
+      </view>
+
+      <view class="label vip-label">{{copy.capacityVipUsageTitle}}</view>
+      <text class="vip-usage">{{capacityProgressText}}</text>
+
+      <view class="label vip-label">{{copy.capacityVipWaysTitle}}</view>
+      <view class="vip-way">
+        <view class="vip-way-hd">
+          <text class="vip-way-name">{{copy.capacityVipRedeemTitle}}</text>
+          <text class="vip-way-tag">{{copy.capacityVipRedeemTag}}</text>
+        </view>
+        <text class="vip-way-hint">{{copy.capacityVipRedeemHint}}</text>
+        <view
+          class="vip-way-btn vip-way-btn-outline"
+          hover-class="press"
+          bind:tap="openCapacityRedeemFromSheet"
+        >{{copy.capacityVipRedeemAction}}</view>
+      </view>
+      <view class="vip-way" wx:if="{{inviteEnabled}}">
+        <view class="vip-way-hd">
+          <text class="vip-way-name">{{copy.capacityVipInviteTitle}}</text>
+          <text wx:if="{{inviteSummary}}" class="vip-way-count">{{inviteSummary}}</text>
+        </view>
+        <text class="vip-way-hint" wx:if="{{inviteRuleText}}">{{inviteRuleText}}</text>
+        <button
+          wx:if="{{inviteReady}}"
+          class="vip-way-btn vip-way-btn-solid"
+          open-type="share"
+          data-share-type="reward"
+        >{{copy.inviteRewardTitle}}</button>
+        <view
+          wx:else
+          class="vip-way-btn vip-way-btn-solid"
+          hover-class="press"
+          bind:tap="onRegenerateInviteLink"
+        >{{copy.inviteRewardRegenerate}}</view>
       </view>
       <view class="sheet-pad"></view>
     </scroll-view>

@@ -236,6 +236,18 @@ const copy = {
     inviteCancel: '取消',
     inviteCopied: '已复制邀请码',
     inviteShareTitle: (name) => `来加入「${name}」一起记物资`,
+    inviteRewardTitle: '邀请好友一起用',
+    inviteRewardRule: (days, window, max) =>
+      `邀请新朋友一起用，对方第一次建家庭后你的加强版顺延 ${days} 天；最近 ${window} 天内最多邀请 ${max} 位`,
+    inviteRewardRuleUnlimited: (days) =>
+      `邀请新朋友一起用，对方第一次建家庭后你的加强版顺延 ${days} 天；邀请人数不限`,
+    inviteRewardShareTitle: '一起记家里的物资吧',
+    inviteRewardRegenerate: '重新生成链接',
+    inviteRewardRegenerated: '已生成新的分享链接',
+    inviteRewardReady: (n, max) => `已邀请 ${n} / ${max} 位新朋友`,
+    inviteRewardUnlimited: (n) => `已邀请 ${n} 位新朋友 · 不限次数`,
+    inviteRewardNeedRegenerate: '链接已失效，重新生成后可继续分享',
+    inviteRewardLimit: '已达邀请上限',
     homeTools: '家庭其他功能',
     spacesTitle: '家庭空间',
     tagsTitle: '物品标签',
@@ -316,18 +328,37 @@ const copy = {
     themePick: '选择主题',
     aiQuota: 'AI配置',
     capacityTitle: '家庭加强版',
-    capacityInactive: '未开通 · 内测兑换',
+    capacityInactive: '未开通',
     capacityActive: (ymd) => `VIP至 ${ymd}`,
-    capacityProgress: (itemCount, itemLimit, memberCount, memberLimit) => {
-      const items =
-        itemLimit == null
-          ? `${itemCount == null ? '—' : itemCount} 件 · 不限`
-          : `${itemCount == null ? '—' : itemCount} / ${itemLimit} 件`
-      const members =
-        memberLimit == null
-          ? `${memberCount == null ? '—' : memberCount} 人 · 不限`
-          : `${memberCount == null ? '—' : memberCount} / ${memberLimit} 人`
-      return `${items} · ${members}`
+    capacityVipStatusIdle: '未开通',
+    capacityVipStatusActive: (ymd) => `VIP 至 ${ymd}`,
+    capacityVipFreeName: '免费档',
+    capacityVipPlusName: '加强版',
+    capacityVipNowLabel: '当前',
+    capacityVipFamilyRow: '家庭数',
+    capacityVipMemberRow: '成员',
+    capacityVipItemRow: '物资',
+    capacityVipMessageRow: '家庭消息',
+    capacityVipFreeFamily: '1 个',
+    capacityVipPlusFamily: '不限',
+    capacityVipFreeMember: '2 人',
+    capacityVipPlusMember: '不限',
+    capacityVipFreeItem: '50 件',
+    capacityVipPlusItem: '不限',
+    capacityVipFreeMessage: '30 条',
+    capacityVipPlusMessage: '200 条',
+    capacityVipUsageTitle: '当前用量',
+    capacityVipWaysTitle: '开通 / 续期方式',
+    capacityVipInviteTitle: '邀请好友',
+    capacityVipRedeemTitle: '兑换码',
+    capacityVipRedeemTag: '内测',
+    capacityVipRedeemHint: '有内测兑换码可直接开通 / 续期',
+    capacityVipRedeemAction: '输入兑换码',
+    /** 只报当前用量；各档上限已在上面表格里，不在这里重复。 */
+    capacityProgress: (itemCount, memberCount) => {
+      const members = `${memberCount == null ? '—' : memberCount} 人`
+      const items = `${itemCount == null ? '—' : itemCount} 件`
+      return `成员 ${members} · 物资 ${items}`
     },
     capacityRedeemTitle: '内测兑换',
     capacityRedeemPlaceholder: '输入兑换码',
@@ -341,7 +372,7 @@ const copy = {
     capacityHelpAria: '容量规则说明',
     capacityHelpTitle: '容量说明',
     capacityHelpBody:
-      '免费档上限：1 个家庭、每家 2 人、50 件物资。\n\n点家庭旁的 VIP 可兑换内测加强版；开通后家庭数、人数、物资均不限。\n\n到期后回落免费档，已有数据不会删除，只是不能再继续增加。',
+      '免费档上限：1 个家庭、每家 2 人、50 件物资。\n\n在家庭页点「家庭加强版」，可邀请好友自动延长有效期，或用内测兑换码开通；开通后家庭数、人数、物资均不限。\n\n到期后回落免费档，已有数据不会删除，只是不能再继续增加。',
     capacityHelpConfirm: '知道了',
     adminEntryTitle: '运营管理',
     adminEntrySub: '发码 · 平台模型 · 兑换记录',
@@ -401,6 +432,21 @@ const copy = {
     platformRemove: '删除',
     platformAdded: '已添加',
     platformRemoved: '已删除',
+    inviteCell: '邀请奖励',
+    inviteCellSub: '天数 / 次数 / 开关',
+    inviteModalTitle: '分享邀请奖励',
+    inviteEnabledLabel: '开启分享邀请',
+    inviteEnabledHint: '关闭后入口隐藏、不再发放；已发权益不追回',
+    inviteDaysLabel: '每次奖励天数',
+    inviteDaysPlaceholder: '1–365',
+    inviteMaxLabel: '次数上限',
+    inviteMaxPlaceholder: '0 表示不限',
+    inviteMaxHint: (d) => `最近 ${d} 天内最多邀请这么多位新朋友，不是终身上限`,
+    inviteHint: '按人统计：同一个人拥有多个家庭不会重复计数',
+    inviteSave: '保存',
+    inviteSaved: '已保存',
+    inviteDaysInvalid: '奖励天数需在 1–365 之间',
+    inviteMaxInvalid: '次数上限需在 0–100 之间（0 表示不限）',
     issueCell: '发码',
     issueCellSub: '生成内测码',
     platformCell: '平台模型',

@@ -12,6 +12,7 @@ Page({
     mode: 'choose',
     familyName: '',
     inviteCode: '',
+    inviteToken: '',
     submitting: false,
     formError: '',
     theme: null,
@@ -20,6 +21,13 @@ Page({
 
   onLoad(options) {
     bindThemeToPage(this, { headerTitle: '' })
+    const token = String((options && options.inviteToken) || '')
+      .trim()
+      .toUpperCase()
+    if (token) {
+      this.setData({ mode: 'create', inviteToken: token, formError: '' })
+      return
+    }
     const code = String((options && options.inviteCode) || '')
       .trim()
       .toUpperCase()
@@ -71,8 +79,17 @@ Page({
     }
     this.setData({ submitting: true, formError: '' })
     try {
-      const family = await callFamily('create', { name })
+      const payload = { name }
+      if (this.data.inviteToken) payload.inviteToken = this.data.inviteToken
+      const family = await callFamily('create', payload)
       setAppFamily(family)
+      if (this.data.inviteToken) {
+        try {
+          await callFamily('claimInvite')
+        } catch (e) {
+          // 奖励失败不挡建家结果
+        }
+      }
       wx.reLaunch({ url: '/pages/items/index' })
     } catch (e) {
       this.setData({

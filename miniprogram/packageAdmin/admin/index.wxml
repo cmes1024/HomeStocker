@@ -30,6 +30,10 @@
         <text class="ops-name">{{adminCopy.recordsCell}}</text>
         <text class="ops-sub">{{adminCopy.recordsCellSub}}</text>
       </view>
+      <view class="ops-cell" hover-class="ops-cell-hover" bind:tap="openInviteSettings">
+        <text class="ops-name">{{adminCopy.inviteCell}}</text>
+        <text class="ops-sub">{{adminCopy.inviteCellSub}}</text>
+      </view>
     </view>
 
     <view class="ops-card">
@@ -234,6 +238,57 @@
         <view class="text-link" data-id="{{item._id}}" data-enabled="{{item.enabled}}" bind:tap="onTogglePlatformKey">{{item.enabled ? copy.platformDisable : copy.platformEnable}}</view>
         <view class="text-link danger" data-id="{{item._id}}" bind:tap="onRemovePlatformKey">{{copy.platformRemove}}</view>
       </view>
+    </view>
+  </view>
+</view>
+
+<view
+  class="issue-mask"
+  wx:if="{{showInvitePanel}}"
+  style="--theme-primary: {{theme.primary}}; --theme-secondary: {{theme.secondary}}; --theme-shadow: {{theme.shadow}}; --theme-primary-30: {{theme.primary}}4D;"
+  bind:tap="closeInvitePanel"
+>
+  <view class="issue-card" catch:tap="noop">
+    <view class="issue-title">{{copy.inviteModalTitle}}</view>
+    <view class="issue-field">
+      <view class="issue-check {{inviteEnabled ? 'on' : ''}}" bind:tap="onToggleInviteEnabled">
+        <view class="issue-check-box">
+          <text class="issue-check-tick" wx:if="{{inviteEnabled}}">✓</text>
+        </view>
+        <view class="issue-check-main">
+          <text class="issue-check-label">{{copy.inviteEnabledLabel}}</text>
+          <text class="issue-check-hint">{{copy.inviteEnabledHint}}</text>
+        </view>
+      </view>
+    </view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.inviteDaysLabel}}</text>
+      <input
+        class="issue-input"
+        type="number"
+        value="{{inviteRewardDays}}"
+        maxlength="3"
+        placeholder="{{copy.inviteDaysPlaceholder}}"
+        bindinput="onInviteDaysInput"
+      />
+    </view>
+    <view class="issue-field">
+      <text class="issue-label">{{copy.inviteMaxLabel}}（最近 {{inviteWindowDays}} 天）</text>
+      <input
+        class="issue-input"
+        type="number"
+        value="{{inviteMaxActivations}}"
+        maxlength="3"
+        placeholder="{{copy.inviteMaxPlaceholder}}"
+        bindinput="onInviteMaxInput"
+      />
+      <text class="field-hint">{{inviteMaxHint}}</text>
+    </view>
+    <view class="invite-hint">{{copy.inviteHint}}</view>
+    <view class="issue-error" wx:if="{{inviteError}}">{{inviteError}}</view>
+    <view class="issue-actions">
+      <view class="issue-btn issue-btn-ghost" bind:tap="closeInvitePanel">{{copy.issueCancel}}</view>
+      <view class="issue-btn theme-btn {{acting ? 'busy' : ''}}" bind:tap="onSaveInviteSettings">{{copy.inviteSave}}</view>
     </view>
   </view>
 </view>
